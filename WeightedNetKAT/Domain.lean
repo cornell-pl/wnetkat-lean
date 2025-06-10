@@ -157,28 +157,38 @@ theorem WeightedPartialOrder.wle_antisymm_iff [WeightedPartialOrder α] {a b : �
 class WeightedNaturalPartialOrder (α) [WeightedSemiring α] extends WeightedPartialOrder α where
   wle_natural (a b : α) : a ≼ b ↔ ∃ c, a ⨁ c = b
 
-def WeightedChain (α : Type) [WeightedSemiring α] [WeightedPartialOrder α] :=
-  { f : ℕ → α // ∀ {a b : ℕ}, a ≤ b → f a ≼ f b }
-def WeightedChain' (α : Type) [WeightedSemiring α] [WeightedPartialOrder α] :=
-  { f : ℕ → α // ∀ {a b : ℕ}, a ≤ b → f a ≽ f b }
+def WeightedMonotone [WeightedLE α] {ι : Type} [WeightedLE ι] (f : ι → α) : Prop :=
+  ∀ {s₁ s₂}, s₁ ≼ s₂ → f s₁ ≼ f s₂
+def WeightedAntitone [WeightedLE α] {ι : Type} [WeightedLE ι] (f : ι → α) : Prop :=
+  ∀ {s₁ s₂}, s₁ ≼ s₂ → f s₂ ≼ f s₁
 
-instance [WeightedSemiring α] [WeightedPartialOrder α] : FunLike (WeightedChain α) ℕ α :=
+def WeightedChain (α : Type) [WeightedPartialOrder α] :=
+  { f : ℕ → α // WeightedMonotone f }
+def WeightedChain' (α : Type) [WeightedPartialOrder α] :=
+  { f : ℕ → α // WeightedAntitone f }
+
+instance [WeightedPartialOrder α] : FunLike (WeightedChain α) ℕ α :=
   ⟨(·.val), by intro ⟨a, ha⟩ ⟨b, hb⟩ c; simp_all⟩
-instance [WeightedSemiring α] [WeightedPartialOrder α] : FunLike (WeightedChain' α) ℕ α :=
+instance [WeightedPartialOrder α] : FunLike (WeightedChain' α) ℕ α :=
   ⟨(·.val), by intro ⟨a, ha⟩ ⟨b, hb⟩ c; simp_all⟩
 
-def WeightedChain.map {α β : Type} [WeightedSemiring α] [WeightedPartialOrder α]
-    [WeightedSemiring β] [WeightedPartialOrder β]
-    (C : WeightedChain α) (f : α → β) (hf : ∀ {a b : α}, a ≼ b → f a ≼ f b) : WeightedChain β :=
+def WeightedChain.map {α β : Type} [WeightedPartialOrder α] [WeightedPartialOrder β]
+    (C : WeightedChain α) (f : α → β) (hf : WeightedMonotone f) : WeightedChain β :=
   ⟨fun n ↦ f (C n), fun hab ↦ hf (C.property hab)⟩
 
-class WeightedOmegaCompletePartialOrder (α : Type) [WeightedSemiring α] extends
+class WeightedOmegaCompletePartialOrder (α : Type) extends
     WeightedPartialOrder α where
   wSup : WeightedChain α → α
   /-- wSup is an upper bound of the increasing sequence -/
   le_wSup (c : WeightedChain α) (i : ℕ) : c i ≼ wSup c
   /-- wSup is a lower bound of the set of upper bounds of the increasing sequence -/
   wSup_le (c : WeightedChain α) (x : α) : (∀ (i : ℕ), c i ≼ x) → wSup c ≼ x
+
+open WeightedOmegaCompletePartialOrder in
+def WeightedOmegaContinuous {ι : Type} [WeightedOmegaCompletePartialOrder ι]
+    [WeightedOmegaCompletePartialOrder α]
+    (f : ι → α) (h : WeightedMonotone f) : Prop :=
+  ∀ C, f (wSup C) = wSup (C.map f h)
 
 /--
 A weighted semiring is _ω-bicontinuous_ iff
@@ -193,34 +203,30 @@ A weighted semiring is _ω-bicontinuous_ iff
   ∀ ω-chains C = {s₀ ≼ s₁ ≼ ⋯}, ∀ s ∈ α,
     s ∘ wSup C = wSup (C.map fun s' ↦ s ∘ s')) and wSup C ∘ s = wSup (C.map fun s' ↦ s' ∘ s))
 -/
-class WeightedOmegaContinuous (α : Type) [WeightedSemiring α] extends
+class WeightedOmegaContinuousSemiring (α : Type) [WeightedSemiring α] extends
     WeightedOmegaCompletePartialOrder α where
   /-- 1. ≼ is positive. -/
   wle_positive (a : α) : 𝟘 ≼ a
   /-- 2. both ⨁ and ⨀ are monotonic in both arguments. -/
-  wAdd_mono (s₁ s₂ s₃ : α) (hab : s₂ ≼ s₃) : s₁ ⨁ s₂ ≼ s₁ ⨁ s₃
-  wMul_mono_left (s₁ s₂ s₃ : α) (hab : s₂ ≼ s₃) : s₁ ⨀ s₂ ≼ s₁ ⨀ s₃
-  wMul_mono_right (s₁ s₂ s₃ : α) (hab : s₂ ≼ s₃) : s₂ ⨀ s₁ ≼ s₃ ⨀ s₁
+  wAdd_mono (s₁ : α) : WeightedMonotone (s₁ ⨁ ·)
+  wMul_mono_left (s₁ : α) : WeightedMonotone (s₁ ⨀ ·)
+  -- wMul_mono_right (s₁ s₂ s₃ : α) (hab : s₂ ≼ s₃) : s₂ ⨀ s₁ ≼ s₃ ⨀ s₁
+  wMul_mono_right (s₁ : α) : WeightedMonotone (· ⨀ s₁)
   /-- 3. both ⨁ and ⨀ are ω-continuous in both arguments. -/
-  wAdd_wSup (s : α) (C : WeightedChain α) :
-      s ⨁ wSup C = wSup (C.map (s ⨁ ·) (wAdd_mono s _ _))
-  wSup_wAdd (s : α) (C : WeightedChain α) :
-      wSup C ⨁ s = wSup (C.map (· ⨁ s) (fun h ↦ by
-        simp [WeightedSemiring.wAdd_comm]
-        exact wAdd_mono s _ _ h))
-  wMul_wSup (s : α) (C : WeightedChain α) :
-      s ⨀ wSup C = wSup (C.map (s ⨀ ·) (wMul_mono_left s _ _))
-  wSup_wMul (s : α) (C : WeightedChain α) :
-      wSup C ⨀ s = wSup (C.map (· ⨀ s) (wMul_mono_right s _ _))
+  wAdd_wSup (s : α) : WeightedOmegaContinuous (s ⨁ ·) (wAdd_mono s)
+  wSup_wAdd (s : α) : WeightedOmegaContinuous (· ⨁ s) (by
+    simp only [WeightedSemiring.wAdd_comm]; exact wAdd_mono _)
+  wMul_wSup (s : α) : WeightedOmegaContinuous (s ⨀ ·) (wMul_mono_left s)
+  wSup_wMul (s : α) : WeightedOmegaContinuous (· ⨀ s) (wMul_mono_right s)
 
 @[simp]
-theorem wZero_wLe [WeightedSemiring α] [WeightedOmegaContinuous α] {x : α} : 𝟘 ≼ x :=
-  WeightedOmegaContinuous.wle_positive x
+theorem wZero_wLe [WeightedSemiring α] [WeightedOmegaContinuousSemiring α] {x : α} : 𝟘 ≼ x :=
+  WeightedOmegaContinuousSemiring.wle_positive x
 @[simp]
-theorem wLe_wZero_iff [WeightedSemiring α] [WeightedOmegaContinuous α] {x : α} : x ≼ 𝟘 ↔ x = 𝟘 := by
+theorem wLe_wZero_iff [WeightedSemiring α] [WeightedOmegaContinuousSemiring α] {x : α} : x ≼ 𝟘 ↔ x = 𝟘 := by
   constructor
   · intro h
-    apply WeightedPartialOrder.wle_antisymm h (WeightedOmegaContinuous.wle_positive x)
+    apply WeightedPartialOrder.wle_antisymm h (WeightedOmegaContinuousSemiring.wle_positive x)
   · rintro ⟨_⟩; simp
 
 def WeightedLE.wle.trans_eq {a b c : α} [WeightedPartialOrder α] (h : a ≼ b) (h' : b = c) :
@@ -228,24 +234,24 @@ def WeightedLE.wle.trans_eq {a b c : α} [WeightedPartialOrder α] (h : a ≼ b)
   subst_eqs
   assumption
 
-open WeightedPartialOrder WeightedOmegaContinuous WeightedOmegaCompletePartialOrder in
+open WeightedPartialOrder WeightedOmegaContinuousSemiring WeightedOmegaCompletePartialOrder in
 @[simp]
-theorem wSup_eq_zero_iff [WeightedSemiring α] [WeightedOmegaContinuous α] {C : WeightedChain α} :
+theorem wSup_eq_zero_iff [WeightedSemiring α] [WeightedOmegaContinuousSemiring α] {C : WeightedChain α} :
     wSup C = 𝟘 ↔ ∀ i, C i = 𝟘 :=
   ⟨fun h i ↦ wLe_wZero_iff.mp <| (le_wSup C i).trans_eq h,
     fun h ↦ wle_antisymm (wSup_le C 𝟘 (wLe_wZero_iff.mpr <| h ·)) (wle_positive (wSup C))⟩
 
 section Pi
 
-variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuous 𝒮]
+variable {X : Type} {𝒮 : Type}
 
-instance WeightedAdd.instPi : WeightedAdd (X → 𝒮) where wAdd a b x := a x ⨁ b x
-instance WeightedMul.instPi : WeightedMul (X → 𝒮) where wMul a b x := a x ⨀ b x
+instance WeightedAdd.instPi [WeightedAdd 𝒮] : WeightedAdd (X → 𝒮) where wAdd a b x := a x ⨁ b x
+instance WeightedMul.instPi [WeightedMul 𝒮] : WeightedMul (X → 𝒮) where wMul a b x := a x ⨀ b x
 
 attribute [local simp] WeightedAdd.instPi
 attribute [local simp] WeightedMul.instPi
 
-instance WeightedSemiring.instPi : WeightedSemiring (X → 𝒮) where
+instance WeightedSemiring.instPi [WeightedSemiring 𝒮] : WeightedSemiring (X → 𝒮) where
   wZero := fun _ ↦ 𝟘
   wOne := fun _ ↦ 𝟙
   wAdd_assoc := by simp [wAdd_assoc]
@@ -271,26 +277,28 @@ instance WeightedSemiring.instPi : WeightedSemiring (X → 𝒮) where
 
 attribute [local simp] WeightedSemiring.instPi
 
-instance WeightedLE.instPi : WeightedLE (X → 𝒮) where
+instance WeightedLE.instPi [WeightedLE 𝒮] : WeightedLE (X → 𝒮) where
   wle a b := ∀ x, a x ≼ b x
 
 open WeightedPartialOrder in
-instance WeightedPartialOrder.instPi : WeightedPartialOrder (X → 𝒮) where
+instance WeightedPartialOrder.instPi [WeightedPartialOrder 𝒮] : WeightedPartialOrder (X → 𝒮) where
   wle_refl a x := by simp
   wle_trans {a b c} hab hbc x := wle_trans (hab x) (hbc x)
   wle_antisymm {a b} hab hba := by ext x; exact wle_antisymm (hab x) (hba x)
 
-instance WeightedOmegaCompletePartialOrder.instPi : WeightedOmegaCompletePartialOrder (X → 𝒮) where
+instance WeightedOmegaCompletePartialOrder.instPi [WeightedOmegaCompletePartialOrder 𝒮] :
+    WeightedOmegaCompletePartialOrder (X → 𝒮) where
   wSup C x := wSup ⟨(C · x), (C.prop · x)⟩
   le_wSup C i x := le_wSup ⟨(C · x), (C.prop · x)⟩ i
   wSup_le C _ h x := wSup_le ⟨(C · x), (C.prop · x)⟩ _ (h · x)
 
-open WeightedOmegaContinuous WeightedOmegaCompletePartialOrder in
-instance WeightedOmegaContinuous.instPi : WeightedOmegaContinuous (X → 𝒮) where
+open WeightedOmegaContinuousSemiring WeightedOmegaCompletePartialOrder in
+instance WeightedOmegaContinuousSemiring.instPi [WeightedSemiring 𝒮]
+    [WeightedOmegaContinuousSemiring 𝒮] : WeightedOmegaContinuousSemiring (X → 𝒮) where
   wle_positive _ _ := by simp [wle_positive]
-  wAdd_mono s₁ s₂ s₃ h x := wAdd_mono (s₁ x) (s₂ x) (s₃ x) (h x)
-  wMul_mono_left s₁ s₂ s₃ h x := wMul_mono_left (s₁ x) (s₂ x) (s₃ x) (h x)
-  wMul_mono_right s₁ s₂ s₃ h x := wMul_mono_right (s₁ x) (s₂ x) (s₃ x) (h x)
+  wAdd_mono s₁ s₂ s₃ h x := wAdd_mono (s₁ x) (h x)
+  wMul_mono_left s₁ s₂ s₃ h x := wMul_mono_left (s₁ x) (h x)
+  wMul_mono_right s₁ s₂ s₃ h x := wMul_mono_right (s₁ x) (h x)
   wAdd_wSup s C := by ext x; exact wAdd_wSup (s x) (C.map (· x) (· x))
   wSup_wAdd s C := by ext x; exact wSup_wAdd (s x) (C.map (· x) (· x))
   wMul_wSup s C := by ext x; exact wMul_wSup (s x) (C.map (· x) (· x))
@@ -303,10 +311,10 @@ variable {ι : Type}
 /-- `⨁ x ∈ I, f x` is the finite sum over `f`. -/
 def WeightedFinsum [WeightedSemiring α] (I : Finset ι) (f : ι → α) : α :=
   I.fold (· ⨁ ·) 𝟘 f
-open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinuous in
+open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinuousSemiring in
 open scoped Classical in
 /-- `⨁' x : ι, f x` is the countable sum over `f`. -/
-noncomputable def WeightedSum [WeightedSemiring α] [WeightedOmegaContinuous α]
+noncomputable def WeightedSum [WeightedSemiring α] [WeightedOmegaContinuousSemiring α]
     [Countable ι] (f : ι → α) : α :=
   if _ : Nonempty ι then
     let e : Encodable ι := Encodable.ofCountable ι
@@ -321,9 +329,8 @@ noncomputable def WeightedSum [WeightedSemiring α] [WeightedOmegaContinuous α]
         rw [← add_assoc]
         simp only [Nat.fold_succ]
         set q := (a + c).fold (fun i _ x ↦ f' i ⨁ x) 𝟘
-        have := wAdd_mono q 𝟘 (f' (a + c)) (wle_positive (f' (a + c)))
-        rw [WeightedSemiring.add_wZero, WeightedSemiring.wAdd_comm] at this
-        exact this⟩
+        have := wAdd_mono q (wle_positive (f' (a + c)))
+        simpa [WeightedSemiring.wAdd_comm]⟩
   else
     𝟘
 
@@ -431,7 +438,7 @@ to show the domain type when the sum is over `Finset.univ`. -/
 #guard_msgs in
 #check fun (I : Finset ι) (f : ι → α) ↦ ⨁ᶠ x ∈ I, f x
 
-variable [Countable ι] [Nonempty ι] [WeightedOmegaContinuous α]
+variable [Countable ι] [Nonempty ι] [WeightedOmegaContinuousSemiring α]
 
 /-- info: fun f ↦ ⨁' (x : ι), f x : (ι → α) → α -/
 #guard_msgs in
@@ -442,17 +449,16 @@ end BigOperators
 section
 
 variable {α : Type}
-variable [WeightedSemiring α] [WeightedOmegaContinuous α]
+variable [WeightedSemiring α] [WeightedOmegaContinuousSemiring α]
 
 variable {I : Type} [Countable I]
 
-open WeightedOmegaContinuous WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedSemiring
+open WeightedOmegaContinuousSemiring WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedSemiring
 
 @[simp]
 theorem wle_wAdd (s s' : α) : s ≼ s ⨁ s' := by
-  have := wAdd_mono s 𝟘 s' (wle_positive s')
-  rw [WeightedSemiring.add_wZero] at this
-  exact this
+  have := wAdd_mono s (wle_positive s')
+  simpa [WeightedSemiring.add_wZero]
 theorem WeightedSum_empty [IsEmpty I] (f : I → α) : ⨁' x : I, f x = 𝟘 := by
   simp [WeightedSum]
 

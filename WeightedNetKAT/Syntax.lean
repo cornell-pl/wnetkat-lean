@@ -2,7 +2,7 @@ import Mathlib.Data.Set.Finite.Basic
 import WeightedNetKAT.Domain
 import WeightedNetKAT.Subst
 
-variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuous 𝒮]
+variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuousSemiring 𝒮]
 
 abbrev W (X : Type) (𝒮 : Type) := X → 𝒮
 
