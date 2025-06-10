@@ -17,7 +17,7 @@ instance {m : 𝒲 𝒮 X} : Countable m.val.supp := m.prop
 
 section CountablePi
 
-variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuous 𝒮]
+variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuousSemiring 𝒮]
 open Pi in
 instance WeightedAdd.instCountablePi : WeightedAdd (𝒲 𝒮 X) where
   wAdd := fun ⟨ a_underlying, a_property ⟩ ⟨ b_underlying, b_property ⟩ => by
