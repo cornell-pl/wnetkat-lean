@@ -1,0 +1,14 @@
+{
+    "editor.rulers": [
+        100
+    ],
+    "lean4.input.customTranslations": {
+        "w+": "⨁",
+        "w*": "⨀",
+        "w.": "⨀",
+        "w0": "𝟘",
+        "w1": "𝟙",
+        "wle": "≼",
+        "wge": "≽"
+    }
+}
