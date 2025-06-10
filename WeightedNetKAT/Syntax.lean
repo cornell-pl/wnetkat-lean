@@ -77,7 +77,7 @@ macro_rules
   let sname : TSyntax `str := ⟨Syntax.mkStrLit name.getId.toString⟩
   `(declare_syntax_cat $cat
     syntax (name := $cat) $sname:str ppHardSpace "{" $cat:ident "}" : term
-    syntax "~" term:max : $cat
+    syntax:max "~" term:max : $cat
     )
 elab "declare_syntax_cat'?" name:ident : command => do
   let cmd ← `(declare_syntax_cat' $name)
@@ -91,9 +91,8 @@ macro_rules|`(wnk_nat{~$t})=>`($t)
 declare_syntax_cat' wnk_weight
 macro_rules|`(wnk_weight{~$t})=>`($t)
 declare_syntax_cat' wnk_pred
-macro_rules|`(wnk_pred{~$t})=>`($t)
 declare_syntax_cat' wnk_policy
-macro_rules|`(wnk_policy{~$t})=>`($t)
+
 
 syntax num : cwnk_nat
 
@@ -117,7 +116,8 @@ macro_rules
 | `(wnk_pred { ¬$l:cwnk_pred }) => `(Predicate.Not wnk_pred {$l})
 | `(wnk_pred { ($t) }) => `(wnk_pred {$t})
 
-syntax cwnk_pred : cwnk_policy
+
+syntax cwnk_pred:min : cwnk_policy
 syntax cwnk_field " ← " cwnk_nat : cwnk_policy
 syntax "dup" : cwnk_policy
 syntax cwnk_policy "; " cwnk_policy : cwnk_policy
@@ -125,6 +125,7 @@ syntax cwnk_weight " ⨀ " cwnk_policy : cwnk_policy
 syntax cwnk_policy " ⨁ " cwnk_policy : cwnk_policy
 syntax cwnk_policy "*" : cwnk_policy
 syntax "(" cwnk_policy ")" : cwnk_policy
+syntax "@filter" ppHardSpace cwnk_pred:min : cwnk_policy
 
 -- Sugar
 
@@ -137,6 +138,7 @@ syntax "while" ppHardSpace cwnk_pred ppHardSpace "do"
 
 macro_rules
 | `(wnk_policy { $t:cwnk_pred }) => `(Policy.Filter wnk_pred {$t})
+| `(wnk_policy { @filter $t:cwnk_pred }) => `(Policy.Filter wnk_pred {$t})
 | `(wnk_policy { $p:cwnk_field ← $q:cwnk_nat }) => `(Policy.Mod wnk_field {$p} wnk_nat {$q})
 | `(wnk_policy { dup }) => `(Policy.Dup)
 | `(wnk_policy { $p ; $q }) => `(Policy.Seq wnk_policy {$p} wnk_policy {$q})
@@ -157,6 +159,9 @@ info: (Policy.Filter (Predicate.Test 123 1)).Seq
 -/
 #guard_msgs in
 #check wnk_policy { ~123 = 1 ; ¬false ∨ true ; ~⟨fun x ↦ 1, sorry⟩ ⨀ ~12 ← 2 ; dup ⨁ dup* }
+
+macro_rules|`(wnk_pred{~$t})=>`($t)
+macro_rules|`(wnk_policy{~$t})=>`($t)
 
 @[app_unexpander Predicate.Bool]
 def Predicate.unexpandBool : Unexpander
