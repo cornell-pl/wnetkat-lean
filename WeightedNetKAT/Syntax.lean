@@ -1,6 +1,7 @@
 import Mathlib.Data.Set.Finite.Basic
 import WeightedNetKAT.Domain
 import WeightedNetKAT.Subst
+import Mathlib.Data.Countable.Basic
 
 variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuousSemiring 𝒮]
 
@@ -13,6 +14,61 @@ noncomputable def W.mass (m : W X 𝒮) [Countable m.supp] := ⨁' x : m.supp, m
 def 𝒲 (𝒮 : Type) [WeightedSemiring 𝒮] (X : Type) := {m : W X 𝒮 // Countable m.supp}
 
 instance {m : 𝒲 𝒮 X} : Countable m.val.supp := m.prop
+
+section CountablePi
+
+variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuous 𝒮]
+open Pi in
+instance WeightedAdd.instCountablePi : WeightedAdd (𝒲 𝒮 X) where
+  wAdd := fun ⟨ a_underlying, a_property ⟩ ⟨ b_underlying, b_property ⟩ => by
+    refine ⟨a_underlying ⨁ b_underlying, ?_ ⟩
+    apply @Function.Injective.countable ((a_underlying ⨁ b_underlying).supp) (Sum a_underlying.supp b_underlying.supp) _
+    case f =>
+      intro ⟨ m_val , m_prop ⟩
+      simp [instPi] at m_prop
+      by_cases a_underlying m_val = 𝟘
+      case pos h =>
+        exact  Sum.inr ⟨ m_val, m_prop h ⟩
+      case neg h =>
+        exact Sum.inl ⟨ m_val, h⟩
+    case hf =>
+      intro ⟨v₁, p₁⟩ ⟨v₂, p₂⟩
+      grind only [cases Or]
+
+instance WeightedMul.instCountablePi : WeightedMul (𝒲 𝒮 X) where
+  wMul := fun ⟨ a_underlying, a_property ⟩ ⟨ b_underlying, b_property ⟩ => by
+    refine ⟨a_underlying ⨀ b_underlying, ?_ ⟩
+    apply @Function.Injective.countable ((a_underlying ⨀ b_underlying).supp) (Prod a_underlying.supp b_underlying.supp) _
+    case f =>
+      intro ⟨ m_val, m_prop ⟩
+      refine ⟨ ⟨ m_val, ?goal1 ⟩, ⟨ m_val, ?goal2 ⟩⟩
+      all_goals grind only [wMul, instPi, cases WeightedSemiring]
+    case hf =>
+      intro ⟨v₁, p₁⟩ ⟨v₂, p₂ ⟩
+      grind only
+
+instance WeightedZero.instCountablePi : WeightedZero (𝒲 𝒮 X) where
+  wZero := by
+    refine ⟨ fun x => 𝟘, ?_⟩
+    refine ⟨ fun x => 0, ?_ ⟩
+    intro ⟨v1, p1⟩ ⟨v2, p2⟩
+    trivial
+
+instance WeightedLE.instCountablePi : WeightedLE (𝒲 𝒮 X) where
+  wle := fun ⟨a, _⟩ ⟨ b, _ ⟩ => a ≼ b
+
+instance WeightedPartialOrder.instCountablePi  : WeightedPartialOrder (𝒲 𝒮 X) where
+  wle_refl a x := by simp
+  wle_trans {a b c} hab hbc x := wle_trans (hab x) (hbc x)
+  wle_antisymm { a b} hab hba := by
+    have ⟨ a_val, a_prop ⟩ := a
+    have ⟨ b_val, b_prop ⟩ := b
+    suffices a_val = b_val from by
+      grind only
+    ext x
+    exact wle_antisymm (hab x) (hba x)
+
+end CountablePi
 
 def η [DecidableEq X] (x : X) : 𝒲 𝒮 X := ⟨fun y ↦ if x = y then 𝟙 else 𝟘, by
   suffices Finite (W.supp (𝒮:=𝒮) fun y ↦ if x = y then 𝟙 else 𝟘) by apply Finite.to_countable
