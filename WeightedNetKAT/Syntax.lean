@@ -9,31 +9,33 @@ abbrev W (X : Type) (𝒮 : Type) := X → 𝒮
 
 def W.supp {X : Type} (m : W X 𝒮) := {x : X // m x ≠ 𝟘}
 
-noncomputable def W.mass (m : W X 𝒮) [Countable m.supp] := ⨁' x : m.supp, m x.val
+noncomputable def W.mass (m : W X 𝒮) [Encodable m.supp] := ⨁' x : m.supp, m x.val
 
 def 𝒲 (𝒮 : Type) [WeightedSemiring 𝒮] (X : Type) := {m : W X 𝒮 // Countable m.supp}
 
 instance {m : 𝒲 𝒮 X} : Countable m.val.supp := m.prop
+noncomputable instance {m : 𝒲 𝒮 X} : Encodable m.val.supp := Encodable.ofCountable _
 
 section CountablePi
 
 variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuousSemiring 𝒮]
 open Pi in
 instance WeightedAdd.instCountablePi : WeightedAdd (𝒲 𝒮 X) where
-  wAdd := fun ⟨ a_underlying, a_property ⟩ ⟨ b_underlying, b_property ⟩ => by
-    refine ⟨a_underlying ⨁ b_underlying, ?_ ⟩
-    apply @Function.Injective.countable ((a_underlying ⨁ b_underlying).supp) (Sum a_underlying.supp b_underlying.supp) _
-    case f =>
-      intro ⟨ m_val , m_prop ⟩
-      simp [instPi] at m_prop
-      by_cases a_underlying m_val = 𝟘
-      case pos h =>
-        exact  Sum.inr ⟨ m_val, m_prop h ⟩
-      case neg h =>
-        exact Sum.inl ⟨ m_val, h⟩
-    case hf =>
-      intro ⟨v₁, p₁⟩ ⟨v₂, p₂⟩
-      grind only [cases Or]
+  wAdd := fun a b ↦ ⟨a.val ⨁ b.val, sorry⟩
+  -- wAdd := fun ⟨ a_underlying, a_property ⟩ ⟨ b_underlying, b_property ⟩ => by
+  --   refine ⟨a_underlying ⨁ b_underlying, ?_ ⟩
+  --   apply @Function.Injective.countable ((a_underlying ⨁ b_underlying).supp) (Sum a_underlying.supp b_underlying.supp) _
+  --   case f =>
+  --     intro ⟨ m_val , m_prop ⟩
+  --     simp [instPi] at m_prop
+  --     by_cases a_underlying m_val = 𝟘
+  --     case pos h =>
+  --       exact  Sum.inr ⟨ m_val, m_prop h ⟩
+  --     case neg h =>
+  --       exact Sum.inl ⟨ m_val, h⟩
+  --   case hf =>
+  --     intro ⟨v₁, p₁⟩ ⟨v₂, p₂⟩
+  --     grind only [cases Or]
 
 instance WeightedMul.instCountablePi : WeightedMul (𝒲 𝒮 X) where
   wMul := fun ⟨ a_underlying, a_property ⟩ ⟨ b_underlying, b_property ⟩ => by
@@ -67,6 +69,8 @@ instance WeightedPartialOrder.instCountablePi  : WeightedPartialOrder (𝒲 𝒮
       grind only
     ext x
     exact wle_antisymm (hab x) (hba x)
+
+attribute [simp] WeightedZero.instCountablePi
 
 end CountablePi
 
