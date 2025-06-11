@@ -6,6 +6,7 @@ defaultTargets = ["WeightedNetKAT"]
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
 autoImplicit = false
+grind.warning = false
 
 [[require]]
 name = "mathlib"
