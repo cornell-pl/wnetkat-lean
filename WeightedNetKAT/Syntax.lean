@@ -76,8 +76,7 @@ instance WeightedZero.instCountablePi : WeightedZero (𝒲 𝒮 X) where
     intro ⟨v1, p1⟩ ⟨v2, p2⟩
     trivial
 
-
-def 𝓦.wNsmul (n : ℕ) (w : 𝒲 𝒮 X) : 𝒲 𝒮 X := match n with
+def 𝒲.wNsmul (n : ℕ) (w : 𝒲 𝒮 X) : 𝒲 𝒮 X := match n with
   | 0 => 𝟘
   | n + 1 => wNsmul n w ⨁ w
 
@@ -85,7 +84,7 @@ instance WeightedPreSemiring.instCountablePi : WeightedPreSemiring (𝒲 𝒮 X)
   wAdd_assoc _ _ _ := by ext x; apply wAdd_assoc
   wZero_add _ := by ext X; apply wZero_add
   add_wZero _ := by ext X; apply add_wZero
-  wNsmul := 𝓦.wNsmul
+  wNsmul := 𝒲.wNsmul
   wNsmul_wZero _ := by rfl
   wNsmul_succ _ _ := by rfl
   wAdd_comm _ _ := by ext x; apply wAdd_comm
