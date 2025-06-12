@@ -53,15 +53,15 @@ class WeightedPreSemiring (α : Type) extends
   wZero_mul (a : α) : 𝟘 ⨀ a = 𝟘
   mul_wZero (a : α) : a ⨀ 𝟘 = 𝟘
   mul_assoc (a b c : α) : a ⨀ b ⨀ c = a ⨀ (b ⨀ c)
-  natCast : ℕ → α
-  natCast_zero : natCast 0 = 𝟘
-  wNpow : ℕ → α → α
-  wNpow_succ (n : ℕ) (x : α) : wNpow (n + 1) x = wNpow n x ⨀ x
 
 class WeightedSemiring (α : Type) extends WeightedPreSemiring α, WeightedOne α where
   wOne_mul (a : α) : 𝟙 ⨀ a = a
   mul_wOne (a : α) : a ⨀ 𝟙 = a
+  natCast : ℕ → α
+  natCast_zero : natCast 0 = 𝟘
   natCast_succ (n : ℕ) : natCast (n + 1) = natCast n ⨁ 𝟙
+  wNpow : ℕ → α → α
+  wNpow_succ (n : ℕ) (x : α) : wNpow (n + 1) x = wNpow n x ⨀ x
   wNpow_zero (x : α) : wNpow 0 x = 𝟙
 
 attribute [simp] WeightedPreSemiring.wZero_add
@@ -297,10 +297,6 @@ instance WeightedPreSemiring.instPi [WeightedPreSemiring 𝒮] : WeightedPreSemi
   wZero_mul := by simp [wZero_mul]
   mul_wZero := by simp [mul_wZero]
   mul_assoc := by simp [mul_assoc]
-  natCast n _ := natCast n
-  natCast_zero := by simp [natCast_zero]
-  wNpow n a b := wNpow n (a b)
-  wNpow_succ := by simp [wNpow_succ]
 
 attribute [local simp] WeightedPreSemiring.instPi
 
@@ -312,6 +308,9 @@ instance WeightedSemiring.instPi [WeightedSemiring 𝒮] : WeightedSemiring (X �
   natCast_succ _ := by ext; apply natCast_succ
   wNpow_succ _ _ := by ext; apply wNpow_succ
   wNpow_zero _ := by ext; apply wNpow_zero
+  natCast n _ := natCast n
+  natCast_zero := by simp [natCast_zero]
+  wNpow n a b := wNpow n (a b)
 }
 
 attribute [local simp] WeightedSemiring.instPi

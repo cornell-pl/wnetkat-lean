@@ -17,6 +17,11 @@ noncomputable def W.mass (m : W X 𝒮) [Encodable m.supp] := ⨁' x : m.supp, m
 
 def 𝒲 (𝒮 : Type) [WeightedSemiring 𝒮] (X : Type) := {m : W X 𝒮 // Countable m.supp}
 
+omit [WeightedOmegaContinuousPreSemiring 𝒮] in
+@[ext]
+theorem Countable.ext (C₁ C₂ : 𝒲 𝒮 X)
+    (h : C₁.val = C₂.val) : C₁ = C₂ := by cases C₁; cases C₂; congr
+
 abbrev 𝒲.supp (m : 𝒲 𝒮 X) := m.val.supp
 
 instance : FunLike (𝒲 𝒮 X) X 𝒮 where
@@ -71,31 +76,24 @@ instance WeightedZero.instCountablePi : WeightedZero (𝒲 𝒮 X) where
     intro ⟨v1, p1⟩ ⟨v2, p2⟩
     trivial
 
-instance WeightedPreSemiring.instCountablePi : WeightedPreSemiring (𝒲 𝒮 X) where
-  wAdd_assoc := by
-    intros
-    simp only [WeightedAdd.instCountablePi, wAdd_assoc]
-  wZero_add := by
-    intro ⟨a, _⟩
-    simp only [WeightedZero.instCountablePi, WeightedAdd.instCountablePi, WeightedAdd.instPi, wZero_add]
-  add_wZero := by
-    intro ⟨a,_ ⟩
-    simp only [WeightedZero.instCountablePi, WeightedAdd.instCountablePi, WeightedAdd.instPi, add_wZero]
-  wNsmul := by
-    sorry
 
-  wNsmul_wZero := sorry
-  wNsmul_succ := sorry
-  wAdd_comm := sorry
-  left_distrib := sorry
-  right_distrib := sorry
-  wZero_mul := sorry
-  mul_wZero := sorry
-  mul_assoc := sorry
-  natCast := sorry
-  natCast_zero := sorry
-  wNpow := sorry
-  wNpow_succ := sorry
+def 𝓦.wNsmul (n : ℕ) (w : 𝒲 𝒮 X) : 𝒲 𝒮 X := match n with
+  | 0 => 𝟘
+  | n + 1 => wNsmul n w ⨁ w
+
+instance WeightedPreSemiring.instCountablePi : WeightedPreSemiring (𝒲 𝒮 X) where
+  wAdd_assoc _ _ _ := by ext x; apply wAdd_assoc
+  wZero_add _ := by ext X; apply wZero_add
+  add_wZero _ := by ext X; apply add_wZero
+  wNsmul := 𝓦.wNsmul
+  wNsmul_wZero _ := by rfl
+  wNsmul_succ _ _ := by rfl
+  wAdd_comm _ _ := by ext x; apply wAdd_comm
+  left_distrib _ _ _ := by ext x; apply left_distrib
+  right_distrib _ _ _ := by ext x; apply right_distrib
+  wZero_mul _ := by ext x; apply wZero_mul
+  mul_wZero _ := by ext x; apply mul_wZero
+  mul_assoc _ _ _ := by ext x; apply mul_assoc
 
 instance WeightedLE.instCountablePi : WeightedLE (𝒲 𝒮 X) where
   wle := fun ⟨a, _⟩ ⟨ b, _ ⟩ => a ≼ b
@@ -106,7 +104,7 @@ instance WeightedPartialOrder.instCountablePi  : WeightedPartialOrder (𝒲 𝒮
   wle_antisymm { a b} hab hba := by
     have ⟨ a_val, a_prop ⟩ := a
     have ⟨ b_val, b_prop ⟩ := b
-    suffices a_val = b_val from by
+    suffices a_val = b_val by
       grind only
     ext x
     exact wle_antisymm (hab x) (hba x)
