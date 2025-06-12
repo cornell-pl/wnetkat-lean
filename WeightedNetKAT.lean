@@ -1,2 +1,2 @@
-import WeightedNetKat.Basic
-import WeightedNetKat.Domain
+import WeightedNetKAT.Basic
+import WeightedNetKAT.Domain

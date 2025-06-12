@@ -1,1 +1,1 @@
-# WeightedNetKat
+# WeightedNetKAT
