@@ -107,23 +107,51 @@ instance WeightedPartialOrder.instCountablePi  : WeightedPartialOrder (𝒲 𝒮
 
 attribute [simp] WeightedZero.instCountablePi
 
+    -- let s : Set _ := ⋃ x ∈ m.supp, (f x).supp
+    -- apply Set.Countable.mono _ (Set.Countable.biUnion m.prop fun a _ ↦ (f a).prop : Countable s)
+    -- intro y
+    -- simp only [W.supp_mem_iff, ne_eq, WeightedSum_eq_zero_iff, Subtype.forall, not_forall,
+    --   Classical.not_imp, Set.mem_iUnion, exists_prop, forall_exists_index, and_imp, s]
+
 instance WeightedOmegaCompletePartialOrder.instCountablePi :
     WeightedOmegaCompletePartialOrder (𝒲 𝒮 X) where
-  wSup C := ⟨fun i ↦ wSup (C.map (· i) sorry), sorry⟩
-  le_wSup := sorry
-  wSup_le := sorry
+  wSup C := ⟨fun i ↦ wSup (C.map (· i) (· i)), by
+    simp
+    let s : Set _ := ⋃ n : ℕ, (C n).supp
+    have s_countable : Countable s := by
+      simp only [Set.countable_coe_iff, Set.countable_iUnion_iff, s]
+      exact fun n => (C n).prop
+    apply Set.Countable.mono _ s_countable
+    intro x mem
+    simp only [Set.mem_iUnion, W.supp_mem_iff, ne_eq, s]
+    simp only [W.supp_mem_iff, ne_eq, wSup_eq_zero_iff, not_forall, s] at mem
+    obtain ⟨p, hp⟩ := mem
+    exists p⟩
+  le_wSup c i p := by
+    simp
+    apply WeightedPartialOrder.wle_trans _ (le_wSup _ i)
+    simp only [WeightedChain.map, DFunLike.coe]
+    simp
+  wSup_le c w h x := by
+    simp
+    apply wSup_le
+    intro n
+    simp only [WeightedChain.map, DFunLike.coe]
+    simp
+    specialize h n x
+    exact h
 
 open WeightedOmegaCompletePartialOrder in
 instance WeightedOmegaContinuousPreSemiring.instCountablePi :
     WeightedOmegaContinuousPreSemiring (𝒲 𝒮 X) where
-  wle_positive := sorry
-  wAdd_mono := sorry
-  wMul_mono_left := sorry
-  wMul_mono_right := sorry
-  wAdd_wSup := sorry
-  wSup_wAdd := sorry
-  wMul_wSup := sorry
-  wSup_wMul := sorry
+  wle_positive _ _ := by simp
+  wAdd_mono _ _ _ _ _ := by apply wAdd_mono; apply_assumption
+  wMul_mono_left _ _ _ _ _ := by apply wMul_mono_left; apply_assumption
+  wMul_mono_right  _ _ _ _ _ := by apply wMul_mono_right; apply_assumption
+  wAdd_wSup _ _ := by ext x; apply wAdd_wSup
+  wSup_wAdd _ _ := by ext x; apply wSup_wAdd
+  wMul_wSup _ _ := by ext x; apply wMul_wSup
+  wSup_wMul _ _ := by ext x; apply wSup_wMul
 
 end CountablePi
 
