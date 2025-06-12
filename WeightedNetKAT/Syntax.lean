@@ -8,8 +8,10 @@ variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuo
 
 abbrev W (X : Type) (𝒮 : Type) := X → 𝒮
 
-def W.supp {X : Type} (m : W X 𝒮) := {x : X // m x ≠ 𝟘}
-def W.suppSet {X : Type} (m : W X 𝒮) := {x : X | m x ≠ 𝟘}
+def W.supp {X : Type} (m : W X 𝒮) := {x : X | m x ≠ 𝟘}
+
+omit [WeightedOmegaContinuousPreSemiring 𝒮] in
+@[simp] theorem W.supp_mem_iff {X : Type} {x} (m : W X 𝒮) : x ∈ m.supp ↔ m x ≠ 𝟘 := by rfl
 
 noncomputable def W.mass (m : W X 𝒮) [Encodable m.supp] := ⨁' x : m.supp, m x.val
 
@@ -45,7 +47,10 @@ instance WeightedMul.instCountablePi : WeightedMul (𝒲 𝒮 X) where
     case f =>
       intro ⟨ m_val, m_prop ⟩
       refine ⟨ ⟨ m_val, ?goal1 ⟩, ⟨ m_val, ?goal2 ⟩⟩
-      all_goals grind only [wMul, instPi, cases WeightedPreSemiring, cases WeightedSemiring]
+      -- TODO: fix this with new set-based def of supp
+      · sorry
+      · sorry
+      -- all_goals grind only [wMul, instPi, cases WeightedPreSemiring, cases WeightedSemiring]
     case hf =>
       intro ⟨v₁, p₁⟩ ⟨v₂, p₂ ⟩
       grind only
@@ -115,12 +120,10 @@ def η [DecidableEq X] (x : X) : 𝒲 𝒮 X := ⟨fun y ↦ if x = y then 𝟙 
   suffices Finite (W.supp (𝒮:=𝒮) fun y ↦ if x = y then 𝟙 else 𝟘) by apply Finite.to_countable
   if (𝟙 : 𝒮) = 𝟘 then
     apply Set.Finite.ofFinset {}
-    simp_all
-    exact fun x a ↦ a
+    simpa
   else
     apply Set.Finite.ofFinset {x}
-    simp_all
-    exact fun _ ↦ comm⟩
+    simpa [eq_comm]⟩
 
 notation "η[" 𝒮 "]" => η (𝒮:=𝒮)
 
@@ -135,6 +138,7 @@ theorem nonzero_wMul_nonzero {α : Type} [WeightedPreSemiring α] {a b : α} : �
   symm
   simp_all [or_iff_not_imp_right]
 
+set_option maxHeartbeats 500000 in
 noncomputable def 𝒲.bind {Y : Type} (m : 𝒲 𝒮 X) (f : X → 𝒲 𝒮 Y) :
     𝒲 𝒮 Y :=
   -- TODO: clean this proof up
@@ -143,51 +147,11 @@ noncomputable def 𝒲.bind {Y : Type} (m : 𝒲 𝒮 X) (f : X → 𝒲 𝒮 Y)
     -- property of s might hold insted
     have wMul_eq_zero_iff : ∀ {a b : 𝒮}, a ⨀ b = 𝟘 ↔ a = 𝟘 ∨ b = 𝟘 := sorry
     have wMul_eq_zero_iff' : ∀ {a b : W Y 𝒮}, a ⨀ b = 𝟘 ↔ a = 𝟘 ∨ b = 𝟘 := sorry
-    let s : Set _ := ⋃ x ∈ m.val.suppSet, (f x).val.suppSet
+    let s : Set _ := ⋃ x ∈ m.val.supp, (f x).val.supp
     have : Countable s := Set.Countable.biUnion m.prop fun a _ ↦ (f a).prop
-    refine Set.countable_univ_iff.mp ?_
-    have : s.Countable := this
-    have : @Set.univ (W.supp fun y ↦ ⨁' (x : m.val.supp), m.val x.val ⨀ (f x.val).val y) = {⟨x.val, by
-      obtain ⟨x, y, ⟨hx, hx'⟩, hxy⟩ := x
-      simp_all [s]
-      subst_eqs
-      simp_all
-      exists ⟨hx, hxy.left⟩⟩ | x : s}
-    := by
-      ext ⟨x, hx⟩
-      simp_all
-      use x
-      simp [s]
-      simp at hx
-      obtain ⟨y, hx⟩ := hx
-      exists y.val, y.prop
-      apply (nonzero_wMul_nonzero hx).right
-    rw [this]; clear this
-    simp_all
-    apply Set.countable_of_injective_of_countable_image (β:=s) (f:=(⟨·.val, ?_⟩))
-    · intro ⟨a, _⟩ ha ⟨b, _⟩ hb x
-      simp_all
-    · let s' : Set s := Set.univ
-      have : Countable ↑s := this
-      have : s'.Countable := Set.countable_univ
-      convert this
-      ext ⟨x, hx⟩
-      simp_all [s', s]
-      simp_all [s', s]
-      obtain ⟨y, hx⟩ := hx
-      use ⟨x, by simp; use ⟨y, hx.left⟩; simp_all; exact hx⟩
-      simp
-      use x
-      simp
-      use y
-    · rename_i x
-      obtain ⟨x, hx⟩ := x
-      simp_all [s]
-      simp_all [s]
-      obtain ⟨y, hx⟩ := hx
-      use y.val, y.prop
-      exact hx.right
-  ⟩
+    convert this
+    ext
+    simp_all [s]⟩
 
 infixr:50 " ≫= " => 𝒲.bind
 
