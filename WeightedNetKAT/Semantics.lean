@@ -149,15 +149,6 @@ theorem 𝒲.bind_continuous (f : 𝒲 𝒮 H[F]) : WeightedOmegaContinuous (f �
 
 open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder
 
--- theorem 𝒲.add_mono_left (f : 𝒲 𝒮 H[F]) : WeightedMonotone (f ⨁ ·) := by
---   sorry
--- theorem 𝒲.add_mono_right (f : 𝒲 𝒮 H[F]) : WeightedMonotone (· ⨁ f) := by
---   sorry
--- theorem 𝒲.add_cont_left (f : 𝒲 𝒮 H[F]) : WeightedOmegaContinuous (f ⨁ ·) (add_mono_left f) := by
---   sorry
--- theorem 𝒲.add_cont_right (f : 𝒲 𝒮 H[F]) : WeightedOmegaContinuous (· ⨁ f) (add_mono_right f) := by
---   sorry
-
 theorem Φ_mono (p : Policy[F,𝒮]) : WeightedMonotone (Φ p) :=
   fun hab h ↦ wAdd_mono_left (η h) (𝒲.bind_mono _ hab)
 theorem Φ_continuous (p : Policy[F,𝒮]) : WeightedOmegaContinuous (Φ p) (Φ_mono p) := by
