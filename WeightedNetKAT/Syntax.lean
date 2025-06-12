@@ -17,6 +17,12 @@ noncomputable def W.mass (m : W X 𝒮) [Encodable m.supp] := ⨁' x : m.supp, m
 
 def 𝒲 (𝒮 : Type) [WeightedSemiring 𝒮] (X : Type) := {m : W X 𝒮 // Countable m.supp}
 
+abbrev 𝒲.supp (m : 𝒲 𝒮 X) := m.val.supp
+
+instance : FunLike (𝒲 𝒮 X) X 𝒮 where
+  coe m := m.val
+  coe_injective' := by intro ⟨_, _⟩; simp_all
+
 instance {m : 𝒲 𝒮 X} : Countable m.val.supp := m.prop
 noncomputable instance {m : 𝒲 𝒮 X} : Encodable m.val.supp := Encodable.ofCountable _
 
@@ -109,7 +115,7 @@ attribute [simp] WeightedZero.instCountablePi
 
 instance WeightedOmegaCompletePartialOrder.instCountablePi :
     WeightedOmegaCompletePartialOrder (𝒲 𝒮 X) where
-  wSup C := ⟨fun i ↦ wSup (C.map (·.val i) sorry), sorry⟩
+  wSup C := ⟨fun i ↦ wSup (C.map (· i) sorry), sorry⟩
   le_wSup := sorry
   wSup_le := sorry
 
@@ -149,20 +155,24 @@ theorem nonzero_wMul_nonzero {α : Type} [WeightedPreSemiring α] {a b : α} : �
   symm
   simp_all [or_iff_not_imp_right]
 
+theorem Set.Countable.subst {α : Type} {S T : Set α} (hS : Countable S) (h : T ⊆ S) :
+    Countable T :=
+  mono h hS
+
 set_option maxHeartbeats 500000 in
 noncomputable def 𝒲.bind {Y : Type} (m : 𝒲 𝒮 X) (f : X → 𝒲 𝒮 Y) :
     𝒲 𝒮 Y :=
-  -- TODO: clean this proof up
-  ⟨fun y ↦ ⨁' x : m.val.supp, m.val x.val ⨀ (f x.val).val y, by
-    -- TODO: we have to figure out if these actually should hold. if not, perhaps some subset
-    -- property of s might hold insted
-    have wMul_eq_zero_iff : ∀ {a b : 𝒮}, a ⨀ b = 𝟘 ↔ a = 𝟘 ∨ b = 𝟘 := sorry
-    have wMul_eq_zero_iff' : ∀ {a b : W Y 𝒮}, a ⨀ b = 𝟘 ↔ a = 𝟘 ∨ b = 𝟘 := sorry
-    let s : Set _ := ⋃ x ∈ m.val.supp, (f x).val.supp
-    have : Countable s := Set.Countable.biUnion m.prop fun a _ ↦ (f a).prop
-    convert this
-    ext
-    simp_all [s]⟩
+  ⟨fun y ↦ ⨁' x : m.supp, m x ⨀ f x y, by
+    let s : Set _ := ⋃ x ∈ m.supp, (f x).supp
+    apply Set.Countable.mono _ (Set.Countable.biUnion m.prop fun a _ ↦ (f a).prop : Countable s)
+    intro y
+    simp only [W.supp_mem_iff, ne_eq, WeightedSum_eq_zero_iff, Subtype.forall, not_forall,
+      Classical.not_imp, Set.mem_iUnion, exists_prop, forall_exists_index, and_imp, s]
+    intro x h₁ h₂
+    use x, h₁
+    intro h
+    have : f x y = 𝟘 := h
+    simp_all⟩
 
 infixr:50 " ≫= " => 𝒲.bind
 
