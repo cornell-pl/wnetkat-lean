@@ -3,7 +3,7 @@ import WeightedNetKAT.Domain
 import WeightedNetKAT.Subst
 import Mathlib.Data.Countable.Basic
 
-variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuousSemiring 𝒮]
+variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 
 abbrev W (X : Type) (𝒮 : Type) := X → 𝒮
 
@@ -18,7 +18,7 @@ noncomputable instance {m : 𝒲 𝒮 X} : Encodable m.val.supp := Encodable.ofC
 
 section CountablePi
 
-variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuousSemiring 𝒮]
+variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 open Pi in
 instance WeightedAdd.instCountablePi : WeightedAdd (𝒲 𝒮 X) where
   wAdd := fun a b ↦ ⟨a.val ⨁ b.val, sorry⟩
@@ -44,7 +44,7 @@ instance WeightedMul.instCountablePi : WeightedMul (𝒲 𝒮 X) where
     case f =>
       intro ⟨ m_val, m_prop ⟩
       refine ⟨ ⟨ m_val, ?goal1 ⟩, ⟨ m_val, ?goal2 ⟩⟩
-      all_goals grind only [wMul, instPi, cases WeightedSemiring]
+      all_goals grind only [wMul, instPi, cases WeightedPreSemiring, cases WeightedSemiring]
     case hf =>
       intro ⟨v₁, p₁⟩ ⟨v₂, p₂ ⟩
       grind only

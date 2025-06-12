@@ -39,8 +39,8 @@ class WeightedOne (α : Type) where wOne : α
 notation "𝟘" => WeightedZero.wZero
 notation "𝟙" => WeightedOne.wOne
 
-class WeightedSemiring (α : Type) extends
-    WeightedAdd α, WeightedMul α, WeightedZero α, WeightedOne α where
+class WeightedPreSemiring (α : Type) extends
+    WeightedAdd α, WeightedMul α, WeightedZero α where
   wAdd_assoc (a b c : α) : a ⨁ b ⨁ c = a ⨁ (b ⨁ c)
   wZero_add (a : α) : 𝟘 ⨁ a = a
   add_wZero (a : α) : a ⨁ 𝟘 = a
@@ -53,28 +53,30 @@ class WeightedSemiring (α : Type) extends
   wZero_mul (a : α) : 𝟘 ⨀ a = 𝟘
   mul_wZero (a : α) : a ⨀ 𝟘 = 𝟘
   mul_assoc (a b c : α) : a ⨀ b ⨀ c = a ⨀ (b ⨀ c)
-  wOne_mul (a : α) : 𝟙 ⨀ a = a
-  mul_wOne (a : α) : a ⨀ 𝟙 = a
   natCast : ℕ → α
   natCast_zero : natCast 0 = 𝟘
-  natCast_succ (n : ℕ) : natCast (n + 1) = natCast n ⨁ 𝟙
   wNpow : ℕ → α → α
-  wNpow_zero (x : α) : wNpow 0 x = 𝟙
   wNpow_succ (n : ℕ) (x : α) : wNpow (n + 1) x = wNpow n x ⨀ x
 
-attribute [simp] WeightedSemiring.wZero_add
-attribute [simp] WeightedSemiring.add_wZero
+class WeightedSemiring (α : Type) extends WeightedPreSemiring α, WeightedOne α where
+  wOne_mul (a : α) : 𝟙 ⨀ a = a
+  mul_wOne (a : α) : a ⨀ 𝟙 = a
+  natCast_succ (n : ℕ) : natCast (n + 1) = natCast n ⨁ 𝟙
+  wNpow_zero (x : α) : wNpow 0 x = 𝟙
+
+attribute [simp] WeightedPreSemiring.wZero_add
+attribute [simp] WeightedPreSemiring.add_wZero
 attribute [simp] WeightedSemiring.wOne_mul
 attribute [simp] WeightedSemiring.mul_wOne
-attribute [simp] WeightedSemiring.wZero_mul
-attribute [simp] WeightedSemiring.mul_wZero
+attribute [simp] WeightedPreSemiring.wZero_mul
+attribute [simp] WeightedPreSemiring.mul_wZero
 
 variable {α : Type}
 
-instance [WeightedSemiring α] : Std.Commutative (fun (a b : α) ↦ a ⨁ b) :=
-  ⟨WeightedSemiring.wAdd_comm⟩
-instance [WeightedSemiring α] : Std.Associative (fun (a b : α) ↦ a ⨁ b) :=
-  ⟨WeightedSemiring.wAdd_assoc⟩
+instance [WeightedPreSemiring α] : Std.Commutative (fun (a b : α) ↦ a ⨁ b) :=
+  ⟨WeightedPreSemiring.wAdd_comm⟩
+instance [WeightedPreSemiring α] : Std.Associative (fun (a b : α) ↦ a ⨁ b) :=
+  ⟨WeightedPreSemiring.wAdd_assoc⟩
 
 def WeightedSemiring.toSemiring (α : Type) [i : WeightedSemiring α] : Semiring α where
   add := i.wAdd
@@ -224,7 +226,7 @@ A weighted semiring is _ω-bicontinuous_ iff
   ∀ ω-chains C = {s₀ ≼ s₁ ≼ ⋯}, ∀ s ∈ α,
     s ∘ wSup C = wSup (C.map fun s' ↦ s ∘ s')) and wSup C ∘ s = wSup (C.map fun s' ↦ s' ∘ s))
 -/
-class WeightedOmegaContinuousSemiring (α : Type) [WeightedSemiring α] extends
+class WeightedOmegaContinuousPreSemiring (α : Type) [WeightedPreSemiring α] extends
     WeightedOmegaCompletePartialOrder α where
   /-- 1. ≼ is positive. -/
   wle_positive (a : α) : 𝟘 ≼ a
@@ -236,24 +238,24 @@ class WeightedOmegaContinuousSemiring (α : Type) [WeightedSemiring α] extends
   /-- 3. both ⨁ and ⨀ are ω-continuous in both arguments. -/
   wAdd_wSup (s : α) : WeightedOmegaContinuous (s ⨁ ·) (wAdd_mono s)
   wSup_wAdd (s : α) : WeightedOmegaContinuous (· ⨁ s) (by
-    simp only [WeightedSemiring.wAdd_comm]; exact wAdd_mono _)
+    simp only [WeightedPreSemiring.wAdd_comm]; exact wAdd_mono _)
   wMul_wSup (s : α) : WeightedOmegaContinuous (s ⨀ ·) (wMul_mono_left s)
   wSup_wMul (s : α) : WeightedOmegaContinuous (· ⨀ s) (wMul_mono_right s)
 
-def WeightedOmegaContinuousSemiring.wAdd_mono_left {α : Type} [WeightedSemiring α]
-    [i : WeightedOmegaContinuousSemiring α] := i.wAdd_mono
-theorem WeightedOmegaContinuousSemiring.wAdd_mono_right {α : Type} [WeightedSemiring α]
-    [WeightedOmegaContinuousSemiring α] (s₁ : α) : WeightedMonotone (· ⨁ s₁) := by
-  simp [WeightedSemiring.wAdd_comm]; exact wAdd_mono s₁
+def WeightedOmegaContinuousPreSemiring.wAdd_mono_left {α : Type} [WeightedPreSemiring α]
+    [i : WeightedOmegaContinuousPreSemiring α] := i.wAdd_mono
+theorem WeightedOmegaContinuousPreSemiring.wAdd_mono_right {α : Type} [WeightedPreSemiring α]
+    [WeightedOmegaContinuousPreSemiring α] (s₁ : α) : WeightedMonotone (· ⨁ s₁) := by
+  simp [WeightedPreSemiring.wAdd_comm]; exact wAdd_mono s₁
 
 @[simp]
-theorem wZero_wLe [WeightedSemiring α] [WeightedOmegaContinuousSemiring α] {x : α} : 𝟘 ≼ x :=
-  WeightedOmegaContinuousSemiring.wle_positive x
+theorem wZero_wLe [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α] {x : α} : 𝟘 ≼ x :=
+  WeightedOmegaContinuousPreSemiring.wle_positive x
 @[simp]
-theorem wLe_wZero_iff [WeightedSemiring α] [WeightedOmegaContinuousSemiring α] {x : α} : x ≼ 𝟘 ↔ x = 𝟘 := by
+theorem wLe_wZero_iff [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α] {x : α} : x ≼ 𝟘 ↔ x = 𝟘 := by
   constructor
   · intro h
-    apply WeightedPartialOrder.wle_antisymm h (WeightedOmegaContinuousSemiring.wle_positive x)
+    apply WeightedPartialOrder.wle_antisymm h (WeightedOmegaContinuousPreSemiring.wle_positive x)
   · rintro ⟨_⟩; simp
 
 def WeightedLE.wle.trans_eq {a b c : α} [WeightedPartialOrder α] (h : a ≼ b) (h' : b = c) :
@@ -261,9 +263,9 @@ def WeightedLE.wle.trans_eq {a b c : α} [WeightedPartialOrder α] (h : a ≼ b)
   subst_eqs
   assumption
 
-open WeightedPartialOrder WeightedOmegaContinuousSemiring WeightedOmegaCompletePartialOrder in
+open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder in
 @[simp]
-theorem wSup_eq_zero_iff [WeightedSemiring α] [WeightedOmegaContinuousSemiring α] {C : WeightedChain α} :
+theorem wSup_eq_zero_iff [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α] {C : WeightedChain α} :
     wSup C = 𝟘 ↔ ∀ i, C i = 𝟘 :=
   ⟨fun h i ↦ wLe_wZero_iff.mp <| (le_wSup C i).trans_eq h,
     fun h ↦ wle_antisymm (wSup_le C 𝟘 (wLe_wZero_iff.mpr <| h ·)) (wle_positive (wSup C))⟩
@@ -281,9 +283,8 @@ instance WeightedMul.instPi [WeightedMul 𝒮] : WeightedMul (X → 𝒮) where 
 attribute [local simp] WeightedAdd.instPi
 attribute [local simp] WeightedMul.instPi
 
-instance WeightedSemiring.instPi [WeightedSemiring 𝒮] : WeightedSemiring (X → 𝒮) where
+instance WeightedPreSemiring.instPi [WeightedPreSemiring 𝒮] : WeightedPreSemiring (X → 𝒮) where
   wZero := fun _ ↦ 𝟘
-  wOne := fun _ ↦ 𝟙
   wAdd_assoc := by simp [wAdd_assoc]
   wZero_add := by simp [wZero_add]
   add_wZero := by simp [wZero_add]
@@ -296,14 +297,22 @@ instance WeightedSemiring.instPi [WeightedSemiring 𝒮] : WeightedSemiring (X �
   wZero_mul := by simp [wZero_mul]
   mul_wZero := by simp [mul_wZero]
   mul_assoc := by simp [mul_assoc]
-  wOne_mul a := by ext x; simp [wOne_mul]
-  mul_wOne := by simp [mul_wOne]
   natCast n _ := natCast n
   natCast_zero := by simp [natCast_zero]
-  natCast_succ := by simp [natCast_succ]
   wNpow n a b := wNpow n (a b)
-  wNpow_zero := by simp [wNpow_zero]
   wNpow_succ := by simp [wNpow_succ]
+
+attribute [local simp] WeightedPreSemiring.instPi
+
+open WeightedPreSemiring in
+instance WeightedSemiring.instPi [WeightedSemiring 𝒮] : WeightedSemiring (X → 𝒮) := {
+  WeightedPreSemiring.instPi with
+  wOne_mul _ := by ext; apply wOne_mul
+  mul_wOne _ := by ext; apply mul_wOne
+  natCast_succ _ := by ext; apply natCast_succ
+  wNpow_succ _ _ := by ext; apply wNpow_succ
+  wNpow_zero _ := by ext; apply wNpow_zero
+}
 
 attribute [local simp] WeightedSemiring.instPi
 
@@ -322,9 +331,9 @@ instance WeightedOmegaCompletePartialOrder.instPi [WeightedOmegaCompletePartialO
   le_wSup C i x := le_wSup ⟨(C · x), (C.prop · x)⟩ i
   wSup_le C _ h x := wSup_le ⟨(C · x), (C.prop · x)⟩ _ (h · x)
 
-open WeightedOmegaContinuousSemiring WeightedOmegaCompletePartialOrder in
-instance WeightedOmegaContinuousSemiring.instPi [WeightedSemiring 𝒮]
-    [WeightedOmegaContinuousSemiring 𝒮] : WeightedOmegaContinuousSemiring (X → 𝒮) where
+open WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder in
+instance WeightedOmegaContinuousPreSemiring.instPi [WeightedSemiring 𝒮]
+    [WeightedOmegaContinuousPreSemiring 𝒮] : WeightedOmegaContinuousPreSemiring (X → 𝒮) where
   wle_positive _ _ := by simp [wle_positive]
   wAdd_mono s₁ s₂ s₃ h x := wAdd_mono (s₁ x) (h x)
   wMul_mono_left s₁ s₂ s₃ h x := wMul_mono_left (s₁ x) (h x)
@@ -341,8 +350,8 @@ variable {ι : Type}
 /-- `⨁ x ∈ I, f x` is the finite sum over `f`. -/
 def WeightedFinsum [WeightedSemiring α] (I : Finset ι) (f : ι → α) : α :=
   I.fold (· ⨁ ·) 𝟘 f
-open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinuousSemiring in
-noncomputable def WeightedSum_chain [WeightedSemiring α] [WeightedOmegaContinuousSemiring α]
+open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinuousPreSemiring in
+noncomputable def WeightedSum_chain [WeightedSemiring α] [WeightedOmegaContinuousPreSemiring α]
     [e : Encodable ι] (f : ι → α) : WeightedChain α :=
   let f' i := if let some x := e.decode i then f x else 𝟘
   ⟨fun n ↦ n.fold (fun i _ x ↦ f' i ⨁ x) 𝟘, by
@@ -356,14 +365,14 @@ noncomputable def WeightedSum_chain [WeightedSemiring α] [WeightedOmegaContinuo
       simp only [Nat.fold_succ]
       set q := (a + c).fold (fun i _ x ↦ f' i ⨁ x) 𝟘
       have := wAdd_mono q (wle_positive (f' (a + c)))
-      simpa [WeightedSemiring.wAdd_comm]⟩
+      simpa [WeightedPreSemiring.wAdd_comm]⟩
 
-open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinuousSemiring in
+open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinuousPreSemiring in
 /-- `⨁' x : ι, f x` is the encodable/countable sum over `f`.
 
 `letI : Encodable ι := Encodable.ofCountable ι`
 -/
-noncomputable def WeightedSum [WeightedSemiring α] [WeightedOmegaContinuousSemiring α]
+noncomputable def WeightedSum [WeightedSemiring α] [WeightedOmegaContinuousPreSemiring α]
     [e : Encodable ι] (f : ι → α) : α := wSup (WeightedSum_chain f)
 
 namespace BigOperators
@@ -470,7 +479,7 @@ to show the domain type when the sum is over `Finset.univ`. -/
 #guard_msgs in
 #check fun (I : Finset ι) (f : ι → α) ↦ ⨁ᶠ x ∈ I, f x
 
-variable [Encodable ι] [Nonempty ι] [WeightedOmegaContinuousSemiring α]
+variable [Encodable ι] [Nonempty ι] [WeightedOmegaContinuousPreSemiring α]
 
 /-- info: fun f ↦ ⨁' (x : ι), f x : (ι → α) → α -/
 #guard_msgs in
@@ -481,16 +490,16 @@ end BigOperators
 section
 
 variable {α : Type}
-variable [WeightedSemiring α] [WeightedOmegaContinuousSemiring α]
+variable [WeightedSemiring α] [WeightedOmegaContinuousPreSemiring α]
 
 variable {I : Type} [e : Encodable I]
 
-open WeightedOmegaContinuousSemiring WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedSemiring
+open WeightedOmegaContinuousPreSemiring WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedPreSemiring WeightedSemiring
 
 @[simp]
 theorem wle_wAdd (s s' : α) : s ≼ s ⨁ s' := by
   have := wAdd_mono s (wle_positive s')
-  simpa [WeightedSemiring.add_wZero]
+  simpa [add_wZero]
 theorem WeightedSum_empty [IsEmpty I] (f : I → α) : ⨁' x : I, f x = 𝟘 := by
   simp only [WeightedSum, WeightedSum_chain, imp_false, IsEmpty.forall_iff, wZero_add, wSup_eq_zero_iff, DFunLike.coe]
   intro i; induction i with simp only [*, Nat.fold_zero, Nat.fold_succ]
@@ -503,7 +512,7 @@ theorem wAdd_eq_zero_iff {x y : α} : x ⨁ y = 𝟘 ↔ x = 𝟘 ∧ y = 𝟘 :
     · apply wle_antisymm (by rw [← h]; apply wle_wAdd) (wle_positive x)
     · apply wle_antisymm (by rw [← h, wAdd_comm]; apply wle_wAdd) (wle_positive y)
   · rintro ⟨⟨_⟩, ⟨_⟩⟩
-    exact WeightedSemiring.wZero_add 𝟘
+    exact wZero_add 𝟘
 example {x y : α} : x ⨁ y ≠ 𝟘 ↔ x ≠ 𝟘 ∨ y ≠ 𝟘 := by
   simp [wAdd_eq_zero_iff, imp_iff_not_or]
 
@@ -527,9 +536,9 @@ theorem WeightedSum_eq_zero_iff {f : I → α} : ⨁' x, f x = 𝟘 ↔ ∀ x, f
 theorem WeightedSum_zero {T : Type} [Encodable T] : ⨁' _ : T, (𝟘 : α) = 𝟘 := by
   simp
 
-omit [WeightedOmegaContinuousSemiring α] in
+omit [WeightedOmegaContinuousPreSemiring α] in
 @[simp] theorem WeightedFinsup_empty {f : ι → α} : ⨁ᶠ i ∈ ∅, f i = 𝟘 := by rfl
-omit [WeightedOmegaContinuousSemiring α] in
+omit [WeightedOmegaContinuousPreSemiring α] in
 @[simp] theorem WeightedFinsup_singleton {f : ι → α} (a : ι) : ⨁ᶠ i ∈ {a}, f i = f a := by
   simp [WeightedFinsum]
 
@@ -544,7 +553,7 @@ theorem Finset.fold_range {X : Type} {n : ℕ} {f : X → X → X} [Std.Commutat
     rw [range_succ]
     simp
 
-omit [WeightedOmegaContinuousSemiring α] in
+omit [WeightedOmegaContinuousPreSemiring α] in
 @[simp]
 theorem WeightedFinsup_range_succ {a : ℕ} {f : ℕ → α} :
       ⨁ᶠ i ∈ Finset.range (a + 1), f i
@@ -552,7 +561,7 @@ theorem WeightedFinsup_range_succ {a : ℕ} {f : ℕ → α} :
   simp [WeightedFinsum]
   simp [Finset.fold_range, wAdd_comm]
 
-omit [WeightedOmegaContinuousSemiring α] in
+omit [WeightedOmegaContinuousPreSemiring α] in
 @[simp]
 theorem WeightedFinsup_range_add {a b : ℕ} {f : ℕ → α} :
       ⨁ᶠ i ∈ Finset.range (a + b), f i
@@ -591,7 +600,7 @@ theorem WeightedSum_mul_left {s : α} (f : I → α) : ⨁' x : I, s ⨀ f x = s
   | succ i ih =>
     simp only [Nat.fold_succ]
     rw [ih]; clear ih
-    split <;> simp [WeightedSemiring.left_distrib]
+    split <;> simp [WeightedPreSemiring.left_distrib]
 -- TODO: can we reuse some of the above proof?
 theorem WeightedSum_mul_right {s : α} (f : I → α) : ⨁' x : I, f x ⨀ s = (⨁' x : I, f x) ⨀ s := by
   simp [WeightedSum]
@@ -606,7 +615,7 @@ theorem WeightedSum_mul_right {s : α} (f : I → α) : ⨁' x : I, f x ⨀ s = 
   | succ i ih =>
     simp only [Nat.fold_succ]
     rw [ih]; clear ih
-    split <;> simp [WeightedSemiring.right_distrib]
+    split <;> simp [WeightedPreSemiring.right_distrib]
 
 @[gcongr]
 theorem wAdd_gconr {a b c d : α} (h₁ : a ≼ c) (h₂ : b ≼ d) : a ⨁ b ≼ c ⨁ d :=

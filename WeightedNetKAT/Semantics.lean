@@ -1,6 +1,6 @@
 import WeightedNetKAT.Syntax
 
-variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuousSemiring 𝒮]
+variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 
 variable {F : Type} [Fintype F] [DecidableEq F]
 
@@ -45,7 +45,7 @@ def Policy.iterDepth : Policy[F,𝒮] → ℕ
 | wnk_policy {~_ ⨀ ~q} => q.iterDepth
 | wnk_policy {~p *} => p.iterDepth + 1
 
-omit [WeightedOmegaContinuousSemiring 𝒮] [Fintype F] [DecidableEq F] in
+omit [WeightedOmegaContinuousPreSemiring 𝒮] [Fintype F] [DecidableEq F] in
 @[simp]
 theorem Policy.iterDepth_iter {p : Policy[F,𝒮]} {n : ℕ} :
     (p.iter n).iterDepth = if n = 0 then 0 else p.iterDepth := by
@@ -133,7 +133,7 @@ theorem WeightedSum_cont [Encodable X] :
         · simp
       · exact wle_trans ih (wle_refl _)
 
-omit [WeightedOmegaContinuousSemiring 𝒮] [Fintype F] [DecidableEq F] in
+omit [WeightedOmegaContinuousPreSemiring 𝒮] [Fintype F] [DecidableEq F] in
 @[ext]
 theorem 𝒲.ext {a b : 𝒲 𝒮 X} (h : ∀ x, a.val x = b.val x) : a = b := by
   cases a; cases b
@@ -141,7 +141,7 @@ theorem 𝒲.ext {a b : 𝒲 𝒮 X} (h : ∀ x, a.val x = b.val x) : a = b := b
   simp_all
 
 omit [Fintype F] [DecidableEq F] in
-open WeightedOmegaContinuousSemiring in
+open WeightedOmegaContinuousPreSemiring in
 theorem 𝒲.bind_mono (f : 𝒲 𝒮 H[F]) : WeightedMonotone (ι:=H[F] → 𝒲 𝒮 H[F]) (f ≫= ·) := by
   apply fun a b hab h ↦ WeightedSum_mono fun i ↦ (wMul_gconr (by simp) (hab i.val h))
 open WeightedOmegaCompletePartialOrder in
@@ -153,7 +153,7 @@ theorem 𝒲.bind_continuous (f : 𝒲 𝒮 H[F]) : WeightedOmegaContinuous (f �
   simp [WeightedChain.map]
   sorry
 
-open WeightedPartialOrder WeightedOmegaContinuousSemiring WeightedOmegaCompletePartialOrder
+open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder
 
 theorem 𝒲.add_mono_left (f : 𝒲 𝒮 H[F]) : WeightedMonotone (f ⨁ ·) := by
   sorry
@@ -237,7 +237,7 @@ theorem 𝒲.wAdd_bind {a : 𝒲 𝒮 X} {f} {g : X → 𝒲 𝒮 X}
   ext h
   simp [DFunLike.coe]
   simp [WeightedAdd.wAdd]
-  simp [WeightedSemiring.left_distrib]
+  simp [WeightedPreSemiring.left_distrib]
   rw [WeightedSum_add]
   congr
   rw [WeightedSum_mul_right]
