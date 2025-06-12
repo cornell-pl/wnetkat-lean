@@ -105,7 +105,38 @@ theorem WeightedSum_cont [Encodable X] :
       simp
       split
       · rename_i x hx
-        sorry -- TODO: wSup_wAdd
+        simp [wSup]
+        have := WeightedOmegaContinuousPreSemiring.wAdd_mono_left (wSup ⟨fun x_1 ↦ C x_1 x, sorry⟩) ih
+        apply wle_trans this
+        simp
+        rw [WeightedOmegaContinuousAddLeft]
+        simp [WeightedOmegaContinuousAddRight]
+        simp only [WeightedChain.map, DFunLike.coe]
+        simp
+        apply wSup_le
+        intro index_1
+        apply wSup_le
+        intro index_2
+        simp [WeightedSum]
+        simp only [WeightedChain.map, DFunLike.coe]
+        simp
+        rw [WeightedOmegaContinuousAddRight]
+        simp only [WeightedSum_chain, WeightedChain.map, DFunLike.coe]
+        simp
+        apply wSup_le
+        intro index_3
+        simp only [WeightedSum_chain, WeightedChain.map, DFunLike.coe]
+        simp
+        apply le_wSup_of_le (max index_1 index_2)
+        simp only [WeightedChain.map, DFunLike.coe]
+        simp
+        apply le_wSup_of_le ((max (Encodable.encode x) index_3) + 1)
+        simp only [WeightedChain.map, DFunLike.coe]
+        simp
+        gcongr
+        . sorry
+        . sorry
+ -- TODO: wSup_wAdd
       · simp; apply wle_trans ih (wle_refl _)
   · apply wSup_le _ _ fun i ↦ ?_
     simp [WeightedChain.map]
@@ -127,25 +158,48 @@ theorem WeightedSum_cont [Encodable X] :
         · simp
       · exact wle_trans ih (wle_refl _)
 
-omit [WeightedOmegaContinuousPreSemiring 𝒮] [Fintype F] [DecidableEq F] in
-@[ext]
-theorem 𝒲.ext {a b : 𝒲 𝒮 X} (h : ∀ x, a.val x = b.val x) : a = b := by
-  cases a; cases b
-  congr; ext
-  simp_all
-
 omit [Fintype F] [DecidableEq F] in
 open WeightedOmegaContinuousPreSemiring in
 theorem 𝒲.bind_mono (f : 𝒲 𝒮 H[F]) : WeightedMonotone (ι:=H[F] → 𝒲 𝒮 H[F]) (f ≫= ·) := by
   apply fun a b hab h ↦ WeightedSum_mono fun i ↦ (wMul_gconr (by simp) (hab i.val h))
 open WeightedOmegaCompletePartialOrder in
+omit [Fintype F] [DecidableEq F] in
 theorem 𝒲.bind_continuous (f : 𝒲 𝒮 H[F]) : WeightedOmegaContinuous (f ≫= ·) f.bind_mono := by
   intro C
   ext h
   simp only
   simp [bind, DFunLike.coe]
-  simp [WeightedChain.map]
-  sorry
+  simp [wSup]
+  simp only [WeightedChain.map, DFunLike.coe]
+  simp [WeightedOmegaContinuousMulRight]
+  simp only [WeightedChain.map, DFunLike.coe]
+  simp
+  have :=  @WeightedSum_cont f.supp 𝒮 _ _ _
+  unfold WeightedOmegaContinuous at this
+  simp only [WeightedChain.map, DFunLike.coe] at this
+  simp [wSup] at this
+  simp only [WeightedChain.map, DFunLike.coe] at this
+  simp at this
+  convert this _
+  rotate_right
+  . exact ⟨fun n x ↦ f x ⨀ (C n x) h, by
+      intro j k le point
+      simp
+      apply wMul_gconr
+      . simp
+      . exact C.prop le point h
+      ⟩
+  . simp only [WeightedChain.map, DFunLike.coe]
+  . simp only [WeightedChain.map, DFunLike.coe]
+
+
+
+  -- intro C
+  -- ext h
+  -- simp only
+  -- simp [bind, DFunLike.coe]
+  -- simp [WeightedChain.map]
+  -- sorry
 
 open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder
 

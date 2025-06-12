@@ -207,11 +207,24 @@ theorem WeightedOmegaCompletePartialOrder.le_wSup_of_le {α : Type}
     a ≼ wSup C :=
   WeightedPartialOrder.wle_trans h (le_wSup C i)
 
+@[gcongr]
+theorem WeightedOmegaCompletePartialOrder.wsup_le_of_le {α : Type} [WeightedOmegaCompletePartialOrder α] (C₁ C₂ : WeightedChain α)
+    (h : ∀ i, C₁ i ≼ C₂ i) : wSup C₁ ≼ wSup C₂ := by
+    cases C₁
+    cases C₂
+    apply wSup_le
+    intro i
+    apply le_wSup_of_le i
+    apply_assumption
+
+
 open WeightedOmegaCompletePartialOrder in
 def WeightedOmegaContinuous {ι : Type} [WeightedOmegaCompletePartialOrder ι]
     [WeightedOmegaCompletePartialOrder α]
     (f : ι → α) (h : WeightedMonotone f) : Prop :=
   ∀ C, f (wSup C) = wSup (C.map f h)
+
+
 
 /--
 A weighted semiring is _ω-bicontinuous_ iff
@@ -247,6 +260,24 @@ def WeightedOmegaContinuousPreSemiring.wAdd_mono_left {α : Type} [WeightedPreSe
 theorem WeightedOmegaContinuousPreSemiring.wAdd_mono_right {α : Type} [WeightedPreSemiring α]
     [WeightedOmegaContinuousPreSemiring α] (s₁ : α) : WeightedMonotone (· ⨁ s₁) := by
   simp [WeightedPreSemiring.wAdd_comm]; exact wAdd_mono s₁
+
+open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder in
+theorem WeightedOmegaContinuousAddLeft {α : Type} [WeightedPreSemiring α]
+    [i : WeightedOmegaContinuousPreSemiring α] {C : WeightedChain α} {s : α}: (wSup C) ⨁ s = wSup (C.map (· ⨁ s) (wAdd_mono_right _)) := by
+    apply wSup_wAdd
+open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder in
+theorem WeightedOmegaContinuousAddRight {α : Type} [WeightedPreSemiring α]
+    [i : WeightedOmegaContinuousPreSemiring α] {C : WeightedChain α} {s : α}: s ⨁ (wSup C) = wSup (C.map (s ⨁ ·) (wAdd_mono_left _)) := by
+    apply wAdd_wSup
+
+open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder in
+theorem WeightedOmegaContinuousMulLeft {α : Type} [WeightedPreSemiring α]
+    [i : WeightedOmegaContinuousPreSemiring α] {C : WeightedChain α} {s : α}: (wSup C) ⨀ s = wSup (C.map (· ⨀ s) (wMul_mono_right _)) := by
+    apply wSup_wMul
+open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder in
+theorem WeightedOmegaContinuousMulRight {α : Type} [WeightedPreSemiring α]
+    [i : WeightedOmegaContinuousPreSemiring α] {C : WeightedChain α} {s : α}: s ⨀ (wSup C) = wSup (C.map (s ⨀ ·) (wMul_mono_left _)) := by
+    apply wMul_wSup
 
 @[simp]
 theorem wZero_wLe [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α] {x : α} : 𝟘 ≼ x :=
