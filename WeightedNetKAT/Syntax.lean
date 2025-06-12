@@ -143,21 +143,14 @@ def η [DecidableEq X] (x : X) : 𝒲 𝒮 X := ⟨fun y ↦ if x = y then 𝟙 
 notation "η[" 𝒮 "]" => η (𝒮:=𝒮)
 
 -- TODO: these should be moved somewhere more appropriate
-theorem wMul_eq_zero_of {α : Type} [WeightedPreSemiring α] {a b : α} : a = 𝟘 ∨ b = 𝟘 → a ⨀ b = 𝟘 := by
-  rintro (h | h) <;> subst_eqs <;> simp
+theorem wMul_eq_zero_of {α : Type} [WeightedPreSemiring α] {a b : α} :
+    a = 𝟘 ∨ b = 𝟘 → a ⨀ b = 𝟘 := by rintro (h | h) <;> subst_eqs <;> simp
 @[simp]
-theorem nonzero_wMul_nonzero {α : Type} [WeightedPreSemiring α] {a b : α} : ¬a ⨀ b = 𝟘 → ¬a = 𝟘 ∧ ¬b = 𝟘 := by
-  contrapose!
-  intro h
-  apply wMul_eq_zero_of
-  symm
-  simp_all [or_iff_not_imp_right]
+theorem nonzero_wMul_nonzero {α : Type} [WeightedPreSemiring α] {a b : α} :
+    ¬a ⨀ b = 𝟘 → ¬a = 𝟘 ∧ ¬b = 𝟘 := by
+  contrapose
+  exact fun h ↦ not_ne_iff.mpr (wMul_eq_zero_of (or_iff_not_and_not.mpr h))
 
-theorem Set.Countable.subst {α : Type} {S T : Set α} (hS : Countable S) (h : T ⊆ S) :
-    Countable T :=
-  mono h hS
-
-set_option maxHeartbeats 500000 in
 noncomputable def 𝒲.bind {Y : Type} (m : 𝒲 𝒮 X) (f : X → 𝒲 𝒮 Y) :
     𝒲 𝒮 Y :=
   ⟨fun y ↦ ⨁' x : m.supp, m x ⨀ f x y, by
@@ -168,9 +161,9 @@ noncomputable def 𝒲.bind {Y : Type} (m : 𝒲 𝒮 X) (f : X → 𝒲 𝒮 Y)
       Classical.not_imp, Set.mem_iUnion, exists_prop, forall_exists_index, and_imp, s]
     intro x h₁ h₂
     use x, h₁
-    intro h
-    have : f x y = 𝟘 := h
-    simp_all⟩
+    contrapose! h₂
+    replace h₂ : f x y = 𝟘 := h₂
+    simp [h₂]⟩
 
 infixr:50 " ≫= " => 𝒲.bind
 
