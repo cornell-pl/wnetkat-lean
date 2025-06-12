@@ -24,21 +24,26 @@ section CountablePi
 
 open Pi in
 instance WeightedAdd.instCountablePi : WeightedAdd (𝒲 𝒮 X) where
-  wAdd := fun a b ↦ ⟨a.val ⨁ b.val, sorry⟩
-  -- wAdd := fun ⟨ a_underlying, a_property ⟩ ⟨ b_underlying, b_property ⟩ => by
-  --   refine ⟨a_underlying ⨁ b_underlying, ?_ ⟩
-  --   apply @Function.Injective.countable ((a_underlying ⨁ b_underlying).supp) (Sum a_underlying.supp b_underlying.supp) _
-  --   case f =>
-  --     intro ⟨ m_val , m_prop ⟩
-  --     simp [instPi] at m_prop
-  --     by_cases a_underlying m_val = 𝟘
-  --     case pos h =>
-  --       exact  Sum.inr ⟨ m_val, m_prop h ⟩
-  --     case neg h =>
-  --       exact Sum.inl ⟨ m_val, h⟩
-  --   case hf =>
-  --     intro ⟨v₁, p₁⟩ ⟨v₂, p₂⟩
-  --     grind only [cases Or]
+  wAdd := fun a b ↦ ⟨a.val ⨁ b.val, by
+    let ⟨a_underlying, a_prop⟩ := a
+    let ⟨b_underlying, b_prop⟩ := b
+    simp [wAdd]
+    apply @Function.Injective.countable _ (Sum a_underlying.supp b_underlying.supp) _
+    case f =>
+      intro ⟨m_val, m_prop⟩
+      simp [instPi] at m_prop
+      by_cases a_underlying m_val = 𝟘
+      case pos h =>
+        apply Sum.inr
+        exact ⟨ m_val, m_prop h ⟩
+      case neg h =>
+        apply Sum.inl
+        exact ⟨ m_val, h⟩
+    case hf =>
+      dsimp
+      intro ⟨v₁, p₁⟩ ⟨v₂, p₂⟩
+      grind
+    ⟩
 
 instance WeightedMul.instCountablePi : WeightedMul (𝒲 𝒮 X) where
   wMul := fun ⟨ a_underlying, a_property ⟩ ⟨ b_underlying, b_property ⟩ => by
@@ -46,11 +51,9 @@ instance WeightedMul.instCountablePi : WeightedMul (𝒲 𝒮 X) where
     apply @Function.Injective.countable ((a_underlying ⨀ b_underlying).supp) (Prod a_underlying.supp b_underlying.supp) _
     case f =>
       intro ⟨ m_val, m_prop ⟩
+      simp at m_prop
       refine ⟨ ⟨ m_val, ?goal1 ⟩, ⟨ m_val, ?goal2 ⟩⟩
-      -- TODO: fix this with new set-based def of supp
-      · sorry
-      · sorry
-      -- all_goals grind only [wMul, instPi, cases WeightedPreSemiring, cases WeightedSemiring]
+      all_goals (simp ; grind only [wMul, instPi, cases WeightedPreSemiring, cases WeightedSemiring])
     case hf =>
       intro ⟨v₁, p₁⟩ ⟨v₂, p₂ ⟩
       grind only
@@ -63,10 +66,18 @@ instance WeightedZero.instCountablePi : WeightedZero (𝒲 𝒮 X) where
     trivial
 
 instance WeightedPreSemiring.instCountablePi : WeightedPreSemiring (𝒲 𝒮 X) where
-  wAdd_assoc := sorry
-  wZero_add := sorry
-  add_wZero := sorry
-  wNsmul := sorry
+  wAdd_assoc := by
+    intros
+    simp only [WeightedAdd.instCountablePi, wAdd_assoc]
+  wZero_add := by
+    intro ⟨a, _⟩
+    simp only [WeightedZero.instCountablePi, WeightedAdd.instCountablePi, WeightedAdd.instPi, wZero_add]
+  add_wZero := by
+    intro ⟨a,_ ⟩
+    simp only [WeightedZero.instCountablePi, WeightedAdd.instCountablePi, WeightedAdd.instPi, add_wZero]
+  wNsmul := by
+    sorry
+
   wNsmul_wZero := sorry
   wNsmul_succ := sorry
   wAdd_comm := sorry
