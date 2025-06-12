@@ -332,7 +332,7 @@ instance WeightedOmegaCompletePartialOrder.instPi [WeightedOmegaCompletePartialO
   wSup_le C _ h x := wSup_le ⟨(C · x), (C.prop · x)⟩ _ (h · x)
 
 open WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder in
-instance WeightedOmegaContinuousPreSemiring.instPi [WeightedSemiring 𝒮]
+instance WeightedOmegaContinuousPreSemiring.instPi [WeightedPreSemiring 𝒮]
     [WeightedOmegaContinuousPreSemiring 𝒮] : WeightedOmegaContinuousPreSemiring (X → 𝒮) where
   wle_positive _ _ := by simp [wle_positive]
   wAdd_mono s₁ s₂ s₃ h x := wAdd_mono (s₁ x) (h x)
@@ -348,10 +348,10 @@ end Pi
 variable {ι : Type}
 
 /-- `⨁ x ∈ I, f x` is the finite sum over `f`. -/
-def WeightedFinsum [WeightedSemiring α] (I : Finset ι) (f : ι → α) : α :=
+def WeightedFinsum [WeightedPreSemiring α] (I : Finset ι) (f : ι → α) : α :=
   I.fold (· ⨁ ·) 𝟘 f
 open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinuousPreSemiring in
-noncomputable def WeightedSum_chain [WeightedSemiring α] [WeightedOmegaContinuousPreSemiring α]
+noncomputable def WeightedSum_chain [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α]
     [e : Encodable ι] (f : ι → α) : WeightedChain α :=
   let f' i := if let some x := e.decode i then f x else 𝟘
   ⟨fun n ↦ n.fold (fun i _ x ↦ f' i ⨁ x) 𝟘, by
@@ -372,7 +372,7 @@ open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinu
 
 `letI : Encodable ι := Encodable.ofCountable ι`
 -/
-noncomputable def WeightedSum [WeightedSemiring α] [WeightedOmegaContinuousPreSemiring α]
+noncomputable def WeightedSum [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α]
     [e : Encodable ι] (f : ι → α) : α := wSup (WeightedSum_chain f)
 
 namespace BigOperators
@@ -400,7 +400,7 @@ macro_rules (kind := bigweightedfinsum)
     | some p => `(Finset.sum (Finset.filter (fun $x ↦ $p) $s) (fun $x ↦ $v))
     | none => `(WeightedFinsum $s (fun $x ↦ $v))
 
-variable {ι : Type} [WeightedSemiring α]
+variable {ι : Type} [WeightedPreSemiring α]
 
 open Lean Meta
 open Elab Term Tactic TryThis
@@ -490,11 +490,11 @@ end BigOperators
 section
 
 variable {α : Type}
-variable [WeightedSemiring α] [WeightedOmegaContinuousPreSemiring α]
+variable [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α]
 
 variable {I : Type} [e : Encodable I]
 
-open WeightedOmegaContinuousPreSemiring WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedPreSemiring WeightedSemiring
+open WeightedOmegaContinuousPreSemiring WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedPreSemiring
 
 @[simp]
 theorem wle_wAdd (s s' : α) : s ≼ s ⨁ s' := by

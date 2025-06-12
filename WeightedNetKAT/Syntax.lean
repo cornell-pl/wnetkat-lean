@@ -18,7 +18,6 @@ noncomputable instance {m : 𝒲 𝒮 X} : Encodable m.val.supp := Encodable.ofC
 
 section CountablePi
 
-variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 open Pi in
 instance WeightedAdd.instCountablePi : WeightedAdd (𝒲 𝒮 X) where
   wAdd := fun a b ↦ ⟨a.val ⨁ b.val, sorry⟩
@@ -56,6 +55,24 @@ instance WeightedZero.instCountablePi : WeightedZero (𝒲 𝒮 X) where
     intro ⟨v1, p1⟩ ⟨v2, p2⟩
     trivial
 
+instance WeightedPreSemiring.instCountablePi : WeightedPreSemiring (𝒲 𝒮 X) where
+  wAdd_assoc := sorry
+  wZero_add := sorry
+  add_wZero := sorry
+  wNsmul := sorry
+  wNsmul_wZero := sorry
+  wNsmul_succ := sorry
+  wAdd_comm := sorry
+  left_distrib := sorry
+  right_distrib := sorry
+  wZero_mul := sorry
+  mul_wZero := sorry
+  mul_assoc := sorry
+  natCast := sorry
+  natCast_zero := sorry
+  wNpow := sorry
+  wNpow_succ := sorry
+
 instance WeightedLE.instCountablePi : WeightedLE (𝒲 𝒮 X) where
   wle := fun ⟨a, _⟩ ⟨ b, _ ⟩ => a ≼ b
 
@@ -71,6 +88,24 @@ instance WeightedPartialOrder.instCountablePi  : WeightedPartialOrder (𝒲 𝒮
     exact wle_antisymm (hab x) (hba x)
 
 attribute [simp] WeightedZero.instCountablePi
+
+instance WeightedOmegaCompletePartialOrder.instCountablePi :
+    WeightedOmegaCompletePartialOrder (𝒲 𝒮 X) where
+  wSup C := ⟨fun i ↦ wSup (C.map (·.val i) sorry), sorry⟩
+  le_wSup := sorry
+  wSup_le := sorry
+
+open WeightedOmegaCompletePartialOrder in
+instance WeightedOmegaContinuousPreSemiring.instCountablePi :
+    WeightedOmegaContinuousPreSemiring (𝒲 𝒮 X) where
+  wle_positive := sorry
+  wAdd_mono := sorry
+  wMul_mono_left := sorry
+  wMul_mono_right := sorry
+  wAdd_wSup := sorry
+  wSup_wAdd := sorry
+  wMul_wSup := sorry
+  wSup_wMul := sorry
 
 end CountablePi
 

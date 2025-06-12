@@ -4,13 +4,6 @@ variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuo
 
 variable {F : Type} [Fintype F] [DecidableEq F]
 
--- TODO: inferInstance
-open WeightedOmegaCompletePartialOrder in
-instance WeightedOmegaCompletePartialOrder.instCountablePi : WeightedOmegaCompletePartialOrder (𝒲 𝒮 X) where
-  wSup C := ⟨fun i ↦ wSup (C.map (·.val i) sorry), sorry⟩
-  le_wSup := sorry
-  wSup_le := sorry
-
 noncomputable instance : DecidableEq (𝒲 𝒮 H[F]) := Classical.typeDecidableEq (𝒲 𝒮 H)
 
 noncomputable def Predicate.sem (p : Predicate[F]) : H[F] → 𝒲 𝒮 H[F] := match p with
@@ -69,11 +62,12 @@ noncomputable def Policy.sem (p : Policy[F,𝒮]) : H[F] → 𝒲 𝒮 H[F] := m
   -- TODO: this should use the syntax
   | .Add p q => fun h ↦ p.sem h ⨁ q.sem h
   -- TODO: this should use the syntax
-  | .Iter p => fun h ↦ ⟨fun h' ↦ ⨁' n : ℕ, (((p ^ n).sem h).val h'), by
-    simp [WeightedSum_eq_wSup_Nat]
-    -- TODO: the support of wSup is coultable
-    sorry
-    ⟩
+  | .Iter p => fun h ↦ ⨁' n : ℕ, (p ^ n).sem h
+  -- | .Iter p => fun h ↦ ⟨fun h' ↦ ⨁' n : ℕ, (((p ^ n).sem h).val h'), by
+  --   simp [WeightedSum_eq_wSup_Nat]
+  --   -- TODO: the support of wSup is coultable
+  --   sorry
+  --   ⟩
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
@@ -155,24 +149,24 @@ theorem 𝒲.bind_continuous (f : 𝒲 𝒮 H[F]) : WeightedOmegaContinuous (f �
 
 open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder
 
-theorem 𝒲.add_mono_left (f : 𝒲 𝒮 H[F]) : WeightedMonotone (f ⨁ ·) := by
-  sorry
-theorem 𝒲.add_mono_right (f : 𝒲 𝒮 H[F]) : WeightedMonotone (· ⨁ f) := by
-  sorry
-theorem 𝒲.add_cont_left (f : 𝒲 𝒮 H[F]) : WeightedOmegaContinuous (f ⨁ ·) (add_mono_left f) := by
-  sorry
-theorem 𝒲.add_cont_right (f : 𝒲 𝒮 H[F]) : WeightedOmegaContinuous (· ⨁ f) (add_mono_right f) := by
-  sorry
+-- theorem 𝒲.add_mono_left (f : 𝒲 𝒮 H[F]) : WeightedMonotone (f ⨁ ·) := by
+--   sorry
+-- theorem 𝒲.add_mono_right (f : 𝒲 𝒮 H[F]) : WeightedMonotone (· ⨁ f) := by
+--   sorry
+-- theorem 𝒲.add_cont_left (f : 𝒲 𝒮 H[F]) : WeightedOmegaContinuous (f ⨁ ·) (add_mono_left f) := by
+--   sorry
+-- theorem 𝒲.add_cont_right (f : 𝒲 𝒮 H[F]) : WeightedOmegaContinuous (· ⨁ f) (add_mono_right f) := by
+--   sorry
 
 theorem Φ_mono (p : Policy[F,𝒮]) : WeightedMonotone (Φ p) :=
-  fun hab h ↦ 𝒲.add_mono_left (η h) (𝒲.bind_mono _ hab)
+  fun hab h ↦ wAdd_mono_left (η h) (𝒲.bind_mono _ hab)
 theorem Φ_continuous (p : Policy[F,𝒮]) : WeightedOmegaContinuous (Φ p) (Φ_mono p) := by
   intro C
   ext h
   unfold Φ
   set f := p.sem h
   have := f.bind_continuous C
-  have := 𝒲.add_cont_left (η h) (C.map (f ≫= ·) f.bind_mono)
+  have := wAdd_wSup (η h) (C.map (f ≫= ·) f.bind_mono)
   simp_all only
   rfl
 
@@ -278,11 +272,12 @@ theorem Policy.iter_k {h h'} (p : Policy[F,𝒮]) (hhh' : h ≠ h') :
     (wnk_policy {~p;~p*}.sem h).val h' = (wnk_policy {~p*}.sem h).val h' := by
   simp [sem]
   simp [𝒲.bind]
-  rw [← WeightedSum_succ]
-  · simp [sem, 𝒲.bind]
-    sorry
-  · simp [sem, Predicate.sem]
-    sorry
+  sorry
+  -- rw [← WeightedSum_succ]
+  -- · simp [sem, 𝒲.bind]
+  --   sorry
+  -- · simp [sem, Predicate.sem]
+  --   sorry
 
 theorem Policy.iter_sem_isLfp (p : Policy[F,𝒮]) : IsLfp (Φ p) (wnk_policy {~p*}.sem) := by
   constructor
@@ -305,12 +300,13 @@ theorem Policy.iter_sem_isLfp (p : Policy[F,𝒮]) : IsLfp (Φ p) (wnk_policy {~
     · simp [𝒲.bind]
       apply wSup_le
       intro i
-      simp [DFunLike.coe, WeightedSum_chain]
+      simp only [DFunLike.coe, WeightedSum_chain]
       simp [WeightedAdd.wAdd]
       induction i with
-      | zero => simp
+      | zero => simp [WeightedChain.map, DFunLike.coe, WeightedZero.wZero]
       | succ i ih =>
         apply wle_trans _ ih; clear ih
+        simp only [DFunLike.coe]
         simp
         sorry
     · sorry
