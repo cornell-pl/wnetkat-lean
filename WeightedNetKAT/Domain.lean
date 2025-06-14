@@ -7,9 +7,11 @@ import Mathlib.Data.Countable.Defs
 import Mathlib.Data.Finset.Defs
 import Mathlib.Data.Finset.Fold
 import Mathlib.Data.FunLike.Basic
+import Mathlib.Data.Set.Finite.Basic
 import Mathlib.Data.Set.Lattice
 import Mathlib.Logic.Encodable.Basic
 import Mathlib.Order.Defs.PartialOrder
+import Mathlib.Tactic.Ring.RingNF
 
 set_option grind.warning false
 
@@ -143,6 +145,11 @@ class WeightedLE (α : Type) where
 @[reducible] def wGe {α : Type} [WeightedLE α] (a b : α) := b ≼ a
 @[inherit_doc] infix:50 " ≽ " => wGe
 
+
+/-- Weighted less-than-or-equal defined by the natural order. -/
+@[reducible] def wLt {α : Type} [WeightedLE α] (a b : α) := a ≼ b ∧ a ≠ b
+@[inherit_doc] infix:50 " ≺ " => wLt
+
 instance (priority := 100) : WeightedLE ℕ := ⟨LE.le⟩
 
 @[simp] theorem WeightedLE.nat_wle_iff {a b : ℕ} : a ≼ b ↔ a ≤ b := by rfl
@@ -217,14 +224,11 @@ theorem WeightedOmegaCompletePartialOrder.wsup_le_of_le {α : Type} [WeightedOme
     apply le_wSup_of_le i
     apply_assumption
 
-
 open WeightedOmegaCompletePartialOrder in
 def WeightedOmegaContinuous {ι : Type} [WeightedOmegaCompletePartialOrder ι]
     [WeightedOmegaCompletePartialOrder α]
     (f : ι → α) (h : WeightedMonotone f) : Prop :=
   ∀ C, f (wSup C) = wSup (C.map f h)
-
-
 
 /--
 A weighted semiring is _ω-bicontinuous_ iff
@@ -268,6 +272,11 @@ theorem WeightedOmegaContinuousAddLeft {α : Type} [WeightedPreSemiring α]
 open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder in
 theorem WeightedOmegaContinuousAddRight {α : Type} [WeightedPreSemiring α]
     [i : WeightedOmegaContinuousPreSemiring α] {C : WeightedChain α} {s : α}: s ⨁ (wSup C) = wSup (C.map (s ⨁ ·) (wAdd_mono_left _)) := by
+    apply wAdd_wSup
+open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder in
+theorem WeightedOmegaContinuousAddRight' {α : Type} [WeightedPreSemiring α]
+    [i : WeightedOmegaContinuousPreSemiring α] {C : WeightedChain α} {s : α} :
+    s ⨁ (wSup C) = wSup ⟨fun i ↦ s ⨁ C i, fun hab ↦ wAdd_mono_left _ (C.prop hab)⟩ := by
     apply wAdd_wSup
 
 open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder in
@@ -375,51 +384,117 @@ instance WeightedOmegaContinuousPreSemiring.instPi [WeightedPreSemiring 𝒮]
 
 end Pi
 
+theorem WeightedPartialOrder.wlt_trans {α : Type} [WeightedPartialOrder α] {a b c : α}
+    (hab : a ≺ b) (hbc : b ≺ c) : a ≺ c := by
+  simp_all [wLt]
+  constructor
+  · exact wle_trans hab.left hbc.left
+  · have : ¬a = b ∧ ¬b = c := by simp_all only [not_false_eq_true, and_self]
+    contrapose! this; subst_eqs
+    exact fun _ ↦ wle_antisymm hbc.left hab.left
+
+@[simp]
+theorem WeightedPartialOrder.not_lt_refl {α : Type} [WeightedPartialOrder α] {a : α} : ¬a ≺ a := by
+  simp_all [wLt]
+@[simp]
+theorem WeightedPartialOrder.lt_not_symm {α : Type} [WeightedPartialOrder α] {a b : α}
+    (hab : a ≺ b) (hba : b ≺ a) : False := by
+  simp_all [wLt]
+  suffices a = b by subst_eqs; simp_all
+  exact wle_antisymm hab.left hba.left
+
+def WeightedPartialOrder.lex (α β : Type)
+  [WeightedPartialOrder α] [WeightedPartialOrder β] :
+    WeightedPartialOrder (α × β) where
+  wle := fun (a₁, b₁) (a₂, b₂) ↦ a₁ ≺ a₂ ∨ a₁ = a₂ ∧ b₁ ≼ b₂
+  wle_refl := by intro; right; simp
+  wle_trans := by
+    simp
+    intro a₁ b₁ a₂ b₂ a₃ b₃ h₁₂ h₂₃
+    simp_all [wLe]
+    rcases h₁₂ with h₁₂ | h₁₂ <;> rcases h₂₃ with h₂₃ | h₂₃
+    · left; apply wlt_trans h₁₂ h₂₃
+    · simp_all; assumption
+    · simp_all; assumption
+    · simp_all; apply wle_trans h₁₂.right h₂₃.right
+  wle_antisymm := by
+    intro ⟨a₁, b₁⟩ ⟨a₂, b₂⟩ h₁₂ h₂₁
+    rcases h₁₂ with h₁₂ | h₁₂ <;> rcases h₂₁ with h₂₁ | h₂₁ <;> simp_all
+    · exact lt_not_symm h₁₂ h₂₁
+    · exact wle_antisymm h₁₂ h₂₁.right
+
+instance WeightedPartialOrder.instWithBot {α : Type} [WeightedPartialOrder α] :
+    WeightedPartialOrder (WithBot α) where
+  wle a b :=
+    match a, b with
+    | ⊥, _ => true
+    | _, ⊥ => false
+    | some a, some b => a ≼ b
+  wle_refl a := by simp [wLe]; split <;> simp
+  wle_trans := by
+    intro a b c hab hbc
+    simp_all [wLe]
+    split at * <;> split at * <;> simp_all
+    apply wle_trans hab hbc
+  wle_antisymm := by
+    intro a b hab hba
+    simp_all [wLe]
+    split at * <;> split at * <;> simp_all
+    exact congrArg some (wle_antisymm hab hba)
+
+instance WeightedPartialOrder.instOption {α : Type} [WeightedPartialOrder α] :
+    WeightedPartialOrder (Option α) where
+  wle a b :=
+    match a, b with
+    | none, _ => true
+    | _, none => false
+    | some a, some b => a ≼ b
+  wle_refl a := by simp [wLe]; split <;> simp
+  wle_trans := by
+    intro a b c hab hbc
+    simp_all [wLe]
+    split at * <;> split at * <;> simp_all
+    apply wle_trans hab hbc
+  wle_antisymm := by
+    intro a b hab hba
+    simp_all [wLe]
+    split at * <;> split at * <;> simp_all
+    exact wle_antisymm hab hba
+
+-- instance WeightedOmegaCompletePartialOrder.instOption {α : Type} [WeightedOmegaCompletePartialOrder α] :
+--     WeightedOmegaCompletePartialOrder (Option α) where
+--   wSup := sorry
+--   wSup_le := sorry
+--   le_wSup := sorry
+
+-- def WeightedOmegaCompletePartialOrder.lex (α β : Type)
+--   [WeightedOmegaCompletePartialOrder α] [WeightedOmegaCompletePartialOrder β] [DecidableRel (wLe (α:=α))] [DecidableRel (wLe (α:=β))] :
+--     WeightedOmegaCompletePartialOrder (α × β) := {WeightedPartialOrder.lex α β with
+--   wSup C :=
+--     letI := WeightedPartialOrder.lex α β
+--     let α_sup := wSup (C.map (·.fst) (by intro a b hab; simp; rcases hab <;> simp_all))
+--     let Cβ : WeightedChain β := ⟨fun i ↦
+--       let C' : List (Option β) := List.ofFn (fun (j : Fin i) ↦
+--         let p := C.val j; if p.1 ≼ α_sup then some p.2 else none)
+--       let C'' := C'.filterMap (·)
+--       letI : Max β := ⟨fun a b ↦ if a ≼ b then a else b⟩
+--       C''[i]?.getD (C''.max?.get (by simp_all [C', C'']; sorry))
+--       ,
+--       sorry⟩
+--     ⟨α_sup, wSup Cβ⟩
+--   le_wSup := sorry
+--   wSup_le := sorry
+-- }
+
 variable {ι : Type}
 
 /-- `⨁ x ∈ I, f x` is the finite sum over `f`. -/
 def WeightedFinsum [WeightedPreSemiring α] (I : Finset ι) (f : ι → α) : α :=
   I.fold (· ⨁ ·) 𝟘 f
-open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinuousPreSemiring in
-noncomputable def WeightedSum_chain [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α]
-    [e : Encodable ι] (f : ι → α) : WeightedChain α :=
-  let f' i := if let some x := e.decode i then f x else 𝟘
-  ⟨fun n ↦ n.fold (fun i _ x ↦ f' i ⨁ x) 𝟘, by
-    intro a b hab
-    obtain ⟨c, _, _⟩ := le_iff_exists_add.mp hab
-    induction c with
-    | zero => apply wle_refl
-    | succ c ih =>
-      apply wle_trans (ih (Nat.le_add_right a c)); clear ih hab
-      rw [← add_assoc]
-      simp only [Nat.fold_succ]
-      set q := (a + c).fold (fun i _ x ↦ f' i ⨁ x) 𝟘
-      have := wAdd_mono q (wle_positive (f' (a + c)))
-      simpa [WeightedPreSemiring.wAdd_comm]⟩
-
-open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinuousPreSemiring in
-/-- `⨁' x : ι, f x` is the encodable/countable sum over `f`.
-
-`letI : Encodable ι := Encodable.ofCountable ι`
--/
-noncomputable def WeightedSum [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α]
-    [e : Encodable ι] (f : ι → α) : α := wSup (WeightedSum_chain f)
 
 namespace BigOperators
 
 syntax (name := bigweightedfinsum) "⨁ᶠ " bigOpBinders ("with " term)? ", " term:67 : term
-
-macro_rules (kind := bigweightedfinsum)
-  | `(⨁ᶠ $bs:bigOpBinders $[with $p?]?, $v) => do
-    let processed ← processBigOpBinders bs
-    let x ← bigOpBindersPattern processed
-    let s ← bigOpBindersProd processed
-    match p? with
-    | some p => `(Finset.sum (Finset.filter (fun $x ↦ $p) $s) (fun $x ↦ $v))
-    | none => `(WeightedFinsum $s (fun $x ↦ $v))
-
-@[inherit_doc WeightedSum]
-notation3 "⨁' "(...)", "r:67:(scoped f => WeightedSum f) => r
 
 macro_rules (kind := bigweightedfinsum)
   | `(⨁ᶠ $bs:bigOpBinders $[with $p?]?, $v) => do
@@ -509,12 +584,6 @@ to show the domain type when the sum is over `Finset.univ`. -/
 #guard_msgs in
 #check fun (I : Finset ι) (f : ι → α) ↦ ⨁ᶠ x ∈ I, f x
 
-variable [Encodable ι] [Nonempty ι] [WeightedOmegaContinuousPreSemiring α]
-
-/-- info: fun f ↦ ⨁' (x : ι), f x : (ι → α) → α -/
-#guard_msgs in
-#check fun (f : ι → α) ↦ ⨁' x : ι, f x
-
 end BigOperators
 
 section
@@ -530,9 +599,6 @@ open WeightedOmegaContinuousPreSemiring WeightedPartialOrder WeightedOmegaComple
 theorem wle_wAdd (s s' : α) : s ≼ s ⨁ s' := by
   have := wAdd_mono s (wle_positive s')
   simpa [add_wZero]
-theorem WeightedSum_empty [IsEmpty I] (f : I → α) : ⨁' x : I, f x = 𝟘 := by
-  simp only [WeightedSum, WeightedSum_chain, imp_false, IsEmpty.forall_iff, wZero_add, wSup_eq_zero_iff, DFunLike.coe]
-  intro i; induction i with simp only [*, Nat.fold_zero, Nat.fold_succ]
 
 @[simp]
 theorem wAdd_eq_zero_iff {x y : α} : x ⨁ y = 𝟘 ↔ x = 𝟘 ∧ y = 𝟘 := by
@@ -545,26 +611,6 @@ theorem wAdd_eq_zero_iff {x y : α} : x ⨁ y = 𝟘 ↔ x = 𝟘 ∧ y = 𝟘 :
     exact wZero_add 𝟘
 example {x y : α} : x ⨁ y ≠ 𝟘 ↔ x ≠ 𝟘 ∨ y ≠ 𝟘 := by
   simp [wAdd_eq_zero_iff, imp_iff_not_or]
-
-@[simp]
-theorem WeightedSum_eq_zero_iff {f : I → α} : ⨁' x, f x = 𝟘 ↔ ∀ x, f x = 𝟘 := by
-  constructor
-  · intro h a
-    simp [WeightedSum, WeightedSum_chain, DFunLike.coe] at h
-    replace h := h (e.encode a + 1)
-    simp_all
-  · intro hf
-    simp [WeightedSum, WeightedSum_chain, hf, DFunLike.coe]
-    intro i
-    induction i with
-    | zero => simp
-    | succ i ih =>
-      simp only [Nat.fold_succ, wAdd_eq_zero_iff]
-      split <;> simp_all
-
-@[simp]
-theorem WeightedSum_zero {T : Type} [Encodable T] : ⨁' _ : T, (𝟘 : α) = 𝟘 := by
-  simp
 
 omit [WeightedOmegaContinuousPreSemiring α] in
 @[simp] theorem WeightedFinsup_empty {f : ι → α} : ⨁ᶠ i ∈ ∅, f i = 𝟘 := by rfl
@@ -583,6 +629,11 @@ theorem Finset.fold_range {X : Type} {n : ℕ} {f : X → X → X} [Std.Commutat
     rw [range_succ]
     simp
 
+theorem Finset.fold_range_succ {X : Type} {n : ℕ} {f : X → X → X} [Std.Commutative f] [Std.Associative f]
+    {g : ℕ → X} {init : X} :
+    (Finset.range (n + 1)).fold f init g = f (g n) (n.fold (fun a _ b ↦ f (g a) b) init) := by
+  simp [Finset.fold_range]
+
 omit [WeightedOmegaContinuousPreSemiring α] in
 @[simp]
 theorem WeightedFinsup_range_succ {a : ℕ} {f : ℕ → α} :
@@ -590,6 +641,13 @@ theorem WeightedFinsup_range_succ {a : ℕ} {f : ℕ → α} :
     = (⨁ᶠ i ∈ Finset.range a, f i) ⨁ f a := by
   simp [WeightedFinsum]
   simp [Finset.fold_range, wAdd_comm]
+
+omit [WeightedOmegaContinuousPreSemiring α] in
+@[simp]
+theorem WeightedFinsup_insert {a : ι} {S : Finset ι} [DecidableEq ι] (h : a ∉ S) {f : ι → α} :
+      ⨁ᶠ i ∈ insert a S, f i
+    = f a ⨁ ⨁ᶠ i ∈ S, f i := by
+  simp_all [WeightedFinsum]
 
 omit [WeightedOmegaContinuousPreSemiring α] in
 @[simp]
@@ -613,9 +671,92 @@ theorem WeightedFinsup_range_mono {f : ℕ → α} :
     simp only [WeightedFinsup_range_succ]
     apply wle_trans (wle_wAdd _ _) (wAdd_mono_right (f c) ih)
 
+section BigOperators
+
+-- open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinuousPreSemiring in
+-- noncomputable def WeightedSum_chain [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α]
+--     [e : Encodable ι] (f : ι → α) : WeightedChain α :=
+--   let f' i := if let some x := e.decode i then f x else 𝟘
+--   ⟨fun n ↦ n.fold (fun i _ x ↦ f' i ⨁ x) 𝟘, by
+--     intro a b hab
+--     obtain ⟨c, _, _⟩ := le_iff_exists_add.mp hab
+--     induction c with
+--     | zero => apply wle_refl
+--     | succ c ih =>
+--       apply wle_trans (ih (Nat.le_add_right a c)); clear ih hab
+--       rw [← add_assoc]
+--       simp only [Nat.fold_succ]
+--       set q := (a + c).fold (fun i _ x ↦ f' i ⨁ x) 𝟘
+--       have := wAdd_mono q (wle_positive (f' (a + c)))
+--       simpa [WeightedPreSemiring.wAdd_comm]⟩
+open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinuousPreSemiring in
+noncomputable def WeightedSum_chain [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α]
+    [e : Encodable ι] (f : ι → α) : WeightedChain α :=
+  let f' i := if let some x := e.decode₂ _ i then f x else 𝟘
+  ⟨fun n ↦ ⨁ᶠ i ∈ Finset.range n, f' i, by
+    intro a b hab
+    simp [WeightedFinsum]
+    induction b, hab using Nat.le_induction with
+    | base => simp
+    | succ c hac ih =>
+      apply wle_trans ih; clear ih
+      rw [Finset.range_succ]
+      simp
+      have h : 𝟘 ≼ f' c := by simp
+      letI : Std.Commutative fun (a b : α) ↦ a ⨁ b := instCommutativeWAdd
+      set x := Finset.fold (· ⨁ ·) (𝟘 : α) f' (Finset.range c)
+      have := @wAdd_mono_right α _ _ x _ _ h
+      simp at this
+      exact this⟩
+
+open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinuousPreSemiring in
+/-- `⨁' x : ι, f x` is the encodable/countable sum over `f`.
+
+`letI : Encodable ι := Encodable.ofCountable ι`
+-/
+noncomputable def WeightedSum [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α]
+    [e : Encodable ι] (f : ι → α) : α := wSup (WeightedSum_chain f)
+
+@[inherit_doc WeightedSum]
+notation3 "⨁' "(...)", "r:67:(scoped f => WeightedSum f) => r
+
+variable [Encodable ι] [Nonempty ι] [WeightedOmegaContinuousPreSemiring α]
+
+/-- info: fun f ↦ ⨁' (x : ι), f x : (ι → α) → α -/
+#guard_msgs in
+#check fun (f : ι → α) ↦ ⨁' x : ι, f x
+
+end BigOperators
+
 theorem WeightedSum_eq_wSup_Nat (f : ℕ → α) :
     ⨁' n : ℕ, f n = wSup ⟨fun n ↦ ⨁ᶠ i ∈ Finset.range n, f i, WeightedFinsup_range_mono⟩ := by
-  simp only [WeightedSum, WeightedSum_chain, WeightedFinsum, Finset.fold_range]
+  simp only [WeightedSum, WeightedSum_chain, WeightedFinsum, Encodable.decode₂,
+    Encodable.decode_nat, Encodable.encode_nat, Option.bind_some, decide_true, Option.guard_pos,
+    Finset.fold_range]
+
+theorem WeightedSum_empty [IsEmpty I] (f : I → α) : ⨁' x : I, f x = 𝟘 := by
+  simp only [WeightedSum, WeightedSum_chain, imp_false, IsEmpty.forall_iff, wZero_add, wSup_eq_zero_iff, DFunLike.coe]
+  intro i; induction i with
+    simp only [Finset.range_zero, WeightedFinsup_empty, WeightedFinsup_range_succ, add_wZero, *]
+@[simp]
+theorem WeightedSum_eq_zero_iff {f : I → α} : ⨁' x, f x = 𝟘 ↔ ∀ x, f x = 𝟘 := by
+  constructor
+  · intro h a
+    simp [WeightedSum, WeightedSum_chain, DFunLike.coe] at h
+    replace h := h (e.encode a + 1)
+    simp_all
+  · intro hf
+    simp [WeightedSum, WeightedSum_chain, hf, DFunLike.coe]
+    intro i
+    induction i with
+    | zero => simp
+    | succ i ih =>
+      simp only [WeightedFinsup_range_succ, wAdd_eq_zero_iff]
+      split <;> simp_all
+
+@[simp]
+theorem WeightedSum_zero {T : Type} [Encodable T] : ⨁' _ : T, (𝟘 : α) = 𝟘 := by
+  simp
 
 theorem WeightedSum_mul_left {s : α} (f : I → α) : ⨁' x : I, s ⨀ f x = s ⨀ ⨁' x : I, f x := by
   simp [WeightedSum]
@@ -628,7 +769,7 @@ theorem WeightedSum_mul_left {s : α} (f : I → α) : ⨁' x : I, s ⨀ f x = s
   induction i with
   | zero => simp
   | succ i ih =>
-    simp only [Nat.fold_succ]
+    simp only [WeightedFinsup_range_succ]
     rw [ih]; clear ih
     split <;> simp [WeightedPreSemiring.left_distrib]
 -- TODO: can we reuse some of the above proof?
@@ -643,7 +784,7 @@ theorem WeightedSum_mul_right {s : α} (f : I → α) : ⨁' x : I, f x ⨀ s = 
   induction i with
   | zero => simp
   | succ i ih =>
-    simp only [Nat.fold_succ]
+    simp only [WeightedFinsup_range_succ]
     rw [ih]; clear ih
     split <;> simp [WeightedPreSemiring.right_distrib]
 
@@ -673,10 +814,9 @@ theorem WeightedSum_chain_wAdd_apply {f₁ f₂ : I → α} (n : ℕ) :
     nth_rw 1 [← wAdd_assoc]
     nth_rw 1 [wAdd_assoc]
     congr
-    rw [wAdd_comm]
-    split
-    · rfl
-    · simp
+    · simp [WeightedSum_chain, DFunLike.coe] at ih
+      rw [ih, wAdd_comm]
+    · split <;> simp
 
 theorem WeightedSum_chain_wAdd {f₁ f₂ : I → α} :
     (WeightedSum_chain fun x ↦ f₁ x ⨁ f₂ x) = WeightedSum_chain f₁ ⨁ WeightedSum_chain f₂ := by
@@ -760,27 +900,84 @@ theorem Nat.fold_id {α : Type} (n : ℕ) (init : α) : n.fold (fun _ _ x ↦ x)
   induction n with simp only [fold_zero, fold_succ, *]
 
 omit e in
-theorem WeightedSum_pair [DecidableEq I] {i₀ i₁ : I} (f : I → α) :
-    letI : Encodable ↑({i₀, i₁} : Set I) := {
-      encode := fun i ↦ if i.val = i₀ then 0 else 1
-      decode := fun i ↦
-        if i = 0 then some ⟨i₀, by simp⟩ else if i = 1 then some ⟨i₁, by simp⟩ else none
-      encodek := by
-        intro ⟨i, hi⟩; split_ifs <;> try grind
-        simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hi
-        grind
-    }
-    ⨁' i : ({i₀, i₁} : Set I), f i = f i₀ ⨁ f i₁ := by
-  apply wle_antisymm (wSup_le _ _ fun n ↦ ?_)
-    (wle_trans (by simp [WeightedSum_chain, DFunLike.coe, wAdd_comm]) (le_wSup _ 2))
-  simp only [WeightedSum_chain]
-  match n with
-  | 0 | 1 => simp [DFunLike.coe]
-  | n + 2 => simp only [DFunLike.coe, Nat.fold_add]; simp [wAdd_comm]
+omit [WeightedOmegaContinuousPreSemiring α] in
+theorem WeightedFinsum_pair [DecidableEq I] {i₀ i₁ : I} (h : i₀ ≠ i₁) (f : I → α) :
+    ⨁ᶠ i ∈ ({i₀, i₁} : Finset I), f i = f i₀ ⨁ f i₁ := by
+  simp [WeightedFinsum]
+  rw [Finset.fold_insert (by simp [h])]
+  simp [@Finset.insert_eq]
 
-example {J : Type} [Encodable J] (I : J → Set ι) [∀ i, Encodable (I i)] (f : (j : J) → I j → α) :
-    have : Encodable ↑(⋃ j, I j) := sorry
-    ⨁' j : J, ⨁' i : I j, f j i = ⨁' i : ↑(⋃ j, I j), f (by sorry) (by sorry) := by
-  sorry
+syntax "magic_simp" ("[" term,* "]")? : tactic
+
+macro_rules
+| `(tactic|magic_simp) => `(tactic|magic_simp [])
+| `(tactic|magic_simp [$t:term,*]) => `(tactic|
+  simp only [DFunLike.coe, wle_refl, $[$t:term],*];
+  try simp only [WeightedChain.map, WeightedChain.val_apply]; simp only [DFunLike.coe, wle_refl];)
+syntax "weightedSemiring" ident : tactic
+
+macro_rules
+| `(tactic|weightedSemiring $t) => `(tactic|
+    try (
+      letI inst : Semiring $t := WeightedSemiring.toSemiring $t;
+      have myAdd : ∀ (x y : $t), x ⨁ y = x + y := fun _ _ ↦ rfl;
+      simp only [myAdd] at *; clear myAdd
+    )
+  )
+
+  -- induction S using Finset.induction with
+  -- | empty => simp
+  -- | insert x S hxS ih =>
+  --   simp [WeightedSum]
+  --   sorry
+
+-- theorem WeightedSum_finite (S : Set I) (hS : S.Finite) (f : I → α) :
+--     have : Encodable S := Encodable.ofCountable ↑S
+--     have : Fintype S := hS.fintype
+--     ⨁' x : S, f x = ⨁ᶠ x ∈ S, f x := by
+--   letI := hS.fintype
+--   have := WeightedSum_finset S.toFinset f
+--   simp at this
+--   simp
+--   rw [← this]
+--   simp [WeightedSum]
+--   congr! 1
+--   ext i
+--   simp [WeightedSum_chain, DFunLike.coe]
+--   congr! 2
+--   sorry
+--   -- split <;> split
+--   -- · congr! 1
+--   -- · simp_all
+--   -- · simp_all
+--   -- · simp_all
+
+-- omit e in
+-- theorem WeightedSum_pair [DecidableEq I] {i₀ i₁ : I} (h : i₀ ≠ i₁) (f : I → α) :
+--     letI : Encodable ↑({i₀, i₁} : Set I) := {
+--       encode := fun i ↦ if i.val = i₀ then 0 else 1
+--       decode := fun i ↦
+--         if i = 0 then some ⟨i₀, by simp⟩ else if i = 1 then some ⟨i₁, by simp⟩ else none
+--       encodek := by
+--         intro ⟨i, hi⟩; split_ifs <;> try grind
+--         simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hi
+--         grind
+--     }
+--     ⨁' i : ({i₀, i₁} : Set I), f i = f i₀ ⨁ f i₁ := by
+--   apply wle_antisymm (wSup_le _ _ fun n ↦ ?_)
+--     (wle_trans (by simp [WeightedSum_chain, DFunLike.coe, wAdd_comm]) (le_wSup _ 2))
+--   simp only [WeightedSum_chain]
+--   simp [DFunLike.coe]
+--   match n with
+--   | 0 | 1 => simp [DFunLike.coe]
+--   | n + 2 =>
+--     have : Finset.range (n + 2) = {0, 1} ∪ (Finset.range n).image (· + 2) := by ext; simp_all; sorry
+--     rw [this]
+--     sorry
+
+-- example {J : Type} [Encodable J] (I : J → Set ι) [∀ i, Encodable (I i)] (f : (j : J) → I j → α) :
+--     have : Encodable ↑(⋃ j, I j) := sorry
+--     ⨁' j : J, ⨁' i : I j, f j i = ⨁' i : ↑(⋃ j, I j), f (by sorry) (by sorry) := by
+--   sorry
 
 end

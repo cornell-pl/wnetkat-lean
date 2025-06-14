@@ -130,8 +130,7 @@ instance WeightedOmegaCompletePartialOrder.instCountablePi :
   le_wSup c i p := by
     simp
     apply WeightedPartialOrder.wle_trans _ (le_wSup _ i)
-    simp only [WeightedChain.map, DFunLike.coe]
-    simp
+    magic_simp
   wSup_le c w h x := by
     simp
     apply wSup_le
