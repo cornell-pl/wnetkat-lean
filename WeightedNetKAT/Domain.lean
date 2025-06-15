@@ -80,6 +80,18 @@ instance [WeightedPreSemiring α] : Std.Commutative (fun (a b : α) ↦ a ⨁ b)
 instance [WeightedPreSemiring α] : Std.Associative (fun (a b : α) ↦ a ⨁ b) :=
   ⟨WeightedPreSemiring.wAdd_assoc⟩
 
+def WeightedPreSemiring.toAddCommMonoid (α : Type) [i : WeightedPreSemiring α] :
+    AddCommMonoid α where
+  add := i.wAdd
+  add_assoc := i.wAdd_assoc
+  zero := i.wZero
+  zero_add := i.wZero_add
+  add_zero := i.add_wZero
+  nsmul := i.wNsmul
+  nsmul_zero := i.wNsmul_wZero
+  nsmul_succ := i.wNsmul_succ
+  add_comm := i.wAdd_comm
+
 def WeightedSemiring.toSemiring (α : Type) [i : WeightedSemiring α] : Semiring α where
   add := i.wAdd
   add_assoc := i.wAdd_assoc
@@ -757,6 +769,23 @@ theorem WeightedSum_eq_zero_iff {f : I → α} : ⨁' x, f x = 𝟘 ↔ ∀ x, f
 @[simp]
 theorem WeightedSum_zero {T : Type} [Encodable T] : ⨁' _ : T, (𝟘 : α) = 𝟘 := by
   simp
+
+omit e in
+theorem WeightedFinsum_mul_left {α : Type} [WeightedPreSemiring α] [DecidableEq I]
+    {s : α} (S : Finset I) (f : I → α) :
+    ⨁ᶠ x ∈ S, s ⨀ f x = s ⨀ ⨁ᶠ x ∈ S, f x := by
+  induction S using Finset.induction with
+  | empty => simp
+  | insert x S ih =>
+    simp_all [WeightedPreSemiring.left_distrib]
+omit e in
+theorem WeightedFinsum_mul_right {α : Type} [WeightedPreSemiring α] [DecidableEq I]
+    {s : α} (S : Finset I) (f : I → α) :
+    ⨁ᶠ x ∈ S, f x ⨀ s = (⨁ᶠ x ∈ S, f x) ⨀ s:= by
+  induction S using Finset.induction with
+  | empty => simp
+  | insert x S ih =>
+    simp_all [WeightedPreSemiring.right_distrib]
 
 theorem WeightedSum_mul_left {s : α} (f : I → α) : ⨁' x : I, s ⨀ f x = s ⨀ ⨁' x : I, f x := by
   simp [WeightedSum]

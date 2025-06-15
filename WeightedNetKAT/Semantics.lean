@@ -77,6 +77,19 @@ example {t u : Predicate[F]} :
 noncomputable def Φ (p : Policy[F,𝒮]) (d : H[F] → 𝒲 𝒮 H[F]) : H[F] → 𝒲 𝒮 H[F] :=
   fun h ↦ η h ⨁ (p.sem h ≫= d)
 
+example {p : Policy[F,𝒮]} : Φ p (wnk_policy {~p*}.sem) = wnk_policy { skip ⨁ ~p; ~p* }.sem := by
+  ext
+  unfold Φ
+  simp [WeightedAdd.wAdd, Policy.sem, Predicate.sem]
+
+section
+
+variable {α : Type}
+
+variable [WeightedSemiring α] [WeightedOmegaContinuousPreSemiring α]
+
+open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinuousPreSemiring
+
 open WeightedOmegaCompletePartialOrder in
 @[simp]
 theorem wSup_apply {ι : Type} (C : WeightedChain (ι → 𝒮)) (a : ι) :
@@ -171,19 +184,13 @@ theorem WeightedSum_cont [Encodable X] :
     · intro f g hfg n; simp only; split <;> simp_all [hfg _]
   · exact wSup_le _ _ fun i ↦ WeightedSum_mono (le_wSup_of_le i (wle_refl _))
 
-section
-
-variable {α : Type}
-
-variable [WeightedSemiring α] [WeightedOmegaContinuousPreSemiring α]
-
-open WeightedPartialOrder WeightedOmegaCompletePartialOrder WeightedOmegaContinuousPreSemiring
-
 omit [WeightedOmegaContinuousPreSemiring α] in
-theorem WeightedFinsum_eq_finset_sum {I : Type} [DecidableEq I] (S : Finset I) (f : I → α) :
-    letI := WeightedSemiring.toSemiring
+theorem WeightedFinsum_eq_finset_sum {α I : Type}
+    [WeightedPreSemiring α]
+    [DecidableEq I] (S : Finset I) (f : I → α) :
+    letI : AddCommMonoid α := WeightedPreSemiring.toAddCommMonoid α
     ⨁ᶠ x ∈ S, f x = ∑ x ∈ S, f x := by
-  letI := WeightedSemiring.toSemiring
+  letI : AddCommMonoid α := WeightedPreSemiring.toAddCommMonoid α
   induction S using Finset.induction with
   | empty => simp_all; rfl
   | insert x S hxS ih =>
@@ -210,7 +217,9 @@ theorem WeightedFinsup_union_singleton {I : Type} [DecidableEq I] (S : Finset I)
 theorem wle_of_eq {α : Type} [WeightedPartialOrder α] {a b : α} (h : a = b) : a ≼ b := by simp_all
 
 omit [WeightedOmegaContinuousPreSemiring α] in
-theorem WeightedFinsum_bij {ι γ : Type} [DecidableEq ι] [DecidableEq γ]
+theorem WeightedFinsum_bij {α ι γ : Type}
+    [WeightedPreSemiring α]
+    [DecidableEq ι] [DecidableEq γ]
     {Sι : Finset ι} {Sγ : Finset γ} {fι : ι → α} {fγ : γ → α}
     (i : ∀ a ∈ Sι, γ) (hi : ∀ a ha, i a ha ∈ Sγ)
     (i_inj : ∀ a₁ ha₁ a₂ ha₂, i a₁ ha₁ = i a₂ ha₂ → a₁ = a₂)
@@ -218,11 +227,13 @@ theorem WeightedFinsum_bij {ι γ : Type} [DecidableEq ι] [DecidableEq γ]
     :
     ⨁ᶠ a ∈ Sι, fι a = ⨁ᶠ b ∈ Sγ, fγ b := by
   simp [WeightedFinsum_eq_finset_sum]
-  letI : Semiring α := WeightedSemiring.toSemiring α
+  letI := WeightedPreSemiring.toAddCommMonoid α
   apply Finset.sum_bij i <;> assumption
 
 omit [WeightedOmegaContinuousPreSemiring α] in
-theorem WeightedFinsum_bij_ne_zero {ι γ : Type} [DecidableEq ι] [DecidableEq γ]
+theorem WeightedFinsum_bij_ne_zero {α ι γ : Type}
+    [WeightedPreSemiring α]
+    [DecidableEq ι] [DecidableEq γ]
     {Sι : Finset ι} {Sγ : Finset γ} {fι : ι → α} {fγ : γ → α}
     (i : ∀ a ∈ Sι, fι a ≠ 𝟘 → γ) (hi : ∀ a h₁ h₂, i a h₁ h₂ ∈ Sγ)
     (i_inj : ∀ a₁ ha₁₁ ha₁₂ a₂ ha₂₁ ha₂₂, i a₁ ha₁₁ ha₁₂ = i a₂ ha₂₁ ha₂₂ → a₁ = a₂)
@@ -230,27 +241,32 @@ theorem WeightedFinsum_bij_ne_zero {ι γ : Type} [DecidableEq ι] [DecidableEq 
     :
     ⨁ᶠ a ∈ Sι, fι a = ⨁ᶠ b ∈ Sγ, fγ b := by
   simp [WeightedFinsum_eq_finset_sum]
-  letI : Semiring α := WeightedSemiring.toSemiring α
+  letI := WeightedPreSemiring.toAddCommMonoid α
   apply Finset.sum_bij_ne_zero i <;> assumption
 
 omit [WeightedOmegaContinuousPreSemiring α] in
-theorem WeightedFinsum_single {I : Type} [DecidableEq I] {S : Finset I} {f : I → α} (x : I)
+theorem WeightedFinsum_single {α I : Type}
+    [WeightedPreSemiring α]
+    [DecidableEq I] {S : Finset I} {f : I → α} (x : I)
     (h₀ : ∀ y ∈ S, y ≠ x → f y = 𝟘)
     (h₁ : x ∉ S → f x = 𝟘) :
     ⨁ᶠ i ∈ S, f i = f x := by
   simp [WeightedFinsum_eq_finset_sum]
-  letI : Semiring α := WeightedSemiring.toSemiring α
+  letI := WeightedPreSemiring.toAddCommMonoid α
   rw [Finset.sum_eq_single x h₀ h₁]
 
 omit [WeightedOmegaContinuousPreSemiring α] in
-theorem WeightedFinsum_union {I : Type} [DecidableEq I] {S₁ S₂ : Finset I} {f : I → α}
+theorem WeightedFinsum_union {α I : Type}
+    [WeightedPreSemiring α]
+    [DecidableEq I] {S₁ S₂ : Finset I} {f : I → α}
     (h : Disjoint S₁ S₂) : ⨁ᶠ i ∈ (S₁ ∪ S₂), f i = (⨁ᶠ i ∈ S₁, f i) ⨁ ⨁ᶠ i ∈ S₂, f i := by
   simp [WeightedFinsum_eq_finset_sum]
-  letI : Semiring α := WeightedSemiring.toSemiring α
+  letI := WeightedPreSemiring.toAddCommMonoid α
   rw [Finset.sum_union h]
   rfl
 
-theorem WeightedFinsum_le_of_subset {I : Type} [DecidableEq I] {S₁ S₂ : Finset I} {f : I → α}
+theorem WeightedFinsum_le_of_subset {α I : Type} [WeightedPreSemiring α]
+    [WeightedOmegaContinuousPreSemiring α] [DecidableEq I] {S₁ S₂ : Finset I} {f : I → α}
     (h : S₁ ⊆ S₂) : ⨁ᶠ i ∈ S₁, f i ≼ ⨁ᶠ i ∈ S₂, f i := by
   set S₃ := S₂ \  S₁
   have : S₂ = S₁ ∪ S₃ := by simp [S₃, h]
@@ -270,7 +286,7 @@ instance : Trans (· ≼ · : 𝒲 𝒮 H[F] → 𝒲 𝒮 H[F] → Prop) (· �
 -- TODO: move this as early as possible
 attribute [local simp] Encodable.decode₂_eq_some in
 theorem WeightedSum_le_of_finset {α 𝒮 : Type} [Encodable α] [DecidableEq α]
-  [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+  [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
     {f : α → 𝒮} {a : 𝒮} (h : ∀ S : Finset α, ⨁ᶠ x ∈ S, f x ≼ a) :
     ⨁' x : α, f x ≼ a := by
   apply wSup_le _ _ fun i ↦ ?_
@@ -488,91 +504,227 @@ theorem Policy.Φ_wSup_isLfp (p : Policy[F,𝒮]) : IsLfp (Φ p) (Φ_wSup p) := 
       rw [← hx]
       apply Φ_mono p ih
 
+omit [WeightedOmegaContinuousPreSemiring 𝒮] in
+@[simp]
+theorem WeightedFinsum_apply {α ι 𝒮 : Type} [DecidableEq α] [WeightedPreSemiring 𝒮] (S : Finset α) (f : α → ι → 𝒮) (i : ι) :
+    (⨁ᶠ x ∈ S, f x) i = ⨁ᶠ x ∈ S, f x i := by
+  simp [WeightedFinsum]
+  induction S using Finset.induction with
+  | empty => simp; rfl
+  | insert x S hx ih =>
+    simp_all [WeightedAdd.wAdd]
+
+omit [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+@[simp]
+theorem WeightedSum_apply {α ι : Type} [Encodable α] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+    (f : α → ι → 𝒮) (i : ι) :
+    (⨁' (x : α), f x) i = ⨁' (x : α), f x i := by
+  simp [WeightedSum]
+  congr
+  ext n
+  simp [WeightedChain.map, WeightedSum_chain]
+  magic_simp
+  simp
+  congr with x
+  split
+  · simp_all
+  · rfl
+
 omit [Fintype F] [DecidableEq F] in
-theorem 𝒲.wAdd_bind {a : 𝒲 𝒮 X} {f} {g : X → 𝒲 𝒮 X}
-    (hf : (⨁' (x : f.val.supp), f.val x.val) = 𝟙) : a ⨁ (f ≫= g) = (f ≫= (a ⨁ g ·)) := by
+@[simp]
+theorem WeightedFinsum_apply' {α : Type} [DecidableEq α] (S : Finset α) (f : α → 𝒲 𝒮 H[F]) (i : H[F]) :
+    (⨁ᶠ x ∈ S, f x) i = ⨁ᶠ x ∈ S, f x i := by
+  simp [WeightedFinsum]
+  induction S using Finset.induction with
+  | empty => simp; rfl
+  | insert x S hx ih =>
+    simp_all [WeightedAdd.wAdd]
+    magic_simp
+    congr
+
+omit [Fintype F] [DecidableEq F] in
+@[simp]
+theorem WeightedFinsum_apply'' {α : Type} [DecidableEq α] (S : Finset α) (f : α → 𝒲 𝒮 H[F]) (i : H[F]) :
+    (⨁ᶠ x ∈ S, f x).val i = ⨁ᶠ x ∈ S, f x i := by
+  simp [WeightedFinsum]
+  induction S using Finset.induction with
+  | empty => simp; rfl
+  | insert x S hx ih =>
+    simp_all [WeightedAdd.wAdd]
+    magic_simp
+
+omit [Fintype F] [DecidableEq F] in
+@[simp]
+theorem WeightedSum_apply' {α : Type} [Encodable α]
+    (f : α → 𝒲 𝒮 H[F]) (i : H[F]) :
+    (⨁' (x : α), f x) i = ⨁' (x : α), f x i := by
+  simp [WeightedSum]
+  unfold WeightedOmegaContinuousPreSemiring.instCountablePi
+  unfold WeightedOmegaCompletePartialOrder.instCountablePi
+  simp
+  simp [instFunLike𝒲]
+  simp [WeightedChain.map, WeightedSum_chain]
+  magic_simp
+  congr
+  ext n
+  simp [DFunLike.coe]
+  congr! with x
+  split
+  · simp
+  · rfl
+
+omit [Fintype F] [DecidableEq F] in
+@[simp]
+theorem WeightedSum_apply'' {α : Type} [Encodable α]
+    (f : α → 𝒲 𝒮 H[F]) (i : H[F]) :
+    (⨁' (x : α), f x).val i = ⨁' (x : α), f x i := by
+  rw [← WeightedSum_apply']
+  rfl
+
+omit [Fintype F] [DecidableEq F] in
+theorem WeightedSum_comm_le {α ι 𝒮 : Type} [Encodable α] [DecidableEq α] [Encodable ι]
+  [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+    (f : α → ι → 𝒮) :
+    ⨁' (x : α) (i : ι), f x i ≼ ⨁' (i : ι) (x : α), f x i := by
+  apply WeightedSum_le_of_finset
+  intro S
+  calc
+    _ = ⨁' (i : ι), ⨁ᶠ x ∈ S, f x i := by
+      induction S using Finset.induction with
+      | empty => simp
+      | insert x S hx ih =>
+        simp_all
+        rw [WeightedSum_add]
+    _ ≼ ⨁' (i : ι) (x : α), f x i := by
+      apply WeightedSum_mono fun i ↦ WeightedSum_finset_le _
+omit [Fintype F] [DecidableEq F] in
+theorem WeightedSum_comm {α ι 𝒮 : Type} [Encodable α] [Encodable ι] [DecidableEq α] [DecidableEq ι]
+  [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+    (f : α → ι → 𝒮) :
+    ⨁' (x : α) (i : ι), f x i = ⨁' (i : ι) (x : α), f x i :=
+  wle_antisymm (WeightedSum_comm_le _) (WeightedSum_comm_le _)
+
+omit [Fintype F] [DecidableEq F] in
+theorem WeightedSum_WeightedFinset_comm {α ι 𝒮 : Type} [Encodable α] [DecidableEq α] [Encodable ι] [DecidableEq ι]
+  [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+    (f : α → ι → 𝒮) (S : Finset ι) :
+    ⨁' (x : α), ⨁ᶠ i ∈ S, f x i = ⨁ᶠ i ∈ S, ⨁' (x : α), f x i := by
+  simp [← WeightedSum_finset]
+  rw [WeightedSum_comm]
+
+omit [DecidableEq F] in
+theorem 𝒲.bind_sum {f : 𝒲 𝒮 H[F]} {g : ℕ → H[F] → 𝒲 𝒮 H[F]} :
+    (f ≫= ⨁' (x : ℕ), g x) = (⨁' (x : ℕ), (f ≫= g x)) := by
   simp [bind]
   ext h
+  simp
   magic_simp
-  simp only [WeightedAdd.wAdd, WeightedPreSemiring.left_distrib, WeightedSum_add,
-    WeightedSum_mul_right, hf, WeightedSemiring.wOne_mul]
+  simp [← WeightedSum_mul_left]
+  rw [WeightedSum_comm]
 
-omit [Fintype F] [DecidableEq F] in
-theorem 𝒲.wAdd_bind' {a : 𝒲 𝒮 H[F]} {f : 𝒲 𝒮 H[F]} {g : H[F] → 𝒲 𝒮 H[F]}
-    (hf : ⨁' (x : f.val.supp), f.val x.val = 𝟙) : a.val ⨁ (f ≫= g).val = (f ≫= (a ⨁ g ·)).val := by
+omit [DecidableEq F] in
+theorem 𝒲.bind_sum_apply {f : 𝒲 𝒮 H[F]} {g : ℕ → H[F] → 𝒲 𝒮 H[F]} :
+    (f ≫= fun i ↦ ⨁' (x : ℕ), g x i) = (⨁' (x : ℕ), (f ≫= g x)) := by
+  simp [bind]
+  magic_simp
+  simp [← WeightedSum_mul_left]
+  apply Subtype.eq_iff.mpr
   ext h
-  have := congrFun (congrArg Subtype.val (𝒲.wAdd_bind (a:=a) (f:=f) (g:=g) hf)) h
-  simpa [WeightedAdd.wAdd]
+  simp
+  rw [WeightedSum_comm]
+  congr
 
-theorem WeightedSum_succ {f : ℕ → 𝒮} (h : f 0 = 𝟘) : ⨁' (n : ℕ), f (n + 1) = ⨁' (n : ℕ), f n := by
+theorem WeightedSum_nat_le (𝒮 : Type) [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+    {f : ℕ → 𝒮} (a : 𝒮) (h : ∀ n, ⨁ᶠ x ∈ Finset.range n, f x ≼ a) :
+    ⨁' (x : ℕ), f x ≼ a := by
+  apply WeightedSum_le_of_finset
+  intro S
+  if hS : ¬S.Nonempty then simp_all else
+  apply Decidable.not_not.mp at hS
+  apply wle_trans (WeightedFinsum_le_of_subset ?_) (h (S.max' hS + 1))
+  exact fun x hx ↦ Finset.mem_range.mpr <| Nat.lt_add_one_of_le <| Finset.le_max' _ _ hx
+attribute [local simp] Encodable.decode₂_eq_some in
+theorem WeightedSum_nat_eq_succ {f : ℕ → 𝒮} : ⨁' (x : ℕ), f x = f 0 ⨁ ⨁' (x : ℕ), f (x + 1) := by
   apply wle_antisymm
-  · apply wSup_le _ _ fun i ↦ le_wSup_of_le (i + 1) ?_
-    induction i with
-    | zero => simp [WeightedSum_chain, DFunLike.coe]
-    | succ i ih =>
-      sorry
-      -- apply wAdd_gconr (by simp)
-      -- apply wle_trans ih; clear ih
-      -- simp only [DFunLike.coe, WeightedSum_chain, WeightedChain.val_apply, Nat.fold_succ, wle_refl]
-  · apply wSup_le _ _ fun i ↦ ?_
-    rcases i with _ | i
-    · simp [WeightedSum_chain, DFunLike.coe]
-    · apply le_wSup_of_le i ?_
-      simp [DFunLike.coe, WeightedSum_chain]
-      induction i with
-      | zero =>
-        simp [DFunLike.coe]
-        sorry
-        -- simp [DFunLike.coe, h]
-      | succ i ih =>
-        sorry
-        -- simp only [DFunLike.coe, Nat.fold_succ]
-        -- apply wAdd_gconr (by simp)
-        -- apply wle_trans ih; clear ih
-        -- simp only [DFunLike.coe, Nat.fold_succ, wle_refl]
-
-theorem Policy.iter_k {h h'} (p : Policy[F,𝒮]) (hhh' : h ≠ h') :
-    (wnk_policy {~p;~p*}.sem h).val h' = (wnk_policy {~p*}.sem h).val h' := by
-  simp [sem]
-  simp [𝒲.bind]
-  sorry
-  -- rw [← WeightedSum_succ]
-  -- · simp [sem, 𝒲.bind]
-  --   sorry
-  -- · simp [sem, Predicate.sem]
-  --   sorry
+  · apply WeightedSum_nat_le
+    intro n
+    rcases n with _ | n
+    · simp
+    · rw [add_comm]
+      simp
+      apply wAdd_mono_left
+      simp [add_comm]
+      apply WeightedSum_finset_le
+  · simp [WeightedSum]
+    rw [WeightedOmegaContinuousAddRight]
+    apply wSup_le _ _ fun i ↦ ?_
+    apply le_wSup_of_le (1 + i)
+    magic_simp [WeightedSum_chain]
+    simp
+    split
+    · simp_all [Encodable.decode₂_eq_some]; subst_eqs
+      apply wAdd_mono_left
+      apply WeightedFinsum_mono
+      intro i
+      simp
+      split <;> split <;> simp_all
+      rw [add_comm]
+      simp
+    · simp_all [Encodable.decode₂_eq_some]
 
 theorem Policy.iter_sem_isLfp (p : Policy[F,𝒮]) : IsLfp (Φ p) (wnk_policy {~p*}.sem) := by
   constructor
   · ext h h'
-    if hhh' : h = h' then
-      subst_eqs
-      sorry
-    else
-      simp [← p.iter_k hhh']
-      simp [sem, Φ]
-      simp [WeightedAdd.wAdd]
-      suffices (η h).val h' = (𝟘 : 𝒮) by simp [this]
-      sorry
-  · intro f hf
-    rw [← hf]
-    simp [Φ, sem]
-    intro h h'
-    simp
-    rw [𝒲.wAdd_bind']
-    · simp [𝒲.bind]
-      apply wSup_le
-      intro i
-      simp only [DFunLike.coe, WeightedSum_chain]
-      simp [WeightedAdd.wAdd]
-      induction i with
-      | zero => simp [WeightedChain.map, DFunLike.coe, WeightedZero.wZero]
-      | succ i ih =>
-        apply wle_trans _ ih; clear ih
-        simp only [DFunLike.coe]
-        simp
-        sorry
-    · sorry
+    simp [sem, Φ]
+    suffices
+          (p.sem h ≫= fun h ↦ ⨁' (n : ℕ), (p.iter n).sem h)
+        = ⨁' (n : ℕ), (p.sem h ≫= fun h ↦ (p.iter n).sem h) by
+      simp [this]; clear this
+      rw [WeightedSum_nat_eq_succ]
+      simp [Policy.sem, Predicate.sem, WeightedAdd.wAdd]
+      congr
+    ext
+    simp [𝒲.bind]
+    magic_simp
+    simp [← WeightedSum_mul_left]
+    rw [WeightedSum_comm]
+  · intro f hf h
+    simp [sem, Φ, 𝒲.bind, WeightedAdd.wAdd]
+    apply WeightedSum_nat_le
+    intro n
+    induction n generalizing h with
+    | zero => simp
+    | succ n ih =>
+      rw [add_comm]
+      simp [sem, Predicate.sem]
+      rw [← hf]
+      simp only [WeightedAdd.wAdd, Φ]
+      apply wAdd_mono_left
+      simp [add_comm]
+      simp [sem]
+      calc
+        ⨁ᶠ i ∈ Finset.range n, (p.sem h ≫= (p.iter i).sem)
+          = (p.sem h ≫= ⨁ᶠ i ∈ Finset.range n, (p.iter i).sem) := by
+          simp [𝒲.bind]
+          magic_simp
+          ext h'
+          simp only
+          simp
+          magic_simp
+          simp [← WeightedFinsum_mul_left]
+          rw [WeightedSum_WeightedFinset_comm]
+        _ ≼ (p.sem h ≫= f) := by
+          apply 𝒲.bind_mono
+          intro h₁
+          convert ih h₁
+          simp [WeightedPreSemiring.instPi]
 
 theorem Policy.iter_sem_eq_lfp (p : Policy[F,𝒮]) : wnk_policy {~p*}.sem = Φ_wSup p :=
   IsLfp_unique p.iter_sem_isLfp p.Φ_wSup_isLfp
+
+example {p : Policy[F,𝒮]} : wnk_policy {~p*}.sem = wnk_policy { skip ⨁ ~p; ~p* }.sem := by
+  have := Policy.iter_sem_isLfp p |>.left
+  rw [← this]
+  ext
+  unfold Φ
+  simp [WeightedAdd.wAdd, Policy.sem, Predicate.sem]
