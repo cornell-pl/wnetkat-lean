@@ -259,271 +259,130 @@ theorem WeightedFinsum_le_of_subset {I : Type} [DecidableEq I] {S₁ S₂ : Fins
   · exact wle_wAdd (⨁ᶠ i ∈ S₁, f i) (⨁ᶠ i ∈ S₃, f i)
   · simp [S₃]; exact Finset.disjoint_sdiff
 
-def List.max {α : Type} [Max α] (l : List α) (h : ¬l = []) : α :=
-  match l with
-  | x::[] => x
-  | x::y::rest => x ⊔ (y::rest).max (by simp)
+-- TODO: move this as early as possible
+@[reducible]
+instance : Trans (· ≼ · : 𝒮 → 𝒮 → Prop) (· ≼ · : 𝒮 → 𝒮 → Prop) (· ≼ · : 𝒮 → 𝒮 → Prop) where
+  trans := wle_trans
+@[reducible]
+instance : Trans (· ≼ · : 𝒲 𝒮 H[F] → 𝒲 𝒮 H[F] → Prop) (· ≼ · : 𝒲 𝒮 H[F] → 𝒲 𝒮 H[F] → Prop) (· ≼ · : 𝒲 𝒮 H[F] → 𝒲 𝒮 H[F] → Prop) where
+  trans := wle_trans
 
-theorem List.le_max_cons_iff {α : Type} [LinearOrder α] (x y : α) (l : List α) :
-    x ≤ (y :: l).max (by simp) ↔ x ≤ y ∨ (∃ h : _, x ≤ l.max h) := by
-  rcases l <;> simp_all [max]
-
-@[simp]
-theorem List.le_max_cons {α : Type} [LinearOrder α] (x : α) (l : List α) :
-    x ≤ (x :: l).max (by simp) := by
-  simp [le_max_cons_iff]
-
-@[simp]
-theorem List.le_max_of_mem {α : Type} [LinearOrder α] (x : α) (l : List α) (h : x ∈ l) :
-    x ≤ l.max (ne_nil_of_mem h) := by
-  induction l with
-  | nil => simp at h
-  | cons y l ih =>
-    simp_all [le_max_cons_iff]
-    rcases h with h | h
-    · simp
-    · have hxl : x ∈ l := by assumption
-      right
-      use (ne_nil_of_mem hxl)
-      apply ih hxl
-
-theorem List.subset_finset_range_max (l : List ℕ) (h : ¬l = []) :
-    l.toFinset ⊆ Finset.range (l.max h + 1) := by
-  induction l, h using List.max.induct with
-  | case1 => simp_all [max]
-  | case2 x y rest h ih =>
-    intro z hz
-    simp_all
-    refine Nat.lt_add_one_iff.mpr ?_
-    simp_all [le_max_cons_iff]
-
-theorem wSup_WeightedSum_chain_wle {I : Type} (e₀ e₁ : Encodable I) (f : I → α) :
-    wSup (@WeightedSum_chain _ _ _ _ e₀ f) ≼ wSup (@WeightedSum_chain _ _ _ _ e₁ f) := by
+-- TODO: move this as early as possible
+attribute [local simp] Encodable.decode₂_eq_some in
+theorem WeightedSum_le_of_finset {α 𝒮 : Type} [Encodable α] [DecidableEq α]
+  [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+    {f : α → 𝒮} {a : 𝒮} (h : ∀ S : Finset α, ⨁ᶠ x ∈ S, f x ≼ a) :
+    ⨁' x : α, f x ≼ a := by
   apply wSup_le _ _ fun i ↦ ?_
   magic_simp [WeightedSum_chain]
-  let actual := (List.range (i )).filterMap (e₀.decode₂ _) |>.map e₁.encode
-  have : actual.Nodup := by
-    refine (List.nodup_map_iff_inj_on (List.Nodup.filterMap ?_ List.nodup_range)).mpr (by simp)
-    simp_all [Encodable.decode₂_eq_some]
-  rw [← WeightedFinsum_bij_ne_zero (Sι:=actual.toFinset) (fι:=(match e₁.decode₂ _ · with | some x => f x | none => 𝟘))]
-  · if h_empty : actual = [] then simp_all else
-    apply le_wSup_of_le (actual.max (by assumption) + 1)
-    magic_simp
-    have : actual.toFinset ⊆ Finset.range (actual.max (by assumption) + 1) := by
-      apply List.subset_finset_range_max actual
-    have := WeightedFinsum_le_of_subset this (f:=(match e₁.decode₂ _ · with | some x => f x | none => 𝟘))
-    apply wle_trans this
-    apply WeightedFinsum_mono
-    intro i
-    simp
-    split <;> split <;> simp_all
-  · exact fun x hx _ ↦ (e₁.decode₂ _ x).get (by
-      simp_all [actual]
-      refine Option.isSome_iff_exists.mpr ?_
-      simp_all [Encodable.decode₂_eq_some]
-      obtain ⟨q, hx, hx'⟩ := hx
-      use q
-    ) |> e₀.encode
-  · simp_all [actual, Encodable.decode₂_eq_some]
-    intro x hx
-    intro ⟨h₁, h₂⟩
-    subst_eqs
-    simp_all
-  · simp_all [actual, Encodable.decode₂_eq_some]
-    rintro a₁ x₁ ⟨h₁, _, _⟩ q₁ a₂ x₂ ⟨h₂, _, _⟩ q₂ h
-    simp_all
-  · simp_all [actual, Encodable.decode₂_eq_some]
-    intro b hbi
+  let S := Finset.range i |>.filterMap (Encodable.decode₂ α) (by simp_all)
+  apply wle_trans _ (h S); clear h
+  apply wle_of_eq
+  symm
+  apply WeightedFinsum_bij_ne_zero (fun x _ _ ↦ Encodable.encode x)
+  · simp_all [S]
+  · simp_all [S]
+  · simp_all [S]
+    intro b hb hb'
+    split at hb'
+    · simp_all; subst_eqs
+      simp_all
+    · contradiction
+  · simp_all [S]
+
+-- TODO: move this as early as possible
+attribute [local simp] Encodable.decode₂_eq_some in
+theorem WeightedSum_finset_le {α 𝒮 : Type} [Encodable α] [DecidableEq α]
+  [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+    {f : α → 𝒮} (S : Finset α) :
+    ⨁ᶠ x ∈ S, f x ≼ ⨁' x : α, f x := by
+  let actual := S.image Encodable.encode
+  if h_nonempty : actual = {} then simp_all [actual] else
+  let top := (actual.max' (Finset.nonempty_iff_ne_empty.mpr h_nonempty) + 1)
+  apply le_wSup_of_le top
+  magic_simp
+  simp [WeightedSum_chain]
+  magic_simp
+  let S' : Finset ℕ := Finset.range top |>.filter (Encodable.decode₂ α · |>.isSome)
+  rw [WeightedFinsum_bij_ne_zero (Sι:=Finset.range top) (Sγ:=S')
+      (fγ:=(fun x ↦ match Encodable.decode₂ _ x with | some x => f x | none => 𝟘))
+      (fun q h₁ h₂ ↦ q)]
+  · rw [WeightedFinsum_bij_ne_zero (Sι:=S) (Sγ:=actual) (fγ:=(fun x ↦ match Encodable.decode₂ _ x with | some x => f x | none => 𝟘)) (fun q _ _ ↦ Encodable.encode q)]
+    · refine WeightedFinsum_le_of_subset ?_
+      intro
+      simp_all [S', actual, top]
+      intro a ha ha'
+      subst_eqs
+      simp_all
+      refine Nat.lt_add_one_of_le ?_
+      apply Finset.le_max'
+      simp [ha]
+    · simp_all [S', actual, top]
+    · simp_all
+    · simp_all; intro a ha; split
+      · simp_all; subst_eqs; simp_all [S', actual, top]
+      · simp
+    · simp_all
+  · simp_all [top, actual]
+    intro a ha
     split
-    · rename_i x' x hx
-      intro h₂
-      simp_all [Encodable.decode₂_eq_some]; subst_eqs
-      simp_all
-      use e₁.encode x
-      simp_all
+    · simp_all; subst_eqs
+      simp_all [S', top, actual]
     · simp
-  · simp_all [actual, Encodable.decode₂_eq_some]
+  · simp
+  · simp_all
+    intro a ha
+    split
+    · simp_all; subst_eqs; simp_all [S']
+    · simp
+  · simp_all
+    intro a ha
+    split
+    · simp_all; subst_eqs; simp
+    · simp_all
 
-theorem WeightedSum_with_encoding {I : Type} (e₀ e₁ : Encodable I) (f : I → α) :
+theorem WeightedSum_with_encoding_wle {I : Type} [DecidableEq I] (e₀ e₁ : Encodable I) (f : I → α) :
+    @WeightedSum I α _ _ e₀ f ≼ @WeightedSum I α _ _ e₁ f :=
+  letI := e₀; WeightedSum_le_of_finset fun _ ↦ letI := e₁; WeightedSum_finset_le _
+
+theorem WeightedSum_with_encoding {I : Type} [DecidableEq I] (e₀ e₁ : Encodable I) (f : I → α) :
     @WeightedSum I α _ _ e₀ f = @WeightedSum I α _ _ e₁ f :=
-  wle_antisymm (wSup_WeightedSum_chain_wle e₀ e₁ f) (wSup_WeightedSum_chain_wle e₁ e₀ f)
+  wle_antisymm (WeightedSum_with_encoding_wle e₀ e₁ f) (WeightedSum_with_encoding_wle e₁ e₀ f)
 
-def Encodable.ofList {I : Type} [DecidableEq I] (S : List I) (hS : S.Nodup) :
-    Encodable {x // x ∈ S} := {
-  encode := fun ⟨s, hs⟩ ↦ S.findIdx? (· = s) |>.get (by simp [hs])
-  decode n := if _ : n < S.length then some ⟨S[n], by simp⟩ else none
-  encodek := by
-    simp only [Option.dite_none_right_eq_some, Option.some.injEq, Subtype.forall,
-      Subtype.mk.injEq]
-    intro s hs
-    obtain ⟨i, hi, _, _⟩ := List.mem_iff_getElem.mp hs
-    suffices List.findIdx? (fun x ↦ decide (x = S[i])) S = some i by simp_all
-    refine List.findIdx?_eq_some_iff_getElem.mpr ?_
-    simp_all
-    intro j hj q
-    have h₁ := List.nodup_iff_injective_getElem.mp hS
-    have : (⟨j, by omega⟩: Fin S.length) ≠ ⟨i, by omega⟩ := by simp; omega
-    have := h₁.ne this
-    contradiction
-}
-
-theorem wSup_skip {C : WeightedChain α} (n : ℕ) :
+theorem wSup_skip {α : Type} [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α]
+    {C : WeightedChain α} (n : ℕ) :
     wSup C = wSup ⟨fun i ↦ C (i + n), fun hab ↦ by simp; apply C.prop; simp_all⟩ := by
   apply wle_antisymm
-  · apply wSup_le _ _ fun i ↦ ?_
-    apply le_wSup_of_le i
-    magic_simp
-    apply C.prop
-    simp
-  · apply wSup_le _ _ fun i ↦ ?_
-    apply le_wSup_of_le (i + n)
-    magic_simp
+  · apply wSup_le _ _ fun i ↦ le_wSup_of_le i ?_
+    exact C.prop (by simp)
+  · exact wSup_le _ _ fun i ↦ le_wSup_of_le (i + n) (by magic_simp)
 
 theorem wSup_skip' {C : WeightedChain α} (n : ℕ) :
     wSup C = wSup ⟨fun i ↦ C (n + i), fun hab ↦ by simp; apply C.prop; simp_all⟩ := by
   rw [wSup_skip n]
   simp [add_comm]
 
-attribute [local simp] Encodable.decode₂_eq_some in
-theorem WeightedSum_list {I : Type} [DecidableEq I] [e₀ : Encodable I] (S : List I) (hS : S.Nodup) (f : I → α) :
-    ⨁' x : {x // x ∈ S}, f x = ⨁ᶠ x ∈ S.toFinset, f x := by
-  rw [WeightedSum_with_encoding _ (Encodable.ofList S hS)]
-  simp_all [WeightedSum, WeightedSum_chain]
-  apply wle_antisymm
-  · apply wSup_le _ _ fun i ↦ ?_
-    magic_simp
-    let S' := Finset.range i |>.filterMap ((Encodable.ofList S hS).decode₂ _) (by simp_all [Encodable.decode₂_eq_some]) |>.image Subtype.val
-    have : S' ⊆ S.toFinset := by intro; simp_all [S']
-    apply wle_trans _ (WeightedFinsum_le_of_subset this)
-    apply wle_of_eq
-    symm
-    apply WeightedFinsum_bij_ne_zero (fun x h₁ h₂ ↦ (Encodable.ofList S hS).encode ⟨x, List.mem_dedup.mp (this h₁)⟩)
-    · simp_all only [Finset.mem_image, Finset.mem_filterMap, Finset.mem_range,
-      Encodable.decode₂_eq_some, exists_eq_right', Subtype.exists, exists_and_right,
-      exists_eq_right, ne_eq, forall_exists_index, implies_true, S']
-    · simp_all only [Finset.mem_image, Finset.mem_filterMap, Finset.mem_range,
-      Encodable.decode₂_eq_some, exists_eq_right', Subtype.exists, exists_and_right,
-      exists_eq_right, ne_eq, Encodable.encode_inj, Subtype.mk.injEq, implies_true, S']
-    · simp_all
-      intro b hb; split
-      · simp_all; subst_eqs; simp_all
-        intro h
-        rename_i x
-        obtain ⟨x, hx⟩ := x
-        use x
-        simp_all [S']
-      · simp
-    · simp
-  · let actual := S.attach.map (Encodable.ofList S hS).encode
-    if h_nonempty : actual = [] then simp_all [actual] else
-    apply le_wSup_of_le (actual.max (by assumption) + 1)
-    magic_simp
-    let S' := Finset.range (actual.max h_nonempty + 1) |>.filter ((Encodable.ofList S hS).decode₂ _ · |>.isSome)
-    rw [WeightedFinsum_bij_ne_zero (Sι:=Finset.range (actual.max h_nonempty + 1)) (Sγ:=S')
-        (fγ:=(fun x ↦ match (Encodable.ofList S hS).decode₂ _ x with | some x => f x | none => 𝟘))
-        (fun q h₁ h₂ ↦ q)]
-    · apply wle_of_eq
-      apply WeightedFinsum_bij_ne_zero (fun x h₁ h₂ ↦ (Encodable.ofList S hS).encode ⟨x, List.mem_dedup.mp h₁⟩)
-      · simp_all [S', actual]
-        intro a ha ha0
-        refine Nat.lt_add_one_of_le ?_
-        apply List.le_max_of_mem
-        simp
-      · simp
-      · intro b hb
-        split
-        · simp_all; subst_eqs; simp
-        · simp
-      · simp
-    · simp_all;
-      intro a ha
-      split
-      · simp_all; subst_eqs; simp_all [actual]
-        simp_all [S', actual]
-      · simp_all
-    · simp_all
-    · simp_all
-      intro b hb
-      split
-      · simp_all; subst_eqs
-        simp_all
-        intro _
-        refine Nat.lt_add_one_of_le ?_
-        apply List.le_max_of_mem
-        simp [actual]
-      · simp_all
-    · simp_all
-      intro a ha
-      split
-      · simp_all; subst_eqs
-        simp
-      · simp
-
 theorem WeightedSum_finset {I : Type} [DecidableEq I] [Encodable I] (S : Finset I) (f : I → α) :
     ⨁' x : S, f x = ⨁ᶠ x ∈ S, f x := by
-  have : S.toList.toFinset = S := by simp
-  rw [← this]
-  rw [← WeightedSum_list _ (Finset.nodup_toList S)]
-  have : {x // x ∈ S.toList.toFinset} = {x // x ∈ S} := by simp
-  congr! 1
-  · simp
-  · congr!
-    simp_all
-    ext
-    simp
-  · simp_all
-    refine Function.hfunext ?_ ?_
-    · simp
-    · simp_all [Subtype.heq_iff_coe_eq]
+  apply wle_antisymm
+  · apply WeightedSum_le_of_finset fun S₀ ↦ ?_
+    rw [WeightedFinsum_bij  (Sγ:=S₀.map ⟨(·.val), ?_⟩) (fun x _ ↦ x.val) (fγ:=(f ·))]
+    · apply WeightedFinsum_le_of_subset; intro; simp_all
+    all_goals simp
+  · apply wle_trans _ (WeightedSum_finset_le S.attach)
+    nth_rw 2 [WeightedFinsum_bij  (Sγ:=S.attach.map ⟨(·.val), ?_⟩) (fun x _ ↦ x.val) (fγ:=(f ·))]
+    · apply WeightedFinsum_le_of_subset; intro; simp
+    all_goals simp
 
-attribute [local simp] Encodable.decode₂_eq_some in
-theorem WeightedSum_finite {I : Type} [DecidableEq I] [e : Encodable I] [hfin : Finite I] (f : I → α) :
-    ⨁' x : I, f x = ⨁ᶠ x ∈ Set.finite_univ.toFinset, f x := by
-  rw [← WeightedSum_finset]
-  have : ⨁' (x : { x // x ∈ Set.finite_univ.toFinset }), f x.val = ⨁' (x : { x : I // True }), f x.val := by
-    congr
-    · simp
-    · simp
-    · refine Function.hfunext rfl ?_
-      · intro a
-        simp_all [Subtype.heq_iff_coe_eq]
-        refine Subsingleton.helim ?_ _ _
-        simp
-    · refine Function.hfunext ?_ ?_
-      · simp_all [Subtype.heq_iff_coe_eq]
-      · simp_all [Subtype.heq_iff_coe_eq]
-  simp [this]
-  let e' : Encodable { a : I // True } := {
-    encode x := e.encode x
-    decode n := (e.decode n).map (⟨·, by trivial⟩)
-    encodek := by simp
-  }
-  rw [WeightedSum_with_encoding Subtype.encodable e']
-  simp [WeightedSum]
-  congr!
-  ext i
-  magic_simp [WeightedSum_chain]
-  apply WeightedFinsum_bij (fun x _ ↦ x)
-  · simp
-  · simp
-  · simp
-  · simp_all
-    intro a ha
-    split <;> split
-    · simp_all [e']; subst_eqs
-      rename_i heq
-      have := Encodable.encode_inj.mp heq
-      simp_all
-    · simp_all [e']
-    · simp_all [e']
-    · simp_all [e']
+theorem WeightedSum_finite {I : Type} [DecidableEq I] [Encodable I] [hfin : Finite I] (f : I → α) :
+    ⨁' x : I, f x = ⨁ᶠ x ∈ Set.finite_univ.toFinset, f x :=
+  wle_antisymm
+    (WeightedSum_le_of_finset fun S₀ ↦ WeightedFinsum_le_of_subset (by simp))
+    (WeightedSum_finset_le _)
 
 example : ⨁' _ : Fin 4, (𝟙 : α) = 𝟙 ⨁ 𝟙 ⨁ 𝟙 ⨁ 𝟙 := by
-  rw [WeightedSum_finite]
-  simp
-  simp [WeightedFinsum]
   have : (Finset.univ : Finset (Fin 4)) = {0, 1, 2, 3} := rfl
-  simp_all [WeightedPreSemiring.wAdd_comm]
+  simp_all [WeightedSum_finite, WeightedPreSemiring.wAdd_comm]
 
 end
 
