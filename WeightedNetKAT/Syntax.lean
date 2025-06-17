@@ -19,16 +19,16 @@ inductive Predicate where
 
 notation "Predicate[" F "]" => Predicate (F:=F)
 
-inductive Policy where
+inductive Policy (W : Type) where
   | Filter (t : Predicate[F])
   | Mod (f : F) (n : ℕ)
   | Dup
-  | Seq (p q : Policy)
-  | Weight (w : 𝒲 𝒮 H[F]) (p : Policy)
-  | Add (p q : Policy)
-  | Iter (p : Policy)
+  | Seq (p q : Policy W)
+  | Weight (w : W) (p : Policy W)
+  | Add (p q : Policy W)
+  | Iter (p : Policy W)
 
-notation "Policy[" F "," W "]" => Policy (F:=F) (W:=W)
+notation "Policy[" α "," β "]" => Policy (F:=α) (W:=β)
 
 section Syntax
 
@@ -121,10 +121,10 @@ macro_rules
 /--
 info: (Policy.Filter (Predicate.Test 123 1)).Seq
   ((Policy.Filter ((Predicate.Bool false).Dis (Predicate.Bool true)).Not).Seq
-    (Policy.Weight ⟨fun x ↦ 1, ⋯⟩ ((Policy.Mod 12 2).Seq (Policy.Dup.Add Policy.Dup.Iter)))) : Policy
+    (Policy.Weight (fun x ↦ 1) ((Policy.Mod 12 2).Seq (Policy.Dup.Add Policy.Dup.Iter)))) : Policy (ℕ → ℕ)
 -/
 #guard_msgs in
-#check wnk_policy { ~123 = 1 ; ¬false ∨ true ; ~⟨fun x ↦ 1, sorry⟩ ⨀ ~12 ← 2 ; dup ⨁ dup* }
+#check wnk_policy { ~123 = 1 ; ¬false ∨ true ; ~(fun (_ : ℕ) ↦ 1) ⨀ ~12 ← 2 ; dup ⨁ dup* }
 
 macro_rules|`(wnk_pred{~$t})=>`($t)
 macro_rules|`(wnk_policy{~$t})=>`($t)
@@ -179,9 +179,9 @@ def Policy.unexpandFilter : Unexpander
   | _ => throw ()
 | _ => throw ()
 
-/-- info: wnk_policy {true} : Policy -/
+/-- info: wnk_policy {true} : Policy Unit -/
 #guard_msgs in
-#check wnk_policy { true }
+#check (wnk_policy { true } : Policy Unit)
 
 @[app_unexpander Policy.Dup]
 def Policy.unexpandDup : Unexpander
@@ -244,13 +244,13 @@ def Policy.unexpandIter : Unexpander
   `(wnk_policy { $x * })
 | _ => throw ()
 
-/-- info: wnk_policy {dup ⨁ dup} : Policy -/
+/-- info: wnk_policy {dup ⨁ dup} : Policy Unit -/
 #guard_msgs in
-#check wnk_policy { dup ⨁ dup }
+#check (wnk_policy { dup ⨁ dup } : Policy Unit)
 
-/-- info: wnk_policy {~123 = ~1; ¬false ∨ true; ~⟨fun x ↦ 1, ⋯⟩ ⨀ ~12 ← ~2; dup ⨁ dup*} : Policy -/
+/-- info: wnk_policy {~123 = ~1; ¬false ∨ true; ~3 ⨀ ~12 ← ~2; dup ⨁ dup*} : Policy ℕ -/
 #guard_msgs in
-#check wnk_policy { ~123 = 1 ; ¬false ∨ true ; ~⟨fun x ↦ 1, sorry⟩ ⨀ ~12 ← 2 ; dup ⨁ dup* }
+#check (wnk_policy { ~123 = 1 ; ¬false ∨ true ; ~(3) ⨀ ~12 ← 2 ; dup ⨁ dup* } : Policy ℕ)
 
 -- Copied from Lean's term parenthesizer - applies the precedence rules in the grammar to add
 -- parentheses as needed.
@@ -273,12 +273,12 @@ where
     let pstx ← `(($(⟨stx⟩)))
     return pstx.raw.setInfo (SourceInfo.fromRef stx)
 
-/-- info: wnk_policy {~"x" = ~2; true ⨁ ¬~"x" = ~2; false} : Policy -/
+/-- info: wnk_policy {~"x" = ~2; true ⨁ ¬~"x" = ~2; false} : Policy Unit -/
 #guard_msgs in
-#check wnk_policy { if ~"x" = 2 then skip else drop }
+#check (wnk_policy { if ~"x" = 2 then skip else drop } : Policy Unit)
 
-/-- info: wnk_policy {(~"x" = ~2; true)*; ¬~"x" = ~2} : Policy -/
+/-- info: wnk_policy {(~"x" = ~2; true)*; ¬~"x" = ~2} : Policy Unit -/
 #guard_msgs in
-#check wnk_policy { while ~"x" = 2 do skip }
+#check (wnk_policy { while ~"x" = 2 do skip } : Policy Unit)
 
 end Syntax

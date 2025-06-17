@@ -741,6 +741,14 @@ theorem WeightedSum_eq_zero_iff {f : I → α} : ⨁' x, f x = 𝟘 ↔ ∀ x, f
       simp only [WeightedFinsup_range_succ, wAdd_eq_zero_iff]
       split <;> simp_all
 
+omit e in
+@[simp]
+theorem WeightedFinsum_eq_zero_iff [DecidableEq I] {f : I → α} (S : Finset I) :
+    ⨁ᶠ x ∈ S, f x = 𝟘 ↔ ∀ x ∈ S, f x = 𝟘 := by
+  induction S using Finset.induction with
+  | empty => simp_all
+  | insert x S hx ih => simp_all
+
 @[simp]
 theorem WeightedSum_zero {T : Type} [Encodable T] : ⨁' _ : T, (𝟘 : α) = 𝟘 := by
   simp

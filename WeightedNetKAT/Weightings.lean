@@ -16,7 +16,7 @@ def 𝒲 (𝒮 : Type) [WeightedSemiring 𝒮] (X : Type) := {m : W X 𝒮 // Co
 
 omit [WeightedOmegaContinuousPreSemiring 𝒮] in
 @[ext]
-theorem Countable.ext (C₁ C₂ : 𝒲 𝒮 X)
+theorem 𝒲.ext (C₁ C₂ : 𝒲 𝒮 X)
     (h : C₁.val = C₂.val) : C₁ = C₂ := by cases C₁; cases C₂; congr
 
 abbrev 𝒲.supp (m : 𝒲 𝒮 X) := m.val.supp
@@ -106,12 +106,6 @@ instance WeightedPartialOrder.instCountablePi  : WeightedPartialOrder (𝒲 𝒮
     exact wle_antisymm (hab x) (hba x)
 
 attribute [simp] WeightedZero.instCountablePi
-
-    -- let s : Set _ := ⋃ x ∈ m.supp, (f x).supp
-    -- apply Set.Countable.mono _ (Set.Countable.biUnion m.prop fun a _ ↦ (f a).prop : Countable s)
-    -- intro y
-    -- simp only [W.supp_mem_iff, ne_eq, WeightedSum_eq_zero_iff, Subtype.forall, not_forall,
-    --   Classical.not_imp, Set.mem_iUnion, exists_prop, forall_exists_index, and_imp, s]
 
 instance WeightedOmegaCompletePartialOrder.instCountablePi :
     WeightedOmegaCompletePartialOrder (𝒲 𝒮 X) where
