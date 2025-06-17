@@ -1088,7 +1088,7 @@ theorem wSup_of_const {α : Type} [WeightedOmegaCompletePartialOrder α] (C : We
 
 omit [Fintype F] [DecidableEq F] in
 theorem 𝒲.bind_apply (f : 𝒲 𝒮 H[F]) (g : H[F] → 𝒲 𝒮 H[F]) (x : H[F]) :
-    (f ≫= g) x = ⨁' (x_1 : ↑f.supp), f ↑x_1 ⨀ (g ↑x_1) x := by
+    (f ≫= g) x = ⨁' (i : f.supp), f i ⨀ g i x := by
   simp [bind]
   magic_simp
 
@@ -1211,3 +1211,9 @@ theorem Policy.sem_n_approx (p : Policy[F,𝒮]) : p.sem = wSup ⟨p.sem_n, sem_
       intro i
       apply le_wSup_of_le n
       magic_simp
+
+attribute [local simp] Policy.sem Policy.sem_n in
+theorem Policy.sem_n_lowerBounds (p : Policy[F,𝒮]) (n : ℕ) : p.sem_n n ≼ p.sem := by
+  rw [sem_n_approx]
+  apply le_wSup_of_le n
+  magic_simp
