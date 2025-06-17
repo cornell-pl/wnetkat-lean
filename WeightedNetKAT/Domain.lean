@@ -473,31 +473,6 @@ instance WeightedPartialOrder.instOption {α : Type} [WeightedPartialOrder α] :
     split at * <;> split at * <;> simp_all
     exact wle_antisymm hab hba
 
--- instance WeightedOmegaCompletePartialOrder.instOption {α : Type} [WeightedOmegaCompletePartialOrder α] :
---     WeightedOmegaCompletePartialOrder (Option α) where
---   wSup := sorry
---   wSup_le := sorry
---   le_wSup := sorry
-
--- def WeightedOmegaCompletePartialOrder.lex (α β : Type)
---   [WeightedOmegaCompletePartialOrder α] [WeightedOmegaCompletePartialOrder β] [DecidableRel (wLe (α:=α))] [DecidableRel (wLe (α:=β))] :
---     WeightedOmegaCompletePartialOrder (α × β) := {WeightedPartialOrder.lex α β with
---   wSup C :=
---     letI := WeightedPartialOrder.lex α β
---     let α_sup := wSup (C.map (·.fst) (by intro a b hab; simp; rcases hab <;> simp_all))
---     let Cβ : WeightedChain β := ⟨fun i ↦
---       let C' : List (Option β) := List.ofFn (fun (j : Fin i) ↦
---         let p := C.val j; if p.1 ≼ α_sup then some p.2 else none)
---       let C'' := C'.filterMap (·)
---       letI : Max β := ⟨fun a b ↦ if a ≼ b then a else b⟩
---       C''[i]?.getD (C''.max?.get (by simp_all [C', C'']; sorry))
---       ,
---       sorry⟩
---     ⟨α_sup, wSup Cβ⟩
---   le_wSup := sorry
---   wSup_le := sorry
--- }
-
 variable {ι : Type}
 
 /-- `⨁ x ∈ I, f x` is the finite sum over `f`. -/
@@ -953,33 +928,6 @@ macro_rules
       simp only [myAdd] at *; clear myAdd
     )
   )
-
-  -- induction S using Finset.induction with
-  -- | empty => simp
-  -- | insert x S hxS ih =>
-  --   simp [WeightedSum]
-  --   sorry
-
--- theorem WeightedSum_finite (S : Set I) (hS : S.Finite) (f : I → α) :
---     have : Encodable S := Encodable.ofCountable ↑S
---     have : Fintype S := hS.fintype
---     ⨁' x : S, f x = ⨁ᶠ x ∈ S, f x := by
---   letI := hS.fintype
---   have := WeightedSum_finset S.toFinset f
---   simp at this
---   simp
---   rw [← this]
---   simp [WeightedSum]
---   congr! 1
---   ext i
---   simp [WeightedSum_chain, DFunLike.coe]
---   congr! 2
---   sorry
---   -- split <;> split
---   -- · congr! 1
---   -- · simp_all
---   -- · simp_all
---   -- · simp_all
 
 -- omit e in
 -- theorem WeightedSum_pair [DecidableEq I] {i₀ i₁ : I} (h : i₀ ≠ i₁) (f : I → α) :
