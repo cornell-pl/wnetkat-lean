@@ -121,10 +121,10 @@ macro_rules
 /--
 info: (Policy.Filter (Predicate.Test 123 1)).Seq
   ((Policy.Filter ((Predicate.Bool false).Dis (Predicate.Bool true)).Not).Seq
-    (Policy.Weight (fun x ↦ 1) ((Policy.Mod 12 2).Seq (Policy.Dup.Add Policy.Dup.Iter)))) : Policy (ℕ → ℕ)
+    (Policy.Weight 1 ((Policy.Mod 12 2).Seq (Policy.Dup.Add Policy.Dup.Iter)))) : Policy ℕ
 -/
 #guard_msgs in
-#check wnk_policy { ~123 = 1 ; ¬false ∨ true ; ~(fun (_ : ℕ) ↦ 1) ⨀ ~12 ← 2 ; dup ⨁ dup* }
+#check wnk_policy { ~123 = 1 ; ¬false ∨ true ; ~1 ⨀ ~12 ← 2 ; dup ⨁ dup* }
 
 macro_rules|`(wnk_pred{~$t})=>`($t)
 macro_rules|`(wnk_policy{~$t})=>`($t)
@@ -250,7 +250,7 @@ def Policy.unexpandIter : Unexpander
 
 /-- info: wnk_policy {~123 = ~1; ¬false ∨ true; ~3 ⨀ ~12 ← ~2; dup ⨁ dup*} : Policy ℕ -/
 #guard_msgs in
-#check (wnk_policy { ~123 = 1 ; ¬false ∨ true ; ~(3) ⨀ ~12 ← 2 ; dup ⨁ dup* } : Policy ℕ)
+#check (wnk_policy { ~123 = 1 ; ¬false ∨ true ; ~3 ⨀ ~12 ← 2 ; dup ⨁ dup* } : Policy ℕ)
 
 -- Copied from Lean's term parenthesizer - applies the precedence rules in the grammar to add
 -- parentheses as needed.

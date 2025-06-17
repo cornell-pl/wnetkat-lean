@@ -51,7 +51,7 @@ theorem Policy.iterDepth_iter {p : Policy[F,X]} {n : ℕ} :
   induction n with simp_all
 
 open WeightedOmegaCompletePartialOrder in
-noncomputable def Policy.sem (p : Policy[F,𝒲 𝒮 H[F]]) : H[F] → 𝒲 𝒮 H[F] := match p with
+noncomputable def Policy.sem (p : Policy[F,𝒮]) : H[F] → 𝒲 𝒮 H[F] := match p with
   | .Filter t => t.sem
   | wnk_policy {~f ← ~n} => fun h ↦ match h with
     | [] => 𝟘
@@ -63,7 +63,7 @@ noncomputable def Policy.sem (p : Policy[F,𝒲 𝒮 H[F]]) : H[F] → 𝒲 𝒮
   | .Seq p q =>
     fun h ↦ (p.sem h ≫= q.sem)
   -- TODO: this should use the syntax
-  | .Weight w p => fun h ↦ w ⨀ p.sem h
+  | .Weight w p => fun h ↦ ⟨fun h' ↦ w ⨀ p.sem h h', SetCoe.countable (W.supp (w ⨀ sem p h ·))⟩
   -- TODO: this should use the syntax
   | .Add p q => fun h ↦ p.sem h ⨁ q.sem h
   -- TODO: this should use the syntax
@@ -75,10 +75,10 @@ example {t u : Predicate[F]} :
     wnk_policy { ~t ∨ ~u }.sem (𝒮:=𝒮) = wnk_policy { if ~t then skip else @filter ~u }.sem := by
   simp [Policy.sem, Predicate.sem]
 
-noncomputable def Φ (p : Policy[F,𝒲 𝒮 H[F]]) (d : H[F] → 𝒲 𝒮 H[F]) : H[F] → 𝒲 𝒮 H[F] :=
+noncomputable def Φ (p : Policy[F,𝒮]) (d : H[F] → 𝒲 𝒮 H[F]) : H[F] → 𝒲 𝒮 H[F] :=
   fun h ↦ η h ⨁ (p.sem h ≫= d)
 
-example {p : Policy[F,𝒲 𝒮 H[F]]} : Φ p (wnk_policy {~p*}.sem) = wnk_policy { skip ⨁ ~p; ~p* }.sem := by
+example {p : Policy[F,𝒮]} : Φ p (wnk_policy {~p*}.sem) = wnk_policy { skip ⨁ ~p; ~p* }.sem := by
   ext
   unfold Φ
   simp [WeightedAdd.wAdd, Policy.sem, Predicate.sem]
@@ -647,9 +647,9 @@ theorem 𝒲.bind_continuous' (g : H[F] → 𝒲 𝒮 H[F]) :
 
 open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder
 
-theorem Φ_mono (p : Policy[F,𝒲 𝒮 H[F]]) : WeightedMonotone (Φ p) :=
+theorem Φ_mono (p : Policy[F,𝒮]) : WeightedMonotone (Φ p) :=
   fun hab h ↦ wAdd_mono_left (η h) (𝒲.bind_mono _ hab)
-theorem Φ_continuous (p : Policy[F,𝒲 𝒮 H[F]]) : WeightedOmegaContinuous (Φ p) (Φ_mono p) := by
+theorem Φ_continuous (p : Policy[F,𝒮]) : WeightedOmegaContinuous (Φ p) (Φ_mono p) := by
   intro C
   ext h
   unfold Φ
@@ -664,7 +664,7 @@ omit [Fintype F] [DecidableEq F] in
 omit [Fintype F] [DecidableEq F] in
 @[simp] theorem 𝒲.Pi_wZero_le {X : Type} (p : X → 𝒲 𝒮 H[F]) : 𝟘 ≼ p := fun _ ↦ 𝒲.wZero_le _
 
-noncomputable def Φ_chain (p : Policy[F,𝒲 𝒮 H[F]]) : WeightedChain (H[F] → 𝒲 𝒮 H[F]) :=
+noncomputable def Φ_chain (p : Policy[F,𝒮]) : WeightedChain (H[F] → 𝒲 𝒮 H[F]) :=
   ⟨fun n ↦ (Φ p)^[n] 𝟘, by
     intro a b hab
     induction b, hab using Nat.le_induction with
@@ -677,7 +677,7 @@ noncomputable def Φ_chain (p : Policy[F,𝒲 𝒮 H[F]]) : WeightedChain (H[F] 
       | succ c ih =>
         simp only [Function.iterate_succ', Function.comp_apply]
         apply Φ_mono _ ih⟩
-noncomputable def Φ_wSup (p : Policy[F,𝒲 𝒮 H[F]]) := wSup (Φ_chain p)
+noncomputable def Φ_wSup (p : Policy[F,𝒮]) := wSup (Φ_chain p)
 
 def IsLfp {α : Type} [WeightedOmegaCompletePartialOrder α]
     (f : α → α) (p : α) : Prop :=
@@ -687,7 +687,7 @@ theorem IsLfp_unique {α : Type} [WeightedOmegaCompletePartialOrder α] {f : α 
     (h₁ : IsLfp f p₁) (h₂ : IsLfp f p₂) : p₁ = p₂ :=
   wle_antisymm (h₁.right _ h₂.left) (h₂.right _ h₁.left)
 
-theorem Policy.Φ_wSup_isLfp (p : Policy[F,𝒲 𝒮 H[F]]) : IsLfp (Φ p) (Φ_wSup p) := by
+theorem Policy.Φ_wSup_isLfp (p : Policy[F,𝒮]) : IsLfp (Φ p) (Φ_wSup p) := by
   constructor
   · simp only [Φ_wSup]
     apply wle_antisymm
@@ -885,7 +885,7 @@ theorem WeightedSum_nat_eq_succ {f : ℕ → 𝒮} : ⨁' (x : ℕ), f x = f 0 �
       simp
     · simp_all [Encodable.decode₂_eq_some]
 
-theorem Policy.iter_sem_isLfp (p : Policy[F,𝒲 𝒮 H[F]]) : IsLfp (Φ p) (wnk_policy {~p*}.sem) := by
+theorem Policy.iter_sem_isLfp (p : Policy[F,𝒮]) : IsLfp (Φ p) (wnk_policy {~p*}.sem) := by
   constructor
   · ext h h'
     simp [sem, Φ]
@@ -932,10 +932,10 @@ theorem Policy.iter_sem_isLfp (p : Policy[F,𝒲 𝒮 H[F]]) : IsLfp (Φ p) (wnk
           convert ih h₁
           simp [WeightedPreSemiring.instPi]
 
-theorem Policy.iter_sem_eq_lfp (p : Policy[F,𝒲 𝒮 H[F]]) : wnk_policy {~p*}.sem = Φ_wSup p :=
+theorem Policy.iter_sem_eq_lfp (p : Policy[F,𝒮]) : wnk_policy {~p*}.sem = Φ_wSup p :=
   IsLfp_unique p.iter_sem_isLfp p.Φ_wSup_isLfp
 
-example {p : Policy[F,𝒲 𝒮 H[F]]} : wnk_policy {~p*}.sem = wnk_policy { skip ⨁ ~p; ~p* }.sem := by
+example {p : Policy[F,𝒮]} : wnk_policy {~p*}.sem = wnk_policy { skip ⨁ ~p; ~p* }.sem := by
   have := Policy.iter_sem_isLfp p |>.left
   rw [← this]
   ext
@@ -943,17 +943,17 @@ example {p : Policy[F,𝒲 𝒮 H[F]]} : wnk_policy {~p*}.sem = wnk_policy { ski
   simp [WeightedAdd.wAdd, Policy.sem, Predicate.sem]
 
 @[simp]
-instance : Zero Policy[F,𝒲 𝒮 H[F]] where
+instance : Zero Policy[F,𝒮] where
   zero := wnk_policy {drop}
 @[simp]
-instance : HAdd Policy[F,𝒲 𝒮 H[F]] Policy[F,𝒲 𝒮 H[F]] Policy[F,𝒲 𝒮 H[F]] where
+instance : HAdd Policy[F,𝒮] Policy[F,𝒮] Policy[F,𝒮] where
   hAdd p q := p.Add q
 @[simp]
-instance : Add Policy[F,𝒲 𝒮 H[F]] where
+instance : Add Policy[F,𝒮] where
   add p q := p.Add q
 
 open WeightedOmegaCompletePartialOrder in
-noncomputable def Policy.approx_n (p : Policy[F,𝒲 𝒮 H[F]]) (n : ℕ) : Policy[F,𝒲 𝒮 H[F]] := match p with
+noncomputable def Policy.approx_n (p : Policy[F,𝒮]) (n : ℕ) : Policy[F,𝒮] := match p with
   | .Filter t => .Filter t
   | wnk_policy {~f ← ~n} => wnk_policy {~f ← ~n}
   | wnk_policy {dup} => wnk_policy {dup}
@@ -967,7 +967,7 @@ noncomputable def Policy.approx_n (p : Policy[F,𝒲 𝒮 H[F]]) (n : ℕ) : Pol
   | .Iter p => List.range n |>.map ((p.approx_n n) ^ ·) |>.sum
 
 open WeightedOmegaCompletePartialOrder in
-noncomputable def Policy.sem_n (p : Policy[F,𝒲 𝒮 H[F]]) (n : ℕ) : H[F] → 𝒲 𝒮 H[F] := match p with
+noncomputable def Policy.sem_n (p : Policy[F,𝒮]) (n : ℕ) : H[F] → 𝒲 𝒮 H[F] := match p with
   | .Filter t => t.sem
   | wnk_policy {~f ← ~n} => fun h ↦ match h with
     | [] => 𝟘
@@ -979,7 +979,7 @@ noncomputable def Policy.sem_n (p : Policy[F,𝒲 𝒮 H[F]]) (n : ℕ) : H[F] �
   | .Seq p q =>
     fun h ↦ (p.sem_n n h ≫= q.sem_n n)
   -- TODO: this should use the syntax
-  | .Weight w p => fun h ↦ w ⨀ p.sem_n n h
+  | .Weight w p => fun h ↦ ⟨fun h' ↦ w ⨀ p.sem_n n h h', SetCoe.countable (W.supp (w ⨀ p.sem_n n h ·))⟩
   -- TODO: this should use the syntax
   | .Add p q => fun h ↦ p.sem_n n h ⨁ q.sem_n n h
   -- TODO: this should use the syntax
@@ -1000,7 +1000,7 @@ theorem List.succ_range_map {α : Type} (f : ℕ → α) {n : Nat} :
     omega
 
 attribute [local simp] Policy.approx_n Policy.sem Policy.sem_n Predicate.sem in
-theorem Policy.approx_n_sem (p : Policy[F,𝒲 𝒮 H[F]]) (n : ℕ) : (p.approx_n n).sem = p.sem_n n := by
+theorem Policy.approx_n_sem (p : Policy[F,𝒮]) (n : ℕ) : (p.approx_n n).sem = p.sem_n n := by
   induction p with simp_all
   | Iter p ih =>
     funext h
@@ -1040,7 +1040,7 @@ omit [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq F] in
 omit [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq F] in
 @[simp] theorem η_subtype_apply {x y : H[F]} : (η x).val y = if x = y then (𝟙 : 𝒮) else 𝟘 := by rfl
 
-theorem Policy.sem_n_mono (p : Policy[F,𝒲 𝒮 H[F]]) : WeightedMonotone p.sem_n := by
+theorem Policy.sem_n_mono (p : Policy[F,𝒮]) : WeightedMonotone p.sem_n := by
   induction p with
   | Filter => intro; simp [sem_n]
   | Mod => intro; simp [sem_n]
@@ -1050,7 +1050,7 @@ theorem Policy.sem_n_mono (p : Policy[F,𝒲 𝒮 H[F]]) : WeightedMonotone p.se
     exact wle_trans (𝒲.bind_mono_right (p₁.sem_n n₁ h) (ih₂ h₁₂)) (𝒲.bind_mono_left _ (ih₁ h₁₂ h))
   | Weight w p ih =>
     intro n₁ n₂ h₁₂ h; simp [sem_n]
-    apply wMul_mono_left _ (ih h₁₂ h)
+    apply fun h' ↦ wMul_mono_left _ (ih h₁₂ h h')
   | Add p₁ p₂ ih₁ ih₂ =>
     intro n₁ n₂ h₁₂ h; simp [sem_n]
     gcongr
@@ -1093,7 +1093,7 @@ theorem 𝒲.bind_apply (f : 𝒲 𝒮 H[F]) (g : H[F] → 𝒲 𝒮 H[F]) (x : 
   magic_simp
 
 attribute [local simp] Policy.sem Policy.sem_n in
-theorem Policy.iter_m_sem_eq_wSup_sem_n {p : Policy[F,𝒲 𝒮 H[F]]} (h : p.sem = wSup ⟨p.sem_n, p.sem_n_mono⟩) (m : ℕ) :
+theorem Policy.iter_m_sem_eq_wSup_sem_n {p : Policy[F,𝒮]} (h : p.sem = wSup ⟨p.sem_n, p.sem_n_mono⟩) (m : ℕ) :
     (p.iter m).sem = wSup ⟨fun n ↦ (p.iter m).sem_n n, (p.iter m).sem_n_mono⟩ := by
   induction m with
   | zero => simp
@@ -1127,11 +1127,11 @@ theorem Policy.iter_m_sem_eq_wSup_sem_n {p : Policy[F,𝒲 𝒮 H[F]]} (h : p.se
 
 -- NOTE: This is lemma 36, but above we show a variant of this so this might not be needed
 -- attribute [local simp] Policy.sem Policy.sem_n in
--- theorem Policy.iter_m_sem_eq_wSup_sem_n' {p : Policy[F,𝒲 𝒮 H[F]]} (h : p.sem = wSup ⟨p.sem_n, p.sem_n_mono⟩) (m : ℕ) :
+-- theorem Policy.iter_m_sem_eq_wSup_sem_n' {p : Policy[F,𝒮]} (h : p.sem = wSup ⟨p.sem_n, p.sem_n_mono⟩) (m : ℕ) :
 --     (p.iter m).sem = wSup ⟨fun n ↦ (p.approx_n n)^m |>.sem, ⋯⟩ := ⋯
 
 attribute [local simp] Policy.sem Policy.sem_n in
-theorem Policy.sem_n_approx (p : Policy[F,𝒲 𝒮 H[F]]) : p.sem = wSup ⟨p.sem_n, sem_n_mono p⟩ := by
+theorem Policy.sem_n_approx (p : Policy[F,𝒮]) : p.sem = wSup ⟨p.sem_n, sem_n_mono p⟩ := by
   induction p with
   | Filter t =>
     ext h h'
@@ -1165,10 +1165,11 @@ theorem Policy.sem_n_approx (p : Policy[F,𝒲 𝒮 H[F]]) : p.sem = wSup ⟨p.s
     intro a b hab i
     apply 𝒲.bind_mono_right _ fun h ↦ p₂.sem_n_mono hab _
   | Weight w p ih =>
-    funext h
+    ext h h'
     simp
+    magic_simp
     rw [ih]
-    simp [WeightedOmegaCompletePartialOrder.instPi]
+    simp [WeightedOmegaCompletePartialOrder.instPi, WeightedOmegaCompletePartialOrder.instCountablePi]
     magic_simp
     simp
     rw [WeightedOmegaContinuousMulRight]
@@ -1213,7 +1214,7 @@ theorem Policy.sem_n_approx (p : Policy[F,𝒲 𝒮 H[F]]) : p.sem = wSup ⟨p.s
       magic_simp
 
 attribute [local simp] Policy.sem Policy.sem_n in
-theorem Policy.sem_n_lowerBounds (p : Policy[F,𝒲 𝒮 H[F]]) (n : ℕ) : p.sem_n n ≼ p.sem := by
+theorem Policy.sem_n_lowerBounds (p : Policy[F,𝒮]) (n : ℕ) : p.sem_n n ≼ p.sem := by
   rw [sem_n_approx]
   apply le_wSup_of_le n
   magic_simp

@@ -150,7 +150,7 @@ def Predicate.compute (p : Predicate[F]) (n : ℕ) : H[F] → 𝒞 𝒮 H[F] := 
   -- TODO: update this once we fix the syntax for ;
   | .Con t u => fun h ↦ (t.compute n h).bind (u.compute n)
   | wnk_pred {¬~t} => fun h ↦ if t.compute n h = 𝟘 then η' h else 𝟘
-def Policy.compute (p : Policy[F,𝒞 𝒮 H[F]]) (n : ℕ) : H[F] → 𝒞 𝒮 H[F] := match p with
+def Policy.compute (p : Policy[F,𝒮]) (n : ℕ) : H[F] → 𝒞 𝒮 H[F] := match p with
   | .Filter t => t.compute n
   | wnk_policy {~f ← ~n} => fun h ↦ match h with
     | [] => 𝟘
@@ -162,10 +162,217 @@ def Policy.compute (p : Policy[F,𝒞 𝒮 H[F]]) (n : ℕ) : H[F] → 𝒞 𝒮
   | .Seq p q =>
     fun h ↦ (p.compute n h).bind (q.compute n)
   -- TODO: this should use the syntax
-  | .Weight w p => fun h ↦ w ⨀ p.compute n h
+  | .Weight w p => fun h ↦ ⟨fun h' ↦ w ⨀ p.compute n h h', (p.compute n h).supp.filter (fun h' ↦ w ⨀ p.compute n h h' ≠ 𝟘), by
+      ext h'
+      simp_all only [W.supp_mem_iff, ne_eq, Finset.coe_filter, 𝒞.mem_supp_iff, Set.mem_setOf_eq,
+        iff_and_self]
+      contrapose!
+      simp_all⟩
   -- TODO: this should use the syntax
   | .Add p q => fun h ↦ p.compute n h ⨁ q.compute n h
   -- TODO: this should use the syntax
   | .Iter p => fun h ↦ ⨁ᶠ i ∈ Finset.range n, (p ^ i).compute n h
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
+
+def 𝒞.to𝒲 (m : 𝒞 𝒮 H[F]) : 𝒲 𝒮 H[F] := ⟨m, SetCoe.countable (W.supp ⇑m)⟩
+
+omit [DecidableEq 𝒮] [DecidableEq F] in
+@[simp]
+theorem 𝒲.bind_of_𝒞' (m : 𝒞 𝒮 H[F]) (f : H[F] → 𝒲 𝒮 H[F]) :
+    (m.to𝒲 ≫= fun h ↦ f h) = ⨁ᶠ h ∈ m.supp, ⟨fun h' ↦ m h ⨀ f h h', SetCoe.countable (W.supp fun h' ↦ m h ⨀ (f h) h')⟩ := by
+  simp [𝒲.bind]
+  have : Finite m.to𝒲.supp := by
+    refine Set.Finite.ofFinset m.supp fun x ↦ ?_
+    simp_all
+    rfl
+  ext h
+  simp
+  rw [WeightedSum_finite]
+  refine WeightedFinsum_bij (fun x _ ↦ x) (fun a ↦ ?_) ?_ ?_ ?_
+  · obtain ⟨a, ha⟩ := a; simp_all; exact ha
+  · simp
+  · simp; intro _ h; exact h
+  · simp_all [𝒞.to𝒲]
+    intro a ha
+    magic_simp
+
+omit [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq F] in
+theorem 𝒲.η_eq_η' (x : H[F]) : η (𝒮:=𝒮) x = (η' x).to𝒲 := by
+  ext h
+  simp [η', 𝒞.to𝒲]
+  magic_simp
+
+omit [DecidableEq F] in
+theorem 𝒲.η_bind (x : H[F]) (f : H[F] → 𝒲 𝒮 H[F]) :
+    (η x ≫= f) = ⟨fun h ↦ η x x ⨀ f x h, SetCoe.countable _⟩ := by
+  simp [𝒲.η_eq_η']
+  if (𝟙 : 𝒮) = 𝟘 then
+    have : (η' (𝒮:=𝒮) x).supp = ∅ := by
+      ext; simp [η']; split_ifs; simp
+    simp_all
+    ext x'
+    simp [𝒞.to𝒲]
+    magic_simp
+    have : η' (𝒮:=𝒮) x = 𝟘 := by simp_all [η']; rfl
+    simp_all
+    symm
+    apply WeightedPreSemiring.wZero_mul
+  else
+    have : (η' (𝒮:=𝒮) x).supp = {x} := by
+      ext; simp [η']; simp_all
+    simp_all
+    ext y
+    simp
+    congr! 1
+
+omit [DecidableEq F] in
+@[simp]
+theorem 𝒲.bind_of_𝒞 (m : 𝒞 𝒮 H[F]) (f : H[F] → 𝒞 𝒮 H[F]) :
+    (m.to𝒲 ≫= fun h ↦ (f h).to𝒲) = (m.bind f).to𝒲 := by
+  simp only [bind_of_𝒞']
+  simp only [𝒞.to𝒲, 𝒞.bind, ne_eq]
+  magic_simp
+  ext
+  simp only [apply_subtype, WeightedFinsum_apply']
+  congr
+
+omit [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+theorem WeightedSemiring.if_zero_is_one_collapse (h : (𝟘 : 𝒮) = 𝟙) (a : 𝒮) : a = 𝟘 := by
+  have := WeightedSemiring.mul_wOne a
+  rw [← h] at this
+  simp at this
+  exact this.symm
+
+omit [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+theorem WeightedSemiring.if_one_is_zero_collapse (h : (𝟙 : 𝒮) = 𝟘) (a : 𝒮) : a = 𝟘 := by
+  have := WeightedSemiring.mul_wOne a
+  rw [h] at this
+  simp at this
+  exact this.symm
+
+omit [DecidableEq F] in
+attribute [local simp] Predicate.sem Predicate.compute in
+theorem Predicate.compute_eq_sem_n (p : Predicate[F]) (n : ℕ):
+    p.sem (𝒮:=𝒮) = fun h ↦ (p.compute n h).to𝒲 := by
+  induction p with
+  | Bool b =>
+    cases b
+    · simp; rfl
+    · simp; rfl
+  | Test f t =>
+    ext
+    simp_all
+    split
+    · simp; rfl
+    · simp; split_ifs
+      · simp; rfl
+      · rfl
+  | Dis t u iht ihu =>
+    simp_all
+    congr! with h
+    simp [𝒞.bind]
+    ext h'
+    magic_simp [𝒞.to𝒲]
+    simp
+    congr! 2 with x
+    magic_simp
+    simp [WeightedAdd.wAdd]
+    magic_simp
+    simp
+    congr
+    split_ifs with h₁ h₂ h₃
+    · simp_all [𝒲.η_bind]
+      if (𝟙 : 𝒮) = 𝟘 then
+        simp_all
+        have : (η' (𝒮:=𝒮) x).supp = ∅ := by simpa [η']
+        simp_all
+        apply WeightedSemiring.if_one_is_zero_collapse
+        assumption
+      else
+        have : (η' (𝒮:=𝒮) x).supp = {x} := by simp_all [η']
+        have : (η' (𝒮:=𝒮) x).toFun x = 𝟙 := by simp [η']
+        simp_all
+        congr
+    · absurd h₂
+      exact 𝒞.ext_iff.mpr (congrFun (congrArg Subtype.val h₁))
+    · simp_all
+      contrapose! h₁
+      rfl
+    · convert_to (𝟘 : 𝒮) = 𝟘
+      · simp [𝒲.bind]
+        magic_simp
+        simp
+      · rfl
+  | Con t u iht ihu => simp_all only [sem, 𝒲.bind_of_𝒞, compute]
+  | Not t ih =>
+    simp_all; clear ih
+    ext h h'
+    simp
+    split_ifs with h₁ h₂ h₃
+    · simp_all [η', 𝒞.to𝒲]
+      magic_simp
+    · absurd h₂
+      exact 𝒞.ext_iff.mpr (congrFun (congrArg Subtype.val h₁))
+    · simp_all
+      absurd h₁
+      rfl
+    · rfl
+
+omit [DecidableEq F] in
+@[simp]
+theorem WeightedFinsum_𝒞_apply {ι : Type} [DecidableEq ι] (f : ι → 𝒞 𝒮 H[F]) (S : Finset ι) (h : H[F]) :
+    (⨁ᶠ i ∈ S, f i) h = ⨁ᶠ i ∈ S, f i h := by
+  induction S using Finset.induction with
+  | empty => simp; rfl
+  | insert i S hi ih =>
+    simp_all
+    simp [WeightedAdd.wAdd]
+    magic_simp
+    congr
+
+omit [DecidableEq F] in
+@[simp]
+theorem WeightedFinsum_𝒞_toFun_apply {ι : Type} [DecidableEq ι] (f : ι → 𝒞 𝒮 H[F]) (S : Finset ι) (h : H[F]) :
+    (⨁ᶠ i ∈ S, f i).toFun h = ⨁ᶠ i ∈ S, f i h := by
+  induction S using Finset.induction with
+  | empty => simp; rfl
+  | insert i S hi ih =>
+    simp_all
+    simp [WeightedAdd.wAdd]
+    magic_simp
+    congr
+
+attribute [local simp] Policy.sem_n Policy.compute in
+theorem Policy.compute_eq_sem_n (p : Policy[F,𝒮]) (n : ℕ) : p.sem_n n = fun h ↦ (p.compute n h).to𝒲 := by
+  induction p with
+  | Filter t => simp [sem_n, compute]; apply Predicate.compute_eq_sem_n
+  | Mod f e => ext; simp; split <;> simp_all <;> rfl
+  | Dup => ext; simp; split <;> simp_all <;> rfl
+  | Seq p q ihp ihq => simp_all only [sem_n, 𝒲.bind_of_𝒞, compute]
+  | Weight w p =>
+    simp_all
+    magic_simp
+    simp
+    congr
+  | Add p q ihp ihq =>
+    simp_all
+    simp [WeightedAdd.wAdd]
+    magic_simp
+    simp_all
+    congr
+  | Iter p ih =>
+    simp_all
+    simp [𝒞.to𝒲]
+    magic_simp
+    congr with h h'
+    simp
+    congr with x
+    suffices (p.iter x).sem_n n = (fun h ↦ (p.iter x).compute n h |>.to𝒲) by simp [this]; rfl
+    induction x with
+    | zero =>
+      ext
+      simp [Predicate.sem, Predicate.compute, η']
+      magic_simp [𝒞.to𝒲]
+    | succ x ihx =>
+      simp_all only [iter, sem_n, 𝒲.bind_of_𝒞, compute]
