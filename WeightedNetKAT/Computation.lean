@@ -2,10 +2,12 @@ import WeightedNetKAT.Semantics
 import Mathlib.Data.Set.Finite.Basic
 import Mathlib.Data.Fintype.Order
 
-variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮]
+section
+
+variable {X : Type} {𝒮 : Type} [WeightedPartialOrder 𝒮] [WeightedSemiring 𝒮] [WeightedMonotonePreSemiring 𝒮] [DecidableEq 𝒮]
 variable {F : Type} [Fintype F] [DecidableEq F]
 
-structure 𝒞 (𝒮 : Type) [WeightedSemiring 𝒮] (X : Type) where
+structure 𝒞 (𝒮 : Type) [WeightedPartialOrder 𝒮] [WeightedSemiring 𝒮] [WeightedMonotonePreSemiring 𝒮] (X : Type) where
   toFun : W X 𝒮
   supp : Finset X
   supp_is_supp : toFun.supp = supp
@@ -23,7 +25,7 @@ instance : FunLike (𝒞 𝒮 X) X 𝒮 where
     subst_eqs
     simp_all
 
-omit [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+omit [DecidableEq 𝒮] in
 @[simp]
 theorem 𝒞.mem_supp_iff {m : 𝒞 𝒮 X} (x : X) : x ∈ m.supp ↔ m x ≠ 𝟘 := by
   have := m.supp_is_supp.symm
@@ -34,7 +36,7 @@ theorem 𝒞.mem_supp_iff {m : 𝒞 𝒮 X} (x : X) : x ∈ m.supp ↔ m x ≠ �
 instance {m : 𝒞 𝒮 X} : Countable m.supp := Finite.to_countable
 noncomputable instance {m : 𝒞 𝒮 X} : Encodable m.supp := Encodable.ofCountable _
 
-omit [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+omit [DecidableEq 𝒮] in
 @[ext]
 theorem 𝒞.ext (C₁ C₂ : 𝒞 𝒮 X)
     (h : ∀ i, C₁ i = C₂ i) : C₁ = C₂ := by
@@ -175,9 +177,16 @@ def Policy.compute (p : Policy[F,𝒮]) (n : ℕ) : H[F] → 𝒞 𝒮 H[F] := m
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
+end
+
+section
+
+variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮]
+variable {F : Type} [Fintype F]
+
 def 𝒞.to𝒲 (m : 𝒞 𝒮 H[F]) : 𝒲 𝒮 H[F] := ⟨m, SetCoe.countable (W.supp ⇑m)⟩
 
-omit [DecidableEq 𝒮] [DecidableEq F] in
+omit [DecidableEq 𝒮] in
 @[simp]
 theorem 𝒲.bind_of_𝒞' (m : 𝒞 𝒮 H[F]) (f : H[F] → 𝒲 𝒮 H[F]) :
     (m.to𝒲 ≫= fun h ↦ f h) = ⨁ᶠ h ∈ m.supp, ⟨fun h' ↦ m h ⨀ f h h', SetCoe.countable (W.supp fun h' ↦ m h ⨀ (f h) h')⟩ := by
@@ -197,13 +206,11 @@ theorem 𝒲.bind_of_𝒞' (m : 𝒞 𝒮 H[F]) (f : H[F] → 𝒲 𝒮 H[F]) :
     intro a ha
     magic_simp
 
-omit [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq F] in
 theorem 𝒲.η_eq_η' (x : H[F]) : η (𝒮:=𝒮) x = (η' x).to𝒲 := by
   ext h
   simp [η', 𝒞.to𝒲]
   magic_simp
 
-omit [DecidableEq F] in
 theorem 𝒲.η_bind (x : H[F]) (f : H[F] → 𝒲 𝒮 H[F]) :
     (η x ≫= f) = ⟨fun h ↦ η x x ⨀ f x h, SetCoe.countable _⟩ := by
   simp [𝒲.η_eq_η']
@@ -226,7 +233,6 @@ theorem 𝒲.η_bind (x : H[F]) (f : H[F] → 𝒲 𝒮 H[F]) :
     simp
     congr! 1
 
-omit [DecidableEq F] in
 @[simp]
 theorem 𝒲.bind_of_𝒞 (m : 𝒞 𝒮 H[F]) (f : H[F] → 𝒞 𝒮 H[F]) :
     (m.to𝒲 ≫= fun h ↦ (f h).to𝒲) = (m.bind f).to𝒲 := by
@@ -237,21 +243,20 @@ theorem 𝒲.bind_of_𝒞 (m : 𝒞 𝒮 H[F]) (f : H[F] → 𝒞 𝒮 H[F]) :
   simp only [apply_subtype, WeightedFinsum_apply']
   congr
 
-omit [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
 theorem WeightedSemiring.if_zero_is_one_collapse (h : (𝟘 : 𝒮) = 𝟙) (a : 𝒮) : a = 𝟘 := by
   have := WeightedSemiring.mul_wOne a
   rw [← h] at this
   simp at this
   exact this.symm
 
-omit [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
 theorem WeightedSemiring.if_one_is_zero_collapse (h : (𝟙 : 𝒮) = 𝟘) (a : 𝒮) : a = 𝟘 := by
   have := WeightedSemiring.mul_wOne a
   rw [h] at this
   simp at this
   exact this.symm
 
-omit [DecidableEq F] in
 attribute [local simp] Predicate.sem Predicate.compute in
 theorem Predicate.compute_eq_sem_n (p : Predicate[F]) (n : ℕ):
     p.sem (𝒮:=𝒮) = fun h ↦ (p.compute n h).to𝒲 := by
@@ -319,7 +324,6 @@ theorem Predicate.compute_eq_sem_n (p : Predicate[F]) (n : ℕ):
       rfl
     · rfl
 
-omit [DecidableEq F] in
 @[simp]
 theorem WeightedFinsum_𝒞_apply {ι : Type} [DecidableEq ι] (f : ι → 𝒞 𝒮 H[F]) (S : Finset ι) (h : H[F]) :
     (⨁ᶠ i ∈ S, f i) h = ⨁ᶠ i ∈ S, f i h := by
@@ -331,7 +335,6 @@ theorem WeightedFinsum_𝒞_apply {ι : Type} [DecidableEq ι] (f : ι → 𝒞 
     magic_simp
     congr
 
-omit [DecidableEq F] in
 @[simp]
 theorem WeightedFinsum_𝒞_toFun_apply {ι : Type} [DecidableEq ι] (f : ι → 𝒞 𝒮 H[F]) (S : Finset ι) (h : H[F]) :
     (⨁ᶠ i ∈ S, f i).toFun h = ⨁ᶠ i ∈ S, f i h := by
@@ -343,6 +346,7 @@ theorem WeightedFinsum_𝒞_toFun_apply {ι : Type} [DecidableEq ι] (f : ι →
     magic_simp
     congr
 
+variable [DecidableEq F] in
 attribute [local simp] Policy.sem_n Policy.compute in
 theorem Policy.compute_eq_sem_n (p : Policy[F,𝒮]) (n : ℕ) : p.sem_n n = fun h ↦ (p.compute n h).to𝒲 := by
   induction p with
@@ -376,3 +380,5 @@ theorem Policy.compute_eq_sem_n (p : Policy[F,𝒮]) (n : ℕ) : p.sem_n n = fun
       magic_simp [𝒞.to𝒲]
     | succ x ihx =>
       simp_all only [iter, sem_n, 𝒲.bind_of_𝒞, compute]
+
+end

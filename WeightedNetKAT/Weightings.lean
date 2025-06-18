@@ -1,20 +1,24 @@
 import Mathlib.Data.Set.Countable
 import WeightedNetKAT.Domain
 
-variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+section
+
+variable {X : Type} {𝒮 : Type} [WeightedPreSemiring 𝒮]
 
 abbrev W (X : Type) (𝒮 : Type) := X → 𝒮
 
 def W.supp {X : Type} (m : W X 𝒮) := {x : X | m x ≠ 𝟘}
 
-omit [WeightedOmegaContinuousPreSemiring 𝒮] in
 @[simp] theorem W.supp_mem_iff {X : Type} {x} (m : W X 𝒮) : x ∈ m.supp ↔ m x ≠ 𝟘 := by rfl
+
+end
+
+variable {X : Type} {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 
 noncomputable def W.mass (m : W X 𝒮) [Encodable m.supp] := ⨁' x : m.supp, m x.val
 
-def 𝒲 (𝒮 : Type) [WeightedSemiring 𝒮] (X : Type) := {m : W X 𝒮 // Countable m.supp}
+def 𝒲 (𝒮 : Type) [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] (X : Type) := {m : W X 𝒮 // Countable m.supp}
 
-omit [WeightedOmegaContinuousPreSemiring 𝒮] in
 @[ext]
 theorem 𝒲.ext (C₁ C₂ : 𝒲 𝒮 X)
     (h : C₁.val = C₂.val) : C₁ = C₂ := by cases C₁; cases C₂; congr
@@ -61,7 +65,8 @@ instance WeightedMul.instCountablePi : WeightedMul (𝒲 𝒮 X) where
       intro ⟨ m_val, m_prop ⟩
       simp at m_prop
       refine ⟨ ⟨ m_val, ?goal1 ⟩, ⟨ m_val, ?goal2 ⟩⟩
-      all_goals (simp ; grind only [wMul, instPi, cases WeightedPreSemiring, cases WeightedSemiring])
+      all_goals (simp ; grind only [wMul, instPi, cases WeightedPreSemiring, cases
+        WeightedMonotonePreSemiring, cases WeightedOmegaContinuousPreSemiring])
     case hf =>
       intro ⟨v₁, p₁⟩ ⟨v₂, p₂ ⟩
       grind only
@@ -121,11 +126,13 @@ instance WeightedOmegaCompletePartialOrder.instCountablePi :
     simp only [W.supp_mem_iff, ne_eq, wSup_eq_zero_iff, not_forall, s] at mem
     obtain ⟨p, hp⟩ := mem
     exists p⟩
-  le_wSup c i p := by
+  le_wSup i p := by
     simp
-    apply WeightedPartialOrder.wle_trans _ (le_wSup _ i)
-    magic_simp
-  wSup_le c w h x := by
+    apply WeightedPartialOrder.wle_trans _ (le_wSup i)
+    simp only [WeightedChain.map, WeightedChain.val_apply]
+    simp only [DFunLike.coe]
+    simp
+  wSup_le h x := by
     simp
     apply wSup_le
     intro n
@@ -138,7 +145,7 @@ open WeightedOmegaCompletePartialOrder in
 instance WeightedOmegaContinuousPreSemiring.instCountablePi :
     WeightedOmegaContinuousPreSemiring (𝒲 𝒮 X) where
   wle_positive _ _ := by simp
-  wAdd_mono _ _ _ _ _ := by apply wAdd_mono; apply_assumption
+  wAdd_mono _ _ _ _ _ := by apply wAdd_mono_left; apply_assumption
   wMul_mono_left _ _ _ _ _ := by apply wMul_mono_left; apply_assumption
   wMul_mono_right  _ _ _ _ _ := by apply wMul_mono_right; apply_assumption
   wAdd_wSup _ _ := by ext x; apply wAdd_wSup
@@ -147,6 +154,8 @@ instance WeightedOmegaContinuousPreSemiring.instCountablePi :
   wSup_wMul _ _ := by ext x; apply wSup_wMul
 
 end CountablePi
+
+variable [WeightedSemiring 𝒮]
 
 def η [DecidableEq X] (x : X) : 𝒲 𝒮 X := ⟨fun y ↦ if x = y then 𝟙 else 𝟘, by
   suffices Finite (W.supp (𝒮:=𝒮) fun y ↦ if x = y then 𝟙 else 𝟘) by apply Finite.to_countable
