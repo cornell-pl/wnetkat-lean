@@ -59,6 +59,12 @@ macro_rules|`(wnk_weight{~$t})=>`($t)
 declare_syntax_cat' wnk_pred
 declare_syntax_cat' wnk_policy
 
+syntax term:max : cwnk_field
+macro_rules|`(wnk_field{$t:term})=>`($t)
+syntax term:max : cwnk_nat
+macro_rules|`(wnk_nat{$t:term})=>`($t)
+syntax num : cwnk_weight
+macro_rules|`(wnk_weight{$t:num})=>`($t)
 
 syntax num : cwnk_nat
 
