@@ -1,6 +1,7 @@
-import WeightedNetKAT.Computation
-import WeightedNetKAT.Instances.Bottleneck
 import Mathlib.Logic.Encodable.Pi
+import WeightedNetKAT.Computation
+import WeightedNetKAT.Instances.Boolean
+import WeightedNetKAT.Instances.Bottleneck
 
 inductive Fields where
   | dst | pt | sw
