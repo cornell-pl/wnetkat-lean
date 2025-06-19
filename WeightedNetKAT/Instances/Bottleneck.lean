@@ -93,3 +93,8 @@ instance : OrderTop EENat := inferInstanceAs (OrderTop (WithBot ENat))
 #eval (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, Bottleneck Secutiy₄]).compute 10 [fun _ ↦ 0] [fun x ↦ if x = 0 then 3 else 0]
 #eval (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, Bottleneck ENat]).compute 10 [fun _ ↦ 0] [fun x ↦ if x = 0 then 3 else 0]
 #eval (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, Bottleneck EENat]).compute 10 [fun _ ↦ 0] [fun x ↦ if x = 0 then 3 else 0]
+
+instance : Repr (Bottleneck ℕ∞) where
+  reprPrec p n := if p = ⊤ then "⊤" else reprPrec p.toNat n
+instance : Repr (Bottleneck EENat) where
+  reprPrec p n := if p = ⊤ then "⊤" else if p = ⊥ then "⊥" else reprPrec p.get!.toNat n
