@@ -5,6 +5,8 @@ def Bottleneck (α : Type) := α
 
 variable {α : Type}
 
+instance [i : Repr α] : Repr (Bottleneck α) := ⟨@reprPrec α i⟩
+
 instance [LE α] : LE (Bottleneck α) := inferInstanceAs (LE α)
 
 instance [PartialOrder α] : PartialOrder (Bottleneck α) := inferInstanceAs (PartialOrder α)
@@ -83,6 +85,8 @@ instance : OfNat Secutiy₄ 1 := ⟨1, by simp⟩
 instance : OfNat Secutiy₄ 2 := ⟨2, by simp⟩
 instance : OfNat Secutiy₄ 3 := ⟨3, by simp⟩
 
+instance : Repr Secutiy₄ := ⟨fun s _ ↦ match s with | 0 => "⊥" | 1 => "L" | 2 => "M" | 3 => "H"⟩
+
 def EENat := WithBot ENat
 instance (n : ℕ) : OfNat EENat n := ⟨some (some n)⟩
 
@@ -90,11 +94,11 @@ instance : LinearOrder EENat := inferInstanceAs (LinearOrder (WithBot ENat))
 instance : OrderBot EENat := inferInstanceAs (OrderBot (WithBot ENat))
 instance : OrderTop EENat := inferInstanceAs (OrderTop (WithBot ENat))
 
+instance : Repr ℕ∞ where
+  reprPrec p n := if p = ⊤ then "⊤" else reprPrec p.toNat n
+instance : Repr EENat where
+  reprPrec p n := if p = ⊤ then "⊤" else if p = ⊥ then "⊥" else reprPrec p.get!.toNat n
+
 #eval (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, Bottleneck Secutiy₄]).compute 10 [fun _ ↦ 0] [fun x ↦ if x = 0 then 3 else 0]
 #eval (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, Bottleneck ENat]).compute 10 [fun _ ↦ 0] [fun x ↦ if x = 0 then 3 else 0]
 #eval (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, Bottleneck EENat]).compute 10 [fun _ ↦ 0] [fun x ↦ if x = 0 then 3 else 0]
-
-instance : Repr (Bottleneck ℕ∞) where
-  reprPrec p n := if p = ⊤ then "⊤" else reprPrec p.toNat n
-instance : Repr (Bottleneck EENat) where
-  reprPrec p n := if p = ⊤ then "⊤" else if p = ⊥ then "⊥" else reprPrec p.get!.toNat n

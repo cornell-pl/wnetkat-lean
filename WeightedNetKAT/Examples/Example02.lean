@@ -16,12 +16,12 @@ def l {𝒮 : Type} [OfNat 𝒮 2] : Policy[Fields,𝒮] := wnk_policy {
 }
 
 /--
-info: {([{dst↦4,pt↦2,sw↦0}, {dst↦4,pt↦0,sw↦0}], 3),
- ([{dst↦4,pt↦3,sw↦0}, {dst↦4,pt↦0,sw↦0}], 3),
- ([{dst↦4,pt↦5,sw↦0}, {dst↦4,pt↦0,sw↦0}], 3),
- ([{dst↦4,pt↦2,sw↦2}, {dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}], 2),
- ([{dst↦4,pt↦3,sw↦2}, {dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}], 2),
- ([{dst↦4,pt↦5,sw↦2}, {dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}], 2)}
+info: {([{dst↦4,pt↦2,sw↦0}, {dst↦4,pt↦0,sw↦0}], H),
+ ([{dst↦4,pt↦3,sw↦0}, {dst↦4,pt↦0,sw↦0}], H),
+ ([{dst↦4,pt↦5,sw↦0}, {dst↦4,pt↦0,sw↦0}], H),
+ ([{dst↦4,pt↦2,sw↦2}, {dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}], M),
+ ([{dst↦4,pt↦3,sw↦2}, {dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}], M),
+ ([{dst↦4,pt↦5,sw↦2}, {dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}], M)}
 -/
 #guard_msgs in
 #wnk_eval[Bottleneck Secutiy₄, 2, [pk[dst ↦ H₄]]] {
