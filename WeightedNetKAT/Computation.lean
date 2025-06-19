@@ -181,6 +181,20 @@ end
 
 section
 
+variable {X : Type} {𝒮 : Type} [WeightedPartialOrder 𝒮] [WeightedSemiring 𝒮] [WeightedMonotonePreSemiring 𝒮] [DecidableEq 𝒮]
+variable {F : Type} [Fintype F] [DecidableEq F] [Encodable F]
+
+def Finset.toList' {α : Type} [Encodable α] [DecidableEq α] (s : Finset α) : List α := s.val.rep
+
+instance {F : Type} [i : Fintype F] [e : Encodable F] [Repr F] : Repr Pk[F] where
+  reprPrec x _ := s!"\{{List.range i.card |>.filterMap e.decode |>.map (fun k ↦ s!"{reprStr k}↦{x k}") |> ",".intercalate}}"
+
+def 𝒞.pretty (m : 𝒞 𝒮 H[F]) : Finset (H[F] × 𝒮) := m.supp.image (fun s ↦ (s, m s))
+
+end
+
+section
+
 variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮]
 variable {F : Type} [Fintype F]
 
