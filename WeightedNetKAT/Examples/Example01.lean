@@ -12,7 +12,7 @@ def p {𝒮 : Type} : Policy[Fields,𝒮] := wnk_policy {
 def l {𝒮 : Type} : Policy[Fields,𝒮] := wnk_policy {
   if pt = 2 then sw ← S₂ ; pt ← 1 else
   if pt = 3 then sw ← S₃ ; pt ← 1 else
-  if pt = 5 then sw ← S₃ ; pt ← 1 else
+  if pt = 5 then sw ← S₅ ; pt ← 1 else
   drop
 }
 

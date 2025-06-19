@@ -51,3 +51,25 @@ macro_rules
     | `(pk_entry|$k:term ↦ $v) => `(fun a ↦ if a = $k then $v else $x a)
     | _ => return x
     ) (← `(fun _ ↦ 0))
+
+declare_syntax_cat' wnk_match_case
+macro_rules|`(wnk_match_case{~$t})=>`($t)
+
+syntax "|" cwnk_pred "↦" cwnk_policy : cwnk_match_case
+syntax "|" "_" "↦" cwnk_policy : cwnk_match_case
+syntax "|" cwnk_pred "=>" cwnk_policy : cwnk_match_case
+syntax "|" "_" "=>" cwnk_policy : cwnk_match_case
+
+syntax "match" cwnk_match_case* : cwnk_policy
+
+macro_rules
+| `(wnk_policy { match $cases:cwnk_match_case* }) => do
+  let p := ← cases.foldrM (β:=Lean.TSyntax `cwnk_policy) (fun y x ↦
+    match y with
+    | `(cwnk_match_case|| $t ↦ $p) | `(cwnk_match_case|| $t => $p) =>
+      `(cwnk_policy|if $t then $p else $x)
+    | `(cwnk_match_case|| _ ↦ $p) | `(cwnk_match_case|| _ => $p) =>
+      pure p
+    | _ => return x
+    ) (← `(cwnk_policy|drop))
+  `(wnk_policy {$p})
