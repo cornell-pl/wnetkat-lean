@@ -63,7 +63,7 @@ noncomputable def Policy.sem (p : Policy[F,𝒮]) : H[F] → 𝒲 𝒮 H[F] := m
   | .Seq p q =>
     fun h ↦ (p.sem h ≫= q.sem)
   -- TODO: this should use the syntax
-  | .Weight w p => fun h ↦ ⟨fun h' ↦ w ⨀ p.sem h h', SetCoe.countable (W.supp (w ⨀ sem p h ·))⟩
+  | .Weight w p => fun h ↦ w • p.sem h
   -- TODO: this should use the syntax
   | .Add p q => fun h ↦ p.sem h ⨁ q.sem h
   -- TODO: this should use the syntax
@@ -742,7 +742,7 @@ theorem WeightedFinsum_apply' {α : Type} [DecidableEq α] (S : Finset α) (f : 
     (⨁ᶠ x ∈ S, f x) i = ⨁ᶠ x ∈ S, f x i := by
   simp [WeightedFinsum]
   induction S using Finset.induction with
-  | empty => simp; rfl
+  | empty => simp
   | insert x S hx ih =>
     simp_all [WeightedAdd.wAdd]
 
@@ -753,7 +753,7 @@ theorem WeightedFinsum_apply'' {α : Type} [DecidableEq α] (S : Finset α) (f :
     (⨁ᶠ x ∈ S, f x) i = ⨁ᶠ x ∈ S, f x i := by
   simp [WeightedFinsum]
   induction S using Finset.induction with
-  | empty => simp; rfl
+  | empty => simp
   | insert x S hx ih =>
     simp_all [WeightedAdd.wAdd]
 
@@ -874,8 +874,8 @@ theorem Policy.iter_sem_isLfp (p : Policy[F,𝒮]) : IsLfp (Φ p) (wnk_policy {~
           (p.sem h ≫= fun h ↦ ⨁' (n : ℕ), (p.iter n).sem h)
         = ⨁' (n : ℕ), (p.sem h ≫= fun h ↦ (p.iter n).sem h) by
       simp [this]; clear this
-      rw [WeightedSum_nat_eq_succ]
-      simp [Policy.sem, Predicate.sem, WeightedAdd.wAdd]
+      nth_rw 2 [WeightedSum_nat_eq_succ]
+      simp [Policy.sem, Predicate.sem]
     ext
     simp [𝒲.bind]
     magic_simp
@@ -958,7 +958,7 @@ noncomputable def Policy.sem_n (p : Policy[F,𝒮]) (n : ℕ) : H[F] → 𝒲 �
   | .Seq p q =>
     fun h ↦ (p.sem_n n h ≫= q.sem_n n)
   -- TODO: this should use the syntax
-  | .Weight w p => fun h ↦ ⟨fun h' ↦ w ⨀ p.sem_n n h h', SetCoe.countable (W.supp (w ⨀ p.sem_n n h ·))⟩
+  | .Weight w p => fun h ↦ w • p.sem_n n h
   -- TODO: this should use the syntax
   | .Add p q => fun h ↦ p.sem_n n h ⨁ q.sem_n n h
   -- TODO: this should use the syntax

@@ -24,7 +24,7 @@ structure 𝒲 (𝒮 X : Type) [WeightedPreSemiring 𝒮] where
   toFun : W X 𝒮
   countable : Countable toFun.supp
 
-structure FiniteWeighting (𝒮 X : Type) [WeightedPreSemiring 𝒮] extends 𝒲 𝒮 X where
+structure 𝒞 (𝒮 X : Type) [WeightedPreSemiring 𝒮] extends 𝒲 𝒮 X where
   finSupp : Finset X
   finSupp_eq_supp : finSupp = toFun.supp
 
@@ -61,6 +61,8 @@ instance WeightedAdd.instCountablePi : WeightedAdd (𝒲 𝒮 X) where
     simp +contextual [wAdd]
     ⟩
 
+@[simp] theorem WeightedAdd.instCountablePi_apply (m m' : 𝒲 𝒮 X) {x : X} : (m ⨁ m') x = m x ⨁ m' x := rfl
+
 instance WeightedMul.instCountablePi : WeightedMul (𝒲 𝒮 X) where
   wMul := fun ⟨ a_underlying, a_property ⟩ ⟨ b_underlying, b_property ⟩ => by
     refine ⟨a_underlying ⨀ b_underlying, ?_ ⟩
@@ -75,12 +77,16 @@ instance WeightedMul.instCountablePi : WeightedMul (𝒲 𝒮 X) where
       intro ⟨v₁, p₁⟩ ⟨v₂, p₂ ⟩
       grind only
 
+@[simp] theorem WeightedMul.instCountablePi_apply (m m' : 𝒲 𝒮 X) {x : X} : (m ⨀ m') x = m x ⨀ m' x := rfl
+
 instance WeightedZero.instCountablePi : WeightedZero (𝒲 𝒮 X) where
   wZero := by
     refine ⟨ fun x => 𝟘, ?_⟩
     refine ⟨ fun x => 0, ?_ ⟩
     intro ⟨v1, p1⟩ ⟨v2, p2⟩
     trivial
+
+@[simp] theorem WeightedZero.instCountablePi_apply {x : X} : (𝟘 : 𝒲 𝒮 X) x = 𝟘 := rfl
 
 def 𝒲.wNsmul (n : ℕ) (w : 𝒲 𝒮 X) : 𝒲 𝒮 X := match n with
   | 0 => 𝟘
@@ -113,8 +119,6 @@ instance WeightedPartialOrder.instCountablePi [WeightedPartialOrder 𝒮] : Weig
       grind only
     ext x
     exact wle_antisymm (hab x) (hba x)
-
-attribute [simp] WeightedZero.instCountablePi
 
 instance WeightedOmegaCompletePartialOrder.instCountablePi [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] :
     WeightedOmegaCompletePartialOrder (𝒲 𝒮 X) where
@@ -156,6 +160,13 @@ instance WeightedOmegaContinuousPreSemiring.instCountablePi [WeightedOmegaComple
   wSup_wAdd _ _ := by ext x; apply wSup_wAdd
   wMul_wSup _ _ := by ext x; apply wMul_wSup
   wSup_wMul _ _ := by ext x; apply wSup_wMul
+
+@[simp]
+instance {X : Type} : SMul 𝒮 (𝒲 𝒮 X) where
+  smul w m := ⟨fun h' ↦ w ⨀ m h', by
+    apply Set.Countable.mono _ m.countable; intro; contrapose!; simp +contextual⟩
+
+@[simp] theorem 𝒲.sMul_apply {X : Type} (m : 𝒲 𝒮 X) (w : 𝒮) (x : X) : (w • m) x = w ⨀ m x := rfl
 
 end CountablePi
 

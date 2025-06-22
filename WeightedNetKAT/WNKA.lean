@@ -100,8 +100,6 @@ def S.decidableEq (p : Policy[F,𝒮]) : DecidableEq (S p) :=
 
 instance S.instDecidableEq {p : Policy[F,𝒮]} : DecidableEq (S p) := S.decidableEq p
 
-instance {X : Type} : SMul 𝒮 (𝒲 𝒮 X) := sorry
-
 def S.ι {X Y : Type} : 𝒲 𝒮 (Unit × X) → 𝒲 𝒮 (Unit × Y) → 𝒲 𝒮 (Unit × (X ⊕ Y)) :=
   fun m₁ m₂ ↦ ⟨fun ⟨_, x⟩ ↦ match x with | .inl x => m₁ ((), x) | .inr y => m₂ ((), y), by sorry⟩
 notation "ι[" a "," b"]" => S.ι a b
@@ -419,7 +417,6 @@ theorem Policy.wnka_sem [Fintype F] [DecidableEq F] (p : Policy[F,𝒮]) : (Poli
       simp [𝓁]
       rw [← ih₁, ← ih₂]; clear ih₁ ih₂
       simp [wnka, WNKA.sem]
-      simp [WeightedAdd.wAdd]
       simp [GS.compute]
       rw [ι_wProd_𝓁]; rfl
     next α α₀ α₁ =>
@@ -430,7 +427,6 @@ theorem Policy.wnka_sem [Fintype F] [DecidableEq F] (p : Policy[F,𝒮]) : (Poli
       simp [δ]
       rw [← ih₁, ← ih₂]; clear ih₁ ih₂
       simp [wnka, WNKA.sem]
-      simp [WeightedAdd.wAdd]
       simp [GS.compute]
       rw [ι_wProd_δ']
       simp
@@ -444,7 +440,6 @@ theorem Policy.wnka_sem [Fintype F] [DecidableEq F] (p : Policy[F,𝒮]) : (Poli
       simp [δ]
       rw [← ih₁, ← ih₂]; clear ih₁ ih₂
       simp [wnka, WNKA.sem]
-      simp [WeightedAdd.wAdd]
       sorry
   | _ => sorry
 
