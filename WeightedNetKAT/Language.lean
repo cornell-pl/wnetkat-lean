@@ -38,7 +38,7 @@ instance Predicate.test_instDecidable {t : Predicate[F]} : DecidablePred t.test 
 def 𝒲.map {X Y : Type} (m : 𝒲 𝒮 X) (f : Y → X) (hf : f.Injective) : 𝒲 𝒮 Y :=
   ⟨(m <| f ·), by
     simp only [Set.countable_coe_iff]
-    convert Set.Countable.preimage_of_injOn m.prop (fun ⦃x₁⦄ a ⦃x₂⦄ a ↦ by apply hf)⟩
+    convert Set.Countable.preimage_of_injOn m.countable (fun ⦃x₁⦄ a ⦃x₂⦄ a ↦ by apply hf)⟩
 
 def 𝒲.liftPi {Q : Type} [Countable Q] (f : Q → 𝒲 𝒮 Q) : 𝒲 𝒮 (Q × Q) :=
   ⟨fun (x, y) ↦ f x y, SetCoe.countable _⟩

@@ -2,6 +2,8 @@ import WeightedNetKAT.Examples.Common
 
 open Fields
 
+/-! Example showing the `match`-syntax sugar. -/
+
 def p {𝒮 : Type} : Policy[Fields,𝒮] := wnk_policy {
   match
   | dst = H₄ ↦ pt ← 2 ⨁ pt ← 3 ⨁ pt ← 5

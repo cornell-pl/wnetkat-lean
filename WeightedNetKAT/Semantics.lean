@@ -425,7 +425,7 @@ theorem 𝒲.bind_mono_left (g : H[F] → 𝒲 𝒮 H[F]) : WeightedMonotone (ι
   simp
   have : DecidableEq H[F] := Classical.typeDecidableEq _
   apply WeightedSum_le_of_finset fun Sa ↦ ?_
-  have : ∀ x, ¬a.val x = 𝟘 → ¬b.val x = 𝟘 := by
+  have : ∀ x, ¬a x = 𝟘 → ¬b x = 𝟘 := by
     intro x hx
     contrapose! hx
     have := hab x
@@ -456,12 +456,9 @@ theorem 𝒲.bind_continuous (f : 𝒲 𝒮 H[F]) : WeightedOmegaContinuous (f �
   intro C
   ext h
   simp only
-  simp [bind, DFunLike.coe]
+  simp [bind]
   simp [wSup]
-  simp only [WeightedChain.map, DFunLike.coe]
   simp [WeightedOmegaContinuousMulRight]
-  simp only [WeightedChain.map, DFunLike.coe]
-  simp
   have :=  @WeightedSum_cont f.supp 𝒮 _ _ _
   unfold WeightedOmegaContinuous at this
   simp only [WeightedChain.map, DFunLike.coe] at this
@@ -620,9 +617,9 @@ theorem 𝒲.bind_continuous' (g : H[F] → 𝒲 𝒮 H[F]) :
   ext h
   simp only
   magic_simp [bind]
-  letI : Encodable (wSup C).supp := instEncodableElemSuppValWCountable
+  letI : Encodable (wSup C).supp := by exact instEncodableElemSupp
   simp
-  have : ∀ (x : (wSup C).supp), (wSup C).val ↑x = wSup ⟨(C · x), (C.prop · x)⟩ := by
+  have : ∀ (x : (wSup C).supp), wSup C x = wSup ⟨(C · x), (C.prop · x)⟩ := by
     simp [WeightedOmegaCompletePartialOrder.instCountablePi]
     magic_simp
     simp
@@ -634,8 +631,8 @@ theorem 𝒲.bind_continuous' (g : H[F] → 𝒲 𝒮 H[F]) :
     intro a b hab i
     apply wMul_mono_right
     apply C.prop hab⟩
-  simp only [wSup_apply, WeightedChain.map, DFunLike.coe] at this
-  simp only [WeightedChain.val_apply] at this
+  simp only [DFunLike.coe, wSup_apply, WeightedChain.map] at this
+  simp only [WeightedChain.val_apply, toFun_apply] at this
   simp [this]; clear this
   conv =>
     right
@@ -739,6 +736,7 @@ theorem WeightedSum_apply {α ι : Type} [Encodable α] [WeightedPreSemiring �
   · rfl
 
 omit [Fintype F] [DecidableEq F] in
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 @[simp]
 theorem WeightedFinsum_apply' {α : Type} [DecidableEq α] (S : Finset α) (f : α → 𝒲 𝒮 H[F]) (i : H[F]) :
     (⨁ᶠ x ∈ S, f x) i = ⨁ᶠ x ∈ S, f x i := by
@@ -747,19 +745,17 @@ theorem WeightedFinsum_apply' {α : Type} [DecidableEq α] (S : Finset α) (f : 
   | empty => simp; rfl
   | insert x S hx ih =>
     simp_all [WeightedAdd.wAdd]
-    magic_simp
-    congr
 
 omit [Fintype F] [DecidableEq F] in
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 @[simp]
 theorem WeightedFinsum_apply'' {α : Type} [DecidableEq α] (S : Finset α) (f : α → 𝒲 𝒮 H[F]) (i : H[F]) :
-    (⨁ᶠ x ∈ S, f x).val i = ⨁ᶠ x ∈ S, f x i := by
+    (⨁ᶠ x ∈ S, f x) i = ⨁ᶠ x ∈ S, f x i := by
   simp [WeightedFinsum]
   induction S using Finset.induction with
   | empty => simp; rfl
   | insert x S hx ih =>
     simp_all [WeightedAdd.wAdd]
-    magic_simp
 
 omit [Fintype F] [DecidableEq F] in
 @[simp]
@@ -770,12 +766,11 @@ theorem WeightedSum_apply' {α : Type} [Encodable α]
   unfold WeightedOmegaContinuousPreSemiring.instCountablePi
   unfold WeightedOmegaCompletePartialOrder.instCountablePi
   simp
-  simp [instFunLike𝒲]
   simp [WeightedChain.map, WeightedSum_chain]
   magic_simp
+  simp
   congr
   ext n
-  simp [DFunLike.coe]
   congr! with x
   split
   · simp
@@ -785,9 +780,8 @@ omit [Fintype F] [DecidableEq F] in
 @[simp]
 theorem WeightedSum_apply'' {α : Type} [Encodable α]
     (f : α → 𝒲 𝒮 H[F]) (i : H[F]) :
-    (⨁' (x : α), f x).val i = ⨁' (x : α), f x i := by
+    (⨁' (x : α), f x) i = ⨁' (x : α), f x i := by
   rw [← WeightedSum_apply']
-  rfl
 
 omit [Fintype F] [DecidableEq F] in
 theorem WeightedSum_comm_le {α ι 𝒮 : Type} [Encodable α] [DecidableEq α] [Encodable ι]
@@ -829,18 +823,6 @@ theorem 𝒲.bind_sum {f : 𝒲 𝒮 H[F]} {g : ℕ → H[F] → 𝒲 𝒮 H[F]}
   magic_simp
   simp [← WeightedSum_mul_left]
   rw [WeightedSum_comm]
-
-omit [DecidableEq F] in
-theorem 𝒲.bind_sum_apply {f : 𝒲 𝒮 H[F]} {g : ℕ → H[F] → 𝒲 𝒮 H[F]} :
-    (f ≫= fun i ↦ ⨁' (x : ℕ), g x i) = (⨁' (x : ℕ), (f ≫= g x)) := by
-  simp [bind]
-  magic_simp
-  simp [← WeightedSum_mul_left]
-  apply Subtype.eq_iff.mpr
-  ext h
-  simp
-  rw [WeightedSum_comm]
-  congr
 
 theorem WeightedSum_nat_le {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
     {f : ℕ → 𝒮} (a : 𝒮) (h : ∀ n, ⨁ᶠ x ∈ Finset.range n, f x ≼ a) :
@@ -894,7 +876,6 @@ theorem Policy.iter_sem_isLfp (p : Policy[F,𝒮]) : IsLfp (Φ p) (wnk_policy {~
       simp [this]; clear this
       rw [WeightedSum_nat_eq_succ]
       simp [Policy.sem, Predicate.sem, WeightedAdd.wAdd]
-      congr
     ext
     simp [𝒲.bind]
     magic_simp
@@ -920,7 +901,6 @@ theorem Policy.iter_sem_isLfp (p : Policy[F,𝒮]) : IsLfp (Φ p) (wnk_policy {~
           simp [𝒲.bind]
           magic_simp
           ext h'
-          simp only
           simp
           magic_simp
           simp [← WeightedFinsum_mul_left]
@@ -1035,9 +1015,11 @@ theorem Policy.approx_n_sem (p : Policy[F,𝒮]) (n : ℕ) : (p.approx_n n).sem 
         simp [← WeightedPreSemiring.wAdd_assoc]
 
 omit [DecidableEq F] in
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 @[simp] theorem η_apply {x y : H[F]} : η x y = if x = y then (𝟙 : 𝒮) else 𝟘 := by rfl
 omit [DecidableEq F] in
-@[simp] theorem η_subtype_apply {x y : H[F]} : (η x).val y = if x = y then (𝟙 : 𝒮) else 𝟘 := by rfl
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+@[simp] theorem η_subtype_apply {x y : H[F]} : η x y = if x = y then (𝟙 : 𝒮) else 𝟘 := by rfl
 
 theorem Policy.sem_n_mono (p : Policy[F,𝒮]) : WeightedMonotone p.sem_n := by
   induction p with
@@ -1068,10 +1050,6 @@ theorem Policy.sem_n_mono (p : Policy[F,𝒮]) : WeightedMonotone p.sem_n := by
       apply wle_trans (𝒲.bind_mono_left ((p.iter i).sem_n n₁) (ih h₁₂ h)) (𝒲.bind_mono_right _ ih')
 
 @[simp]
-theorem 𝒲.apply_subtype {α β : Type} [WeightedOmegaCompletePartialOrder α] [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α] (m : 𝒲 α β) (x : β) : m.val x = m x := by
-  rfl
-
-@[simp]
 theorem wSup_const {α : Type} [WeightedOmegaCompletePartialOrder α] (x : α) :
     wSup ⟨fun _ ↦ x, by intro; simp⟩ = x := by
   apply wle_antisymm
@@ -1089,7 +1067,6 @@ omit [Fintype F] [DecidableEq F] in
 theorem 𝒲.bind_apply (f : 𝒲 𝒮 H[F]) (g : H[F] → 𝒲 𝒮 H[F]) (x : H[F]) :
     (f ≫= g) x = ⨁' (i : f.supp), f i ⨀ g i x := by
   simp [bind]
-  magic_simp
 
 attribute [local simp] Policy.sem Policy.sem_n in
 theorem Policy.iter_m_sem_eq_wSup_sem_n {p : Policy[F,𝒮]} (h : p.sem = wSup ⟨p.sem_n, p.sem_n_mono⟩) (m : ℕ) :

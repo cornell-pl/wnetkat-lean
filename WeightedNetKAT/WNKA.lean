@@ -211,18 +211,12 @@ theorem asdasd {X Y Z : Type} [DecidableEq X] [DecidableEq Y] {x : X × Y} (m : 
     rw [WeightedSum_finite]
     rw [WeightedFinsum_single ⟨x, by simp_all⟩]
     · simp_all [η]
-      magic_simp
-      simp_all
     · simp_all
     · simp_all
   else
     ext
     simp_all
     sorry
-
-@[simp]
-theorem asjdk {X : Type} {f : X → 𝒮} {x : X} (h : Countable ↑(W.supp f )) :
-  DFunLike.coe (F:=𝒲 𝒮 X) ⟨f, h⟩ x = f x := sorry
 
 @[simp]
 theorem WeightedProduct.wProd_wZero {X Y Z : Type} [DecidableEq X] [DecidableEq Y]
@@ -241,7 +235,6 @@ theorem WeightedProduct.wProd_assoc {X Y Z W : Type} [DecidableEq X] [DecidableE
     (c : 𝒲 𝒮 (Z × W)) :
     (a ⨯ b ⨯ c) = (a ⨯ (b ⨯ c)) := by
   ext ⟨x, w⟩
-  simp
   simp [WeightedProduct.wProd]
   simp [← WeightedSum_mul_left]
   sorry

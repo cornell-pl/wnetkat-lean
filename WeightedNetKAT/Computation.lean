@@ -217,8 +217,6 @@ theorem 𝒲.bind_of_𝒞' (m : 𝒞 𝒮 H[F]) (f : H[F] → 𝒲 𝒮 H[F]) :
   · simp
   · simp; intro _ h; exact h
   · simp_all [𝒞.to𝒲]
-    intro a ha
-    magic_simp
 
 theorem 𝒲.η_eq_η' (x : H[F]) : η (𝒮:=𝒮) x = (η' x).to𝒲 := by
   ext h
@@ -244,7 +242,6 @@ theorem 𝒲.η_bind (x : H[F]) (f : H[F] → 𝒲 𝒮 H[F]) :
       ext; simp [η']; simp_all
     simp_all
     ext y
-    simp
     congr! 1
 
 @[simp]
@@ -254,8 +251,7 @@ theorem 𝒲.bind_of_𝒞 (m : 𝒞 𝒮 H[F]) (f : H[F] → 𝒞 𝒮 H[F]) :
   simp only [𝒞.to𝒲, 𝒞.bind, ne_eq]
   magic_simp
   ext
-  simp only [apply_subtype, WeightedFinsum_apply']
-  congr
+  simp only [WeightedFinsum_apply', mk_apply]
 
 omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
 theorem WeightedSemiring.if_zero_is_one_collapse (h : (𝟘 : 𝒮) = 𝟙) (a : 𝒮) : a = 𝟘 := by
@@ -303,7 +299,6 @@ theorem Predicate.compute_eq_sem_n (p : Predicate[F]) (n : ℕ):
     split_ifs with h₁ h₂ h₃
     · simp_all [𝒲.η_bind]
       if (𝟙 : 𝒮) = 𝟘 then
-        simp_all
         have : (η' (𝒮:=𝒮) x).supp = ∅ := by simpa [η']
         simp_all
         apply WeightedSemiring.if_one_is_zero_collapse
@@ -312,27 +307,24 @@ theorem Predicate.compute_eq_sem_n (p : Predicate[F]) (n : ℕ):
         have : (η' (𝒮:=𝒮) x).supp = {x} := by simp_all [η']
         have : (η' (𝒮:=𝒮) x).toFun x = 𝟙 := by simp [η']
         simp_all
-        congr
     · absurd h₂
-      exact 𝒞.ext_iff.mpr (congrFun (congrArg Subtype.val h₁))
+      -- TODO: fix when 𝒞 is `FiniteWeighting`
+      exact 𝒞.ext_iff.mpr (congrFun (congrArg (·.toFun) h₁))
     · simp_all
       contrapose! h₁
       rfl
     · convert_to (𝟘 : 𝒮) = 𝟘
       · simp [𝒲.bind]
-        magic_simp
-        simp
       · rfl
   | Con t u iht ihu => simp_all only [sem, 𝒲.bind_of_𝒞, compute]
   | Not t ih =>
     simp_all; clear ih
     ext h h'
-    simp
     split_ifs with h₁ h₂ h₃
     · simp_all [η', 𝒞.to𝒲]
       magic_simp
     · absurd h₂
-      exact 𝒞.ext_iff.mpr (congrFun (congrArg Subtype.val h₁))
+      exact 𝒞.ext_iff.mpr (congrFun (congrArg (·.toFun) h₁))
     · simp_all
       absurd h₁
       rfl

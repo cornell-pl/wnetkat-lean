@@ -13,48 +13,52 @@ def W.supp {X : Type} (m : W X 𝒮) := {x : X | m x ≠ 𝟘}
 
 end
 
-variable {X : Type} {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+-- variable {X : Type} {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+variable {X : Type} {𝒮 : Type} [WeightedPreSemiring 𝒮]
 
-noncomputable def W.mass (m : W X 𝒮) [Encodable m.supp] := ⨁' x : m.supp, m x.val
+noncomputable def W.mass [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+    (m : W X 𝒮) [Encodable m.supp] :=
+  ⨁' x : m.supp, m x.val
 
-def 𝒲 (𝒮 : Type) [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] (X : Type) := {m : W X 𝒮 // Countable m.supp}
+structure 𝒲 (𝒮 X : Type) [WeightedPreSemiring 𝒮] where
+  toFun : W X 𝒮
+  countable : Countable toFun.supp
+
+structure FiniteWeighting (𝒮 X : Type) [WeightedPreSemiring 𝒮] extends 𝒲 𝒮 X where
+  finSupp : Finset X
+  finSupp_eq_supp : finSupp = toFun.supp
+
+abbrev 𝒲.supp (m : 𝒲 𝒮 X) := m.toFun.supp
+
+instance : FunLike (𝒲 𝒮 X) X 𝒮 where
+  coe m := m.toFun
+  coe_injective' := by intro ⟨_, _, _⟩ ⟨_, _, _⟩; simp_all
 
 @[ext]
 theorem 𝒲.ext (C₁ C₂ : 𝒲 𝒮 X)
-    (h : C₁.val = C₂.val) : C₁ = C₂ := by cases C₁; cases C₂; congr
+    (h : ∀ i, C₁ i = C₂ i) : C₁ = C₂ := by cases C₁; cases C₂; congr; ext; apply h
 
-abbrev 𝒲.supp (m : 𝒲 𝒮 X) := m.val.supp
+@[simp]
+theorem 𝒲.mk_apply {X : Type} {f : X → 𝒮} {x : X} (h : Countable ↑(W.supp f)) :
+  DFunLike.coe (F:=𝒲 𝒮 X) ⟨f, h⟩ x = f x := by rfl
+@[simp]
+theorem 𝒲.toFun_apply {X : Type} (m : 𝒲 𝒮 X) {x : X} :
+  m.toFun x = m x := by rfl
 
-instance : FunLike (𝒲 𝒮 X) X 𝒮 where
-  coe m := m.val
-  coe_injective' := by intro ⟨_, _⟩; simp_all
-
-instance {m : 𝒲 𝒮 X} : Countable m.val.supp := m.prop
-noncomputable instance {m : 𝒲 𝒮 X} : Encodable m.val.supp := Encodable.ofCountable _
+instance {m : 𝒲 𝒮 X} : Countable m.supp := m.countable
+noncomputable instance {m : 𝒲 𝒮 X} : Encodable m.supp := Encodable.ofCountable _
 
 section CountablePi
 
 open Pi in
 instance WeightedAdd.instCountablePi : WeightedAdd (𝒲 𝒮 X) where
-  wAdd := fun a b ↦ ⟨a.val ⨁ b.val, by
-    let ⟨a_underlying, a_prop⟩ := a
-    let ⟨b_underlying, b_prop⟩ := b
-    simp [wAdd]
-    apply @Function.Injective.countable _ (Sum a_underlying.supp b_underlying.supp) _
-    case f =>
-      intro ⟨m_val, m_prop⟩
-      simp [instPi] at m_prop
-      by_cases a_underlying m_val = 𝟘
-      case pos h =>
-        apply Sum.inr
-        exact ⟨ m_val, m_prop h ⟩
-      case neg h =>
-        apply Sum.inl
-        exact ⟨ m_val, h⟩
-    case hf =>
-      dsimp
-      intro ⟨v₁, p₁⟩ ⟨v₂, p₂⟩
-      grind
+  wAdd := fun a b ↦ ⟨a ⨁ b, by
+    obtain ⟨a, ha⟩ := a
+    obtain ⟨b, hb⟩ := b
+    apply Set.Countable.mono _ (Set.Countable.union ha hb)
+    intro
+    contrapose!
+    simp +contextual [wAdd]
     ⟩
 
 instance WeightedMul.instCountablePi : WeightedMul (𝒲 𝒮 X) where
@@ -96,10 +100,10 @@ instance WeightedPreSemiring.instCountablePi : WeightedPreSemiring (𝒲 𝒮 X)
   mul_wZero _ := by ext x; apply mul_wZero
   mul_assoc _ _ _ := by ext x; apply mul_assoc
 
-instance WeightedLE.instCountablePi : WeightedLE (𝒲 𝒮 X) where
+instance WeightedLE.instCountablePi [WeightedLE 𝒮] : WeightedLE (𝒲 𝒮 X) where
   wle := fun ⟨a, _⟩ ⟨ b, _ ⟩ => a ≼ b
 
-instance WeightedPartialOrder.instCountablePi  : WeightedPartialOrder (𝒲 𝒮 X) where
+instance WeightedPartialOrder.instCountablePi [WeightedPartialOrder 𝒮] : WeightedPartialOrder (𝒲 𝒮 X) where
   wle_refl a x := by simp
   wle_trans {a b c} hab hbc x := wle_trans (hab x) (hbc x)
   wle_antisymm { a b} hab hba := by
@@ -112,14 +116,14 @@ instance WeightedPartialOrder.instCountablePi  : WeightedPartialOrder (𝒲 𝒮
 
 attribute [simp] WeightedZero.instCountablePi
 
-instance WeightedOmegaCompletePartialOrder.instCountablePi :
+instance WeightedOmegaCompletePartialOrder.instCountablePi [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] :
     WeightedOmegaCompletePartialOrder (𝒲 𝒮 X) where
   wSup C := ⟨fun i ↦ wSup (C.map (· i) (· i)), by
     simp
     let s : Set _ := ⋃ n : ℕ, (C n).supp
     have s_countable : Countable s := by
       simp only [Set.countable_coe_iff, Set.countable_iUnion_iff, s]
-      exact fun n => (C n).prop
+      exact fun n => (C n).countable
     apply Set.Countable.mono _ s_countable
     intro x mem
     simp only [Set.mem_iUnion, W.supp_mem_iff, ne_eq, s]
@@ -142,7 +146,7 @@ instance WeightedOmegaCompletePartialOrder.instCountablePi :
     exact h
 
 open WeightedOmegaCompletePartialOrder in
-instance WeightedOmegaContinuousPreSemiring.instCountablePi :
+instance WeightedOmegaContinuousPreSemiring.instCountablePi [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] :
     WeightedOmegaContinuousPreSemiring (𝒲 𝒮 X) where
   wle_positive _ _ := by simp
   wAdd_mono _ _ _ _ _ := by apply wAdd_mono_left; apply_assumption
@@ -177,11 +181,13 @@ theorem nonzero_wMul_nonzero {α : Type} [WeightedPreSemiring α] {a b : α} :
   contrapose
   exact fun h ↦ not_ne_iff.mpr (wMul_eq_zero_of (or_iff_not_and_not.mpr h))
 
+variable [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+
 noncomputable def 𝒲.bind {Y : Type} (m : 𝒲 𝒮 X) (f : X → 𝒲 𝒮 Y) :
     𝒲 𝒮 Y :=
   ⟨fun y ↦ ⨁' x : m.supp, m x ⨀ f x y, by
     let s : Set _ := ⋃ x ∈ m.supp, (f x).supp
-    apply Set.Countable.mono _ (Set.Countable.biUnion m.prop fun a _ ↦ (f a).prop : Countable s)
+    apply Set.Countable.mono _ (Set.Countable.biUnion m.countable fun a _ ↦ (f a).countable : Countable s)
     intro y
     simp only [W.supp_mem_iff, ne_eq, WeightedSum_eq_zero_iff, Subtype.forall, not_forall,
       Classical.not_imp, Set.mem_iUnion, exists_prop, forall_exists_index, and_imp, s]
@@ -194,4 +200,4 @@ noncomputable def 𝒲.bind {Y : Type} (m : 𝒲 𝒮 X) (f : X → 𝒲 𝒮 Y)
 infixr:50 " ≫= " => 𝒲.bind
 
 instance {Y : Type} [Countable X] {m : 𝒲 𝒮 X} (f : X → 𝒲 𝒮 Y) :
-    Countable (m ≫= f).val.supp := (m ≫= f).prop
+    Countable (m ≫= f).supp := (m ≫= f).countable

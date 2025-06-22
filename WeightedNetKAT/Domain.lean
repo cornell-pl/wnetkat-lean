@@ -215,6 +215,10 @@ def WeightedChain.map {α β : Type} [WeightedPartialOrder α] [WeightedPartialO
     (C : WeightedChain α) (f : α → β) (hf : WeightedMonotone f) : WeightedChain β :=
   ⟨fun n ↦ f (C n), fun hab ↦ hf (C.property hab)⟩
 
+@[simp]
+theorem WeightedChain.map_apply {α β : Type} [WeightedPartialOrder α] [WeightedPartialOrder β]
+    (C : WeightedChain α) (f : α → β) (hf : WeightedMonotone f) {i : ℕ} : (C.map f hf) i = f (C i) := rfl
+
 class WeightedOmegaCompletePartialOrder (α : Type) extends
     WeightedPartialOrder α where
   wSup : WeightedChain α → α
