@@ -42,6 +42,11 @@ def 𝒲.map {X Y : Type} (m : 𝒲 𝒮 X) (f : Y → X) (hf : f.Injective) : �
 
 def 𝒲.liftPi {Q : Type} [Countable Q] (f : Q → 𝒲 𝒮 Q) : 𝒲 𝒮 (Q × Q) :=
   ⟨fun (x, y) ↦ f x y, SetCoe.countable _⟩
+def 𝒞.liftPi {Q P : Type} [i : Fintype Q] [DecidableEq Q] [DecidableEq P] (f : Q → 𝒞 𝒮 P) : 𝒞 𝒮 (Q × P) :=
+  𝒞.mk'
+    (fun (x, y) ↦ f x y)
+    (i.elems.biUnion (fun q ↦ (f q).finSupp.map ⟨(q, ·), (Prod.mk_right_injective q)⟩))
+    (by simp [Fintype.complete])
 
 def 𝒲.equiv {X Y : Type} (m : 𝒲 𝒮 X) {e : Y ≃ X} : 𝒲 𝒮 Y := m.map _ e.injective
 
@@ -83,7 +88,29 @@ noncomputable instance [DecidableEq (GS F)] : WeightedConcat (𝒲 𝒮 (GS F)) 
     fun g ↦ ⨁' (x : m.supp) (y : m'.supp), if (x.val ♢ y.val) = some g then m x ⨀ m y else 𝟘,
     by
       simp
-      sorry⟩
+      have : m.supp.Countable := m.countable
+      have : m'.supp.Countable := m'.countable
+      let S := m.supp ×ˢ m'.supp
+      have : S.Countable := Set.Countable.prod m.countable m'.countable
+      let S' := S.image (fun (a, b) ↦ (a ♢ b : Option (GS F)))
+      have : S'.Countable := Set.Countable.image this _
+      let S'' := S' ∩ {x | x.isSome}
+      have : S''.Countable := by
+        apply Set.Countable.mono _ this
+        intro s; simp +contextual [S'']
+      let S''' := (fun x ↦ x.val.get (by obtain ⟨x, hx⟩ := x; simp_all [S'']; simp_all [S''])) '' (Set.univ : Set S'')
+      simp at S'''
+      have : Countable ↑S'' := this
+      have : S'''.Countable := by
+        simp [S''']
+        apply Set.countable_range
+      apply Set.Countable.mono (s₂:=S''') _ this
+      intro g
+      simp [S''', S'', S', S]
+      intro g₀ hg₀ g₁ hg₁ h h'
+      use g
+      simp
+      use g₀, hg₀, g₁⟩
 
 #check (GS.mk (fun _ ↦ 0) [] (fun _ ↦ 0)) ♢ (GS.mk (fun _ ↦ 0) [] (fun _ ↦ 0))
 

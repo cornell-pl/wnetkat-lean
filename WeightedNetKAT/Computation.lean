@@ -65,7 +65,7 @@ instance : WeightedZero (𝒞 𝒮 X) where
 
 omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] [DecidableEq 𝒮] [Fintype F] [DecidableEq F] in
 @[simp]
-theorem 𝒞.wZero_to𝒲 : (𝟘 : 𝒞 𝒮 H[F]).to𝒲 = 𝟘 := rfl
+theorem 𝒞.wZero_to𝒲 : (𝟘 : 𝒞 𝒮 X).to𝒲 = 𝟘 := rfl
 omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] [DecidableEq 𝒮] [Fintype F] [DecidableEq F] in
 @[simp]
 theorem 𝒞.wZero_apply {x : X} : (𝟘 : 𝒞 𝒮 X) x = 𝟘 := rfl
@@ -81,7 +81,7 @@ omit [DecidableEq 𝒮] in
 theorem 𝒞.wAdd_apply [DecidableEq X] {m m' : 𝒞 𝒮 X} {x : X} : (m ⨁ m') x = m x ⨁ m' x := rfl
 
 open WeightedPreSemiring in
-instance : WeightedPreSemiring (𝒞 𝒮 H[F]) where
+instance [DecidableEq X] : WeightedPreSemiring (𝒞 𝒮 X) where
   wMul a b := ⟨a.to𝒲 ⨀ b.to𝒲, (a.finSupp ∩ b.finSupp).filter fun x ↦ a.to𝒲 x ⨀ b.to𝒲 x ≠ 𝟘 , by
     ext; simp [WeightedMul.wMul]
     contrapose!
