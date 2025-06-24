@@ -61,37 +61,36 @@ deriving DecidableEq
 notation "♡" => StateSpace.Heart
 notation "♣" => StateSpace.Club
 
-def S : Policy[F,𝒮] → Type
-  | wnk_policy {drop} => I {♡}
-  | wnk_policy {skip} => I {♡}
-  | wnk_policy {@filter ~_} => I {♡}
-  | wnk_policy {~_ ← ~_} => I {♡}
-  | wnk_policy {dup} => I {♡, ♣}
-  | wnk_policy {~_ ⨀ ~p₁} => S p₁
-  | wnk_policy {~p₁ ⨁ ~p₂} => S p₁ ⊕ S p₂
-  | wnk_policy {~p₁ ; ~p₂} => S p₁ ⊕ S p₂
-  | wnk_policy {~p₁*} => S p₁
+def S : RPol[F,𝒮] → Type
+  | wnk_rpol {drop} => I {♡}
+  | wnk_rpol {skip} => I {♡}
+  | wnk_rpol {@test ~_} => I {♡}
+  | wnk_rpol {@mod ~_} => I {♡}
+  | wnk_rpol {dup} => I {♡, ♣}
+  | wnk_rpol {¬ ~p₁} => S p₁
+  | wnk_rpol {~_ ⨀ ~p₁} => S p₁
+  | wnk_rpol {~p₁ ⨁ ~p₂} => S p₁ ⊕ S p₂
+  | wnk_rpol {~p₁ ; ~p₂} => S p₁ ⊕ S p₂
+  | wnk_rpol {~p₁*} => S p₁
 where I : (Set StateSpace) → Type := (↑·)
 
-def S.decidableEq (p : Policy[F,𝒮]) : DecidableEq (S p) :=
+def S.decidableEq (p : RPol[F,𝒮]) : DecidableEq (S p) :=
   match p with
-  | wnk_policy {drop} => Subtype.instDecidableEq
-  | wnk_policy {skip} => Subtype.instDecidableEq
-  | wnk_policy {@filter ¬~_}
-  | wnk_policy {@filter ~(.Con _ _)}
-  | wnk_policy {@filter ~(.Dis _ _)}
-  | wnk_policy {@filter ~(.Test _ _)} => Subtype.instDecidableEq
-  | wnk_policy {~_ ← ~_} => Subtype.instDecidableEq
-  | wnk_policy {dup} => Subtype.instDecidableEq
-  | wnk_policy {~_ ⨀ ~p₁} => S.decidableEq p₁
-  | wnk_policy {~p₁ ⨁ ~p₂}
-  | wnk_policy {~p₁ ; ~p₂} =>
+  | wnk_rpol {drop} => Subtype.instDecidableEq
+  | wnk_rpol {skip} => Subtype.instDecidableEq
+  | wnk_rpol {@test ~_}
+  | wnk_rpol {@mod ~_} => Subtype.instDecidableEq
+  | wnk_rpol {dup} => Subtype.instDecidableEq
+  | wnk_rpol {¬~p₁}
+  | wnk_rpol {~_ ⨀ ~p₁} => S.decidableEq p₁
+  | wnk_rpol {~p₁ ⨁ ~p₂}
+  | wnk_rpol {~p₁ ; ~p₂} =>
     have := S.decidableEq p₁
     have := S.decidableEq p₂
     instDecidableEqSum
-  | wnk_policy {~p₁*} => S.decidableEq p₁
+  | wnk_rpol {~p₁*} => S.decidableEq p₁
 
-instance S.instDecidableEq {p : Policy[F,𝒮]} : DecidableEq (S p) := S.decidableEq p
+instance S.instDecidableEq {p : RPol[F,𝒮]} : DecidableEq (S p) := S.decidableEq p
 
 def S.ι {X Y : Type} : 𝒞 𝒮 (Unit × X) → 𝒞 𝒮 (Unit × Y) → 𝒞 𝒮 (Unit × (X ⊕ Y)) :=
   fun m₁ m₂ ↦
@@ -137,82 +136,80 @@ def S.δ {X Y Z W : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [Decid
 notation "δ[" "[" a "," b "]" "," "[" c "," d "]" "]" => S.δ a b c d
 
 omit [DecidableEq Pk] [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
-instance S.Fintype (p : Policy[F,𝒮]) : Fintype (S p) :=
+instance S.Fintype (p : RPol[F,𝒮]) : Fintype (S p) :=
   match p with
-  | wnk_policy {drop} => ⟨{⟨♡, by simp⟩}, by intro ⟨_, _⟩; simp; congr⟩
-  | wnk_policy {skip} => ⟨{⟨♡, by simp⟩}, by intro ⟨_, _⟩; simp; congr⟩
-  | wnk_policy {@filter ¬~_}
-  | wnk_policy {@filter ~(.Con _ _)}
-  | wnk_policy {@filter ~(.Dis _ _)}
-  | wnk_policy {@filter ~(.Test _ _)} => ⟨{⟨♡, by simp⟩}, by intro ⟨_, _⟩; simp; congr⟩
-  | wnk_policy {~_ ← ~_} => ⟨{⟨♡, by simp⟩}, by intro ⟨_, _⟩; simp; congr⟩
-  | wnk_policy {dup} => ⟨{⟨♡, by simp⟩, ⟨♣, by simp⟩}, by rintro ⟨_, (h | h | h)⟩ <;> simp_all⟩
-  | wnk_policy {~_ ⨀ ~p₁} => S.Fintype p₁
-  | wnk_policy {~p₁ ⨁ ~p₂} =>
+  | wnk_rpol {drop} => ⟨{⟨♡, by simp⟩}, by intro ⟨_, _⟩; simp; congr⟩
+  | wnk_rpol {skip} => ⟨{⟨♡, by simp⟩}, by intro ⟨_, _⟩; simp; congr⟩
+  | wnk_rpol {@test ~_}
+  | wnk_rpol {@mod ~_} => ⟨{⟨♡, by simp⟩}, by intro ⟨_, _⟩; simp; congr⟩
+  | wnk_rpol {dup} => ⟨{⟨♡, by simp⟩, ⟨♣, by simp⟩}, by rintro ⟨_, (h | h | h)⟩ <;> simp_all⟩
+  | wnk_rpol {~_ ⨀ ~p₁}
+  | wnk_rpol {¬~p₁} => S.Fintype p₁
+  | wnk_rpol {~p₁ ⨁ ~p₂} =>
     have := S.Fintype p₁
     have := S.Fintype p₂
     instFintypeSum (S p₁) (S p₂)
-  | wnk_policy {~p₁ ; ~p₂} =>
+  | wnk_rpol {~p₁ ; ~p₂} =>
     have := S.Fintype p₁
     have := S.Fintype p₂
     instFintypeSum (S p₁) (S p₂)
-  | wnk_policy {~p₁*} => S.Fintype p₁
-instance S.instFintype {p : Policy[F,𝒮]} : _root_.Fintype (S p) := S.Fintype p
+  | wnk_rpol {~p₁*} => S.Fintype p₁
+instance S.instFintype {p : RPol[F,𝒮]} : _root_.Fintype (S p) := S.Fintype p
 omit [DecidableEq Pk] [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
-instance S.Finite {p : Policy[F,𝒮]} : Finite (S p) := Finite.of_fintype (S p)
+instance S.Finite {p : RPol[F,𝒮]} : Finite (S p) := Finite.of_fintype (S p)
 
 variable [DecidableEq 𝒮]
 
-def ι (p : Policy[F,𝒮]) : 𝒞 𝒮 (Unit × S p) := match p with
-  | wnk_policy {drop} => η' ⟨(), ♡, rfl⟩
-  | wnk_policy {skip} => η' ⟨(), ♡, rfl⟩
-  | wnk_policy {@filter ¬~_} => η' ⟨(), ♡, rfl⟩
-  | wnk_policy {@filter ~(.Con _ _)} => η' ⟨(), ♡, rfl⟩
-  | wnk_policy {@filter ~(.Dis _ _)} => η' ⟨(), ♡, rfl⟩
-  | wnk_policy {@filter ~(.Test _ _)} => η' ⟨(), ♡, rfl⟩
-  | wnk_policy {~_ ← ~_} => η' ⟨(), ♡, rfl⟩
-  | wnk_policy {dup} => η' ⟨(), ♡, by simp [S]⟩
-  | wnk_policy {~w ⨀ ~p₁} => w • ι p₁
-  | wnk_policy {~p₁ ⨁ ~p₂} => ι[ι p₁, ι p₂]
-  | wnk_policy {~p₁ ; ~p₂} => ι[ι p₁, 𝟘]
-  | wnk_policy {~p₁*} => ι p₁
+def ι (p : RPol[F,𝒮]) : 𝒞 𝒮 (Unit × S p) := match p with
+  | wnk_rpol {drop} => η' ⟨(), ♡, rfl⟩
+  | wnk_rpol {skip} => η' ⟨(), ♡, rfl⟩
+  | wnk_rpol {@test ~_} => η' ⟨(), ♡, rfl⟩
+  | wnk_rpol {@mod ~_} => η' ⟨(), ♡, rfl⟩
+  | wnk_rpol {dup} => η' ⟨(), ♡, by simp [S]⟩
+  | wnk_rpol {¬~p₁} => ι p₁
+  | wnk_rpol {~w ⨀ ~p₁} => w • ι p₁
+  | wnk_rpol {~p₁ ⨁ ~p₂} => ι[ι p₁, ι p₂]
+  | wnk_rpol {~p₁ ; ~p₂} => ι[ι p₁, 𝟘]
+  | wnk_rpol {~p₁*} => ι p₁
 
 variable [Fintype Pk[F]]
 
-def 𝓁 [DecidableEq 𝒮] (p : Policy[F,𝒮]) (α β : Pk[F]) : 𝒞 𝒮 (S p × Unit) :=
+def 𝓁 [DecidableEq 𝒮] (p : RPol[F,𝒮]) (α β : Pk[F]) : 𝒞 𝒮 (S p × Unit) :=
   match p with
-  | wnk_policy {drop} => 𝟘
-  | wnk_policy {skip} =>
+  | wnk_rpol {drop} => 𝟘
+  | wnk_rpol {skip} =>
     𝒞.mk'
       (fun ⟨⟨♡, _⟩, ()⟩ ↦ if α = β then 𝟙 else 𝟘)
       (if α = β ∧ (𝟙 : 𝒮) ≠ 𝟘 then Fintype.elems else ∅)
       (by simp +contextual [S, S.I]; rintro a ⟨_⟩ _; split_ifs <;> simp [Fintype.complete, *])
-  | wnk_policy {@filter ~t} => 𝒞.mk' (fun _ ↦ if α = β ∧ t.test α then 𝟙 else 𝟘) sorry sorry
-  | wnk_policy {~_ ← ~_} => sorry -- TODO
-  | wnk_policy {dup} => 𝒞.mk' (fun ⟨s, ()⟩ ↦ if s.val = ♣ then if α = β then 𝟙 else 𝟘 else 𝟘) sorry sorry
-  | wnk_policy {~_ ⨀ ~p₁} => 𝓁 p₁ α β
-  | wnk_policy {~p₁ ⨁ ~p₂} => 𝓁[𝓁 p₁ α β, 𝓁 p₂ α β]
-  | wnk_policy {~p₁ ; ~p₂} => 𝓁[⨁ᶠ γ, (𝓁 p₁ α γ ⨯ ι p₂ ⨯ 𝓁 p₂ γ β), 𝓁 p₂ α β]
-  | wnk_policy {~p₁*} => ⨁ᶠ γ, (𝓁 p₁ α γ ⨯ ι p₁ ⨯ 𝓁 p₁ γ β)
+  | wnk_rpol {@test ~γ} => 𝒞.mk' (fun _ ↦ if α = β ∧ β = γ then 𝟙 else 𝟘) sorry sorry
+  | wnk_rpol {@mod ~π} => 𝒞.mk' (fun _ ↦ if β = π then 𝟙 else 𝟘) sorry sorry
+  | wnk_rpol {¬~_} => sorry -- TODO
+  | wnk_rpol {dup} => 𝒞.mk' (fun ⟨s, ()⟩ ↦ if s.val = ♣ then if α = β then 𝟙 else 𝟘 else 𝟘) sorry sorry
+  | wnk_rpol {~_ ⨀ ~p₁} => 𝓁 p₁ α β
+  | wnk_rpol {~p₁ ⨁ ~p₂} => 𝓁[𝓁 p₁ α β, 𝓁 p₂ α β]
+  | wnk_rpol {~p₁ ; ~p₂} => 𝓁[⨁ᶠ γ, (𝓁 p₁ α γ ⨯ ι p₂ ⨯ 𝓁 p₂ γ β), 𝓁 p₂ α β]
+  | wnk_rpol {~p₁*} => ⨁ᶠ γ, (𝓁 p₁ α γ ⨯ ι p₁ ⨯ 𝓁 p₁ γ β)
 
-def δ (p : Policy[F,𝒮]) (α β : Pk[F]) : 𝒞 𝒮 (S p × S p) := match p with
-  | wnk_policy {drop} => 𝟘
-  | wnk_policy {skip} => 𝟘
-  | wnk_policy {@filter ~_} => 𝟘
-  | wnk_policy {~_ ← ~_} => 𝟘
-  | wnk_policy {dup} => 𝒞.liftPi fun s ↦ if s.val = ♡ ∧ α = β then η' ⟨♣, by simp [S]⟩ else 𝟘
-  | wnk_policy {~_ ⨀ ~p₁} => δ p₁ α β
-  | wnk_policy {~p₁ ⨁ ~p₂} =>
+def δ (p : RPol[F,𝒮]) (α β : Pk[F]) : 𝒞 𝒮 (S p × S p) := match p with
+  | wnk_rpol {drop} => 𝟘
+  | wnk_rpol {skip} => 𝟘
+  | wnk_rpol {@test ~_} => 𝟘
+  | wnk_rpol {@mod ~_} => 𝟘
+  | wnk_rpol {¬ ~_} => sorry -- TODO
+  | wnk_rpol {dup} => 𝒞.liftPi fun s ↦ if s.val = ♡ ∧ α = β then η' ⟨♣, by simp [S]⟩ else 𝟘
+  | wnk_rpol {~_ ⨀ ~p₁} => δ p₁ α β
+  | wnk_rpol {~p₁ ⨁ ~p₂} =>
       δ[[δ p₁ α β,    𝟘],
         [𝟘,           δ p₂ α β]]
-  | wnk_policy {~p₁ ; ~p₂} =>
+  | wnk_rpol {~p₁ ; ~p₂} =>
       δ[[δ p₁ α β,    ⨁ᶠ γ, (𝓁 p₁ α γ ⨯ ι p₂ ⨯ δ p₂ γ β)],
         [𝟘,           δ p₂ α β]]
-  | wnk_policy {~p₁*} => δ p₁ α β ⨁ (⨁ᶠ γ, 𝓁 p₁ α γ ⨯ ι p₁)
+  | wnk_rpol {~p₁*} => δ p₁ α β ⨁ (⨁ᶠ γ, 𝓁 p₁ α γ ⨯ ι p₁)
 
 example {a : Prop} : ¬¬a ↔ a := by exact not_not
 
-def Policy.wnka (p : Policy[F,𝒮]) : WNKA F 𝒮 (S p) where
+def RPol.wnka (p : RPol[F,𝒮]) : WNKA F 𝒮 (S p) where
   ι := ι p
   δ := δ p
   𝓁 := 𝓁 p
@@ -310,17 +307,6 @@ theorem asdasdas {X : Type} {n : ℕ} : (fun (_ : 𝒞 𝒮 X) ↦ (WeightedZero
   | zero => simp_all; rfl
   | succ => simp_all; rfl
 
--- example {A A' B B' C C' D D' : Type} {X : 𝒞 𝒮 (A × B)} {Y : 𝒞 𝒮 (B × C)} {Z : 𝒞 𝒮 (A × D)} {W : 𝒞 𝒮 (D × C)} : True := by
---   let a := S[X,Y]
---   let b := S[Z,W]
---   -- let a := S[X,Y].equiv (e:=Equiv.prodSumDistrib _ _ _)
---   -- let b := S[Z,W].equiv (e:=Equiv.sumProdDistrib _ _ _)
---   -- have := a ⨯ b
---   let c := X ⨯ Y
---   let d := Z ⨯ W
---   have : (S[X,Y] ⨯ S[Z,W]) = (X ⨯ Y) ⨁ (Z ⨯ W) := sorry
---   sorry
-
 theorem ι_wProd_𝓁 {A B : Type} [DecidableEq A] [DecidableEq B] {X : 𝒞 𝒮 (Unit × A)} {Y : 𝒞 𝒮 (Unit × B)} {Z : 𝒞 𝒮 (A × Unit)} {W : 𝒞 𝒮 (B × Unit)} :
     (ι[X, Y] ⨯ 𝓁[Z, W]) = (X ⨯ Z) ⨁ (Y ⨯ W) := by
   ext a
@@ -351,98 +337,85 @@ theorem ι_wProd_δ' {A B C D : Type}
   sorry
 
 open scoped Classical in
-theorem Policy.wnka_sem [Fintype F] [DecidableEq F] (p : Policy[F,𝒮]) : (Policy.wnka p).sem = G p := by
+theorem RPol.wnka_sem [Fintype F] [DecidableEq F] (p : RPol[F,𝒮]) : (RPol.wnka p).sem = G p := by
   if h : (𝟘 : 𝒮) = 𝟙 then sorry else
   have h' : ¬𝟙 = (𝟘 : 𝒮) := by grind
   induction p with
-  | Filter t =>
-    cases t with
-    | Bool b =>
-      cases b
-      · ext x
-        simp [G]
-        induction x using GS.induction
-        next α α₀ =>
-          simp [wnka, WNKA.sem, GS.mk, GS.compute, 𝓁]
-        next α α₀ α₁ =>
-          simp [wnka, WNKA.sem, GS.mk, GS.compute, 𝓁]
-        next α A αn =>
-          simp [wnka, WNKA.sem, GS.mk, GS.compute, List.pairs, 𝓁]
-      · ext x
-        simp [G]
-        induction x using GS.induction
-        next α α₀ =>
-          simp [wnka, WNKA.sem, GS.mk, GS.compute, List.pairs, ι, 𝓁]
-          sorry
-        next α α₀ α₁ =>
-          simp [wnka, WNKA.sem, GS.mk, GS.compute, List.pairs, ι, 𝓁, δ, h]
-          sorry
-        next α A αn =>
-          simp [wnka, WNKA.sem, GS.mk, GS.compute, List.pairs, ι, 𝓁, δ]
-          rw [List.foldl_const]
-          simp
-          cases A
-          · simp_all; sorry--; grind
-          · simp [List.length_cons, -Function.iterate_succ, Function.comp_apply, ne_eq,
-            reduceCtorEq, not_false_eq_true, List.getLast_cons]
-            sorry
-            -- grind
-    | _ => sorry
+  | Drop =>
+    ext x
+    simp [G]
+    induction x using GS.induction
+    next α α₀ =>
+      simp only [WNKA.sem, GS.compute, wnka, ι, 𝓁, WeightedProduct.wProd_wZero, 𝒞.wZero_apply,
+        asdasd, 𝒞.mk', ↓reduceIte, GS.mk, 𝒲.mk_apply]
+    next α α₀ α₁ =>
+      simp only [WNKA.sem, GS.compute, wnka, δ, WeightedProduct.wProd_wZero,
+        WeightedProduct.wZero_wProd, 𝒞.wZero_apply, GS.mk, 𝒲.mk_apply]
+    next α A αn =>
+      simp [wnka, WNKA.sem, GS.mk, GS.compute, List.pairs, δ]
+      sorry
+  | Skip =>
+    ext x
+    simp [G]
+    induction x using GS.induction
+    next α α₀ =>
+      -- TODO: simp?
+      simp [wnka, WNKA.sem, GS.mk, GS.compute, 𝓁, ι]
+      split_ifs with h₁ h₂ h₃ <;> simp_all
+      grind
+    next α α₀ α₁ =>
+      simp only [WNKA.sem, GS.compute, wnka, δ, WeightedProduct.wProd_wZero,
+        WeightedProduct.wZero_wProd, 𝒞.wZero_apply, GS.mk, 𝒲.mk_apply, right_eq_ite_iff]
+      grind
+    next α A αn =>
+      simp [wnka, WNKA.sem, GS.mk, GS.compute, List.pairs, δ]
+      sorry
+  | Test t =>
+    ext x
+    simp [G]
+    induction x using GS.induction
+    next α α₀ =>
+      -- TODO: simp?
+      simp [wnka, WNKA.sem, GS.mk, GS.compute, 𝓁, ι]
+      grind
+    next α α₀ α₁ =>
+      simp only [WNKA.sem, GS.compute, wnka, δ, WeightedProduct.wProd_wZero,
+        WeightedProduct.wZero_wProd, 𝒞.wZero_apply, GS.mk, 𝒲.mk_apply, right_eq_ite_iff]
+      grind
+    next α A αn =>
+      simp [wnka, WNKA.sem, GS.mk, GS.compute, List.pairs, δ]
+      sorry
+  | Mod π =>
+    ext x
+    simp [G]
+    induction x using GS.induction
+    next α α₀ =>
+      -- TODO: simp?
+      simp [wnka, WNKA.sem, GS.mk, GS.compute, 𝓁, ι]
+      split_ifs with h₁ h₂ h₃ <;> simp_all
+      grind
+    next α α₀ α₁ =>
+      simp only [WNKA.sem, GS.compute, wnka, δ, WeightedProduct.wProd_wZero,
+        WeightedProduct.wZero_wProd, 𝒞.wZero_apply, GS.mk, 𝒲.mk_apply, right_eq_ite_iff]
+      grind
+    next α A αn =>
+      simp [wnka, WNKA.sem, GS.mk, GS.compute, List.pairs, δ]
+      sorry
   | Dup =>
-    sorry
-    -- ext S
-    -- induction S using GS.induction
-    -- next α α₀ =>
-    --   simp [wnka, WNKA.sem, GS.mk, GS.compute, List.pairs, ι]
-    --   simp [𝓁]
-    --   simp_all [G, GS.mk]
-    --   grind
-    -- next α α₀ α₁ =>
-    --   simp [wnka, WNKA.sem, GS.mk, GS.compute, List.pairs, WeightedProduct.wProd_assoc]
-    --   simp [δ, 𝒞.liftPi]
-    --   simp [𝓁]
-    --   simp [ι]
-    --   simp [δ]
-    -- -- simp [wnka, WNKA.sem]
-    -- -- simp only [DFunLike.coe]
-    -- -- simp
-    -- -- apply S.cases₀₁ₙ
-    -- -- · rintro α α₀ ⟨_⟩
-    -- --   simp [GS.mk, GS.compute, List.pairs]
-    -- --   simp [ι]
-    -- --   magic_simp
-    -- --   simp
-    -- --   simp [𝓁]
-    -- --   magic_simp
-    -- --   simp [G]
-    -- --   simp_all [GS.mk]
-    -- --   grind
-    -- -- · rintro α α₀ α₁ ⟨_⟩
-    -- --   simp [GS.mk, GS.compute, List.pairs]
-    -- --   simp [ι]
-    -- --   magic_simp
-    -- --   simp
-    -- --   simp [𝓁]
-    -- --   magic_simp
-    -- --   simp [WeightedProduct.wProd]
-    -- --   magic_simp
-    -- --   simp
-    -- --   rw [WeightedSum_finite]
-    -- --   sorry
-
-    -- -- simp only [WNKA.sem, wnka, 𝒞.apply_subtype, G]
-    -- -- simp only [DFunLike.coe]
-    -- -- simp only [𝒞.apply_subtype]
-    -- -- split_ifs with h
-    -- -- · obtain ⟨α, hα⟩ := h
-    -- --   subst_eqs
-    -- --   simp [GS.mk, GS.compute, List.pairs]
-    -- --   simp [ι, δ]
-    -- --   simp [𝓁]
-    -- --   magic_simp
-    -- --   simp
-    -- --   simp
-    -- -- · simp_all
+    ext x
+    simp [G]
+    induction x using GS.induction
+    next α α₀ =>
+      -- TODO: simp?
+      simp [wnka, WNKA.sem, GS.mk, GS.compute, 𝓁, ι]
+      grind
+    next α α₀ α₁ =>
+      simp [WNKA.sem, GS.compute, wnka, δ, WeightedProduct.wProd_wZero,
+        WeightedProduct.wZero_wProd, 𝒞.wZero_apply, GS.mk, 𝒲.mk_apply, right_eq_ite_iff]
+      sorry
+    next α A αn =>
+      simp [wnka, WNKA.sem, GS.mk, GS.compute, List.pairs, δ]
+      sorry
   | Add p₁ p₂ ih₁ ih₂ =>
     ext S
     induction S using GS.induction
@@ -476,6 +449,20 @@ theorem Policy.wnka_sem [Fintype F] [DecidableEq F] (p : Policy[F,𝒮]) : (Poli
       simp [δ]
       rw [← ih₁, ← ih₂]; clear ih₁ ih₂
       simp [wnka, WNKA.sem]
+      sorry
+  | Weight w p ih =>
+    ext x
+    simp [G]
+    rw [← ih]
+    induction x using GS.induction
+    next α α₀ =>
+      simp [wnka, WNKA.sem, GS.mk, GS.compute, 𝓁, ι]
+      sorry
+    next α α₀ α₁ =>
+      simp only [WNKA.sem, GS.compute, wnka, δ, GS.mk, 𝒲.mk_apply, ι, 𝓁]
+      sorry
+    next α A αn =>
+      simp [wnka, WNKA.sem, GS.mk, GS.compute, List.pairs, ι, 𝓁]
       sorry
   | _ => sorry
 

@@ -1,6 +1,7 @@
 import WeightedNetKAT.Computation
 import Mathlib.Computability.Language
 import Mathlib.Data.Finite.Sum
+import WeightedNetKAT.RPol
 
 section
 
@@ -123,23 +124,22 @@ notation "gs[" α ";" x ";" "dup" ";" y ";" "dup" ";" β "]" => GS.mk α [x, y] 
 #check gs[1;2;dup;3]
 
 open scoped Classical in
-noncomputable def G (p : Policy[F,𝒮]) : 𝒲 𝒮 (GS F) := match p with
-  | wnk_policy {drop} => 𝟘
-  | wnk_policy {skip} => ⟨(if ∃ α, gs[α; α; dup; α] = · then 𝟙 else 𝟘), sorry⟩
-  -- TODO: α
-  -- TODO: π
-  | wnk_policy {~x ← ~v} => ⟨(if ∃ α β, gs[α; β] = · ∧ α[x ↦ v] = β then 𝟙 else 𝟘), sorry⟩
-  | wnk_policy {dup} => ⟨(if ∃ α, gs[α; α; dup; α] = · then 𝟙 else 𝟘), sorry⟩
-  | wnk_policy {¬ ~p₁} => ⟨(if G wnk_policy {@filter ~p₁} · = 𝟘 then 𝟙 else 𝟘), sorry⟩
-  | wnk_policy {~p₁ ⨁ ~p₂} => G p₁ ⨁ G p₂
-  | wnk_policy {~p₁ ; ~p₂} => G p₁ ♢ G p₂
-  | wnk_policy {~w ⨀ ~p₁} => ⟨(w ⨀ G p₁ ·), sorry⟩
-  | wnk_policy {~p₁*} => ⨁' n : ℕ, G (p₁ ^ n)
-  -- TODO: figure out how these play with α
-  | wnk_policy {@filter ~t} => ⟨(if ∃ α, gs[α; α] = · ∧ Predicate.test t α then 𝟙 else 𝟘), sorry⟩
-  -- | wnk_policy {@filter ~(.Con t u)} => sorry
-  -- | wnk_policy {~t ∨ ~u} => sorry
-  -- | wnk_policy {~t = ~u} => sorry
+noncomputable def G (p : RPol[F,𝒮]) : 𝒲 𝒮 (GS F) := match p with
+  | wnk_rpol { drop } => 𝟘
+  -- [x = α; α | α ∈ Pk]
+  | wnk_rpol { skip } => ⟨(if ∃ α, gs[α; α] = · then 𝟙 else 𝟘), sorry⟩
+  -- [x = α; α]
+  | wnk_rpol { @test ~α } => ⟨(if gs[α; α] = · then 𝟙 else 𝟘), sorry⟩
+  -- [x = α; π | α ∈ Pk]
+  | wnk_rpol { @mod ~π } => ⟨(if ∃ α, gs[α; π] = · then 𝟙 else 𝟘), sorry⟩
+  -- [x = α; α; dup; α | α ∈ Pk]
+  | wnk_rpol { dup } => ⟨(if ∃ α, gs[α; α; dup; α] = · then 𝟙 else 𝟘), sorry⟩
+  -- [G(p₁)(x) = 𝟘]
+  | wnk_rpol { ¬~p₁ } => ⟨(if G p₁ · = 𝟘 then 𝟙 else 𝟘), sorry⟩
+  | wnk_rpol { ~p₁ ⨁ ~p₂ } => G p₁ ⨁ G p₂
+  | wnk_rpol { ~p₁ ; ~p₂ } => G p₁ ♢ G p₂
+  | wnk_rpol { ~w ⨀ ~p₁ } => w • G p₁
+  | wnk_rpol { ~p₁* } => ⨁' n : ℕ, G (p₁ ^ n)
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
