@@ -142,6 +142,17 @@ def 𝒞.mk' (f : X → 𝒮) (finSupp : Finset X) (h : ∀ x, x ∈ W.supp f �
   let h : finSupp = W.supp f := by ext; simp_all
   ⟨⟨f, by rw [← h]; exact Finite.to_countable⟩, finSupp, h⟩
 
+instance 𝒞.instWeightedOne {X : Type} [Fintype X] : WeightedOne (𝒞 𝒮 X) where
+  wOne :=
+    if h : ¬(𝟙 : 𝒮) = 𝟘 then 𝒞.mk' (fun _ ↦ 𝟙) Fintype.elems (by simp [h, Fintype.complete])
+    else 𝟘
+
+omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
+@[simp]
+theorem 𝒞.wOne_apply {X : Type} [Fintype X] (x) : (𝟙 : 𝒞 𝒮 X) x = 𝟙 := by
+  simp [WeightedOne.wOne]
+  split_ifs <;> grind [𝒞.wZero_apply, 𝒞.mk_apply, 𝒲.mk_apply]
+
 def 𝒞.bind {X Y : Type} [DecidableEq X] [DecidableEq Y] (m : 𝒞 𝒮 X) (f : X → 𝒞 𝒮 Y) :
     𝒞 𝒮 Y :=
   𝒞.mk' (fun y ↦ ⨁ᶠ x ∈ m.finSupp, m x ⨀ f x y)
