@@ -49,6 +49,15 @@ def 𝒞.liftPi {Q P : Type} [i : Fintype Q] [DecidableEq Q] [DecidableEq P] (f 
     (i.elems.biUnion (fun q ↦ (f q).finSupp.map ⟨(q, ·), (Prod.mk_right_injective q)⟩))
     (by simp [Fintype.complete])
 
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+@[simp]
+theorem 𝒲.liftPi_apply {Q : Type} [Countable Q]
+    (f : Q → 𝒲 𝒮 Q) (q : Q) (p : Q) : 𝒲.liftPi f ⟨q, p⟩ = f q p := rfl
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+@[simp]
+theorem 𝒞.liftPi_apply {Q P : Type} [i : Fintype Q] [DecidableEq Q] [DecidableEq P]
+    (f : Q → 𝒞 𝒮 P) (q : Q) (p : P) : 𝒞.liftPi f ⟨q, p⟩ = f q p := rfl
+
 def 𝒲.equiv {X Y : Type} (m : 𝒲 𝒮 X) {e : Y ≃ X} : 𝒲 𝒮 Y := m.map _ e.injective
 
 end
@@ -56,10 +65,10 @@ end
 namespace WeightedNetKAT
 
 /-- `At` is the set of complete tests. -/
-def At (F : Type) : Type := sorry
+def At (F : Type) : Type := Pk[F]
 
 /-- `Π` is the set of all complete assignments. -/
-def Pi (F : Type) : Type := sorry
+def Pi (F : Type) : Type := Pk[F]
 @[inherit_doc] notation "Π" => WeightedNetKAT.Pi
 
 /--
@@ -70,6 +79,8 @@ Isomorphically defined as `At ⬝ (Π ⬝ dup)* ⬝ Π`.
 def GS (F : Type) := Pk[F] × List Pk[F] × Pk[F]
 
 variable {F : Type} [DecidableEq Pk[F]] [Encodable Pk[F]]
+
+instance : Countable (GS F) := instCountableProd
 
 def GS.mk (α : Pk[F]) (x : List Pk[F]) (β : Pk[F]) : GS F := ⟨α, x, β⟩
 
@@ -87,31 +98,8 @@ variable {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrde
 noncomputable instance [DecidableEq (GS F)] : WeightedConcat (𝒲 𝒮 (GS F)) (𝒲 𝒮 (GS F)) where
   concat m m' := ⟨
     fun g ↦ ⨁' (x : m.supp) (y : m'.supp), if (x.val ♢ y.val) = some g then m x ⨀ m y else 𝟘,
-    by
-      simp
-      have : m.supp.Countable := m.countable
-      have : m'.supp.Countable := m'.countable
-      let S := m.supp ×ˢ m'.supp
-      have : S.Countable := Set.Countable.prod m.countable m'.countable
-      let S' := S.image (fun (a, b) ↦ (a ♢ b : Option (GS F)))
-      have : S'.Countable := Set.Countable.image this _
-      let S'' := S' ∩ {x | x.isSome}
-      have : S''.Countable := by
-        apply Set.Countable.mono _ this
-        intro s; simp +contextual [S'']
-      let S''' := (fun x ↦ x.val.get (by obtain ⟨x, hx⟩ := x; simp_all [S'']; simp_all [S''])) '' (Set.univ : Set S'')
-      simp at S'''
-      have : Countable ↑S'' := this
-      have : S'''.Countable := by
-        simp [S''']
-        apply Set.countable_range
-      apply Set.Countable.mono (s₂:=S''') _ this
-      intro g
-      simp [S''', S'', S', S]
-      intro g₀ hg₀ g₁ hg₁ h h'
-      use g
-      simp
-      use g₀, hg₀, g₁⟩
+    SetCoe.countable _,
+  ⟩
 
 #check (GS.mk (fun _ ↦ 0) [] (fun _ ↦ 0)) ♢ (GS.mk (fun _ ↦ 0) [] (fun _ ↦ 0))
 
@@ -124,18 +112,34 @@ notation "gs[" α ";" x ";" "dup" ";" y ";" "dup" ";" β "]" => GS.mk α [x, y] 
 #check gs[1;2;dup;3]
 
 open scoped Classical in
+noncomputable def G.ofPk (f : Pk[F] → GS F) : 𝒲 𝒮 (GS F) :=
+  ⟨(if ∃ α, f α = · then 𝟙 else 𝟘), SetCoe.countable _⟩
+def G.ofConst [DecidableEq (GS F)] (f : GS F) : 𝒲 𝒮 (GS F) :=
+  ⟨(if f = · then 𝟙 else 𝟘), SetCoe.countable _⟩
+
+open scoped Classical in
+omit [DecidableEq Pk] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+@[simp]
+theorem G.ofPk_apply (f : Pk[F] → GS F) (x : GS F) :
+    G.ofPk f x = if ∃ α, f α = x then (𝟙 : 𝒮) else 𝟘 := rfl
+omit [DecidableEq Pk] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+@[simp]
+theorem G.ofConst_apply [DecidableEq (GS F)] (f : GS F) (x : GS F) :
+    G.ofConst f x = if f = x then (𝟙 : 𝒮) else 𝟘 := rfl
+
+open scoped Classical in
 noncomputable def G (p : RPol[F,𝒮]) : 𝒲 𝒮 (GS F) := match p with
   | wnk_rpol { drop } => 𝟘
   -- [x = α; α | α ∈ Pk]
-  | wnk_rpol { skip } => ⟨(if ∃ α, gs[α; α] = · then 𝟙 else 𝟘), sorry⟩
+  | wnk_rpol { skip } => G.ofPk fun α ↦ gs[α; α]
   -- [x = α; α]
-  | wnk_rpol { @test ~α } => ⟨(if gs[α; α] = · then 𝟙 else 𝟘), sorry⟩
+  | wnk_rpol { @test ~α } => G.ofConst gs[α; α]
   -- [x = α; π | α ∈ Pk]
-  | wnk_rpol { @mod ~π } => ⟨(if ∃ α, gs[α; π] = · then 𝟙 else 𝟘), sorry⟩
+  | wnk_rpol { @mod ~π } => G.ofPk fun α ↦ gs[α; π]
   -- [x = α; α; dup; α | α ∈ Pk]
-  | wnk_rpol { dup } => ⟨(if ∃ α, gs[α; α; dup; α] = · then 𝟙 else 𝟘), sorry⟩
+  | wnk_rpol { dup } => G.ofPk fun α ↦ gs[α; α; dup; α]
   -- [G(p₁)(x) = 𝟘]
-  | wnk_rpol { ¬~p₁ } => ⟨(if G p₁ · = 𝟘 then 𝟙 else 𝟘), sorry⟩
+  | wnk_rpol { ¬~p₁ } => ⟨(if G p₁ · = 𝟘 then 𝟙 else 𝟘), SetCoe.countable _⟩
   | wnk_rpol { ~p₁ ⨁ ~p₂ } => G p₁ ⨁ G p₂
   | wnk_rpol { ~p₁ ; ~p₂ } => G p₁ ♢ G p₂
   | wnk_rpol { ~w ⨀ ~p₁ } => w • G p₁

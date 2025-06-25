@@ -216,8 +216,6 @@ def RPol.wnka (p : RPol[F,𝒮]) : WNKA F 𝒮 (S p) where
 
 def List.pairs {α : Type} (l : List α) : List (α × α) := l.zip l.tail
 
-#eval List.pairs (List.range 10)
-
 def GS.pks (s : GS F) : List Pk[F] := s.1 :: s.2.1 ++ [s.2.2]
 
 def GS.compute {Q : Type} [DecidableEq Q] (𝒜 : WNKA F 𝒮 Q) (s : GS F) : 𝒮 :=
@@ -259,6 +257,19 @@ theorem WeightedProduct.wZero_wProd {X Y Z : Type} [DecidableEq X] [DecidableEq 
     ((𝟘 : 𝒞 𝒮 (X × Y)) ⨯ a) = 𝟘 := by
   ext ⟨x, Z⟩; simp [WeightedProduct.wProd]
 
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+theorem WeightedFinsum_ite {α : Type} [DecidableEq α] {S : Finset α} (g : α → Prop) [DecidablePred g] (f : α → 𝒮) :
+    (⨁ᶠ x ∈ S, if g x then f x else 𝟘) = ⨁ᶠ x ∈ S.filter g, f x := by
+  induction S using Finset.induction with
+  | empty => simp
+  | insert x S hx ih =>
+    simp_all
+    rw [Finset.filter_insert]
+    have : x ∉ S.filter g := by simp_all
+    split_ifs
+    · simp_all
+    · simp_all
+
 theorem WeightedProduct.wProd_assoc {X Y Z W : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq W]
     (a : 𝒞 𝒮 (X × Y))
     (b : 𝒞 𝒮 (Y × Z))
@@ -267,7 +278,25 @@ theorem WeightedProduct.wProd_assoc {X Y Z W : Type} [DecidableEq X] [DecidableE
   ext ⟨x, w⟩
   simp [WeightedProduct.wProd]
   simp [← WeightedFinsum_mul_left]
-  sorry
+  rw [WeightedFinsum_ite]
+  simp [← WeightedFinsum_mul_right]
+  rw [WeightedFinsum_comm]
+  congr! with ⟨x, y⟩
+  split_ifs
+  · subst_eqs
+    apply WeightedFinsum_bij_ne_zero (fun ⟨_, z⟩ _ _ ↦ ⟨y, z⟩)
+    · grind only [WeightedPreSemiring.mul_wZero, 𝒞.mem_finSupp_iff, WeightedPreSemiring.wZero_mul,
+      Prod.mk.injEq, Finset.mem_filter, Finset.mem_biUnion, cases eager Prod]
+    · grind only [Prod.mk.injEq, Finset.mem_filter, cases eager Prod]
+    · simp only [𝒞.mem_finSupp_iff, ne_eq, exists_prop, Finset.mem_filter, Finset.mem_biUnion,
+      Finset.mem_filterMap, Finset.mem_image, Prod.exists, exists_eq_right,
+      Option.ite_none_right_eq_some, Option.some.injEq, exists_and_left, Prod.mk.injEq, existsAndEq,
+      and_true, true_and, Prod.forall, exists_and_right, exists_eq_right']
+      grind only [WeightedPreSemiring.mul_wZero, WeightedPreSemiring.wZero_mul,
+        WeightedPreSemiring.mul_assoc, cases eager Prod, cases Or]
+    · grind only [Finset.mem_filter, WeightedPreSemiring.mul_assoc, cases eager Prod]
+  · rw [WeightedFinsum_eq_zero_iff]
+    grind only [WeightedPreSemiring.wZero_mul, Finset.mem_filter, cases eager Prod]
 
 theorem WeightedProduct.wProd_apply {X Y Z : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z]
     (a : 𝒞 𝒮 (X × Y))
@@ -275,6 +304,7 @@ theorem WeightedProduct.wProd_apply {X Y Z : Type} [DecidableEq X] [DecidableEq 
     (x : X × Z) :
     (a ⨯ b) x = sorry := by
   simp [wProd]
+  simp [WeightedFinsum_ite]
   sorry
 theorem WeightedProduct.wProd_apply' {X Y Z : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z]
     (f : (X × Y) → 𝒮)
@@ -410,8 +440,10 @@ theorem RPol.wnka_sem [Fintype F] [DecidableEq F] (p : RPol[F,𝒮]) : (RPol.wnk
       simp [wnka, WNKA.sem, GS.mk, GS.compute, 𝓁, ι]
       grind
     next α α₀ α₁ =>
-      simp [WNKA.sem, GS.compute, wnka, δ, WeightedProduct.wProd_wZero,
+      simp [WNKA.sem, GS.compute, wnka, WeightedProduct.wProd_wZero,
         WeightedProduct.wZero_wProd, 𝒞.wZero_apply, GS.mk, 𝒲.mk_apply, right_eq_ite_iff]
+      simp [δ]
+      simp [ι]
       sorry
     next α A αn =>
       simp [wnka, WNKA.sem, GS.mk, GS.compute, List.pairs, δ]

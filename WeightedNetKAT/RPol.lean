@@ -32,7 +32,8 @@ def RPol.iterDepth : RPol[F,𝒮] → ℕ
 | .Neg q | .Weight _ q => q.iterDepth
 | .Iter p => p.iterDepth + 1
 
-omit [WeightedOmegaContinuousPreSemiring 𝒮] [Fintype F] [DecidableEq F] in
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+omit [Fintype F] [DecidableEq F] in
 @[simp]
 theorem RPol.iterDepth_iter {p : RPol[F,𝒮]} {n : ℕ} :
     (p.iter n).iterDepth = if n = 0 then 0 else p.iterDepth := by

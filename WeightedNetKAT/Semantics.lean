@@ -282,6 +282,40 @@ theorem WeightedFinsum_le_of_subset {α I : Type} [WeightedOmegaCompletePartialO
   · exact wle_wAdd (⨁ᶠ i ∈ S₁, f i) (⨁ᶠ i ∈ S₃, f i)
   · simp [S₃]; exact Finset.disjoint_sdiff
 
+omit [Fintype F] [DecidableEq F] in
+theorem WeightedFinsum_add {ι 𝒮 : Type} [DecidableEq ι] [WeightedPreSemiring 𝒮]
+    (I : Finset ι)
+    (f g : ι → 𝒮) :
+    ⨁ᶠ i ∈ I, (f i ⨁ g i) = (⨁ᶠ i ∈ I, f i) ⨁ ⨁ᶠ i ∈ I, g i := by
+  induction I using Finset.induction with
+  | empty => simp
+  | insert x I hx ih =>
+    simp_all only [not_false_eq_true, WeightedFinsum_insert]
+    grind only [WeightedPreSemiring.wAdd_comm, WeightedPreSemiring.wAdd_assoc]
+
+omit [Fintype F] [DecidableEq F] in
+theorem WeightedFinsum_comm {α ι 𝒮 : Type} [DecidableEq α] [DecidableEq ι]
+  [WeightedPreSemiring 𝒮] [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮]
+    (A : Finset α) (I : Finset ι)
+    (f : α → ι → 𝒮) :
+    ⨁ᶠ x ∈ A, ⨁ᶠ i ∈ I, f x i = ⨁ᶠ i ∈ I, ⨁ᶠ x ∈  A, f x i := by
+  induction A using Finset.induction with
+  | empty =>
+    symm
+    simp only [WeightedFinsum_empty, WeightedFinsum_eq_zero_iff, implies_true]
+  | insert x I hx ih =>
+    simp_all
+    simp [WeightedFinsum_add]
+
+omit [Fintype F] [DecidableEq F] in
+theorem WeightedFinsum_prod_comm {α ι 𝒮 : Type} [Encodable α] [DecidableEq α] [Encodable ι] [DecidableEq ι]
+  [WeightedOmegaCompletePartialOrder 𝒮] [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+    (A : Finset α) (I : Finset ι)
+    (f : α → ι → 𝒮) :
+    ⨁ᶠ (x ∈ A) (i ∈ I), f x i = ⨁ᶠ (i ∈ I) (x ∈ A), f x i := by
+  apply WeightedFinsum_bij (fun (a, b) _  ↦ (b, a))
+  all_goals (try simp) <;> grind
+
 -- TODO: move this as early as possible
 @[reducible]
 instance : Trans (· ≼ · : 𝒮 → 𝒮 → Prop) (· ≼ · : 𝒮 → 𝒮 → Prop) (· ≼ · : 𝒮 → 𝒮 → Prop) where
