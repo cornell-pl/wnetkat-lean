@@ -5,10 +5,11 @@ import WeightedNetKAT.RPol
 
 namespace WeightedNetKAT
 
-variable {F : Type} [DecidableEq Pk[F]]
+variable {F : Type} -- [DecidableEq Pk[F,N]]
+variable {N : Type} [DecidableEq N]
 variable {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 
-def Predicate.test (t : Predicate[F]) (pk : Pk[F]) : Prop :=
+def Predicate.test (t : Predicate[F,N]) (pk : Pk[F,N]) : Prop :=
   match t with
   | wnk_pred {false} => false
   | wnk_pred {true} => true
@@ -17,7 +18,7 @@ def Predicate.test (t : Predicate[F]) (pk : Pk[F]) : Prop :=
   -- TODO: update this once we fix the syntax for ;
   | .Con t u => t.test pk ∧ u.test pk
   | wnk_pred {¬~t} => ¬Predicate.test t pk
-def Predicate.test_decidable {t : Predicate[F]} : DecidablePred t.test := fun pk ↦
+def Predicate.test_decidable {t : Predicate[F,N]} : DecidablePred t.test := fun pk ↦
   match h : t with
   | wnk_pred {false} => .isFalse (by simp [Predicate.test])
   | wnk_pred {true} => .isTrue (by simp [Predicate.test])
@@ -34,13 +35,14 @@ def Predicate.test_decidable {t : Predicate[F]} : DecidablePred t.test := fun pk
   | wnk_pred {¬~t} =>
     have := t.test_decidable pk
     if h' : ¬t.test pk then .isTrue h' else .isFalse h'
-instance Predicate.test_instDecidable {t : Predicate[F]} : DecidablePred t.test := test_decidable
+instance Predicate.test_instDecidable {t : Predicate[F,N]} : DecidablePred t.test := test_decidable
 
 end WeightedNetKAT
 
 section
 
-variable {F : Type} [DecidableEq Pk[F]]
+variable {F : Type}
+variable {N : Type} [DecidableEq N]
 variable {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 
 def 𝒲.map {X Y : Type} (m : 𝒲 𝒮 X) (f : Y → X) (hf : f.Injective) : 𝒲 𝒮 Y :=
@@ -72,10 +74,10 @@ end
 namespace WeightedNetKAT
 
 /-- `At` is the set of complete tests. -/
-def At (F : Type) : Type := Pk[F]
+def At (F : Type) (N : Type) : Type := Pk[F,N]
 
 /-- `Π` is the set of all complete assignments. -/
-def Pi (F : Type) : Type := Pk[F]
+def Pi (F : Type) (N : Type) : Type := Pk[F,N]
 @[inherit_doc] notation "Π" => WeightedNetKAT.Pi
 
 /--
@@ -83,13 +85,15 @@ The language of guarded strings.
 
 Isomorphically defined as `At ⬝ (Π ⬝ dup)* ⬝ Π`.
 -/
-def GS (F : Type) := Pk[F] × List Pk[F] × Pk[F]
+def GS (F : Type) (N : Type) := Pk[F,N] × List Pk[F,N] × Pk[F,N]
+notation "GS[" f "," n "]" => GS (F:=f) (N:=n)
 
-variable {F : Type} [DecidableEq Pk[F]] [Encodable Pk[F]]
+variable {F : Type} [Fintype F] [DecidableEq F]
+variable {N : Type} [Fintype N] [DecidableEq N]
 
-instance : Countable (GS F) := instCountableProd
+instance : Countable GS[F,N] := instCountableProd
 
-def GS.mk (α : Pk[F]) (x : List Pk[F]) (β : Pk[F]) : GS F := ⟨α, x, β⟩
+def GS.mk (α : Pk[F,N]) (x : List Pk[F,N]) (β : Pk[F,N]) : GS[F,N] := ⟨α, x, β⟩
 
 class WeightedConcat (α : Type) (β := Option α) where
   concat : α → α → β
@@ -97,12 +101,12 @@ class WeightedConcat (α : Type) (β := Option α) where
 -- Options: ⋄ ◇ ♢ ⬦
 infixl:50 " ♢ " => WeightedConcat.concat
 
-instance : WeightedConcat (GS F) where
+instance : WeightedConcat GS[F,N] where
   concat | ⟨α, x, β⟩, ⟨γ, y, ξ⟩ => if β = γ then some ⟨α, x ++ y, ξ⟩ else none
 
 variable {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 
-noncomputable instance [DecidableEq (GS F)] : WeightedConcat (𝒲 𝒮 (GS F)) (𝒲 𝒮 (GS F)) where
+noncomputable instance [DecidableEq GS[F,N]] : WeightedConcat (𝒲 𝒮 GS[F,N]) (𝒲 𝒮 GS[F,N]) where
   concat m m' := ⟨
     fun g ↦ ⨁' (x : m.supp) (y : m'.supp), if (x.val ♢ y.val) = some g then m x ⨀ m y else 𝟘,
     SetCoe.countable _,
@@ -119,23 +123,23 @@ notation "gs[" α ";" x ";" "dup" ";" y ";" "dup" ";" β "]" => GS.mk α [x, y] 
 #check gs[1;2;dup;3]
 
 open scoped Classical in
-noncomputable def G.ofPk (f : Pk[F] → GS F) : 𝒲 𝒮 (GS F) :=
+noncomputable def G.ofPk (f : Pk[F,N] → GS[F,N]) : 𝒲 𝒮 GS[F,N] :=
   ⟨(if ∃ α, f α = · then 𝟙 else 𝟘), SetCoe.countable _⟩
-def G.ofConst [DecidableEq (GS F)] (f : GS F) : 𝒲 𝒮 (GS F) :=
+def G.ofConst [DecidableEq GS[F,N]] (f : GS[F,N]) : 𝒲 𝒮 GS[F,N] :=
   ⟨(if f = · then 𝟙 else 𝟘), SetCoe.countable _⟩
 
 open scoped Classical in
-omit [DecidableEq Pk] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+omit [DecidableEq N] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 @[simp]
-theorem G.ofPk_apply (f : Pk[F] → GS F) (x : GS F) :
+theorem G.ofPk_apply (f : Pk[F,N] → GS[F,N]) (x : GS[F,N]) :
     G.ofPk f x = if ∃ α, f α = x then (𝟙 : 𝒮) else 𝟘 := rfl
-omit [DecidableEq Pk] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+omit [DecidableEq N] [DecidableEq F] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 @[simp]
-theorem G.ofConst_apply [DecidableEq (GS F)] (f : GS F) (x : GS F) :
+theorem G.ofConst_apply [DecidableEq GS[F,N]] (f : GS[F,N]) (x : GS[F,N]) :
     G.ofConst f x = if f = x then (𝟙 : 𝒮) else 𝟘 := rfl
 
 open scoped Classical in
-noncomputable def G (p : RPol[F,𝒮]) : 𝒲 𝒮 (GS F) := match p with
+noncomputable def G (p : RPol[F,N,𝒮]) : 𝒲 𝒮 GS[F,N] := match p with
   | wnk_rpol { drop } => 𝟘
   -- [x = α; α | α ∈ Pk]
   | wnk_rpol { skip } => G.ofPk fun α ↦ gs[α; α]

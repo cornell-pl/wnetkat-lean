@@ -4,40 +4,41 @@ namespace WeightedNetKAT
 
 variable {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 variable {F : Type} [Fintype F] [DecidableEq F]
+variable {N : Type} [Fintype N] [DecidableEq N]
 
 inductive RPol (W : Type) where
   | Drop
   | Skip
-  | Test (pk : Pk[F])
-  | Mod (pk : Pk[F])
-  | Neg (p : Pk[F])
+  | Test (pk : Pk[F,N])
+  | Mod (pk : Pk[F,N])
+  | Neg (p : Pk[F,N])
   | Dup
   | Seq (p q : RPol W)
   | Weight (w : W) (p : RPol W)
   | Add (p q : RPol W)
   | Iter (p : RPol W)
 
-notation "RPol[" α "," β "]" => RPol (F:=α) (W:=β)
+notation "RPol[" f "," n "," w "]" => RPol (F:=f) (N:=n) (W:=w)
 
 
 @[simp]
-def RPol.iter (p : RPol[F,𝒮]) : ℕ → RPol[F,𝒮]
+def RPol.iter (p : RPol[F,N,𝒮]) : ℕ → RPol[F,N,𝒮]
   | 0 => .Skip
   | n+1 => p.Seq (p.iter n)
 
-@[simp, reducible] instance RPol.instHPow : HPow RPol[F,𝒮] ℕ RPol[F,𝒮] where hPow p n := p.iter n
+@[simp, reducible] instance RPol.instHPow : HPow RPol[F,N,𝒮] ℕ RPol[F,N,𝒮] where hPow p n := p.iter n
 
 @[simp]
-def RPol.iterDepth : RPol[F,𝒮] → ℕ
+def RPol.iterDepth : RPol[F,N,𝒮] → ℕ
 | .Skip | .Drop | .Test _ | .Mod _ | .Dup | .Neg _ => 0
 | .Add p q | .Seq p q => p.iterDepth ⊔ q.iterDepth
 | .Weight _ q => q.iterDepth
 | .Iter p => p.iterDepth + 1
 
 omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
-omit [Fintype F] [DecidableEq F] in
+omit [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] in
 @[simp]
-theorem RPol.iterDepth_iter {p : RPol[F,𝒮]} {n : ℕ} :
+theorem RPol.iterDepth_iter {p : RPol[F,N,𝒮]} {n : ℕ} :
     (p.iter n).iterDepth = if n = 0 then 0 else p.iterDepth := by
   rcases n with _ | n <;> simp_all
   induction n with simp_all
@@ -169,7 +170,7 @@ def RPol.unexpandIter : Unexpander
 
 /-- info: fun x ↦ wnk_rpol {@test ~x; ~3 ⨀ @mod ~x; dup ⨁ dup*} : Pk → RPol ℕ -/
 #guard_msgs in
-#check fun x : Pk[F] ↦ (wnk_rpol { @test ~x ; ~3 ⨀ @mod ~x ; dup ⨁ dup* } : RPol ℕ)
+#check fun x : Pk[F,N] ↦ (wnk_rpol { @test ~x ; ~3 ⨀ @mod ~x ; dup ⨁ dup* } : RPol ℕ)
 
 -- Copied from Lean's term parenthesizer - applies the precedence rules in the grammar to add
 -- parentheses as needed.

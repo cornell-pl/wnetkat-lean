@@ -24,10 +24,11 @@ namespace WeightedNetKAT
 variable {X : Type} {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮] [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 
 variable {F : Type} [Fintype F] [DecidableEq F]
+variable {N : Type} [DecidableEq N]
 
-noncomputable instance : DecidableEq (𝒲 𝒮 H[F]) := Classical.typeDecidableEq (𝒲 𝒮 H)
+noncomputable instance : DecidableEq (𝒲 𝒮 H[F,N]) := Classical.typeDecidableEq (𝒲 𝒮 H)
 
-noncomputable def Predicate.sem (p : Predicate[F]) : H[F] → 𝒲 𝒮 H[F] := match p with
+noncomputable def Predicate.sem (p : Predicate[F,N]) : H[F,N] → 𝒲 𝒮 H[F,N] := match p with
   | wnk_pred {false} => fun _ ↦ 𝟘
   | wnk_pred {true} => η
   | wnk_pred {~f = ~n} => fun h ↦ match h with
@@ -41,32 +42,32 @@ noncomputable def Predicate.sem (p : Predicate[F]) : H[F] → 𝒲 𝒮 H[F] := 
   | .Con t u => fun h ↦ t.sem h ≫= u.sem
   | wnk_pred {¬~t} => fun h ↦ if t.sem h = 𝟘 then η h else 𝟘
 
-instance : Subst Pk[F] F ℕ where
+instance : Subst Pk[F,N] F N where
   subst pk f n := fun f' ↦ if f = f' then n else pk f'
 
 @[simp]
-def Policy.iter (p : Policy[F,X]) : ℕ → Policy[F,X]
+def Policy.iter (p : Policy[F,N,X]) : ℕ → Policy[F,N,X]
   | 0 => wnk_policy { skip }
   | n+1 => wnk_policy {~p ; ~(p.iter n)}
 
-@[simp, reducible] instance Policy.instHPow : HPow Policy[F,X] ℕ Policy[F,X] where hPow p n := p.iter n
+@[simp, reducible] instance Policy.instHPow : HPow Policy[F,N,X] ℕ Policy[F,N,X] where hPow p n := p.iter n
 
 @[simp]
-def Policy.iterDepth : Policy[F,X] → ℕ
+def Policy.iterDepth : Policy[F,N,X] → ℕ
 | .Filter _ | wnk_policy {~_ ← ~_} | wnk_policy {dup} => 0
 | wnk_policy {~p ⨁ ~q} | wnk_policy {~p ; ~q} => p.iterDepth ⊔ q.iterDepth
 | wnk_policy {~_ ⨀ ~q} => q.iterDepth
 | wnk_policy {~p *} => p.iterDepth + 1
 
-omit [WeightedOmegaContinuousPreSemiring 𝒮] [Fintype F] [DecidableEq F] in
+omit [WeightedOmegaContinuousPreSemiring 𝒮] [Fintype F] [DecidableEq F] [DecidableEq N] in
 @[simp]
-theorem Policy.iterDepth_iter {p : Policy[F,X]} {n : ℕ} :
+theorem Policy.iterDepth_iter {p : Policy[F,N,X]} {n : ℕ} :
     (p.iter n).iterDepth = if n = 0 then 0 else p.iterDepth := by
   rcases n with _ | n <;> simp_all
   induction n with simp_all
 
 open WeightedOmegaCompletePartialOrder in
-noncomputable def Policy.sem (p : Policy[F,𝒮]) : H[F] → 𝒲 𝒮 H[F] := match p with
+noncomputable def Policy.sem (p : Policy[F,N,𝒮]) : H[F,N] → 𝒲 𝒮 H[F,N] := match p with
   | .Filter t => t.sem
   | wnk_policy {~f ← ~n} => fun h ↦ match h with
     | [] => 𝟘
@@ -86,23 +87,23 @@ noncomputable def Policy.sem (p : Policy[F,𝒮]) : H[F] → 𝒲 𝒮 H[F] := m
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
-example {t u : Predicate[F]} :
+example {t u : Predicate[F,N]} :
     wnk_policy { ~t ∨ ~u }.sem (𝒮:=𝒮) = wnk_policy { if ~t then skip else @filter ~u }.sem := by
   simp [Policy.sem, Predicate.sem]
 
-noncomputable def Φ (p : Policy[F,𝒮]) (d : H[F] → 𝒲 𝒮 H[F]) : H[F] → 𝒲 𝒮 H[F] :=
+noncomputable def Φ (p : Policy[F,N,𝒮]) (d : H[F,N] → 𝒲 𝒮 H[F,N]) : H[F,N] → 𝒲 𝒮 H[F,N] :=
   fun h ↦ η h ⨁ (p.sem h ≫= d)
 
-example {p : Policy[F,𝒮]} : Φ p (wnk_policy {~p*}.sem) = wnk_policy { skip ⨁ ~p; ~p* }.sem := by
+example {p : Policy[F,N,𝒮]} : Φ p (wnk_policy {~p*}.sem) = wnk_policy { skip ⨁ ~p; ~p* }.sem := by
   ext
   unfold Φ
   simp [WeightedAdd.wAdd, Policy.sem, Predicate.sem]
 
 open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder
 
-theorem Φ_mono (p : Policy[F,𝒮]) : WeightedMonotone (Φ p) :=
+theorem Φ_mono (p : Policy[F,N,𝒮]) : WeightedMonotone (Φ p) :=
   fun hab h ↦ wAdd_mono_left (η h) (𝒲.bind_mono _ hab)
-theorem Φ_continuous (p : Policy[F,𝒮]) : WeightedOmegaContinuous (Φ p) (Φ_mono p) := by
+theorem Φ_continuous (p : Policy[F,N,𝒮]) : WeightedOmegaContinuous (Φ p) (Φ_mono p) := by
   intro C
   ext h
   unfold Φ
@@ -112,12 +113,12 @@ theorem Φ_continuous (p : Policy[F,𝒮]) : WeightedOmegaContinuous (Φ p) (Φ_
   simp_all only
   rfl
 
-omit [Fintype F] [DecidableEq F] in
-@[simp] theorem 𝒲.wZero_le (p : 𝒲 𝒮 H[F]) : 𝟘 ≼ p := by intro; simp
-omit [Fintype F] [DecidableEq F] in
-@[simp] theorem 𝒲.Pi_wZero_le {X : Type} (p : X → 𝒲 𝒮 H[F]) : 𝟘 ≼ p := fun _ ↦ 𝒲.wZero_le _
+omit [Fintype F] [DecidableEq F] [DecidableEq N] in
+@[simp] theorem 𝒲.wZero_le (p : 𝒲 𝒮 H[F,N]) : 𝟘 ≼ p := by intro; simp
+omit [Fintype F] [DecidableEq F] [DecidableEq N] in
+@[simp] theorem 𝒲.Pi_wZero_le {X : Type} (p : X → 𝒲 𝒮 H[F,N]) : 𝟘 ≼ p := fun _ ↦ 𝒲.wZero_le _
 
-noncomputable def Φ_chain (p : Policy[F,𝒮]) : WeightedChain (H[F] → 𝒲 𝒮 H[F]) :=
+noncomputable def Φ_chain (p : Policy[F,N,𝒮]) : WeightedChain (H[F,N] → 𝒲 𝒮 H[F,N]) :=
   ⟨fun n ↦ (Φ p)^[n] 𝟘, by
     intro a b hab
     induction b, hab using Nat.le_induction with
@@ -130,7 +131,7 @@ noncomputable def Φ_chain (p : Policy[F,𝒮]) : WeightedChain (H[F] → 𝒲 �
       | succ c ih =>
         simp only [Function.iterate_succ', Function.comp_apply]
         apply Φ_mono _ ih⟩
-noncomputable def Φ_wSup (p : Policy[F,𝒮]) := wSup (Φ_chain p)
+noncomputable def Φ_wSup (p : Policy[F,N,𝒮]) := wSup (Φ_chain p)
 
 def IsLfp {α : Type} [WeightedOmegaCompletePartialOrder α]
     (f : α → α) (p : α) : Prop :=
@@ -140,7 +141,7 @@ theorem IsLfp_unique {α : Type} [WeightedOmegaCompletePartialOrder α] {f : α 
     (h₁ : IsLfp f p₁) (h₂ : IsLfp f p₂) : p₁ = p₂ :=
   wle_antisymm (h₁.right _ h₂.left) (h₂.right _ h₁.left)
 
-theorem Policy.Φ_wSup_isLfp (p : Policy[F,𝒮]) : IsLfp (Φ p) (Φ_wSup p) := by
+theorem Policy.Φ_wSup_isLfp (p : Policy[F,N,𝒮]) : IsLfp (Φ p) (Φ_wSup p) := by
   constructor
   · simp only [Φ_wSup]
     apply wle_antisymm
@@ -166,7 +167,7 @@ theorem Policy.Φ_wSup_isLfp (p : Policy[F,𝒮]) : IsLfp (Φ p) (Φ_wSup p) := 
       rw [← hx]
       apply Φ_mono p ih
 
-theorem Policy.iter_sem_isLfp (p : Policy[F,𝒮]) : IsLfp (Φ p) (wnk_policy {~p*}.sem) := by
+theorem Policy.iter_sem_isLfp (p : Policy[F,N,𝒮]) : IsLfp (Φ p) (wnk_policy {~p*}.sem) := by
   constructor
   · ext h h'
     simp [sem, Φ]
@@ -183,7 +184,7 @@ theorem Policy.iter_sem_isLfp (p : Policy[F,𝒮]) : IsLfp (Φ p) (wnk_policy {~
     rw [WeightedSum_comm]
   · intro f hf h
     simp [sem, Φ, 𝒲.bind, WeightedAdd.wAdd]
-    apply WeightedSum_nat_le (𝒮:=𝒲 𝒮 H[F]) (f:=(fun n ↦ (p.iter n).sem h))
+    apply WeightedSum_nat_le (𝒮:=𝒲 𝒮 H[F,N]) (f:=(fun n ↦ (p.iter n).sem h))
     intro n
     induction n generalizing h with
     | zero => simp
@@ -211,10 +212,10 @@ theorem Policy.iter_sem_isLfp (p : Policy[F,𝒮]) : IsLfp (Φ p) (wnk_policy {~
           convert ih h₁
           simp [WeightedPreSemiring.instPi]
 
-theorem Policy.iter_sem_eq_lfp (p : Policy[F,𝒮]) : wnk_policy {~p*}.sem = Φ_wSup p :=
+theorem Policy.iter_sem_eq_lfp (p : Policy[F,N,𝒮]) : wnk_policy {~p*}.sem = Φ_wSup p :=
   IsLfp_unique p.iter_sem_isLfp p.Φ_wSup_isLfp
 
-example {p : Policy[F,𝒮]} : wnk_policy {~p*}.sem = wnk_policy { skip ⨁ ~p; ~p* }.sem := by
+example {p : Policy[F,N,𝒮]} : wnk_policy {~p*}.sem = wnk_policy { skip ⨁ ~p; ~p* }.sem := by
   have := Policy.iter_sem_isLfp p |>.left
   rw [← this]
   ext
@@ -222,17 +223,17 @@ example {p : Policy[F,𝒮]} : wnk_policy {~p*}.sem = wnk_policy { skip ⨁ ~p; 
   simp [WeightedAdd.wAdd, Policy.sem, Predicate.sem]
 
 @[simp]
-instance : Zero Policy[F,𝒮] where
+instance : Zero Policy[F,N,𝒮] where
   zero := wnk_policy {drop}
 @[simp]
-instance : HAdd Policy[F,𝒮] Policy[F,𝒮] Policy[F,𝒮] where
+instance : HAdd Policy[F,N,𝒮] Policy[F,N,𝒮] Policy[F,N,𝒮] where
   hAdd p q := p.Add q
 @[simp]
-instance : Add Policy[F,𝒮] where
+instance : Add Policy[F,N,𝒮] where
   add p q := p.Add q
 
 open WeightedOmegaCompletePartialOrder in
-noncomputable def Policy.approx_n (p : Policy[F,𝒮]) (n : ℕ) : Policy[F,𝒮] := match p with
+noncomputable def Policy.approx_n (p : Policy[F,N,𝒮]) (n : ℕ) : Policy[F,N,𝒮] := match p with
   | .Filter t => .Filter t
   | wnk_policy {~f ← ~n} => wnk_policy {~f ← ~n}
   | wnk_policy {dup} => wnk_policy {dup}
@@ -246,7 +247,7 @@ noncomputable def Policy.approx_n (p : Policy[F,𝒮]) (n : ℕ) : Policy[F,𝒮
   | .Iter p => List.range n |>.map ((p.approx_n n) ^ ·) |>.sum
 
 open WeightedOmegaCompletePartialOrder in
-noncomputable def Policy.sem_n (p : Policy[F,𝒮]) (n : ℕ) : H[F] → 𝒲 𝒮 H[F] := match p with
+noncomputable def Policy.sem_n (p : Policy[F,N,𝒮]) (n : ℕ) : H[F,N] → 𝒲 𝒮 H[F,N] := match p with
   | .Filter t => t.sem
   | wnk_policy {~f ← ~n} => fun h ↦ match h with
     | [] => 𝟘
@@ -267,7 +268,7 @@ termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
 attribute [local simp] Policy.approx_n Policy.sem Policy.sem_n Predicate.sem in
-theorem Policy.approx_n_sem (p : Policy[F,𝒮]) (n : ℕ) : (p.approx_n n).sem = p.sem_n n := by
+theorem Policy.approx_n_sem (p : Policy[F,N,𝒮]) (n : ℕ) : (p.approx_n n).sem = p.sem_n n := by
   induction p with simp_all
   | Iter p ih =>
     funext h
@@ -304,12 +305,12 @@ theorem Policy.approx_n_sem (p : Policy[F,𝒮]) (n : ℕ) : (p.approx_n n).sem 
 
 omit [DecidableEq F] in
 omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
-@[simp] theorem η_apply {x y : H[F]} : η x y = if x = y then (𝟙 : 𝒮) else 𝟘 := by rfl
+@[simp] theorem η_apply {x y : H[F,N]} : η x y = if x = y then (𝟙 : 𝒮) else 𝟘 := by rfl
 omit [DecidableEq F] in
 omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
-@[simp] theorem η_subtype_apply {x y : H[F]} : η x y = if x = y then (𝟙 : 𝒮) else 𝟘 := by rfl
+@[simp] theorem η_subtype_apply {x y : H[F,N]} : η x y = if x = y then (𝟙 : 𝒮) else 𝟘 := by rfl
 
-theorem Policy.sem_n_mono (p : Policy[F,𝒮]) : WeightedMonotone p.sem_n := by
+theorem Policy.sem_n_mono (p : Policy[F,N,𝒮]) : WeightedMonotone p.sem_n := by
   induction p with
   | Filter => intro; simp [sem_n]
   | Mod => intro; simp [sem_n]
@@ -338,7 +339,7 @@ theorem Policy.sem_n_mono (p : Policy[F,𝒮]) : WeightedMonotone p.sem_n := by
       apply wle_trans (𝒲.bind_mono_left ((p.iter i).sem_n n₁) (ih h₁₂ h)) (𝒲.bind_mono_right _ ih')
 
 attribute [local simp] Policy.sem Policy.sem_n in
-theorem Policy.iter_m_sem_eq_wSup_sem_n {p : Policy[F,𝒮]} (h : p.sem = wSup ⟨p.sem_n, p.sem_n_mono⟩) (m : ℕ) :
+theorem Policy.iter_m_sem_eq_wSup_sem_n [Fintype N] {p : Policy[F,N,𝒮]} (h : p.sem = wSup ⟨p.sem_n, p.sem_n_mono⟩) (m : ℕ) :
     (p.iter m).sem = wSup ⟨fun n ↦ (p.iter m).sem_n n, (p.iter m).sem_n_mono⟩ := by
   induction m with
   | zero => simp
@@ -372,11 +373,11 @@ theorem Policy.iter_m_sem_eq_wSup_sem_n {p : Policy[F,𝒮]} (h : p.sem = wSup �
 
 -- NOTE: This is lemma 36, but above we show a variant of this so this might not be needed
 -- attribute [local simp] Policy.sem Policy.sem_n in
--- theorem Policy.iter_m_sem_eq_wSup_sem_n' {p : Policy[F,𝒮]} (h : p.sem = wSup ⟨p.sem_n, p.sem_n_mono⟩) (m : ℕ) :
+-- theorem Policy.iter_m_sem_eq_wSup_sem_n' {p : Policy[F,N,𝒮]} (h : p.sem = wSup ⟨p.sem_n, p.sem_n_mono⟩) (m : ℕ) :
 --     (p.iter m).sem = wSup ⟨fun n ↦ (p.approx_n n)^m |>.sem, ⋯⟩ := ⋯
 
 attribute [local simp] Policy.sem Policy.sem_n in
-theorem Policy.sem_n_approx (p : Policy[F,𝒮]) : p.sem = wSup ⟨p.sem_n, sem_n_mono p⟩ := by
+theorem Policy.sem_n_approx [Fintype N] (p : Policy[F,N,𝒮]) : p.sem = wSup ⟨p.sem_n, sem_n_mono p⟩ := by
   induction p with
   | Filter t =>
     ext h h'
@@ -459,7 +460,7 @@ theorem Policy.sem_n_approx (p : Policy[F,𝒮]) : p.sem = wSup ⟨p.sem_n, sem_
       magic_simp
 
 attribute [local simp] Policy.sem Policy.sem_n in
-theorem Policy.sem_n_lowerBounds (p : Policy[F,𝒮]) (n : ℕ) : p.sem_n n ≼ p.sem := by
+theorem Policy.sem_n_lowerBounds [Fintype N] (p : Policy[F,N,𝒮]) (n : ℕ) : p.sem_n n ≼ p.sem := by
   rw [sem_n_approx]
   apply le_wSup_of_le n
   magic_simp

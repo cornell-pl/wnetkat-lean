@@ -31,8 +31,8 @@ abbrev S₃ := 3
 abbrev S₄ := 4
 abbrev S₅ := 5
 
-def Network {F 𝒮 : Type} (ingress : Predicate[F]) (p l : Policy[F,𝒮]) (egress : Predicate[F]) :
-    Policy[F,𝒮] :=
+def Network {F N 𝒮 : Type} (ingress : Predicate[F,N]) (p l : Policy[F,N,𝒮]) (egress : Predicate[F,N]) :
+    Policy[F,N,𝒮] :=
   wnk_policy { @filter ~ingress; dup; (~p; ~l; dup)*; ~p; @filter ~egress }
 
 syntax "#wnk_eval[" term "," term ("," term)? "]" "{" cwnk_policy "}" : command

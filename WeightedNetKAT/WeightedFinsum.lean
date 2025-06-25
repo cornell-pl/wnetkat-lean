@@ -379,7 +379,7 @@ theorem WeightedSum_subtype_le {ι : Type} [Encodable ι] [DecidableEq ι] (P : 
   apply WeightedSum_finset_le
 
 open WeightedOmegaCompletePartialOrder
--- omit [Fintype F] [DecidableEq F] in
+-- omit [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] in
 
 open WeightedPartialOrder WeightedOmegaContinuousPreSemiring WeightedOmegaCompletePartialOrder in
 theorem wSup_wSup {α : Type} [WeightedOmegaCompletePartialOrder α] (f : ℕ → ℕ → α) (h₁ : WeightedMonotone f) (h₂ : WeightedMonotone (fun x y ↦ f y x)) :

@@ -5,32 +5,33 @@ namespace WeightedNetKAT
 variable {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 
 variable {F : Type} [Fintype F] [DecidableEq F]
+variable {N : Type} [Fintype N] [DecidableEq N]
 
-abbrev Pk := F → ℕ
-notation "Pk[" F "]" => Pk (F:=F)
+abbrev Pk := F → N
+notation "Pk[" F "," N "]" => Pk (F:=F) (N:=N)
 
-abbrev H := List Pk[F]
-notation "H[" F "]" => H (F:=F)
+abbrev H := List Pk[F,N]
+notation "H[" F "," N "]" => H (F:=F) (N:=N)
 
 inductive Predicate where
   | Bool (b : Bool)
-  | Test (f : F) (n : ℕ)
+  | Test (f : F) (n : N)
   | Dis (t u : Predicate)
   | Con (t u : Predicate)
   | Not (t : Predicate)
 
-notation "Predicate[" F "]" => Predicate (F:=F)
+notation "Predicate[" F "," N "]" => Predicate (F:=F) (N:=N)
 
 inductive Policy (W : Type) where
-  | Filter (t : Predicate[F])
-  | Mod (f : F) (n : ℕ)
+  | Filter (t : Predicate[F,N])
+  | Mod (f : F) (n : N)
   | Dup
   | Seq (p q : Policy W)
   | Weight (w : W) (p : Policy W)
   | Add (p q : Policy W)
   | Iter (p : Policy W)
 
-notation "Policy[" α "," β "]" => Policy (F:=α) (W:=β)
+notation "Policy[" f "," n "," w "]" => Policy (F:=f) (N:=n) (W:=w)
 
 section Syntax
 

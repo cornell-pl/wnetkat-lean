@@ -2,7 +2,8 @@ import WeightedNetKAT.Language
 
 namespace WeightedNetKAT
 
-variable {F : Type} [DecidableEq Pk[F]] [Encodable Pk[F]]
+variable {F : Type} [Fintype F] [DecidableEq F]
+variable {N : Type} [Fintype N] [DecidableEq N]
 variable {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 
 /-- Weighted NetKAT Automaton.
@@ -13,16 +14,17 @@ variable {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrde
 - `𝓁` is a family of output weightings `𝓁[α,β] : 𝒞 𝒮 Q` indexed by packet pairs. Note that we
   use 𝓁 instead of λ, since λ is the function symbol in Lean.
 -/
-structure WNKA (F 𝒮 Q: Type)
+structure WNKA (F N 𝒮 Q: Type)
     [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 where
   /-- `ι` is the initial weightings. -/
   ι : 𝒞 𝒮 (Unit × Q)
   /-- `δ` is a family of transition functions `δ[α,β] : Q → 𝒞 𝒮 Q` indexed by packet pairs. -/
-  δ : (α β : Pk[F]) → 𝒞 𝒮 (Q × Q)
+  δ : (α β : Pk[F,N]) → 𝒞 𝒮 (Q × Q)
   /-- `𝓁` is a family of output weightings `𝓁[α,β] : 𝒞 𝒮 Q` indexed by packet pairs. Note that
     we use 𝓁 instead of λ, since λ is the function symbol in Lean. -/
-  𝓁 : (α β : Pk[F]) → 𝒞 𝒮 (Q × Unit)
+  𝓁 : (α β : Pk[F,N]) → 𝒞 𝒮 (Q × Unit)
+notation "WNKA[" f "," n "," s "," q "]" => WNKA (F:=f) (n:=n) (𝒮:=s) (Q:=q)
 
 class WeightedProduct (α : Type) (β : Type) (γ : outParam Type) where
   wProd : α → β → γ
@@ -61,7 +63,7 @@ deriving DecidableEq
 notation "♡" => StateSpace.Heart
 notation "♣" => StateSpace.Club
 
-def S : RPol[F,𝒮] → Type
+def S : RPol[F,N,𝒮] → Type
   | wnk_rpol {drop} => I {♡}
   | wnk_rpol {skip} => I {♡}
   | wnk_rpol {@test ~_} => I {♡}
@@ -74,7 +76,7 @@ def S : RPol[F,𝒮] → Type
   | wnk_rpol {~p₁*} => S p₁
 where I : (Set StateSpace) → Type := (↑·)
 
-def S.decidableEq (p : RPol[F,𝒮]) : DecidableEq (S p) :=
+def S.decidableEq (p : RPol[F,N,𝒮]) : DecidableEq (S p) :=
   match p with
   | wnk_rpol {drop} => Subtype.instDecidableEq
   | wnk_rpol {skip} => Subtype.instDecidableEq
@@ -90,7 +92,7 @@ def S.decidableEq (p : RPol[F,𝒮]) : DecidableEq (S p) :=
     instDecidableEqSum
   | wnk_rpol {~p₁*} => S.decidableEq p₁
 
-instance S.instDecidableEq {p : RPol[F,𝒮]} : DecidableEq (S p) := S.decidableEq p
+instance S.instDecidableEq {p : RPol[F,N,𝒮]} : DecidableEq (S p) := S.decidableEq p
 
 def S.ι {X Y : Type} : 𝒞 𝒮 (Unit × X) → 𝒞 𝒮 (Unit × Y) → 𝒞 𝒮 (Unit × (X ⊕ Y)) :=
   fun m₁ m₂ ↦
@@ -136,23 +138,23 @@ def S.δ {X Y Z W : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [Decid
           Sum.elim_inr, Sum.inr.injEq, exists_eq_right, implies_true, and_self])
 notation "δ[" "[" a "," b "]" "," "[" c "," d "]" "]" => S.δ a b c d
 
-omit [DecidableEq Pk] [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
-instance S.Fintype (p : RPol[F,𝒮]) : Fintype (S p) :=
+-- omit [DecidableEq Pk] [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+instance S.fintype (p : RPol[F,N,𝒮]) : Fintype (S p) :=
   match p with
   | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} | wnk_rpol {¬~_} =>
     ⟨{⟨♡, by simp⟩}, by intro ⟨_, _⟩; simp; congr⟩
   | wnk_rpol {dup} => ⟨{⟨♡, by simp⟩, ⟨♣, by simp⟩}, by rintro ⟨_, (h | h | h)⟩ <;> simp_all⟩
-  | wnk_rpol {~_ ⨀ ~p₁} => S.Fintype p₁
-  | wnk_rpol {~p₁ ⨁ ~p₂} => letI := S.Fintype p₁; letI := S.Fintype p₂; instFintypeSum _ _
-  | wnk_rpol {~p₁ ; ~p₂} => letI := S.Fintype p₁; letI := S.Fintype p₂; instFintypeSum _ _
-  | wnk_rpol {~p₁*} => S.Fintype p₁
-instance S.instFintype {p : RPol[F,𝒮]} : _root_.Fintype (S p) := S.Fintype p
-omit [DecidableEq Pk] [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
-instance S.Finite {p : RPol[F,𝒮]} : Finite (S p) := Finite.of_fintype (S p)
+  | wnk_rpol {~_ ⨀ ~p₁} => S.fintype p₁
+  | wnk_rpol {~p₁ ⨁ ~p₂} => letI := S.fintype p₁; letI := S.fintype p₂; instFintypeSum _ _
+  | wnk_rpol {~p₁ ; ~p₂} => letI := S.fintype p₁; letI := S.fintype p₂; instFintypeSum _ _
+  | wnk_rpol {~p₁*} => S.fintype p₁
+instance S.instFintype {p : RPol[F,N,𝒮]} : Fintype (S p) := S.fintype p
+-- omit [DecidableEq Pk] [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+instance S.Finite {p : RPol[F,N,𝒮]} : Finite (S p) := Finite.of_fintype (S p)
 
 variable [DecidableEq 𝒮]
 
-def ι (p : RPol[F,𝒮]) : 𝒞 𝒮 (Unit × S p) := match p with
+def ι (p : RPol[F,N,𝒮]) : 𝒞 𝒮 (Unit × S p) := match p with
   | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {¬~_} | wnk_rpol {@mod ~_} =>
     η' ⟨(), ♡, rfl⟩
   | wnk_rpol {dup} => η' ⟨(), ♡, by simp⟩
@@ -161,9 +163,9 @@ def ι (p : RPol[F,𝒮]) : 𝒞 𝒮 (Unit × S p) := match p with
   | wnk_rpol {~p₁ ; ~p₂} => ι[ι p₁, 𝟘]
   | wnk_rpol {~p₁*} => ι p₁
 
-variable [Fintype Pk[F]]
+variable [Fintype Pk[F,N]]
 
-def 𝓁 [DecidableEq 𝒮] (p : RPol[F,𝒮]) (α β : Pk[F]) : 𝒞 𝒮 (S p × Unit) :=
+def 𝓁 [DecidableEq 𝒮] (p : RPol[F,N,𝒮]) (α β : Pk[F,N]) : 𝒞 𝒮 (S p × Unit) :=
   match p with
   | wnk_rpol {drop} => 𝟘
   | wnk_rpol {skip} => if α = β then 𝟙 else 𝟘
@@ -183,7 +185,7 @@ def 𝓁 [DecidableEq 𝒮] (p : RPol[F,𝒮]) (α β : Pk[F]) : 𝒞 𝒮 (S p 
   | wnk_rpol {~p₁ ; ~p₂} => 𝓁[⨁ᶠ γ, (𝓁 p₁ α γ ⨯ ι p₂ ⨯ 𝓁 p₂ γ β), 𝓁 p₂ α β]
   | wnk_rpol {~p₁*} => ⨁ᶠ γ, (𝓁 p₁ α γ ⨯ ι p₁ ⨯ 𝓁 p₁ γ β)
 
-def δ (p : RPol[F,𝒮]) (α β : Pk[F]) : 𝒞 𝒮 (S p × S p) := match p with
+def δ (p : RPol[F,N,𝒮]) (α β : Pk[F,N]) : 𝒞 𝒮 (S p × S p) := match p with
   | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} | wnk_rpol {¬ ~_} =>
     𝟘
   | wnk_rpol {dup} => 𝒞.liftPi fun s ↦ if s.val = ♡ ∧ α = β then η' ⟨♣, by simp [S]⟩ else 𝟘
@@ -198,23 +200,23 @@ def δ (p : RPol[F,𝒮]) (α β : Pk[F]) : 𝒞 𝒮 (S p × S p) := match p wi
 
 example {a : Prop} : ¬¬a ↔ a := by exact not_not
 
-def RPol.wnka (p : RPol[F,𝒮]) : WNKA F 𝒮 (S p) where
+def RPol.wnka (p : RPol[F,N,𝒮]) : WNKA[F,N,𝒮,S p] where
   ι := ι p
   δ := δ p
   𝓁 := 𝓁 p
 
 def List.pairs {α : Type} (l : List α) : List (α × α) := l.zip l.tail
 
-def GS.pks (s : GS F) : List Pk[F] := s.1 :: s.2.1 ++ [s.2.2]
+def GS.pks (s : GS[F,N]) : List Pk[F,N] := s.1 :: s.2.1 ++ [s.2.2]
 
-def GS.compute {Q : Type} [DecidableEq Q] (𝒜 : WNKA F 𝒮 Q) (s : GS F) : 𝒮 :=
+def GS.compute {Q : Type} [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (s : GS[F,N]) : 𝒮 :=
   match _ : s with
   | ⟨α, [], α₀⟩ => (𝒜.ι ⨯ 𝒜.𝓁 α α₀) ((), ())
   | ⟨α, [α₀], α₁⟩ => (𝒜.ι ⨯ 𝒜.δ α α₀ ⨯ 𝒜.𝓁 α₀ α₁) ((), ())
   | ⟨α, α₀::α₁::A, αn⟩ => (𝒜.ι ⨯ (List.pairs (α₀ :: α₁ :: A) |>.foldl (fun acc (α', β') ↦ acc ⨯ 𝒜.δ α' β') (𝒜.δ α α₀)) ⨯ 𝒜.𝓁 ((α₁ :: A).getLast (by simp)) αn) ((), ())
   -- g ((List.pairs (s.1 :: s.2.1)).foldl f init) ((s.1 :: s.2.1).getLast (by simp), s.2.2)
 
-def WNKA.sem {Q : Type} [DecidableEq Q] (𝒜 : WNKA F 𝒮 Q) : 𝒲 𝒮 (GS F) := 𝒲.mk
+def WNKA.sem {Q : Type} [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) : 𝒲 𝒮 GS[F,N] := 𝒲.mk
   (fun x ↦ x.compute 𝒜)
   sorry
 
@@ -301,12 +303,12 @@ theorem WeightedProduct.wProd_apply' {X Y Z : Type} [DecidableEq X] [DecidableEq
     WeightedProduct.wProd (α:=𝒞 𝒮 (X × Y)) (β:=𝒞 𝒮 (Y × Z)) ⟨⟨f, sorry⟩, sorry, sorry⟩ b x = sorry := by
   simp [wProd]
   sorry
-omit [DecidableEq Pk] [Encodable Pk] [Fintype Pk] in
-theorem GS.induction (P : GS F → Prop)
+omit [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Fintype Pk] in
+theorem GS.induction (P : GS[F,N] → Prop)
     (h₀ : ∀ α α₀, P gs[α; α₀])
     (h₁ : ∀ α α₀ α₁, P gs[α; α₀; dup; α₁])
     (hn : ∀ α α₀ α₁ A αₙ, P (GS.mk α (α₀ :: α₁ :: A) αₙ))
-    (x : GS F) :
+    (x : GS[F,N]) :
     P x := by
   obtain ⟨α, A, αn⟩ := x
   match A with
@@ -319,6 +321,7 @@ omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemirin
 omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
 @[simp] theorem WeightedZero.instCountablePi_apply {X : Type} (x : X) : (𝟘 : 𝒞 𝒮 X) x = 𝟘 := rfl
 
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
 @[simp]
 theorem asdasdas {X : Type} {n : ℕ} : (fun (_ : 𝒞 𝒮 X) ↦ (WeightedZero.wZero (α:=𝒞 𝒮 X)))^[n + 1] = 𝟘 := by
   induction n with
@@ -355,7 +358,7 @@ theorem ι_wProd_δ' {A B C D : Type}
   sorry
 
 open scoped Classical in
-theorem RPol.wnka_sem [Fintype F] [DecidableEq F] (p : RPol[F,𝒮]) : (RPol.wnka p).sem = G p := by
+theorem RPol.wnka_sem [Fintype F] [DecidableEq F] (p : RPol[F,N,𝒮]) : (RPol.wnka p).sem = G p := by
   if h : (𝟘 : 𝒮) = 𝟙 then sorry else
   have h' : ¬𝟙 = (𝟘 : 𝒮) := by grind
   induction p with
