@@ -139,7 +139,7 @@ noncomputable def G (p : RPol[F,𝒮]) : 𝒲 𝒮 (GS F) := match p with
   -- [x = α; α; dup; α | α ∈ Pk]
   | wnk_rpol { dup } => G.ofPk fun α ↦ gs[α; α; dup; α]
   -- [G(p₁)(x) = 𝟘]
-  | wnk_rpol { ¬~p₁ } => ⟨(if G p₁ · = 𝟘 then 𝟙 else 𝟘), SetCoe.countable _⟩
+  | wnk_rpol { ¬~α } => ⟨(if ∃ β, gs[β; β] = · ∧ β ≠ α then 𝟙 else 𝟘), SetCoe.countable _⟩
   | wnk_rpol { ~p₁ ⨁ ~p₂ } => G p₁ ⨁ G p₂
   | wnk_rpol { ~p₁ ; ~p₂ } => G p₁ ♢ G p₂
   | wnk_rpol { ~w ⨀ ~p₁ } => w • G p₁
