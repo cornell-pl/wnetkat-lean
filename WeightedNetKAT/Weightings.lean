@@ -1,19 +1,9 @@
 import Mathlib.Data.Set.Countable
 import WeightedNetKAT.Domain
+import WeightedNetKAT.WeightedFinsum
 
 section
 
-variable {X : Type} {𝒮 : Type} [WeightedPreSemiring 𝒮]
-
-abbrev W (X : Type) (𝒮 : Type) := X → 𝒮
-
-def W.supp {X : Type} (m : W X 𝒮) := {x : X | m x ≠ 𝟘}
-
-@[simp] theorem W.supp_mem_iff {X : Type} {x} (m : W X 𝒮) : x ∈ m.supp ↔ m x ≠ 𝟘 := by rfl
-
-end
-
--- variable {X : Type} {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 variable {X : Type} {𝒮 : Type} [WeightedPreSemiring 𝒮]
 
 noncomputable def W.mass [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
@@ -120,6 +110,10 @@ instance WeightedPartialOrder.instCountablePi [WeightedPartialOrder 𝒮] : Weig
     ext x
     exact wle_antisymm (hab x) (hba x)
 
+@[reducible]
+instance [WeightedPartialOrder 𝒮] : Trans (· ≼ · : 𝒲 𝒮 X → 𝒲 𝒮 X → Prop) (· ≼ · : 𝒲 𝒮 X → 𝒲 𝒮 X → Prop) (· ≼ · : 𝒲 𝒮 X → 𝒲 𝒮 X → Prop) where
+  trans := WeightedPartialOrder.wle_trans
+
 instance WeightedOmegaCompletePartialOrder.instCountablePi [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] :
     WeightedOmegaCompletePartialOrder (𝒲 𝒮 X) where
   wSup C := ⟨fun i ↦ wSup (C.map (· i) (· i)), by
@@ -170,7 +164,11 @@ instance {X : Type} : SMul 𝒮 (𝒲 𝒮 X) where
 
 end CountablePi
 
-variable [WeightedSemiring 𝒮]
+end
+
+section
+
+variable {X : Type} {𝒮 : Type} [WeightedSemiring 𝒮]
 
 def η [DecidableEq X] (x : X) : 𝒲 𝒮 X := ⟨fun y ↦ if x = y then 𝟙 else 𝟘, by
   suffices Finite (W.supp (𝒮:=𝒮) fun y ↦ if x = y then 𝟙 else 𝟘) by apply Finite.to_countable
@@ -212,3 +210,210 @@ infixr:50 " ≫= " => 𝒲.bind
 
 instance {Y : Type} [Countable X] {m : 𝒲 𝒮 X} (f : X → 𝒲 𝒮 Y) :
     Countable (m ≫= f).supp := (m ≫= f).countable
+
+open WeightedOmegaContinuousPreSemiring in
+theorem 𝒲.bind_mono (f : 𝒲 𝒮 X) : WeightedMonotone (ι:=X → 𝒲 𝒮 X) (f ≫= ·) := by
+  apply fun a b hab h ↦ WeightedSum_mono fun i ↦ (wMul_gconr (by simp) (hab i.val h))
+open WeightedOmegaContinuousPreSemiring in
+theorem 𝒲.bind_mono_right (f : 𝒲 𝒮 X) : WeightedMonotone (ι:=X → 𝒲 𝒮 X) (f ≫= ·) := by
+  apply fun a b hab h ↦ WeightedSum_mono fun i ↦ (wMul_gconr (by simp) (hab i.val h))
+open WeightedOmegaContinuousPreSemiring in
+theorem 𝒲.bind_mono_left (g : X → 𝒲 𝒮 X) : WeightedMonotone (ι:=𝒲 𝒮 X) (· ≫= g) := by
+  intro a b hab h
+  simp
+  have : DecidableEq X := Classical.typeDecidableEq _
+  apply WeightedSum_le_of_finset fun Sa ↦ ?_
+  have : ∀ x, ¬a x = 𝟘 → ¬b x = 𝟘 := by
+    intro x hx
+    contrapose! hx
+    have := hab x
+    simp_all
+  let S : Finset X := Sa.map ⟨(·.val), by simp⟩
+  let Sb : Finset ↑b.supp := Sa.map ⟨(fun ⟨x, h⟩ ↦ ⟨x, this x h⟩), by intro; simp [Subtype.val_inj]⟩
+  apply WeightedPartialOrder.wle_trans _ (WeightedSum_finset_le Sb)
+  rw [WeightedFinsum_bij (Sι:=Sa) (Sγ:=S) (fγ:=fun x ↦ a x ⨀ g x h) (fun x _ ↦ x.val)]
+  · rw [WeightedFinsum_bij (Sι:=Sb) (Sγ:=S) (fγ:=fun x ↦ b x ⨀ g x h) (fun x _ ↦ x.val)]
+    · apply WeightedFinsum_mono
+      intro x
+      simp
+      apply wMul_mono_right _ (hab x)
+    · simp_all [Sb, S]
+      rintro x hbx y hax hy' ⟨_⟩
+      simp_all
+    · simp_all [Sb, S]
+    · simp_all [Sb, S]
+    · simp_all [Sb, S]
+  · simp_all [Sb, S]
+  · simp_all [Sb]
+  · simp_all [Sb, S]
+  · simp_all [Sb, S]
+
+open WeightedOmegaCompletePartialOrder in
+theorem 𝒲.bind_continuous (f : 𝒲 𝒮 X) : WeightedOmegaContinuous (f ≫= ·) f.bind_mono := by
+  intro C
+  ext h
+  simp only
+  simp [bind]
+  simp [wSup]
+  simp [WeightedOmegaContinuousMulRight]
+  have :=  @WeightedSum_cont f.supp 𝒮 _ _ _
+  unfold WeightedOmegaContinuous at this
+  simp only [WeightedChain.map, DFunLike.coe] at this
+  simp [wSup] at this
+  simp only [WeightedChain.map, DFunLike.coe] at this
+  simp at this
+  convert this _
+  rotate_right
+  . exact ⟨fun n x ↦ f x ⨀ (C n x) h, by
+      intro j k le point
+      simp
+      apply wMul_gconr
+      . simp
+      . exact C.prop le point h
+      ⟩
+  . simp only [WeightedChain.map, DFunLike.coe]
+  . simp only [WeightedChain.map, DFunLike.coe]
+
+open WeightedOmegaCompletePartialOrder
+
+open WeightedOmegaContinuousPreSemiring in
+theorem 𝒲.bind_continuous'' [Countable X] (g : X → 𝒮) (C : WeightedChain (𝒲 𝒮 X)) :
+      wSup ⟨fun n ↦ ⨁' (i : (wSup C).supp), C n i ⨀ g i, by
+        intro a b hab; apply WeightedSum_mono
+        apply wMul_mono_right
+        intro i
+        apply C.prop hab⟩
+    = wSup ⟨fun n ↦ ⨁' (x : (C n).supp), C n x ⨀ g x, by
+      intro a b hab
+      simp only
+      letI : Encodable X := Encodable.ofCountable X
+      have q := fun a ↦
+        WeightedSum_eq_WeightedSum_of_ne_one_bij
+          (ι:=(C a).supp) (γ:=X) (f:=fun x ↦ C a x ⨀ g x) (g:=fun x ↦ C a x ⨀ g x)
+          (fun ⟨x, hx⟩ ↦ ⟨x, by contrapose hx; simp at hx; replace hx : C a x = 𝟘 := hx; simp [hx]⟩)
+      rw [q a, q b]
+      · apply WeightedSum_mono
+        apply wMul_mono_right
+        exact C.prop hab
+      all_goals intro ⟨_, _⟩; simp_all⟩ := by
+  congr with n
+  have : (C n).supp ⊆ (wSup C).supp := by
+    intro x
+    simp only [W.supp_mem_iff, ne_eq, WeightedOmegaCompletePartialOrder.instCountablePi,
+      wSup_eq_zero_iff, not_forall]
+    magic_simp
+    intro h'
+    use n
+  apply WeightedSum_eq_WeightedSum_of_ne_one_bij (fun ⟨x, hx⟩ ↦ ⟨x.val, this x.prop⟩)
+  · intro ⟨⟨a, _⟩, ha⟩ ⟨b, hb⟩; simp_all
+  · intro ⟨a, ha⟩
+    simp_all
+    simp_all
+    contrapose!
+    intro h
+    have : C n a = 𝟘 := h
+    simp [this]
+  · simp
+
+theorem 𝒲.bind_continuous' [Countable X] (g : X → 𝒲 𝒮 X) :
+    WeightedOmegaContinuous (· ≫= g) (𝒲.bind_mono_left g) := by
+  intro C
+  ext h
+  simp only
+  magic_simp [bind]
+  letI : Encodable (wSup C).supp := by exact instEncodableElemSupp
+  simp
+  have : ∀ (x : (wSup C).supp), wSup C x = wSup ⟨(C · x), (C.prop · x)⟩ := by
+    simp [WeightedOmegaCompletePartialOrder.instCountablePi]
+    magic_simp
+    simp
+  simp [this]; clear this
+  simp [WeightedOmegaContinuousMulLeft]
+  magic_simp
+  simp
+  have := WeightedSum_cont (X:=(wSup C).supp) (𝒮:=𝒮) ⟨fun n x ↦ (C n) ↑x ⨀ (g x) h, by
+    intro a b hab i
+    apply wMul_mono_right
+    apply C.prop hab⟩
+  simp only [DFunLike.coe, wSup_apply, WeightedChain.map] at this
+  simp only [WeightedChain.val_apply, toFun_apply] at this
+  simp [this]; clear this
+  conv =>
+    right
+    simp [instCountablePi]
+  magic_simp
+  simp
+  apply 𝒲.bind_continuous'' (g · h)
+
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+@[simp]
+theorem WeightedFinsum_apply_𝒲 {α : Type} [DecidableEq α] (S : Finset α) (f : α → 𝒲 𝒮 X) (i : X) :
+    (⨁ᶠ x ∈ S, f x) i = ⨁ᶠ x ∈ S, f x i := by
+  simp [WeightedFinsum]
+  induction S using Finset.induction with
+  | empty => simp
+  | insert x S hx ih =>
+    simp_all [WeightedAdd.wAdd]
+
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+@[simp]
+theorem WeightedFinsum_apply_𝒲' {α : Type} [DecidableEq α] (S : Finset α) (f : α → 𝒲 𝒮 X) (i : X) :
+    (⨁ᶠ x ∈ S, f x) i = ⨁ᶠ x ∈ S, f x i := by
+  simp [WeightedFinsum]
+  induction S using Finset.induction with
+  | empty => simp
+  | insert x S hx ih =>
+    simp_all [WeightedAdd.wAdd]
+
+@[simp]
+theorem WeightedSum_apply_𝒲 {α : Type} [Encodable α]
+    (f : α → 𝒲 𝒮 X) (i : X) :
+    (⨁' (x : α), f x) i = ⨁' (x : α), f x i := by
+  simp [WeightedSum]
+  unfold WeightedOmegaContinuousPreSemiring.instCountablePi
+  unfold WeightedOmegaCompletePartialOrder.instCountablePi
+  simp
+  simp [WeightedChain.map, WeightedSum_chain]
+  magic_simp
+  simp
+  congr
+  ext n
+  congr! with x
+  split
+  · simp
+  · rfl
+
+@[simp]
+theorem WeightedSum_apply_𝒲' {α : Type} [Encodable α]
+    (f : α → 𝒲 𝒮 X) (i : X) :
+    (⨁' (x : α), f x) i = ⨁' (x : α), f x i := by
+  rw [← WeightedSum_apply_𝒲]
+
+theorem 𝒲.bind_sum [DecidableEq X] {f : 𝒲 𝒮 X} {g : ℕ → X → 𝒲 𝒮 X} :
+    (f ≫= ⨁' (x : ℕ), g x) = (⨁' (x : ℕ), (f ≫= g x)) := by
+  simp [𝒲.bind]
+  ext h
+  simp
+  magic_simp
+  simp [← WeightedSum_mul_left]
+  rw [WeightedSum_comm]
+
+open WeightedPartialOrder
+
+@[simp]
+theorem wSup_const {α : Type} [WeightedOmegaCompletePartialOrder α] (x : α) :
+    wSup ⟨fun _ ↦ x, by intro; simp⟩ = x := by
+  apply wle_antisymm
+  · apply wSup_le; magic_simp [implies_true]
+  · apply le_wSup_of_le 0; magic_simp
+
+@[simp]
+theorem wSup_of_const {α : Type} [WeightedOmegaCompletePartialOrder α] (C : WeightedChain α)
+    (h : ∀ n, C n = C 0) : wSup C = C 0 := by
+  apply wle_antisymm
+  · apply wSup_le; magic_simp [implies_true]; simp_all
+  · apply le_wSup_of_le 0; magic_simp
+
+theorem 𝒲.bind_apply (f : 𝒲 𝒮 X) (g : X → 𝒲 𝒮 X) (x : X) :
+    (f ≫= g) x = ⨁' (i : f.supp), f i ⨀ g i x := by
+  simp [bind]

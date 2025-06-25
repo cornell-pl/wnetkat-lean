@@ -3,7 +3,7 @@ import Mathlib.Computability.Language
 import Mathlib.Data.Finite.Sum
 import WeightedNetKAT.RPol
 
-section
+namespace WeightedNetKAT
 
 variable {F : Type} [DecidableEq Pk[F]]
 variable {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
@@ -35,6 +35,13 @@ def Predicate.test_decidable {t : Predicate[F]} : DecidablePred t.test := fun pk
     have := t.test_decidable pk
     if h' : ¬t.test pk then .isTrue h' else .isFalse h'
 instance Predicate.test_instDecidable {t : Predicate[F]} : DecidablePred t.test := test_decidable
+
+end WeightedNetKAT
+
+section
+
+variable {F : Type} [DecidableEq Pk[F]]
+variable {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 
 def 𝒲.map {X Y : Type} (m : 𝒲 𝒮 X) (f : Y → X) (hf : f.Injective) : 𝒲 𝒮 Y :=
   ⟨(m <| f ·), by

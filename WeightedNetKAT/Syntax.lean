@@ -1,5 +1,7 @@
 import WeightedNetKAT.Weightings
 
+namespace WeightedNetKAT
+
 variable {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 
 variable {F : Type} [Fintype F] [DecidableEq F]
@@ -288,3 +290,5 @@ where
 #check (wnk_policy { while ~"x" = 2 do skip } : Policy Unit)
 
 end Syntax
+
+end WeightedNetKAT

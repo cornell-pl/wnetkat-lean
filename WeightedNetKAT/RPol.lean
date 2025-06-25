@@ -1,5 +1,7 @@
 import WeightedNetKAT.Syntax
 
+namespace WeightedNetKAT
+
 variable {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 variable {F : Type} [Fintype F] [DecidableEq F]
 
@@ -191,3 +193,5 @@ where
     return pstx.raw.setInfo (SourceInfo.fromRef stx)
 
 end Syntax
+
+end WeightedNetKAT

@@ -184,6 +184,8 @@ instance {X : Type} : SMul 𝒮 (𝒞 𝒮 X) where
       contrapose!
       simp_all)
 
+namespace WeightedNetKAT
+
 def Predicate.compute (p : Predicate[F]) (n : ℕ) : H[F] → 𝒞 𝒮 H[F] := match p with
   | wnk_pred {false} => fun _ ↦ 𝟘
   | wnk_pred {true} => η'
@@ -216,6 +218,8 @@ def Policy.compute (p : Policy[F,𝒮]) (n : ℕ) : H[F] → 𝒞 𝒮 H[F] := m
   | .Iter p => fun h ↦ ⨁ᶠ i ∈ Finset.range n, (p ^ i).compute n h
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
+
+end WeightedNetKAT
 
 end
 
@@ -279,7 +283,7 @@ theorem 𝒲.η_bind (x : H[F]) (f : H[F] → 𝒲 𝒮 H[F]) :
 @[simp]
 theorem 𝒲.bind_of_𝒞 (m : 𝒞 𝒮 H[F]) (f : H[F] → 𝒞 𝒮 H[F]) :
     (m.to𝒲 ≫= fun h ↦ (f h).to𝒲) = (m.bind f).to𝒲 := by
-  ext; simp only [bind_of_𝒞', 𝒞.to𝒲_apply, WeightedFinsum_apply', mk_apply, 𝒞.bind, 𝒞.mk', ne_eq]
+  ext; simp only [bind_of_𝒞', 𝒞.to𝒲_apply, WeightedFinsum_apply_𝒲, mk_apply, 𝒞.bind, 𝒞.mk', ne_eq]
 
 omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
 theorem WeightedSemiring.if_zero_is_one_collapse (h : (𝟘 : 𝒮) = 𝟙) (a : 𝒮) : a = 𝟘 := by
@@ -294,6 +298,8 @@ theorem WeightedSemiring.if_one_is_zero_collapse (h : (𝟙 : 𝒮) = 𝟘) (a :
   rw [h] at this
   simp at this
   exact this.symm
+
+namespace WeightedNetKAT
 
 attribute [local simp] Predicate.sem Predicate.compute in
 theorem Predicate.compute_eq_sem_n (p : Predicate[F]) (n : ℕ):
@@ -391,5 +397,7 @@ theorem Policy.compute_eq_sem_n (p : Policy[F,𝒮]) (n : ℕ) : p.sem_n n = fun
     induction x with
     | zero => ext; simp [Predicate.sem, Predicate.compute, η']
     | succ x ihx => simp_all only [iter, sem_n, 𝒲.bind_of_𝒞, compute]
+
+end WeightedNetKAT
 
 end
