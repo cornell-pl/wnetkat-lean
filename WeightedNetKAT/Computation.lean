@@ -235,7 +235,9 @@ def Finset.toList' {α : Type} [Encodable α] [DecidableEq α] (s : Finset α) :
 instance {F : Type} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] : Repr Pk[F,N] where
   reprPrec x _ := s!"\{{List.range i.card |>.filterMap e.decode |>.map (fun k ↦ s!"{reprStr k}↦{reprStr (x k)}") |> ",".intercalate}}"
 
-def 𝒞.pretty (m : 𝒞 𝒮 H[F,N]) : Finset (H[F,N] × 𝒮) := m.finSupp.image (fun s ↦ (s, m s))
+def 𝒞.pretty [DecidableEq X] (m : 𝒞 𝒮 X) : Finset (X × 𝒮) := m.finSupp.image (fun s ↦ (s, m s))
+unsafe instance 𝒞.repr [DecidableEq X] [Repr X] [Repr 𝒮] : Repr (𝒞 𝒮 X) where
+  reprPrec m n := reprPrec m.pretty n
 
 end
 

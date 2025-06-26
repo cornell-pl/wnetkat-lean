@@ -4,7 +4,7 @@ namespace WeightedNetKAT
 
 variable {F : Type} [Fintype F] [DecidableEq F]
 variable {N : Type} [Fintype N] [DecidableEq N]
-variable {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+variable {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] -- [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
 
 /-- Weighted NetKAT Automaton.
 
@@ -15,7 +15,7 @@ variable {𝒮 : Type} [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrde
   use 𝓁 instead of λ, since λ is the function symbol in Lean.
 -/
 structure WNKA (F N 𝒮 Q: Type)
-    [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+    [WeightedSemiring 𝒮]
 where
   /-- `ι` is the initial weightings. -/
   ι : 𝒞 𝒮 (Unit × Q)
@@ -248,7 +248,8 @@ theorem WeightedProduct.wZero_wProd {X Y Z : Type} [DecidableEq X] [DecidableEq 
     ((𝟘 : 𝒞 𝒮 (X × Y)) ⨯ a) = 𝟘 := by
   ext ⟨x, Z⟩; simp [WeightedProduct.wProd]
 
-omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+omit [DecidableEq 𝒮] in
+omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
 theorem WeightedFinsum_ite {α : Type} [DecidableEq α] {S : Finset α} (g : α → Prop) [DecidablePred g] (f : α → 𝒮) :
     (⨁ᶠ x ∈ S, if g x then f x else 𝟘) = ⨁ᶠ x ∈ S.filter g, f x := by
   induction S using Finset.induction with
@@ -316,12 +317,11 @@ theorem GS.induction (P : GS[F,N] → Prop)
   | [α'] => exact h₁ α α' αn
   | α' :: α'' :: A => exact hn α α' α'' A αn
 
-omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 @[simp] theorem WeightedZero.instPi_apply {X 𝒮 : Type} [WeightedZero 𝒮] (x : X) : (𝟘 : X → 𝒮) x = 𝟘 := rfl
-omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] [DecidableEq 𝒮] in
 @[simp] theorem WeightedZero.instCountablePi_apply {X : Type} (x : X) : (𝟘 : 𝒞 𝒮 X) x = 𝟘 := rfl
 
-omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] [DecidableEq 𝒮] in
 @[simp]
 theorem asdasdas {X : Type} {n : ℕ} : (fun (_ : 𝒞 𝒮 X) ↦ (WeightedZero.wZero (α:=𝒞 𝒮 X)))^[n + 1] = 𝟘 := by
   induction n with
@@ -358,7 +358,8 @@ theorem ι_wProd_δ' {A B C D : Type}
   sorry
 
 open scoped Classical in
-theorem RPol.wnka_sem [Fintype F] [DecidableEq F] (p : RPol[F,N,𝒮]) : (RPol.wnka p).sem = G p := by
+theorem RPol.wnka_sem [Fintype F] [DecidableEq F] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] (p : RPol[F,N,𝒮]) :
+    (RPol.wnka p).sem = G p := by
   if h : (𝟘 : 𝒮) = 𝟙 then sorry else
   have h' : ¬𝟙 = (𝟘 : 𝒮) := by grind
   induction p with
