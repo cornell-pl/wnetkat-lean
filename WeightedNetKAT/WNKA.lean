@@ -58,7 +58,7 @@ instance {X Y Z : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [Decidab
 inductive StateSpace where
   | Heart
   | Club
-deriving DecidableEq
+deriving DecidableEq, Fintype
 
 notation "♡" => StateSpace.Heart
 notation "♣" => StateSpace.Club
@@ -75,6 +75,8 @@ def S : RPol[F,N,𝒮] → Type
   | wnk_rpol {~p₁ ; ~p₂} => S p₁ ⊕ S p₂
   | wnk_rpol {~p₁*} => S p₁
 where I : (Set StateSpace) → Type := (↑·)
+
+attribute [simp] S.I
 
 def S.decidableEq (p : RPol[F,N,𝒮]) : DecidableEq (S p) :=
   match p with
@@ -138,7 +140,6 @@ def S.δ {X Y Z W : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [Decid
           Sum.elim_inr, Sum.inr.injEq, exists_eq_right, implies_true, and_self])
 notation "δ[" "[" a "," b "]" "," "[" c "," d "]" "]" => S.δ a b c d
 
--- omit [DecidableEq Pk] [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 instance S.fintype (p : RPol[F,N,𝒮]) : Fintype (S p) :=
   match p with
   | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} | wnk_rpol {¬~_} =>
@@ -149,7 +150,6 @@ instance S.fintype (p : RPol[F,N,𝒮]) : Fintype (S p) :=
   | wnk_rpol {~p₁ ; ~p₂} => letI := S.fintype p₁; letI := S.fintype p₂; instFintypeSum _ _
   | wnk_rpol {~p₁*} => S.fintype p₁
 instance S.instFintype {p : RPol[F,N,𝒮]} : Fintype (S p) := S.fintype p
--- omit [DecidableEq Pk] [WeightedSemiring 𝒮] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 instance S.Finite {p : RPol[F,N,𝒮]} : Finite (S p) := Finite.of_fintype (S p)
 
 variable [DecidableEq 𝒮]
