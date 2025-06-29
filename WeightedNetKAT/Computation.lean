@@ -143,7 +143,8 @@ def 𝒞.mk' (f : X → 𝒮) (finSupp : Finset X) (h : ∀ x, x ∈ W.supp f �
   let h : finSupp = W.supp f := by ext; simp_all
   ⟨⟨f, by rw [← h]; exact Finite.to_countable⟩, finSupp, h⟩
 
-instance 𝒞.instWeightedOne {X : Type} [Fintype X] : WeightedOne (𝒞 𝒮 X) where
+instance 𝒞.instwProdWeightedOne {𝒮 X : Type} [Fintype X] [WeightedSemiring 𝒮] [DecidableEq 𝒮] :
+    WeightedOne (𝒞 𝒮 X) where
   wOne :=
     if h : ¬(𝟙 : 𝒮) = 𝟘 then 𝒞.mk' (fun _ ↦ 𝟙) Fintype.elems (by simp [h, Fintype.complete])
     else 𝟘
@@ -175,7 +176,17 @@ def η' {X : Type} [DecidableEq X] (x : X) : 𝒞 𝒮 X := 𝒞.mk'
 
 notation "η'[" 𝒮 "]" => η' (𝒮:=𝒮)
 
+omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
 @[simp]
+theorem η'_apply {X : Type} [DecidableEq X] (x y : X) :
+    η'[𝒮] x y = if x = y then 𝟙 else 𝟘 :=
+  rfl
+
+omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
+@[simp]
+theorem η'_finSupp {X : Type} [DecidableEq X] (x : X) :
+    (η'[𝒮] x).finSupp = if (𝟙 : 𝒮) = 𝟘 then ∅ else {x} := rfl
+
 instance {X : Type} : SMul 𝒮 (𝒞 𝒮 X) where
   smul w m := 𝒞.mk' (fun h' ↦ w ⨀ m h')
     (m.finSupp.filter (fun h' ↦ w ⨀ m h' ≠ 𝟘))
@@ -184,6 +195,13 @@ instance {X : Type} : SMul 𝒮 (𝒞 𝒮 X) where
       simp_all only [W.supp_mem_iff, ne_eq, Finset.mem_filter, 𝒞.mem_finSupp_iff, iff_and_self]
       contrapose!
       simp_all)
+
+omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
+@[simp] theorem 𝒞.sMul_apply {X : Type} (m : 𝒞 𝒮 X) (w : 𝒮) (x : X) : (w • m) x = w ⨀ m x := rfl
+omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
+@[simp] theorem 𝒞.one_sMul {X : Type} (m : 𝒞 𝒮 X) : (𝟙 : 𝒮) • m = m := by ext; simp
+omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
+@[simp] theorem 𝒞.zero_sMul {X : Type} (m : 𝒞 𝒮 X) : (𝟘 : 𝒮) • m = 𝟘 := by ext; simp
 
 namespace WeightedNetKAT
 
@@ -268,23 +286,6 @@ omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemirin
 theorem 𝒲.η_eq_η' (x : H[F,N]) : η (𝒮:=𝒮) x = (η' x).to𝒲 := by
   rfl
 
-theorem 𝒲.η_bind (x : H[F,N]) (f : H[F,N] → 𝒲 𝒮 H[F,N]) :
-    (η x ≫= f) = ⟨fun h ↦ η x x ⨀ f x h, SetCoe.countable _⟩ := by
-  simp [𝒲.η_eq_η']
-  if (𝟙 : 𝒮) = 𝟘 then
-    have : (η' (𝒮:=𝒮) x).finSupp = ∅ := by
-      ext; simp [η']; split_ifs; simp
-    simp_all
-    ext x'
-    simp [𝒞.to𝒲]
-    magic_simp
-    have : η' (𝒮:=𝒮) x = 𝟘 := by simp_all [η']; rfl
-    simp_all
-  else
-    have : (η' (𝒮:=𝒮) x).finSupp = {x} := by
-      ext; simp [η']; simp_all
-    simp_all
-
 @[simp]
 theorem 𝒲.bind_of_𝒞 (m : 𝒞 𝒮 H[F,N]) (f : H[F,N] → 𝒞 𝒮 H[F,N]) :
     (m.to𝒲 ≫= fun h ↦ (f h).to𝒲) = (m.bind f).to𝒲 := by
@@ -304,6 +305,37 @@ theorem WeightedSemiring.if_one_is_zero_collapse (h : (𝟙 : 𝒮) = 𝟘) (a :
   simp at this
   exact this.symm
 
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+theorem WeightedSemiring.if_zero_is_one_elim (h : (𝟘 : 𝒮) = 𝟙) (a b : 𝒮) : a = b := by
+  simp [if_zero_is_one_collapse h]
+
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+theorem WeightedSemiring.if_one_is_zero_elim (h : (𝟙 : 𝒮) = 𝟘) (a b : 𝒮) : a = b := by
+  simp [if_one_is_zero_collapse h]
+
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+theorem WeightedSemiring.if_zero_is_one_subsingleton (h : (𝟘 : 𝒮) = 𝟙) : Subsingleton 𝒮 := by
+  constructor
+  simp [if_zero_is_one_collapse h]
+
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+theorem WeightedSemiring.if_one_is_zero_subsingleton (h : (𝟙 : 𝒮) = 𝟘) : Subsingleton 𝒮 := by
+  constructor
+  simp [if_one_is_zero_collapse h]
+
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+theorem 𝒲.if_zero_is_one_elim (h : (𝟘 : 𝒮) = 𝟙) (a b : 𝒲 𝒮 X) :
+    a = b := by ext; apply WeightedSemiring.if_zero_is_one_elim h
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] [DecidableEq 𝒮] in
+theorem 𝒲.if_one_is_zero_elim (h : (𝟙 : 𝒮) = 𝟘) (a b : 𝒲 𝒮 X) :
+    a = b := by ext; apply WeightedSemiring.if_one_is_zero_elim h
+
+theorem 𝒲.η_bind (x : H[F,N]) (f : H[F,N] → 𝒲 𝒮 H[F,N]) :
+    (η x ≫= f) = ⟨fun h ↦ η x x ⨀ f x h, SetCoe.countable _⟩ := by
+  simp [𝒲.η_eq_η']
+  if (𝟙 : 𝒮) = 𝟘 then apply 𝒲.if_one_is_zero_elim ‹𝟙 = 𝟘›
+  else simp_all
+
 namespace WeightedNetKAT
 
 attribute [local simp] Predicate.sem Predicate.compute in
@@ -319,7 +351,7 @@ theorem Predicate.compute_eq_sem_n (p : Predicate[F,N]) (n : ℕ):
     split
     · simp
     · simp; split_ifs
-      · simp; rfl
+      · simp
       · rfl
   | Dis t u iht ihu =>
     simp_all
@@ -336,11 +368,8 @@ theorem Predicate.compute_eq_sem_n (p : Predicate[F,N]) (n : ℕ):
     congr
     split_ifs with h₁ h₂ h₃
     · simp_all [𝒲.η_bind]
-      if (𝟙 : 𝒮) = 𝟘 then
-        have : (η' (𝒮:=𝒮) x).finSupp = ∅ := by simpa [η']
-        simp_all
-        apply WeightedSemiring.if_one_is_zero_collapse
-        assumption
+      if h10 : (𝟙 : 𝒮) = 𝟘 then
+        apply WeightedSemiring.if_one_is_zero_elim h10
       else
         have : (η' (𝒮:=𝒮) x).finSupp = {x} := by simp_all [η']
         have : (η' (𝒮:=𝒮) x).toFun x = 𝟙 := by simp [η']
@@ -384,8 +413,8 @@ attribute [local simp] Policy.sem_n Policy.compute in
 theorem Policy.compute_eq_sem_n (p : Policy[F,N,𝒮]) (n : ℕ) : p.sem_n n = fun h ↦ (p.compute n h).to𝒲 := by
   induction p with
   | Filter t => simp [sem_n, compute]; apply Predicate.compute_eq_sem_n
-  | Mod f e => ext; simp; split <;> simp_all; rfl
-  | Dup => ext; simp; split <;> simp_all; rfl
+  | Mod f e => ext; simp; split <;> simp_all
+  | Dup => ext; simp; split <;> simp_all
   | Seq p q ihp ihq => simp_all only [sem_n, 𝒲.bind_of_𝒞, compute]
   | Weight w p =>
     simp_all

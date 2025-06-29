@@ -379,6 +379,8 @@ variable {X : Type} {𝒮 : Type}
 instance WeightedZero.instPi [WeightedZero 𝒮] : WeightedZero (X → 𝒮) where wZero := fun _ ↦ 𝟘
 instance WeightedOne.instPi [WeightedOne 𝒮] : WeightedOne (X → 𝒮) where wOne := fun _ ↦ 𝟙
 
+@[simp] theorem WeightedZero.instPi_apply [WeightedZero 𝒮] (x : X) : (𝟘 : X → 𝒮) x = 𝟘 := rfl
+
 instance WeightedAdd.instPi [WeightedAdd 𝒮] : WeightedAdd (X → 𝒮) where wAdd a b x := a x ⨁ b x
 instance WeightedMul.instPi [WeightedMul 𝒮] : WeightedMul (X → 𝒮) where wMul a b x := a x ⨀ b x
 
@@ -703,6 +705,11 @@ theorem WeightedFinsum_eq_zero_iff {α : Type} [WeightedPartialOrder α] [Weight
   induction S using Finset.induction with
   | empty => simp_all
   | insert x S hx ih => simp_all
+
+@[simp]
+theorem WeightedFinsum_zero {α : Type} [WeightedPartialOrder α] [WeightedPreSemiring α] [WeightedMonotonePreSemiring α] [DecidableEq I] (S : Finset I) :
+    ⨁ᶠ _ ∈ S, (𝟘 : α) = 𝟘 := by
+  simp only [WeightedFinsum_eq_zero_iff, implies_true]
 
 theorem WeightedFinsum_pair [DecidableEq I] {i₀ i₁ : I} (h : i₀ ≠ i₁) (f : I → α) :
     ⨁ᶠ i ∈ ({i₀, i₁} : Finset I), f i = f i₀ ⨁ f i₁ := by

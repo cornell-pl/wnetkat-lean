@@ -470,7 +470,7 @@ theorem WeightedFinsum_apply {α ι 𝒮 : Type} [DecidableEq α] [WeightedPreSe
     (⨁ᶠ x ∈ S, f x) i = ⨁ᶠ x ∈ S, f x i := by
   simp [WeightedFinsum]
   induction S using Finset.induction with
-  | empty => simp; rfl
+  | empty => simp
   | insert x S hx ih =>
     simp_all [WeightedAdd.wAdd]
 

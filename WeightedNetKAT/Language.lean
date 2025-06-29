@@ -95,7 +95,7 @@ instance : Countable GS[F,N] := instCountableProd
 
 def GS.mk (α : Pk[F,N]) (x : List Pk[F,N]) (β : Pk[F,N]) : GS[F,N] := ⟨α, x, β⟩
 
-class WeightedConcat (α : Type) (β := Option α) where
+class WeightedConcat (α : Type) (β : outParam Type := Option α) where
   concat : α → α → β
 
 -- Options: ⋄ ◇ ♢ ⬦
@@ -157,5 +157,85 @@ noncomputable def G (p : RPol[F,N,𝒮]) : 𝒲 𝒮 GS[F,N] := match p with
   | wnk_rpol { ~p₁* } => ⨁' n : ℕ, G (p₁ ^ n)
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
+
+instance {X : Type} [Countable X] : WeightedOne (𝒲 𝒮 X) where
+  wOne := ⟨𝟙, SetCoe.countable _⟩
+
+open WeightedOmegaCompletePartialOrder in
+noncomputable def RPol.sem (p : RPol[F,N,𝒮]) : H[F,N] → 𝒲 𝒮 H[F,N] := match p with
+  | wnk_rpol {drop} => 𝟘
+  | wnk_rpol {skip} => fun _ ↦ ⟨𝟙, SetCoe.countable _⟩
+  | wnk_rpol {@test ~t} => fun h ↦ match h with
+    | [] => 𝟘
+    | π::h => if π = t then 𝟙 else 𝟘
+  | wnk_rpol {@mod ~t} => sorry
+  | wnk_rpol {¬ ~t} => sorry
+  | wnk_rpol {dup} => fun h ↦ match h with
+    | [] => 𝟘
+    | π::h => η (π::π::h)
+  -- TODO: this should use the syntax
+  | .Seq p q =>
+    fun h ↦ (p.sem h ≫= q.sem)
+  -- TODO: this should use the syntax
+  | .Weight w p => fun h ↦ w • p.sem h
+  -- TODO: this should use the syntax
+  | .Add p q => fun h ↦ p.sem h ⨁ q.sem h
+  -- TODO: this should use the syntax
+  | .Iter p => fun h ↦ ⨁' n : ℕ, (p ^ n).sem h
+termination_by (p.iterDepth, sizeOf p)
+decreasing_by all_goals simp_all; (try split_ifs) <;> omega
+
+def GS.pks (s : GS[F,N]) : List Pk[F,N] := s.1 :: s.2.1 ++ [s.2.2]
+
+def GS.sem (g : GS[F,N]) : H[F,N] → 𝒲 𝒮 H[F,N] :=
+  (if g.pks = · then 𝟙 else 𝟘)
+
+theorem RPol.sem_G (p : RPol[F,N,𝒮]) :
+    p.sem = fun h ↦ ⨁' x : (G p).supp, G p x • x.val.sem h := by
+  induction p with
+  | Drop => ext h; simp [sem, G]
+  | Skip =>
+    simp [sem, G, GS.sem]
+    sorry
+  | Test => sorry
+  | Mod => sorry
+  | Neg => sorry
+  | Dup =>
+    ext h
+    simp [sem, G]
+    split
+    · symm
+      simp [G, GS.sem, GS.pks]
+    · rename_i π h'
+      simp [G, GS.sem, GS.pks]
+      sorry
+  | Seq p₁ p₂ ih₁ ih₂ =>
+    simp [sem]
+    rw [ih₁, ih₂]; clear ih₁ ih₂
+    ext h
+    simp [G]
+
+    sorry
+  | Add p₁ p₂ ih₁ ih₂ =>
+    simp [sem]
+    rw [ih₁, ih₂]; clear ih₁ ih₂
+    ext h h'
+    simp [G]
+    sorry
+  | Weight w p₁ ih =>
+    simp [sem, ih, G]; clear ih
+    ext h h'
+    simp [← WeightedSum_mul_left]
+    apply WeightedSum_eq_WeightedSum_of_ne_one_bij (fun ⟨⟨a, ha⟩, ha'⟩ ↦ ⟨a, by simp_all; contrapose! ha'; simp_all⟩)
+    · intro ⟨_, _⟩ ⟨_, _⟩
+      simp_all
+      exact fun a ↦ SetCoe.ext a
+    · intro ⟨_, h₀⟩; simp
+      intro h₁
+      contrapose! h₀
+      simp_all [← WeightedPreSemiring.mul_assoc, G]
+    · grind [← WeightedPreSemiring.mul_assoc, G]
+  | Iter => sorry
+
 
 end WeightedNetKAT
