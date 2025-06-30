@@ -11,7 +11,6 @@ inductive RPol (W : Type) where
   | Skip
   | Test (pk : Pk[F,N])
   | Mod (pk : Pk[F,N])
-  | Neg (p : Pk[F,N])
   | Dup
   | Seq (p q : RPol W)
   | Weight (w : W) (p : RPol W)
@@ -30,7 +29,7 @@ def RPol.iter (p : RPol[F,N,𝒮]) : ℕ → RPol[F,N,𝒮]
 
 @[simp]
 def RPol.iterDepth : RPol[F,N,𝒮] → ℕ
-| .Skip | .Drop | .Test _ | .Mod _ | .Dup | .Neg _ => 0
+| .Skip | .Drop | .Test _ | .Mod _ | .Dup => 0
 | .Add p q | .Seq p q => p.iterDepth ⊔ q.iterDepth
 | .Weight _ q => q.iterDepth
 | .Iter p => p.iterDepth + 1
@@ -57,7 +56,6 @@ syntax cwnk_rpol "; " cwnk_rpol : cwnk_rpol
 syntax cwnk_weight " ⨀ " cwnk_rpol : cwnk_rpol
 syntax cwnk_rpol " ⨁ " cwnk_rpol : cwnk_rpol
 syntax cwnk_rpol "*" : cwnk_rpol
-syntax "¬" cwnk_pk : cwnk_rpol
 syntax "(" cwnk_rpol ")" : cwnk_rpol
 syntax "@test" ppHardSpace cwnk_pk:min : cwnk_rpol
 syntax "@mod" ppHardSpace cwnk_pk:min : cwnk_rpol
@@ -79,23 +77,12 @@ macro_rules
 | `(wnk_rpol { $w:cwnk_weight ⨀ $p }) => `(RPol.Weight wnk_weight {$w} wnk_rpol {$p})
 | `(wnk_rpol { $p ⨁ $q }) => `(RPol.Add wnk_rpol {$p} wnk_rpol {$q})
 | `(wnk_rpol { $p * }) => `(RPol.Iter wnk_rpol {$p})
-| `(wnk_rpol { ¬ $p }) => `(RPol.Neg wnk_pk {$p})
 | `(wnk_rpol { ($t:cwnk_rpol) }) => `(wnk_rpol {$t})
 | `(wnk_rpol { skip }) => `(RPol.Skip)
 | `(wnk_rpol { drop }) => `(RPol.Drop)
 
 macro_rules|`(wnk_pk{~$t})=>`($t)
 macro_rules|`(wnk_rpol{~$t})=>`($t)
-
-
-@[app_unexpander RPol.Neg]
-def RPol.unexpandNot : Unexpander
-| `($(_) $x) => do
-  let x ← match x with
-    | `(wnk_pk{$x}) => pure x
-    | _ => `(cwnk_pk|~$x)
-  `(wnk_rpol { ¬$x })
-| _ => throw ()
 
 @[app_unexpander RPol.Test]
 def RPol.unexpandTest : Unexpander

@@ -151,8 +151,6 @@ noncomputable def G (p : RPol[F,N,𝒮]) : 𝒲 𝒮 GS[F,N] := match p with
   | wnk_rpol { @mod ~π } => G.ofPk fun α ↦ gs[α; π]
   -- [x = α; α; dup; α | α ∈ Pk]
   | wnk_rpol { dup } => G.ofPk fun α ↦ gs[α; α; dup; α]
-  -- [G(p₁)(x) = 𝟘]
-  | wnk_rpol { ¬~α } => ⟨(if ∃ β, gs[β; β] = · ∧ β ≠ α then 𝟙 else 𝟘), SetCoe.countable _⟩
   | wnk_rpol { ~p₁ ⨁ ~p₂ } => G p₁ ⨁ G p₂
   | wnk_rpol { ~p₁ ; ~p₂ } => G p₁ ♢ G p₂
   | wnk_rpol { ~w ⨀ ~p₁ } => w • G p₁
@@ -192,7 +190,6 @@ noncomputable def RPol.sem (p : RPol[F,N,𝒮]) : H[F,N] → 𝒲 𝒮 H[F,N] :=
   | wnk_rpol {skip} => η
   | wnk_rpol {@test ~t} => fun (π, h) ↦ if π = t then η (π, h) else 𝟘
   | wnk_rpol {@mod ~t} => fun (_, h) ↦ η (t, h)
-  | wnk_rpol {¬ ~t} => 𝟘
   | wnk_rpol {dup} => fun (π, h) ↦ η (π, π::h)
   -- TODO: this should use the syntax
   | .Seq p q =>
@@ -319,7 +316,6 @@ theorem RPol.sem_G (p : RPol[F,N,𝒮]) :
       simp_all
   | Test => sorry
   | Mod => sorry
-  | Neg => sorry
   | Dup =>
     ext ⟨π, h⟩ ⟨π', h'⟩
     simp

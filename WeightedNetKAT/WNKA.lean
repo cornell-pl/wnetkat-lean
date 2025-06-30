@@ -198,7 +198,6 @@ def S : RPol[F,N,𝒮] → Type
   | wnk_rpol {@test ~_} => I {♡}
   | wnk_rpol {@mod ~_} => I {♡}
   | wnk_rpol {dup} => I {♡, ♣}
-  | wnk_rpol {¬ ~_} => I {♡}
   | wnk_rpol {~_ ⨀ ~p₁} => S p₁
   | wnk_rpol {~p₁ ⨁ ~p₂} => S p₁ ⊕ S p₂
   | wnk_rpol {~p₁ ; ~p₂} => S p₁ ⊕ S p₂
@@ -214,7 +213,6 @@ def S.decidableEq (p : RPol[F,N,𝒮]) : DecidableEq (S p) :=
   | wnk_rpol {@test ~_}
   | wnk_rpol {@mod ~_} => Subtype.instDecidableEq
   | wnk_rpol {dup} => Subtype.instDecidableEq
-  | wnk_rpol {¬~_} => Subtype.instDecidableEq
   | wnk_rpol {~_ ⨀ ~p₁} => S.decidableEq p₁
   | wnk_rpol {~p₁ ⨁ ~p₂}
   | wnk_rpol {~p₁ ; ~p₂} =>
@@ -271,7 +269,7 @@ notation "δ[" "[" a "," b "]" "," "[" c "," d "]" "]" => S.δ a b c d
 
 instance S.fintype (p : RPol[F,N,𝒮]) : Fintype (S p) :=
   match p with
-  | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} | wnk_rpol {¬~_} =>
+  | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} =>
     ⟨{⟨♡, by simp⟩}, by intro ⟨_, _⟩; simp; congr⟩
   | wnk_rpol {dup} => ⟨{⟨♡, by simp⟩, ⟨♣, by simp⟩}, by rintro ⟨_, (h | h | h)⟩ <;> simp_all⟩
   | wnk_rpol {~_ ⨀ ~p₁} => S.fintype p₁
@@ -284,7 +282,7 @@ instance S.Finite {p : RPol[F,N,𝒮]} : Finite (S p) := Finite.of_fintype (S p)
 variable [DecidableEq 𝒮]
 
 def ι (p : RPol[F,N,𝒮]) : 𝒞 𝒮 (Unit × S p) := match p with
-  | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {¬~_} | wnk_rpol {@mod ~_} =>
+  | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} =>
     η' ⟨(), ♡, rfl⟩
   | wnk_rpol {dup} => η' ⟨(), ♡, by simp⟩
   | wnk_rpol {~w ⨀ ~p₁} => w • ι p₁
@@ -297,7 +295,6 @@ def 𝓁 [DecidableEq 𝒮] (p : RPol[F,N,𝒮]) (α β : Pk[F,N]) : 𝒞 𝒮 (
   | wnk_rpol {drop} => 𝟘
   | wnk_rpol {skip} => if α = β then 𝟙 else 𝟘
   | wnk_rpol {@test ~γ} => if α = β ∧ β = γ then 𝟙 else 𝟘
-  | wnk_rpol {¬~γ} => if α = β ∧ β ≠ γ then 𝟙 else 𝟘
   | wnk_rpol {@mod ~π} => if β = π then 𝟙 else 𝟘
   | wnk_rpol {dup} =>
     if α = β then
@@ -313,7 +310,7 @@ def 𝓁 [DecidableEq 𝒮] (p : RPol[F,N,𝒮]) (α β : Pk[F,N]) : 𝒞 𝒮 (
   | wnk_rpol {~p₁*} => ⨁ᶠ γ, (𝓁 p₁ α γ ⨯ ι p₁ ⨯ 𝓁 p₁ γ β)
 
 def δ (p : RPol[F,N,𝒮]) (α β : Pk[F,N]) : 𝒞 𝒮 (S p × S p) := match p with
-  | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} | wnk_rpol {¬ ~_} =>
+  | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} =>
     𝟘
   | wnk_rpol {dup} => 𝒞.liftPi fun s ↦ if s.val = ♡ ∧ α = β then η' ⟨♣, by simp [S]⟩ else 𝟘
   | wnk_rpol {~_ ⨀ ~p₁} => δ p₁ α β
@@ -606,30 +603,6 @@ theorem RPol.wnka_sem_test {t} :
       List.append_eq_nil_iff, List.cons_ne_self, and_false, imp_self, WeightedProduct.wZero_wProd,
       WeightedProduct.wProd_wZero, 𝒞.wZero_apply, right_eq_ite_iff]
     grind
-theorem RPol.wnka_sem_neg {t} :
-    (RPol.wnka wnk_rpol {¬ ~t}).sem = G (F:=F) (N:=N) (𝒮:=𝒮) wnk_rpol {¬ ~t} := by
-  ext x
-  simp [G]
-  induction x using GS.induction
-  next α α₀ =>
-    -- TODO: simp?
-    simp [wnka, WNKA.sem, GS.mk, WNKA.compute, 𝓁, ι, GS.pks]
-    split_ifs with h₁ h₂ h₃
-    · simp only [𝒞.wOne_apply]
-    · simp_all only [not_exists, not_and, Decidable.not_not, 𝒞.wOne_apply, not_true_eq_false,
-      and_false]
-    · grind [𝒞.wZero_apply]
-    · rfl
-  next α α₀ α₁ =>
-    simp only [WNKA.sem, wnka, δ, GS.pks, List.cons_append, GS.mk, 𝒲.mk_apply, List.nil_append,
-      WNKA.compute, WeightedProduct.wZero_wProd, WeightedProduct.wProd_wZero, 𝒞.wZero_apply,
-      right_eq_ite_iff, forall_exists_index, and_imp]
-    grind
-  next α A αn =>
-    simp only [WNKA.sem, wnka, δ, GS.pks, List.cons_append, GS.mk, 𝒲.mk_apply, WNKA.compute,
-      List.append_eq_nil_iff, List.cons_ne_self, and_false, imp_self, WeightedProduct.wZero_wProd,
-      WeightedProduct.wProd_wZero, 𝒞.wZero_apply, right_eq_ite_iff, forall_exists_index, and_imp]
-    grind
 theorem RPol.wnka_sem_mod {π} :
     (RPol.wnka wnk_rpol {@mod ~π}).sem = G (F:=F) (N:=N) (𝒮:=𝒮) wnk_rpol {@mod ~π} := by
   ext x
@@ -830,7 +803,6 @@ theorem RPol.wnka_sem (p : RPol[F,N,𝒮]) : (RPol.wnka p).sem = G p := by
   | Drop => exact wnka_sem_drop
   | Skip => exact wnka_sem_skip
   | Test t => exact wnka_sem_test
-  | Neg t => exact wnka_sem_neg
   | Mod π => exact wnka_sem_mod
   | Dup => exact wnka_sem_dup h' h
   | Add p₁ p₂ ih₁ ih₂ => rw [G, ← ih₁, ← ih₂]; exact wnka_sem_add
