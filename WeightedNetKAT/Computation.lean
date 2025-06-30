@@ -208,9 +208,7 @@ namespace WeightedNetKAT
 def Predicate.compute (p : Predicate[F,N]) (n : ℕ) : H[F,N] → 𝒞 𝒮 H[F,N] := match p with
   | wnk_pred {false} => fun _ ↦ 𝟘
   | wnk_pred {true} => η'
-  | wnk_pred {~f = ~n} => fun h ↦ match h with
-    | [] => 𝟘
-    | π::h => if π f = n then η' (π::h) else 𝟘
+  | wnk_pred {~f = ~n} => fun (π, h) ↦ if π f = n then η' (π, h) else 𝟘
   | wnk_pred {~t ∨ ~u} =>
     -- NOTE: this is the actual semantics `⟦if t then skip else u⟧`, but we use the unfolded due to
     -- termination checking
@@ -220,12 +218,8 @@ def Predicate.compute (p : Predicate[F,N]) (n : ℕ) : H[F,N] → 𝒞 𝒮 H[F,
   | wnk_pred {¬~t} => fun h ↦ if t.compute n h = 𝟘 then η' h else 𝟘
 def Policy.compute (p : Policy[F,N,𝒮]) (n : ℕ) : H[F,N] → 𝒞 𝒮 H[F,N] := match p with
   | .Filter t => t.compute n
-  | wnk_policy {~f ← ~n} => fun h ↦ match h with
-    | [] => 𝟘
-    | π::h => η' (π[f ↦ n]::h)
-  | wnk_policy {dup} => fun h ↦ match h with
-    | [] => 𝟘
-    | π::h => η' (π::π::h)
+  | wnk_policy {~f ← ~n} => fun (π, h) ↦ η' (π[f ↦ n], h)
+  | wnk_policy {dup} => fun (π, h) ↦ η' (π, π::h)
   -- TODO: this should use the syntax
   | .Seq p q =>
     fun h ↦ (p.compute n h).bind (q.compute n)
@@ -349,10 +343,7 @@ theorem Predicate.compute_eq_sem_n (p : Predicate[F,N]) (n : ℕ):
     ext
     simp_all
     split
-    · simp
-    · simp; split_ifs
-      · simp
-      · rfl
+    simp; split_ifs <;> rfl
   | Dis t u iht ihu =>
     simp_all
     congr! with h
@@ -413,8 +404,8 @@ attribute [local simp] Policy.sem_n Policy.compute in
 theorem Policy.compute_eq_sem_n (p : Policy[F,N,𝒮]) (n : ℕ) : p.sem_n n = fun h ↦ (p.compute n h).to𝒲 := by
   induction p with
   | Filter t => simp [sem_n, compute]; apply Predicate.compute_eq_sem_n
-  | Mod f e => ext; simp; split <;> simp_all
-  | Dup => ext; simp; split <;> simp_all
+  | Mod f e => ext; simp; split; simp_all
+  | Dup => ext; simp; split; simp_all
   | Seq p q ihp ihq => simp_all only [sem_n, 𝒲.bind_of_𝒞, compute]
   | Weight w p =>
     simp_all

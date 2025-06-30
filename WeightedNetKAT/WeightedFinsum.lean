@@ -464,6 +464,21 @@ theorem WeightedSum_eq_WeightedSum_of_ne_one_bij {α ι γ : Type}
   rw [← WeightedSum_substype_supp g, ← hi.WeightedSum_eq hf]
   simp only [hfg]
 
+theorem WeightedSum_eq_single {α ι : Type}
+    [WeightedOmegaCompletePartialOrder α] [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α] [Encodable ι]
+    {f : ι → α}  (x : ι) (hf : ∀ (x' : ι), x' ≠ x → f x' = 𝟘) : ⨁' x, f x = f x := by
+  letI : Encodable ({x} : Set ι) := Encodable.ofCountable _
+  rw [WeightedSum_eq_WeightedSum_of_ne_one_bij (f:=f) (γ:=({x} : Set ι)) (g:=(f ·)) (fun ⟨x, _⟩ ↦ x)]
+  · rw [WeightedSum_finite]
+    simp only [Set.Finite.toFinset_setOf, Finset.univ_unique, Set.default_coe_singleton,
+      Finset.filter_True, WeightedFinsum_singleton]
+  · rintro ⟨⟨x, _, _⟩, h₁⟩; grind
+  · intro x'
+    simp_all only [ne_eq, W.supp_mem_iff, Set.mem_range, Subtype.exists, exists_prop,
+      Set.mem_singleton_iff, exists_and_left, existsAndEq, true_and]
+    grind
+  · simp
+
 omit [WeightedOmegaContinuousPreSemiring 𝒮] in
 @[simp]
 theorem WeightedFinsum_apply {α ι 𝒮 : Type} [DecidableEq α] [WeightedPreSemiring 𝒮] (S : Finset α) (f : α → ι → 𝒮) (i : ι) :

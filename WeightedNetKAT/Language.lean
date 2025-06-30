@@ -88,10 +88,10 @@ Isomorphically defined as `At ⬝ (Π ⬝ dup)* ⬝ Π`.
 def GS (F : Type) (N : Type) := Pk[F,N] × List Pk[F,N] × Pk[F,N]
 notation "GS[" f "," n "]" => GS (F:=f) (N:=n)
 
-variable {F : Type} [Fintype F] [DecidableEq F]
-variable {N : Type} [Fintype N] [DecidableEq N]
+instance {F N : Type} [Fintype F] [Fintype N] : Countable GS[F,N] := instCountableProd
 
-instance : Countable GS[F,N] := instCountableProd
+variable {F : Type} [Fintype F] [DecidableEq F] [Encodable F]
+variable {N : Type} [Fintype N] [DecidableEq N] [Encodable N]
 
 def GS.mk (α : Pk[F,N]) (x : List Pk[F,N]) (β : Pk[F,N]) : GS[F,N] := ⟨α, x, β⟩
 
@@ -129,10 +129,12 @@ def G.ofConst [DecidableEq GS[F,N]] (f : GS[F,N]) : 𝒲 𝒮 GS[F,N] :=
   ⟨(if f = · then 𝟙 else 𝟘), SetCoe.countable _⟩
 
 open scoped Classical in
+omit [Encodable F] [Encodable N] in
 omit [DecidableEq N] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 @[simp]
 theorem G.ofPk_apply (f : Pk[F,N] → GS[F,N]) (x : GS[F,N]) :
     G.ofPk f x = if ∃ α, f α = x then (𝟙 : 𝒮) else 𝟘 := rfl
+omit [Encodable F] [Encodable N] in
 omit [DecidableEq N] [DecidableEq F] [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 @[simp]
 theorem G.ofConst_apply [DecidableEq GS[F,N]] (f : GS[F,N]) (x : GS[F,N]) :
@@ -161,18 +163,37 @@ decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 instance {X : Type} [Countable X] : WeightedOne (𝒲 𝒮 X) where
   wOne := ⟨𝟙, SetCoe.countable _⟩
 
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+@[simp]
+theorem 𝒲.WeightedOne_apply {X : Type} [Countable X] {x : X} : (𝟙 : 𝒲 𝒮 X) x = 𝟙 := by rfl
+
+@[simp]
+theorem 𝒲.zero_bind {X : Type} [Countable X] [Encodable X] {g : X → 𝒲 𝒮 X} :
+    ((𝟘 : 𝒲 𝒮 X) ≫= g) = 𝟘 := by
+  ext x
+  simp [𝒲.bind_apply]
+
+@[simp]
+theorem 𝒲.one_bind {X : Type} [Countable X] [Encodable X] {g : X → 𝒲 𝒮 X} :
+    ((𝟙 : 𝒲 𝒮 X) ≫= g) = ⨁' x, g x := by
+  ext x
+  simp [𝒲.bind_apply]
+  symm
+  apply WeightedSum_eq_WeightedSum_of_ne_one_bij (fun ⟨x, _⟩ ↦ x)
+  · intro ⟨⟨_, _⟩, _⟩; simp_all
+  · intro; simp_all
+    contrapose!
+    exact fun a ↦ WeightedSemiring.if_one_is_zero_collapse a _
+  · simp
+
 open WeightedOmegaCompletePartialOrder in
 noncomputable def RPol.sem (p : RPol[F,N,𝒮]) : H[F,N] → 𝒲 𝒮 H[F,N] := match p with
   | wnk_rpol {drop} => 𝟘
-  | wnk_rpol {skip} => fun _ ↦ ⟨𝟙, SetCoe.countable _⟩
-  | wnk_rpol {@test ~t} => fun h ↦ match h with
-    | [] => 𝟘
-    | π::h => if π = t then 𝟙 else 𝟘
-  | wnk_rpol {@mod ~t} => sorry
-  | wnk_rpol {¬ ~t} => sorry
-  | wnk_rpol {dup} => fun h ↦ match h with
-    | [] => 𝟘
-    | π::h => η (π::π::h)
+  | wnk_rpol {skip} => η
+  | wnk_rpol {@test ~t} => fun (π, h) ↦ if π = t then η (π, h) else 𝟘
+  | wnk_rpol {@mod ~t} => fun (_, h) ↦ η (t, h)
+  | wnk_rpol {¬ ~t} => 𝟘
+  | wnk_rpol {dup} => fun (π, h) ↦ η (π, π::h)
   -- TODO: this should use the syntax
   | .Seq p q =>
     fun h ↦ (p.sem h ≫= q.sem)
@@ -186,55 +207,179 @@ termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
 def GS.pks (s : GS[F,N]) : List Pk[F,N] := s.1 :: s.2.1 ++ [s.2.2]
+def GS.H (s : GS[F,N]) : H[F,N] := (s.2.2, s.2.1.reverse)
 
-def GS.sem (g : GS[F,N]) : H[F,N] → 𝒲 𝒮 H[F,N] :=
-  (if g.pks = · then 𝟙 else 𝟘)
+def GS.toRPol (g : GS[F,N]) : RPol[F,N,𝒮] :=
+  wnk_rpol {@test ~g.1}.Seq <| g.2.1.foldr (fun x y ↦ wnk_rpol { @mod ~x; dup; ~y }) wnk_rpol { @mod ~g.2.2 }
+
+example (a b c d : Pk[F,N]) :
+    gs[a;b;dup;c;dup;d].toRPol (𝒮:=𝒮) = wnk_rpol { @test ~a; @mod ~b; dup; @mod ~c; dup; @mod ~d } := by
+  rfl
+
+example (a b : Pk[F,N]) {h h'} :
+    (gs[a;b].toRPol (𝒮:=𝒮) |>.sem h h') = 𝟙 ↔ ∃ tail, h = (a, tail) ∧ h' = (b, tail) := by
+  if h01 : (𝟘 : 𝒮) = 𝟙 then
+    sorry
+  else
+    simp [GS.mk, GS.toRPol, RPol.sem]
+    split
+    rename_i π h
+    split_ifs
+    · subst_eqs
+      rename_i h
+      simp [𝒲.bind_apply]
+      rw [WeightedSum_eq_single ⟨⟨a, h⟩, (by simp_all; grind)⟩]
+      · simp_all
+        constructor
+        · rintro ⟨_⟩
+          use h
+        · simp_all
+          rintro _ ⟨_⟩ ⟨_⟩
+          rfl
+      · simp_all
+    · simp_all
+      rintro _ ⟨_⟩
+      contradiction
+
+example (a b c d : Pk[F,N]) {h h'} :
+    (gs[a;b;dup;c;dup;d].toRPol (𝒮:=𝒮) |>.sem h h') = 𝟙 ↔ ∃ tail, h = (a, tail) ∧ h' = (d, c::b::tail) := by
+  if h01 : (𝟘 : 𝒮) = 𝟙 then
+    sorry
+  else
+    simp [GS.mk, GS.toRPol, RPol.sem]
+    split
+    rename_i π h
+    split_ifs
+    · subst_eqs
+      rename_i h
+      simp [𝒲.bind_apply]
+      rw [WeightedSum_eq_single ⟨⟨a, h⟩, (by simp_all; grind)⟩]
+      · simp_all
+        rw [WeightedSum_eq_single ⟨⟨b, h⟩, (by simp_all; grind)⟩]
+        · simp_all
+          rw [WeightedSum_eq_single ⟨⟨b, b::h⟩, (by simp_all; grind)⟩]
+          · simp_all
+            rw [WeightedSum_eq_single ⟨⟨c, b::h⟩, (by simp_all; grind)⟩]
+            · simp_all
+              rw [WeightedSum_eq_single ⟨⟨c, c::b::h⟩, (by simp_all; grind)⟩]
+              · simp_all
+                grind
+              · simp_all
+            · simp_all
+          · simp_all
+        · simp_all
+      · simp_all
+    · simp_all
+      rintro _ ⟨_⟩
+      contradiction
+
+noncomputable def GS.sem (g : GS[F,N]) : H[F,N] → 𝒲 𝒮 H[F,N] :=
+  g.toRPol.sem
+omit [DecidableEq F] in
+theorem GS.sem_eq (g : GS[F,N]) (h) :
+    g.sem (𝒮:=𝒮) h = if g.1 = h.1 then η (g.H.1, g.H.2 ++ h.2) else 𝟘 := by
+  if h10 : (𝟙 : 𝒮) = 𝟘 then apply 𝒲.if_one_is_zero_elim h10 else
+  rcases h with ⟨π, h⟩
+  simp_all [GS.sem]
+  split_ifs with h₀
+  · simp [GS.toRPol, RPol.sem, h₀]
+    ext ⟨π', h'⟩
+    simp [𝒲.bind_apply]
+    rw [WeightedSum_eq_single ⟨⟨π, h⟩, by simp [h10]⟩ (by simp_all)]
+    simp
+    obtain ⟨g₀, g, g₁⟩ := g
+    simp_all
+    subst_eqs
+    simp [H]
+    induction g generalizing π h with
+    | nil =>
+      simp_all [RPol.sem, η]
+      grind
+    | cons x g ih =>
+      simp_all [RPol.sem, 𝒲.bind_apply]
+      rw [WeightedSum_eq_single ⟨⟨x, h⟩, by simp [h10]⟩ (by simp_all)]
+      simp_all
+      rw [WeightedSum_eq_single ⟨⟨x, x::h⟩, by simp [h10]⟩ (by simp_all)]
+      simp_all
+  · simp [GS.toRPol, RPol.sem, h₀, ne_comm.mp h₀]
 
 theorem RPol.sem_G (p : RPol[F,N,𝒮]) :
     p.sem = fun h ↦ ⨁' x : (G p).supp, G p x • x.val.sem h := by
   induction p with
   | Drop => ext h; simp [sem, G]
   | Skip =>
-    simp [sem, G, GS.sem]
-    sorry
+    ext ⟨π, h⟩
+    if h10 : (𝟙 : 𝒮) = 𝟘 then apply WeightedSemiring.if_one_is_zero_elim h10 else
+    simp [GS.sem_eq, sem, G]
+    rw [WeightedSum_eq_single ⟨gs[π;π], (by simp [G, h10])⟩]
+    · simp [GS.mk, GS.H, η]
+    · simp [G, GS.mk]
+      rintro ⟨g₀, g, g₁⟩ ⟨⟨α, _, _⟩, hg⟩ hg'
+      have : g₀ ≠ π := by rintro ⟨_⟩; contradiction
+      simp_all
   | Test => sorry
   | Mod => sorry
   | Neg => sorry
   | Dup =>
-    ext h
-    simp [sem, G]
-    split
+    ext ⟨π, h⟩ ⟨π', h'⟩
+    simp
+    simp [GS.sem_eq]
+    simp [sem, G, GS.H]
+    split_ifs with h₀
+    · cases h₀
+      symm
+      if h10 : (𝟙 : 𝒮) = 𝟘 then apply WeightedSemiring.if_one_is_zero_elim h10 else
+      rw [WeightedSum_eq_single ⟨gs[π;π;dup;π], (by simp [G, h10])⟩]
+      · simp_all [GS.mk, η]
+      · simp_all [G, GS.mk]
+        intro g hg
+        split_ifs
+        · grind
+        · rfl
     · symm
-      simp [G, GS.sem, GS.pks]
-    · rename_i π h'
-      simp [G, GS.sem, GS.pks]
-      sorry
+      simp [G]
+      rintro g ⟨⟨α, ⟨_⟩⟩, h10⟩
+      simp [GS.mk]
+      split_ifs
+      · subst_eqs
+        simp [η, h10]
+        grind
+      · rfl
   | Seq p₁ p₂ ih₁ ih₂ =>
-    simp [sem]
-    rw [ih₁, ih₂]; clear ih₁ ih₂
-    ext h
-    simp [G]
+    -- simp [sem]
+    -- rw [ih₁, ih₂]; clear ih₁ ih₂
+    -- ext h
+    -- simp [G]
 
     sorry
   | Add p₁ p₂ ih₁ ih₂ =>
-    simp [sem]
-    rw [ih₁, ih₂]; clear ih₁ ih₂
-    ext h h'
-    simp [G]
+    -- simp [sem]
+    -- rw [ih₁, ih₂]; clear ih₁ ih₂
+    -- ext h h'
+    -- simp [G]
     sorry
   | Weight w p₁ ih =>
-    simp [sem, ih, G]; clear ih
-    ext h h'
-    simp [← WeightedSum_mul_left]
-    apply WeightedSum_eq_WeightedSum_of_ne_one_bij (fun ⟨⟨a, ha⟩, ha'⟩ ↦ ⟨a, by simp_all; contrapose! ha'; simp_all⟩)
-    · intro ⟨_, _⟩ ⟨_, _⟩
-      simp_all
-      exact fun a ↦ SetCoe.ext a
-    · intro ⟨_, h₀⟩; simp
-      intro h₁
-      contrapose! h₀
-      simp_all [← WeightedPreSemiring.mul_assoc, G]
-    · grind [← WeightedPreSemiring.mul_assoc, G]
+    sorry
+    -- simp [sem, ih, G]; clear ih
+    -- ext h h'
+    -- simp [← WeightedSum_mul_left]
+    -- apply WeightedSum_eq_WeightedSum_of_ne_one_bij (fun ⟨⟨a, ha⟩, ha'⟩ ↦ ⟨a, by simp_all; contrapose! ha'; simp_all⟩)
+    -- · intro ⟨_, _⟩ ⟨_, _⟩
+    --   simp_all
+    --   exact fun a ↦ SetCoe.ext a
+    -- · intro ⟨s, h₀⟩; simp [GS.H]
+    --   obtain ⟨π, h⟩ := h
+    --   split_ifs
+    --   · intro h₁
+    --     contrapose! h₀
+    --     simp_all [← WeightedPreSemiring.mul_assoc, G]
+    --   · simp
+    -- · obtain ⟨π, h⟩ := h
+    --   simp [G, GS.H]
+    --   intro s
+    --   split_ifs
+    --   · simp_all [← WeightedPreSemiring.mul_assoc, G]
+    --   · simp
   | Iter => sorry
 
 

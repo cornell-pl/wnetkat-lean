@@ -400,7 +400,7 @@ theorem WNKA.compute_eq_of {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 𝒜' : 
         simp_all
 
 omit [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] in
-theorem WNKA.compute'_eq_of {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 𝒜' : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) (hδ : 𝒜.δ = 𝒜'.δ) (h𝓁 : 𝒜.𝓁 = 𝒜'.𝓁) :
+theorem WNKA.compute'_eq_of {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 𝒜' : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) (hδ : 𝒜.δ = 𝒜'.δ) :
     𝒜.compute' s = 𝒜'.compute' s := by
   induction s with
   | nil => simp [compute']
@@ -409,7 +409,7 @@ theorem WNKA.compute'_eq_of {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 𝒜' :
     | nil => simp [compute']
     | cons y s ih =>
       unfold compute'
-      simp [ih, hδ, h𝓁]
+      simp [ih, hδ]
 
 def WNKA.sem {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) : 𝒲 𝒮 GS[F,N] :=
   𝒲.mk (𝒜.ι ⨯ 𝒜.compute ·.pks <| ((), ())) (SetCoe.countable _)
@@ -756,9 +756,8 @@ theorem RPol.wnka_sem_add {p₁ p₂ : RPol[F,N,𝒮]} :
         rw [WNKA.compute'_eq_of (𝒜':={ ι := ι[ι₁,ι₂], δ := fun α β ↦ δ[[δ p₁ α β,𝟘],[𝟘,δ p₂ α β]], 𝓁 := fun α β ↦ 𝓁[𝓁 p₁ α β,𝓁 p₂ α β] })] at ih
         · rw [ih]
           congr! 4
-          · exact WNKA.compute'_eq_of _ _ _ rfl rfl
-          · exact WNKA.compute'_eq_of _ _ _ rfl rfl
-        · rfl
+          · exact WNKA.compute'_eq_of _ _ _ rfl
+          · exact WNKA.compute'_eq_of _ _ _ rfl
         · rfl
 
 omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
@@ -822,7 +821,6 @@ theorem RPol.wnka_sem_seq {p₁ p₂ : RPol[F,N,𝒮]} (h : ((𝟙 : 𝒮) ≠ �
         specialize ih (ι₁ ⨯ ⨁ᶠ γ, 𝓁 p₁ α γ ⨯ ι p₂ ⨯ δ p₂ γ α' ⨁ ι₁' ⨯ δ p₂ α α') (ι₁ ⨯ δ p₁ α α')
         rw [WNKA.compute'_eq_of (𝒜':={ ι := ι[ι₁,ι₁'], δ := fun α β ↦ δ[[δ p₁ α β,⨁ᶠ γ, 𝓁 p₁ α γ ⨯ ι p₂ ⨯ δ p₂ γ β],[𝟘,δ p₂ α β]], 𝓁 := fun α β ↦ 𝓁[⨁ᶠ γ, 𝓁 p₁ α γ ⨯ ι p₂ ⨯ 𝓁 p₂ γ β,𝓁 p₂ α β] })] at ih
         · rw [ih]
-        · rfl
         · rfl
 
 theorem RPol.wnka_sem (p : RPol[F,N,𝒮]) : (RPol.wnka p).sem = G p := by

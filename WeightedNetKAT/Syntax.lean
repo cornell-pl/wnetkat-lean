@@ -1,4 +1,5 @@
 import WeightedNetKAT.Weightings
+import Mathlib.Logic.Encodable.Pi
 
 namespace WeightedNetKAT
 
@@ -8,10 +9,14 @@ variable {F : Type} [Fintype F] [DecidableEq F]
 variable {N : Type} [Fintype N] [DecidableEq N]
 
 abbrev Pk := F → N
-notation "Pk[" F "," N "]" => Pk (F:=F) (N:=N)
+notation "Pk[" f "," n "]" => Pk (F:=f) (N:=n)
 
-abbrev H := List Pk[F,N]
-notation "H[" F "," N "]" => H (F:=F) (N:=N)
+def H := Pk[F,N] × List Pk[F,N]
+notation "H[" f "," n "]" => H (F:=f) (N:=n)
+
+instance : DecidableEq H[F,N] := inferInstanceAs (DecidableEq (_ × _))
+instance : Countable H[F,N] := inferInstanceAs (Countable (_ × _))
+instance [Encodable F] [Encodable N] : Encodable H[F,N] := inferInstanceAs (Encodable (_ × _))
 
 inductive Predicate where
   | Bool (b : Bool)

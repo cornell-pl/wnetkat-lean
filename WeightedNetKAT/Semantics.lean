@@ -31,9 +31,7 @@ noncomputable instance : DecidableEq (𝒲 𝒮 H[F,N]) := Classical.typeDecidab
 noncomputable def Predicate.sem (p : Predicate[F,N]) : H[F,N] → 𝒲 𝒮 H[F,N] := match p with
   | wnk_pred {false} => fun _ ↦ 𝟘
   | wnk_pred {true} => η
-  | wnk_pred {~f = ~n} => fun h ↦ match h with
-    | [] => 𝟘
-    | π::h => if π f = n then η (π::h) else 𝟘
+  | wnk_pred {~f = ~n} => fun (π, h) ↦ if π f = n then η (π, h) else 𝟘
   | wnk_pred {~t ∨ ~u} =>
     -- NOTE: this is the actual semantics `⟦if t then skip else u⟧`, but we use the unfolded due to
     -- termination checking
@@ -69,12 +67,8 @@ theorem Policy.iterDepth_iter {p : Policy[F,N,X]} {n : ℕ} :
 open WeightedOmegaCompletePartialOrder in
 noncomputable def Policy.sem (p : Policy[F,N,𝒮]) : H[F,N] → 𝒲 𝒮 H[F,N] := match p with
   | .Filter t => t.sem
-  | wnk_policy {~f ← ~n} => fun h ↦ match h with
-    | [] => 𝟘
-    | π::h => η (π[f ↦ n]::h)
-  | wnk_policy {dup} => fun h ↦ match h with
-    | [] => 𝟘
-    | π::h => η (π::π::h)
+  | wnk_policy {~f ← ~n} => fun (π, h) ↦ η (π[f ↦ n], h)
+  | wnk_policy {dup} => fun (π, h) ↦ η (π, π::h)
   -- TODO: this should use the syntax
   | .Seq p q =>
     fun h ↦ (p.sem h ≫= q.sem)
@@ -249,12 +243,8 @@ noncomputable def Policy.approx_n (p : Policy[F,N,𝒮]) (n : ℕ) : Policy[F,N,
 open WeightedOmegaCompletePartialOrder in
 noncomputable def Policy.sem_n (p : Policy[F,N,𝒮]) (n : ℕ) : H[F,N] → 𝒲 𝒮 H[F,N] := match p with
   | .Filter t => t.sem
-  | wnk_policy {~f ← ~n} => fun h ↦ match h with
-    | [] => 𝟘
-    | π::h => η (π[f ↦ n]::h)
-  | wnk_policy {dup} => fun h ↦ match h with
-    | [] => 𝟘
-    | π::h => η (π::π::h)
+  | wnk_policy {~f ← ~n} => fun (π, h) ↦ η (π[f ↦ n], h)
+  | wnk_policy {dup} => fun (π, h) ↦ η (π, π::h)
   -- TODO: this should use the syntax
   | .Seq p q =>
     fun h ↦ (p.sem_n n h ≫= q.sem_n n)
@@ -300,8 +290,6 @@ theorem Policy.approx_n_sem (p : Policy[F,N,𝒮]) (n : ℕ) : (p.approx_n n).se
         simp [HAdd.hAdd, WeightedPreSemiring.wAdd_comm]
         rw [ih']; clear ih'
         simp [← WeightedPreSemiring.wAdd_assoc]
-        rw [WeightedPreSemiring.wAdd_comm]
-        simp [← WeightedPreSemiring.wAdd_assoc]
 
 omit [DecidableEq F] in
 omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
@@ -335,7 +323,7 @@ theorem Policy.sem_n_mono (p : Policy[F,N,𝒮]) : WeightedMonotone p.sem_n := b
     induction i generalizing h with
     | zero => simp [sem_n]
     | succ i ih' =>
-      simp_all [sem_n]
+      simp [sem_n]
       apply wle_trans (𝒲.bind_mono_left ((p.iter i).sem_n n₁) (ih h₁₂ h)) (𝒲.bind_mono_right _ ih')
 
 attribute [local simp] Policy.sem Policy.sem_n in
