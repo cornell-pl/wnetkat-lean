@@ -2,6 +2,7 @@ import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Data.Finset.Max
 import WeightedNetKAT.Domain
 import Mathlib.Data.Finset.Preimage
+import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
 
 section
 
@@ -42,7 +43,7 @@ theorem WeightedFinsum_mono {α : Type} [WeightedPartialOrder α] [WeightedPreSe
     gcongr
     exact hfg x
 open WeightedOmegaCompletePartialOrder in
-theorem WeightedSum_mono [Encodable X] : WeightedMonotone (fun (f : X → 𝒮) ↦ ⨁' i : X, f i) := by
+theorem WeightedSum_mono [Encodable X] : WeightedMonotone (fun (f : X → α) ↦ ⨁' i : X, f i) := by
   intro f₁ f₂ h₁₂
   apply wSup_le fun i ↦ ?_
   apply le_wSup_of_le i
@@ -240,12 +241,23 @@ theorem WeightedFinsum_comm {α ι 𝒮 : Type} [DecidableEq α] [DecidableEq ι
     simp [WeightedFinsum_add]
 
 theorem WeightedFinsum_prod_comm {α ι 𝒮 : Type} [Encodable α] [DecidableEq α] [Encodable ι] [DecidableEq ι]
-  [WeightedOmegaCompletePartialOrder 𝒮] [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+  [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
     (A : Finset α) (I : Finset ι)
     (f : α → ι → 𝒮) :
     ⨁ᶠ (x ∈ A) (i ∈ I), f x i = ⨁ᶠ (i ∈ I) (x ∈ A), f x i := by
   apply WeightedFinsum_bij (fun (a, b) _  ↦ (b, a))
   all_goals (try simp) <;> grind
+
+theorem WeightedFinsum_finset_prod {α ι 𝒮 : Type} [Encodable α] [DecidableEq α] [Encodable ι] [DecidableEq ι]
+  [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+    (r : Finset (α × ι)) (s : Finset α) (t : α → Finset ι)
+    (h : ∀ p, p ∈ r ↔ p.1 ∈ s ∧ p.2 ∈ t p.1)
+    {f : α × ι → 𝒮} :
+    ⨁ᶠ x ∈ r, f x = ⨁ᶠ (x ∈ s), ⨁ᶠ (i ∈ t x), f (x, i) := by
+  simp [WeightedFinsum_eq_finset_sum]
+  letI := WeightedPreSemiring.toAddCommMonoid 𝒮
+  apply Finset.sum_finset_product
+  grind only [cases eager Prod, cases Or]
 
 -- TODO: move this as early as possible
 attribute [local simp] Encodable.decode₂_eq_some in
@@ -506,7 +518,7 @@ theorem WeightedSum_apply {α ι : Type} [Encodable α] [WeightedPreSemiring �
   · rfl
 
 theorem WeightedSum_comm_le {α ι 𝒮 : Type} [Encodable α] [DecidableEq α] [Encodable ι]
-  [WeightedOmegaCompletePartialOrder 𝒮] [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+  [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
     (f : α → ι → 𝒮) :
     ⨁' (x : α) (i : ι), f x i ≼ ⨁' (i : ι) (x : α), f x i := by
   apply WeightedSum_le_of_finset
@@ -521,17 +533,44 @@ theorem WeightedSum_comm_le {α ι 𝒮 : Type} [Encodable α] [DecidableEq α] 
     _ ≼ ⨁' (i : ι) (x : α), f x i := by
       apply WeightedSum_mono fun i ↦ WeightedSum_finset_le _
 theorem WeightedSum_comm {α ι 𝒮 : Type} [Encodable α] [Encodable ι] [DecidableEq α] [DecidableEq ι]
-  [WeightedOmegaCompletePartialOrder 𝒮] [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+  [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
     (f : α → ι → 𝒮) :
     ⨁' (x : α) (i : ι), f x i = ⨁' (i : ι) (x : α), f x i :=
   wle_antisymm (WeightedSum_comm_le _) (WeightedSum_comm_le _)
 
 theorem WeightedSum_WeightedFinset_comm {α ι 𝒮 : Type} [Encodable α] [DecidableEq α] [Encodable ι] [DecidableEq ι]
-  [WeightedOmegaCompletePartialOrder 𝒮] [WeightedSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+  [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
     (f : α → ι → 𝒮) (S : Finset ι) :
     ⨁' (x : α), ⨁ᶠ i ∈ S, f x i = ⨁ᶠ i ∈ S, ⨁' (x : α), f x i := by
   simp [← WeightedSum_finset]
   rw [WeightedSum_comm]
+
+theorem WeightedSum_prod {α ι γ : Type} [DecidableEq ι] [DecidableEq γ]
+    [WeightedOmegaCompletePartialOrder α] [WeightedPreSemiring α] [WeightedOmegaContinuousPreSemiring α] [Encodable ι] [Encodable γ]
+    {f : ι × γ → α} : ⨁' (xy : ι × γ), f xy = ⨁' (x) (y), f (x, y) := by
+  apply wle_antisymm
+  · apply WeightedSum_le_of_finset fun IΓ ↦ ?_
+    let I := IΓ.image (·.fst)
+    let Γ := IΓ.image (·.snd)
+    rw [WeightedFinsum_finset_prod (r:=IΓ) (f:=f) I (fun i ↦ IΓ.filter (·.fst = i) |>.image (·.snd))]
+    · apply wle_trans _ (WeightedSum_finset_le I)
+      apply WeightedFinsum_mono _ fun i ↦ ?_
+      apply WeightedSum_finset_le
+    · simp [I, Γ]; grind
+  · apply WeightedSum_le_of_finset fun I ↦ ?_
+    induction I using Finset.induction with
+    | empty => simp
+    | insert x I hx ih =>
+      simp_all
+      rw [← WeightedSum_WeightedFinset_comm]
+      simp [← WeightedSum_add]
+      apply WeightedSum_le_of_finset fun Γ ↦ ?_
+      apply wle_trans _ (WeightedSum_finset_le ((insert x I) ×ˢ Γ))
+      rw [WeightedFinsum_finset_prod _ (insert x I) (fun _ ↦ Γ)]
+      · rw [WeightedFinsum_comm]
+        apply WeightedFinsum_mono _ fun i ↦ ?_
+        simp_all only [not_false_eq_true, WeightedFinsum_insert, wle_refl]
+      · simp
 
 theorem WeightedSum_nat_le {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
     {f : ℕ → 𝒮} (a : 𝒮) (h : ∀ n, ⨁ᶠ x ∈ Finset.range n, f x ≼ a) :

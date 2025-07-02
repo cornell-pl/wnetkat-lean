@@ -385,7 +385,7 @@ theorem Predicate.compute_eq_sem_n (p : Predicate[F,N]) (n : ℕ):
 
 omit [Fintype N] in
 @[simp]
-theorem WeightedFinsum_𝒞_apply {ι : Type} [DecidableEq ι] (f : ι → 𝒞 𝒮 H[F,N]) (S : Finset ι) (h : H[F,N]) :
+theorem WeightedFinsum_𝒞_apply [DecidableEq X] {ι : Type} [DecidableEq ι] (f : ι → 𝒞 𝒮 X) (S : Finset ι) (h : X) :
     (⨁ᶠ i ∈ S, f i) h = ⨁ᶠ i ∈ S, f i h := by
   induction S using Finset.induction with
   | empty => simp

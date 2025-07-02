@@ -96,7 +96,7 @@ macro_rules
 | `(wnk_pred { ¬$l:cwnk_pred }) => `(Predicate.Not wnk_pred {$l})
 | `(wnk_pred { ($t) }) => `(wnk_pred {$t})
 
-
+-- TODO: add proper precedence
 syntax cwnk_pred:min : cwnk_policy
 syntax cwnk_field " ← " cwnk_nat : cwnk_policy
 syntax "dup" : cwnk_policy

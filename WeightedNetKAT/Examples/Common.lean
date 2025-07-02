@@ -54,7 +54,6 @@ def S.repr {F N 𝒮 : Type} {p : RPol[F,N,𝒮]} (s : S p) : String :=
     match s.1 with
     | ♡ => "♡"
     | ♣ => "♣"
-  | wnk_rpol { ¬~_ } => "♡"
   | wnk_rpol { ~_ ⨁ ~_ } =>
     match s with
     | .inl x => s!"l{x.repr}"
