@@ -136,9 +136,9 @@ theorem WeightedProduct.wProd_assoc {X Y Z W : Type} [DecidableEq X] [DecidableE
   · rw [WeightedFinsum_eq_zero_iff]
     grind only [WeightedPreSemiring.wZero_mul, Finset.mem_filter, cases eager Prod]
 
-theorem WeightedProduct.sMul_wProd {X Y Z : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq 𝒮]
+theorem WeightedProduct.wHMul_wProd {X Y Z : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq 𝒮]
     (m : 𝒞 𝒮 (X × Y)) (m' : 𝒞 𝒮 (Y × Z)) (w : 𝒮) :
-    w • (m ⨯ m') = w • m ⨯ m' := by
+    w ⨀ (m ⨯ m') = w ⨀ m ⨯ m' := by
   ext ⟨x, z⟩
   simp
   simp [WeightedProduct.wProd]
@@ -296,7 +296,7 @@ def ι (p : RPol[F,N,𝒮]) : 𝒞 𝒮 (Unit × S p) := match p with
   | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} =>
     η' ⟨(), ♡, rfl⟩
   | wnk_rpol {dup} => η' ⟨(), ♡, by simp⟩
-  | wnk_rpol {~w ⨀ ~p₁} => w • ι p₁
+  | wnk_rpol {~w ⨀ ~p₁} => w ⨀ ι p₁
   | wnk_rpol {~p₁ ⨁ ~p₂} => ι[ι p₁, ι p₂]
   | wnk_rpol {~p₁ ; ~p₂} => ι[ι p₁, 𝟘]
   | wnk_rpol {~p₁*} => ι[𝟘, 𝟙]
@@ -348,8 +348,7 @@ def 𝓁  [WeightedStar 𝒮] (p : RPol[F,N,𝒮]) (α β : Pk[F,N]) : 𝒞 𝒮
   | wnk_rpol {~p₁*} =>
     let q : 𝒞 𝒮 (Unit × Unit) := 𝓁_heart p₁
     𝓁[
-      -- TODO: this smul has to be from the right
-      (𝟙 ⨁ q ((), ())) • 𝓁 p₁ α β,
+      𝓁 p₁ α β ⨀ (𝟙 ⨁ q ((), ())),
       𝒞.left_to_heart q
     ]
 where 𝓁_heart (p₁ : RPol[F,N,𝒮]) := (ι p₁ ⨯ 𝓁 p₁ α β)^*
@@ -1032,18 +1031,18 @@ theorem RPol.wnka_sem_add {p₁ p₂ : RPol[F,N,𝒮]} :
 
 omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 theorem RPol.wnka_sem_weight {w} {p : RPol[F,N,𝒮]} :
-    wnk_rpol {~w ⨀ ~p}.wnka.sem = (w • p.wnka.sem) := by
+    wnk_rpol {~w ⨀ ~p}.wnka.sem = (w ⨀ p.wnka.sem) := by
   ext x
   induction x using GS.induction
   next α α₀ =>
-    simp [WNKA.sem, wnka, ι, instSMul𝒞, 𝒞.mk', ne_eq, 𝓁, GS.pks, List.cons_append, GS.mk,
-      List.nil_append, WNKA.compute, instSMul𝒲, 𝒲.sMul_apply, ←  WeightedProduct.sMul_wProd]
+    simp only [WNKA.sem, wnka, ι, GS.pks, List.cons_append, ← WeightedProduct.wHMul_wProd,
+      𝒞.sHMul_apply, GS.mk, 𝒲.mk_apply, List.nil_append, WNKA.compute, 𝓁, instWeightedHMul𝒲]
   next α α₀ α₁ =>
     simp [WNKA.sem, WNKA.compute, wnka, δ, GS.mk, 𝒲.mk_apply, ι, 𝓁, GS.pks,
-      ← WeightedProduct.wProd_assoc, ← WeightedProduct.sMul_wProd]
+      ← WeightedProduct.wProd_assoc, ← WeightedProduct.wHMul_wProd]
   next α A αn =>
     simp [GS.mk, wnka, WNKA.sem, ι, WNKA.compute, GS.pks, ← WeightedProduct.wProd_assoc,
-      ← WeightedProduct.sMul_wProd, δ, ι, 𝓁]
+      ← WeightedProduct.wHMul_wProd, δ, ι, 𝓁]
     congr! 3
     apply WNKA.compute_eq_of
     · rfl

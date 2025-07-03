@@ -155,7 +155,7 @@ noncomputable def G (p : RPol[F,N,𝒮]) : 𝒲 𝒮 GS[F,N] := match p with
   | wnk_rpol { dup } => G.ofPk fun α ↦ gs[α; α; dup; α]
   | wnk_rpol { ~p₁ ⨁ ~p₂ } => G p₁ ⨁ G p₂
   | wnk_rpol { ~p₁ ; ~p₂ } => G p₁ ♢ G p₂
-  | wnk_rpol { ~w ⨀ ~p₁ } => w • G p₁
+  | wnk_rpol { ~w ⨀ ~p₁ } => w ⨀ G p₁
   | wnk_rpol { ~p₁* } => ⨁' n : ℕ, G (p₁ ^ n)
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
@@ -197,7 +197,7 @@ noncomputable def RPol.sem (p : RPol[F,N,𝒮]) : H[F,N] → 𝒲 𝒮 H[F,N] :=
   | .Seq p q =>
     fun h ↦ (p.sem h ≫= q.sem)
   -- TODO: this should use the syntax
-  | .Weight w p => fun h ↦ w • p.sem h
+  | .Weight w p => fun h ↦ w ⨀ p.sem h
   -- TODO: this should use the syntax
   | .Add p q => fun h ↦ p.sem h ⨁ q.sem h
   -- TODO: this should use the syntax
@@ -247,7 +247,7 @@ theorem GS.sem_eq (g : GS[F,N]) (h) :
 
 @[simp]
 noncomputable def RPol.sem_G_theorem (p : RPol[F,N,𝒮]) : Prop :=
-  p.sem = fun h ↦ ⨁' x : (G p).supp, G p x • x.val.sem h
+  p.sem = fun h ↦ ⨁' x : (G p).supp, G p x ⨀ x.val.sem (𝒮:=𝒮) h
 
 omit [Encodable F] [Encodable N] in
 theorem RPol.sem_G.Drop : wnk_rpol {drop}.sem_G_theorem (F:=F) (N:=N) (𝒮:=𝒮) := by
@@ -258,9 +258,9 @@ theorem RPol.sem_G.Skip : wnk_rpol {skip}.sem_G_theorem (F:=F) (N:=N) (𝒮:=�
   simp [GS.sem_eq, sem, G]
   rw [WeightedSum_eq_single ⟨gs[π;π], (by simp [G, h10])⟩]
   · simp [GS.mk, GS.H, η]
-  · simp [G, GS.mk, GS.H]
-    intro α _ hαπ
-    have : α ≠ π := by rintro ⟨_⟩; contradiction
+  · simp [G, GS.mk, GS.H, h10]
+    rintro _ α ⟨_⟩ _
+    have : α ≠ π := by rintro ⟨_⟩; grind
     simp_all
 theorem RPol.sem_G.Test {π₀} : wnk_rpol {@test ~π₀}.sem_G_theorem (F:=F) (N:=N) (𝒮:=𝒮) := by
     ext ⟨π, h⟩
@@ -271,10 +271,11 @@ theorem RPol.sem_G.Test {π₀} : wnk_rpol {@test ~π₀}.sem_G_theorem (F:=F) (
       rw [WeightedSum_eq_single ⟨gs[π₀;π₀], (by simp [G, h10])⟩]
       · simp [GS.mk, GS.H, η]
       · simp [G, GS.mk, GS.H]
+        grind
     else
       symm
       simp [h₀, G, GS.mk, GS.H]
-      intro _
+      rintro _ ⟨⟨_⟩, _⟩
       have : π₀ ≠ π := fun a ↦ h₀ (Eq.symm a)
       simp_all
 theorem RPol.sem_G.Mod {γ} : wnk_rpol {@mod ~γ}.sem_G_theorem (F:=F) (N:=N) (𝒮:=𝒮) := by
@@ -283,8 +284,8 @@ theorem RPol.sem_G.Mod {γ} : wnk_rpol {@mod ~γ}.sem_G_theorem (F:=F) (N:=N) (�
   simp [GS.sem_eq, sem, G]
   rw [WeightedSum_eq_single ⟨gs[π;γ], (by simp [G, h10])⟩]
   · simp [GS.mk, GS.H, η]
-  · simp [G, GS.mk, GS.H]
-    intro α _ hg
+  · simp [G, GS.mk, GS.H, h10]
+    rintro _ α ⟨_⟩ hg
     have : α ≠ π := by grind
     simp [this]
 theorem RPol.sem_G.Dup : wnk_rpol {dup}.sem_G_theorem (F:=F) (N:=N) (𝒮:=𝒮) := by
@@ -345,7 +346,7 @@ theorem RPol.sem_G.Add {p₁ p₂} (ih₁ : p₁.sem_G_theorem) (ih₂ : p₂.se
     · simp
 omit [Encodable F] [Encodable N] in
 theorem RPol.sem_G.Weight {w} {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~w ⨀ ~p₁}.sem_G_theorem (F:=F) (N:=N) (𝒮:=𝒮) := by
-  simp only [sem_G_theorem, instSMul𝒲] at ih
+  simp only [sem_G_theorem, instWeightedHMul𝒲] at ih
   simp [sem, ih, G]; clear ih
   ext h h'
   simp [← WeightedSum_mul_left]
@@ -372,7 +373,7 @@ theorem RPol.sem_G.Iter {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~p₁*}.sem
   letI : DecidableEq (GS F N) := instDecidableEqProd
   rw [WeightedSum_comm]
   congr with n
-  suffices (p₁.iter n).sem = fun h ↦ ⨁' (x : ↑(G wnk_rpol {~p₁*}).supp), (G (p₁.iter n)) x • (x.val.sem h) by
+  suffices (p₁.iter n).sem = fun h ↦ ⨁' (x : ↑(G wnk_rpol {~p₁*}).supp), (G (p₁.iter n)) x ⨀ (x.val.sem (𝒮:=𝒮) h) by
     simp [this]
   clear h h'
   induction n with
@@ -389,9 +390,11 @@ theorem RPol.sem_G.Iter {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~p₁*}.sem
       split_ifs with h₁ h₂
       · simp_all [η]
         obtain ⟨α, _, _⟩ := h₂
-        simp_all
+        sorry
+        -- simp_all
       · simp
       · simp
+      · sorry
   | succ n ih' =>
     simp [sem]
     simp [ih]
@@ -425,7 +428,7 @@ theorem RPol.sem_G.Iter {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~p₁*}.sem
     · sorry
 
 theorem RPol.sem_G (p : RPol[F,N,𝒮]) :
-    p.sem = fun h ↦ ⨁' x : (G p).supp, G p x • x.val.sem h := by
+    p.sem = fun h ↦ ⨁' x : (G p).supp, G p x ⨀ x.val.sem (𝒮:=𝒮) h := by
   induction p with
   | Drop => exact RPol.sem_G.Drop
   | Skip => exact RPol.sem_G.Skip

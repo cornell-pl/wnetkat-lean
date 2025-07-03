@@ -73,7 +73,7 @@ noncomputable def Policy.sem (p : Policy[F,N,𝒮]) : H[F,N] → 𝒲 𝒮 H[F,N
   | .Seq p q =>
     fun h ↦ (p.sem h ≫= q.sem)
   -- TODO: this should use the syntax
-  | .Weight w p => fun h ↦ w • p.sem h
+  | .Weight w p => fun h ↦ w ⨀ p.sem h
   -- TODO: this should use the syntax
   | .Add p q => fun h ↦ p.sem h ⨁ q.sem h
   -- TODO: this should use the syntax
@@ -249,7 +249,7 @@ noncomputable def Policy.sem_n (p : Policy[F,N,𝒮]) (n : ℕ) : H[F,N] → �
   | .Seq p q =>
     fun h ↦ (p.sem_n n h ≫= q.sem_n n)
   -- TODO: this should use the syntax
-  | .Weight w p => fun h ↦ w • p.sem_n n h
+  | .Weight w p => fun h ↦ w ⨀ p.sem_n n h
   -- TODO: this should use the syntax
   | .Add p q => fun h ↦ p.sem_n n h ⨁ q.sem_n n h
   -- TODO: this should use the syntax

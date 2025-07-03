@@ -196,9 +196,17 @@ omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
 theorem η'_finSupp {X : Type} [DecidableEq X] (x : X) :
     (η'[𝒮] x).finSupp = if (𝟙 : 𝒮) = 𝟘 then ∅ else {x} := rfl
 
-instance {X : Type} : SMul 𝒮 (𝒞 𝒮 X) where
-  smul w m := 𝒞.mk' (fun h' ↦ w ⨀ m h')
+instance {X : Type} : WeightedHMul 𝒮 (𝒞 𝒮 X) (𝒞 𝒮 X) where
+  wHMul w m := 𝒞.mk' (fun h' ↦ w ⨀ m h')
     (m.finSupp.filter (fun h' ↦ w ⨀ m h' ≠ 𝟘))
+    (by
+      intro h'
+      simp_all only [W.supp_mem_iff, ne_eq, Finset.mem_filter, 𝒞.mem_finSupp_iff, iff_and_self]
+      contrapose!
+      simp_all)
+instance {X : Type} : WeightedHMul (𝒞 𝒮 X) 𝒮 (𝒞 𝒮 X) where
+  wHMul m w := 𝒞.mk' (fun h' ↦ m h' ⨀ w)
+    (m.finSupp.filter (fun h' ↦ m h' ⨀ w ≠ 𝟘))
     (by
       intro h'
       simp_all only [W.supp_mem_iff, ne_eq, Finset.mem_filter, 𝒞.mem_finSupp_iff, iff_and_self]
@@ -206,11 +214,18 @@ instance {X : Type} : SMul 𝒮 (𝒞 𝒮 X) where
       simp_all)
 
 omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
-@[simp] theorem 𝒞.sMul_apply {X : Type} (m : 𝒞 𝒮 X) (w : 𝒮) (x : X) : (w • m) x = w ⨀ m x := rfl
+@[simp] theorem 𝒞.sHMul_apply {X : Type} (m : 𝒞 𝒮 X) (w : 𝒮) (x : X) : (w ⨀ m) x = w ⨀ m x := rfl
 omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
-@[simp] theorem 𝒞.one_sMul {X : Type} (m : 𝒞 𝒮 X) : (𝟙 : 𝒮) • m = m := by ext; simp
+@[simp] theorem 𝒞.one_sHMul {X : Type} (m : 𝒞 𝒮 X) : (𝟙 : 𝒮) ⨀ m = m := by ext; simp
 omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
-@[simp] theorem 𝒞.zero_sMul {X : Type} (m : 𝒞 𝒮 X) : (𝟘 : 𝒮) • m = 𝟘 := by ext; simp
+@[simp] theorem 𝒞.zero_sHMul {X : Type} (m : 𝒞 𝒮 X) : (𝟘 : 𝒮) ⨀ m = 𝟘 := by ext; simp
+
+omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
+@[simp] theorem 𝒞.sHMul'_apply {X : Type} (m : 𝒞 𝒮 X) (w : 𝒮) (x : X) : (m ⨀ w) x = m x ⨀ w := rfl
+omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
+@[simp] theorem 𝒞.sHMul_one {X : Type} (m : 𝒞 𝒮 X) : m ⨀ (𝟙 : 𝒮) = m := by ext; simp
+omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
+@[simp] theorem 𝒞.sHMul_zero {X : Type} (m : 𝒞 𝒮 X) : m ⨀ (𝟘 : 𝒮) = 𝟘 := by ext; simp
 
 namespace WeightedNetKAT
 
@@ -233,7 +248,7 @@ def Policy.compute (p : Policy[F,N,𝒮]) (n : ℕ) : H[F,N] → 𝒞 𝒮 H[F,N
   | .Seq p q =>
     fun h ↦ (p.compute n h).bind (q.compute n)
   -- TODO: this should use the syntax
-  | .Weight w p => fun h ↦ w • p.compute n h
+  | .Weight w p => fun h ↦ w ⨀ p.compute n h
   -- TODO: this should use the syntax
   | .Add p q => fun h ↦ p.compute n h ⨁ q.compute n h
   -- TODO: this should use the syntax

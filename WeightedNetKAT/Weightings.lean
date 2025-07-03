@@ -156,13 +156,20 @@ instance WeightedOmegaContinuousPreSemiring.instCountablePi [WeightedOmegaComple
   wSup_wMul _ _ := by ext x; apply wSup_wMul
 
 @[simp]
-instance {X : Type} : SMul 𝒮 (𝒲 𝒮 X) where
-  smul w m := ⟨fun h' ↦ w ⨀ m h', by
+instance {X : Type} : WeightedHMul 𝒮 (𝒲 𝒮 X) (𝒲 𝒮 X) where
+  wHMul w m := ⟨fun h' ↦ w ⨀ m h', by
+    apply Set.Countable.mono _ m.countable; intro; contrapose!; simp +contextual⟩
+@[simp]
+instance {X : Type} : WeightedHMul (𝒲 𝒮 X) 𝒮 (𝒲 𝒮 X) where
+  wHMul m w := ⟨fun h' ↦ m h' ⨀ w, by
     apply Set.Countable.mono _ m.countable; intro; contrapose!; simp +contextual⟩
 
-@[simp] theorem 𝒲.sMul_apply {X : Type} (m : 𝒲 𝒮 X) (w : 𝒮) (x : X) : (w • m) x = w ⨀ m x := rfl
-@[simp] theorem 𝒲.one_sMul {𝒮 : Type} [WeightedSemiring 𝒮] {X : Type} (m : 𝒲 𝒮 X) : (𝟙 : 𝒮) • m = m := by ext; simp
-@[simp] theorem 𝒲.zero_sMul {X : Type} (m : 𝒲 𝒮 X) : (𝟘 : 𝒮) • m = 𝟘 := by ext; simp
+@[simp] theorem 𝒲.sMul_apply {X : Type} (m : 𝒲 𝒮 X) (w : 𝒮) (x : X) : (w ⨀ m) x = w ⨀ m x := rfl
+@[simp] theorem 𝒲.one_sMul {𝒮 : Type} [WeightedSemiring 𝒮] {X : Type} (m : 𝒲 𝒮 X) : (𝟙 : 𝒮) ⨀ m = m := by ext; simp
+@[simp] theorem 𝒲.zero_sMul {X : Type} (m : 𝒲 𝒮 X) : (𝟘 : 𝒮) ⨀ m = 𝟘 := by ext; simp
+@[simp] theorem 𝒲.sMul'_apply {X : Type} (m : 𝒲 𝒮 X) (w : 𝒮) (x : X) : (m ⨀ w) x = m x ⨀ w := rfl
+@[simp] theorem 𝒲.sMul_one {𝒮 : Type} [WeightedSemiring 𝒮] {X : Type} (m : 𝒲 𝒮 X) : m ⨀ (𝟙 : 𝒮) = m := by ext; simp
+@[simp] theorem 𝒲.sMul_zero {X : Type} (m : 𝒲 𝒮 X) : m ⨀ (𝟘 : 𝒮) = 𝟘 := by ext; simp
 
 end CountablePi
 
