@@ -717,6 +717,13 @@ theorem WeightedFinsum_pair [DecidableEq I] {i₀ i₁ : I} (h : i₀ ≠ i₁) 
   rw [Finset.fold_insert (by simp [h])]
   simp [@Finset.insert_eq]
 
+theorem WeightedFinsum_congr {α : Type} [WeightedPartialOrder α] [WeightedPreSemiring α] [WeightedMonotonePreSemiring α] [DecidableEq I]
+    {f g : I → α} {S : Finset I} (h : ∀ x ∈ S, f x = g x) :
+    ⨁ᶠ x ∈ S, f x = ⨁ᶠ x ∈ S, g x := by
+  induction S using Finset.induction with
+  | empty => simp_all
+  | insert x S hx ih => simp_all
+
 end
 
 section

@@ -522,6 +522,73 @@ theorem ι_wProd_δ' {A B C D : Type}
   rcases a with c | d
   · simp
   · simp
+theorem δ_wProd_δ {A B C D E F : Type}
+    [DecidableEq A] [DecidableEq B] [DecidableEq C] [DecidableEq D] [DecidableEq E] [DecidableEq F]
+    {A₁₁ : 𝒞 𝒮 (A × C)} {A₁₂ : 𝒞 𝒮 (A × D)}
+    {A₂₁ : 𝒞 𝒮 (B × C)} {A₂₂ : 𝒞 𝒮 (B × D)}
+    {B₁₁ : 𝒞 𝒮 (C × E)} {B₁₂ : 𝒞 𝒮 (C × F)}
+    {B₂₁ : 𝒞 𝒮 (D × E)} {B₂₂ : 𝒞 𝒮 (D × F)}
+    :
+      (δ[[A₁₁, A₁₂], [A₂₁, A₂₂]] ⨯ δ[[B₁₁, B₁₂], [B₂₁, B₂₂]])
+    = δ[[A₁₁ ⨯ B₁₁ ⨁ A₁₂ ⨯ B₂₁, A₁₁ ⨯ B₁₂ ⨁ A₁₂ ⨯ B₂₂],
+        [A₂₁ ⨯ B₁₁ ⨁ A₂₂ ⨯ B₂₁, A₂₁ ⨯ B₁₂ ⨁ A₂₂ ⨯ B₂₂]] := by
+  ext ⟨ab, ef⟩
+  rcases ab with a | b
+  · rcases ef with e | f
+    · simp only [WeightedProduct.wProd, 𝒞.mk', S.δ, Finset.union_assoc, 𝒞.mk_apply, 𝒲.mk_apply,
+      Prod.mk.eta, ne_eq, Sum.elim_inl, 𝒞.wAdd_apply]
+      rw [WeightedFinsum_union, WeightedFinsum_union, WeightedFinsum_union]
+      · simp
+      all_goals
+        intro h h' h'' ⟨ab, cd⟩ h'''
+        have := h' h'''
+        simp_all only [Finset.le_eq_subset, Finset.mem_map, 𝒞.mem_finSupp_iff, ne_eq,
+          Function.Embedding.coeFn_mk, Prod.exists, Prod.map_apply, Prod.mk.injEq,
+          Finset.bot_eq_empty, Finset.notMem_empty]
+        obtain ⟨a, b, h₀, ⟨_⟩, ⟨_⟩⟩ := this
+        have := h'' h'''
+        simp_all
+    · simp only [WeightedProduct.wProd, 𝒞.mk', S.δ, Finset.union_assoc, 𝒞.mk_apply, 𝒲.mk_apply,
+      Prod.mk.eta, ne_eq, Sum.elim_inl, 𝒞.wAdd_apply]
+      rw [WeightedFinsum_union, WeightedFinsum_union, WeightedFinsum_union]
+      · simp
+      all_goals
+        intro h h' h'' ⟨ab, cd⟩ h'''
+        have := h' h'''
+        simp_all only [Finset.le_eq_subset, Finset.mem_map, 𝒞.mem_finSupp_iff, ne_eq,
+          Function.Embedding.coeFn_mk, Prod.exists, Prod.map_apply, Prod.mk.injEq,
+          Finset.bot_eq_empty, Finset.notMem_empty]
+        obtain ⟨a, b, h₀, ⟨_⟩, ⟨_⟩⟩ := this
+        have := h'' h'''
+        simp_all
+  · rcases ef with e | f
+    · simp only [WeightedProduct.wProd, 𝒞.mk', S.δ, Finset.union_assoc, 𝒞.mk_apply, 𝒲.mk_apply,
+      Prod.mk.eta, ne_eq, Sum.elim_inl, 𝒞.wAdd_apply]
+      rw [WeightedFinsum_union, WeightedFinsum_union, WeightedFinsum_union]
+      · simp
+      all_goals
+        intro h h' h'' ⟨ab, cd⟩ h'''
+        have := h' h'''
+        simp_all only [Finset.le_eq_subset, Finset.mem_map, 𝒞.mem_finSupp_iff, ne_eq,
+          Function.Embedding.coeFn_mk, Prod.exists, Prod.map_apply, Prod.mk.injEq,
+          Finset.bot_eq_empty, Finset.notMem_empty]
+        obtain ⟨a, b, h₀, ⟨_⟩, ⟨_⟩⟩ := this
+        have := h'' h'''
+        simp_all
+    · simp only [WeightedProduct.wProd, 𝒞.mk', S.δ, Finset.union_assoc, 𝒞.mk_apply, 𝒲.mk_apply,
+      Prod.mk.eta, ne_eq, Sum.elim_inl, 𝒞.wAdd_apply]
+      rw [WeightedFinsum_union, WeightedFinsum_union, WeightedFinsum_union]
+      · simp
+      all_goals
+        intro h h' h'' ⟨ab, cd⟩ h'''
+        have := h' h'''
+        simp_all only [Finset.le_eq_subset, Finset.mem_map, 𝒞.mem_finSupp_iff, ne_eq,
+          Function.Embedding.coeFn_mk, Prod.exists, Prod.map_apply, Prod.mk.injEq,
+          Finset.bot_eq_empty, Finset.notMem_empty]
+        obtain ⟨a, b, h₀, ⟨_⟩, ⟨_⟩⟩ := this
+        have := h'' h'''
+        simp_all
+
 theorem δ_wProd_𝓁 {A B C D : Type}
     [DecidableEq A] [DecidableEq B] [DecidableEq C] [DecidableEq D]
     {X : 𝒞 𝒮 (C × Unit)} {Y : 𝒞 𝒮 (D × Unit)}
@@ -555,6 +622,19 @@ theorem δ_wProd_𝓁 {A B C D : Type}
     obtain ⟨a, b, h₀, ⟨_⟩, ⟨_⟩⟩ := this
     have := h'' h'''
     simp_all
+
+omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
+@[simp]
+theorem S.δ_identity {A B : Type} [DecidableEq A] [DecidableEq B] [Fintype A] [Fintype B] :
+    (δ[[⨯1,𝟘],[𝟘,⨯1]] : 𝒞 𝒮 ((A ⊕ B) × (A ⊕ B))) = ⨯1 := by
+  ext ⟨ab₁, ab₂⟩
+  simp
+  split_ifs
+  · subst_eqs
+    rcases ab₁ with a | b <;> simp [S.δ]
+  · rcases ab₁ with a₁ | b₁ <;> rcases ab₂ with a₂ | b₂ <;> simp [S.δ]
+    · grind
+    · grind
 
 theorem wProd_left_distrib {A B C : Type}
     [DecidableEq A] [DecidableEq B] [DecidableEq C]
@@ -808,60 +888,6 @@ theorem RPol.wnka_sem_weight {w} {p : RPol[F,N,𝒮]} :
       ← WeightedProduct.sMul_wProd, δ, ι, 𝓁]
     congr! 3
     apply WNKA.compute_eq_of <;> rfl
-open scoped Classical in
-theorem RPol.wnka_sem_seq [Encodable F] [Encodable N] {p₁ p₂ : RPol[F,N,𝒮]} (h : ((𝟙 : 𝒮) ≠ 𝟘)) (h' : ((𝟘 : 𝒮) ≠ 𝟙)) :
-    wnk_rpol {~p₁ ; ~p₂}.wnka.sem = (p₁.wnka.sem ♢ p₂.wnka.sem) := by
-  ext x
-  -- F : Type
-  -- inst✝⁵ : Fintype F
-  -- inst✝⁴ : DecidableEq F
-  -- N : Type
-  -- inst✝³ : Fintype N
-  -- inst✝² : DecidableEq N
-  -- inst✝¹ : Encodable F
-  -- inst✝ : Encodable N
-  induction x using GS.induction'
-  next α α₀ =>
-    nth_rw 1 [WNKA.sem]
-    simp [GS.pks, GS.mk, WNKA.compute, ι, 𝓁]
-    rw [ι_wProd_𝓁]
-    simp []
-    simp [WeightedConcat.concat]
-    simp [wnka, WNKA.sem, GS.mk, WNKA.compute, ι, GS.pks, 𝓁, G]
-    sorry
-    -- simp
-    -- simp [𝒲.supp]
-    -- simp only [DFunLike.coe]
-    -- unfold WNKA.compute
-    -- simp_all
-    -- rw [WeightedSum_eq_WeightedSum_of_ne_one_bij (γ:=Pk[F,N]) (g:=sorry) (fun ⟨x, _⟩ ↦ sorry)]
-    -- · sorry
-    -- · sorry
-    -- · sorry
-    -- · sorry
-  next α α₀ α₁ A α₂ =>
-    simp [GS.mk]
-    generalize (p₁.wnka.sem ♢ p₂.wnka.sem : 𝒲 𝒮 (GS F N)) = Q
-    simp [wnka, WNKA.sem, GS.mk, WNKA.compute, GS.pks, ι, 𝓁, G, δ]
-    simp [WNKA.compute_pair']
-    simp [← WeightedProduct.wProd_assoc]
-    generalize (𝟘 : 𝒞 𝒮 (Unit × S p₂)) = ι₁'
-    generalize ι p₁ = ι₁
-    generalize (α₀ :: (A ++ [α₁])) = A
-    induction A generalizing ι₁ ι₁' with
-    | nil => sorry
-    | cons α A ih =>
-      rcases A with _ | ⟨α', A⟩
-      · simp [WNKA.compute']
-        rw [ι_wProd_𝓁]
-        sorry
-      · simp [WNKA.compute']
-        simp [← WeightedProduct.wProd_assoc]
-        simp [ι_wProd_δ', ι_wProd_𝓁]
-        specialize ih (ι₁ ⨯ ⨁ᶠ γ, 𝓁 p₁ α γ ⨯ ι p₂ ⨯ δ p₂ γ α' ⨁ ι₁' ⨯ δ p₂ α α') (ι₁ ⨯ δ p₁ α α')
-        rw [WNKA.compute'_eq_of (𝒜':={ ι := ι[ι₁,ι₁'], δ := fun α β ↦ δ[[δ p₁ α β,⨁ᶠ γ, 𝓁 p₁ α γ ⨯ ι p₂ ⨯ δ p₂ γ β],[𝟘,δ p₂ α β]], 𝓁 := fun α β ↦ 𝓁[⨁ᶠ γ, 𝓁 p₁ α γ ⨯ ι p₂ ⨯ 𝓁 p₂ γ β,𝓁 p₂ α β] })] at ih
-        · rw [ih]
-        · rfl
 
 def GS.splitAtJoined (g : GS[F,N]) (n : ℕ) (γ : Pk[F,N]) : GS[F,N] × GS[F,N] :=
   let (g₀, g, gₙ)  := g
@@ -1079,60 +1105,119 @@ theorem List.revCases {α : Type} {P : List α → Prop}
   (l : List α) : P l := by
   induction l using List.reverseRecOn <;> apply_assumption
 
-structure Split (α : Type) where
-  l : List α
-  a : α
-  r : List α
-deriving Lean.ToExpr, Repr, DecidableEq
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+attribute [-simp] WeightedFinsum_range_succ WeightedFinsum_range_add in
+theorem RPol.seq_wnka_compute'' {p₁ p₂ : RPol[F,N,𝒮]} [Inhabited Pk[F,N]] {A} :
+        wnk_rpol {~p₁; ~p₂}.wnka.compute' A =
+    δ[[p₁.wnka.compute' A,
+        (⨁ᶠ γ, ⨁ᶠ i ∈ Finset.range (A.length - 1), p₁.wnka.compute' (A.take (i + 1)) ⨯ 𝓁 p₁ A[i]! γ ⨯ ι p₂ ⨯ p₂.wnka.compute' (γ :: A.drop (i + 1)))],
+      [𝟘, p₂.wnka.compute' A]] := by
+  induction A using List.reverseRecOn with
+  | nil => simp [WNKA.compute']
+  | append_singleton A α₀ ih =>
+    clear ih
+    induction A using List.reverseRecOn generalizing α₀ with
+    | nil => simp [WNKA.compute']
+    | append_singleton A α₁ ih =>
+      simp [WNKA.compute'_right]
+      rw [ih]; clear ih
+      simp [δ]
+      rw [δ_wProd_δ]
+      simp [wProd_WeightedFinsum]
+      simp [← WeightedProduct.wProd_assoc]
+      simp [wProd_WeightedFinsum, WeightedFinsum_wProd, ← WeightedFinsum_add]
+      congr! 3 with γ
+      simp [WeightedFinsum_range_add]
+      rw [WeightedPreSemiring.wAdd_comm]
+      simp [WNKA.compute']
+      simp [List.take_append]
+      congr! 1
+      apply WeightedFinsum_congr _ fun i hi ↦ ?_
+      simp at hi
+      have : i + 1 - A.length = 0 := by omega
+      simp [List.getElem?_append, hi, List.take_append_eq_append_take, List.drop_append_eq_append_drop, this]
+      nth_rw 2 [← List.cons_append]
+      simp [-List.cons_append, -List.cons_append_fun, WNKA.compute'_right]
+      simp [← WeightedProduct.wProd_assoc]
 
-def List.neSplits {α : Type} (l : List α) : Finset (Split α) :=
-  Finset.range l.length |>.attach.map ⟨(fun (i : { x // x ∈ Finset.range (l.length) }) ↦ ⟨l.take i.val, l[i.val]'(by obtain ⟨i, hi⟩ := i; simp at hi ⊢; omega), l.drop (i.val + 1)⟩), by intro ⟨i, hi⟩ ⟨j, hj⟩; simp at hi hj ⊢; omega⟩
-
-/--
-info: {{ l := [], a := 1, r := [2, 3, 4] },
- { l := [1], a := 2, r := [3, 4] },
- { l := [1, 2], a := 3, r := [4] },
- { l := [1, 2, 3], a := 4, r := [] }}
--/
-#guard_msgs in
-#eval List.neSplits [1, 2, 3, 4]
-
-@[simp] def List.neSplits_empty {α : Type} : List.neSplits ([] : List α) = {} := rfl
-@[simp] def List.neSplits_singleton {α : Type} {a} : List.neSplits ([a] : List α) = {⟨[], a, []⟩} := rfl
-@[simp] def List.neSplits_pair {α : Type} [DecidableEq α] {a b} : List.neSplits ([a, b] : List α) = {⟨[], a, [b]⟩, ⟨[a], b, []⟩} := rfl
+omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
+@[simp]
+theorem 𝒞.unit_pair_wProd {m₁ m₂ : 𝒞 𝒮 (Unit × Unit)} : m₁ ((), ()) ⨀ m₂ ((), ()) = (m₁ ⨯ m₂) ((), ()) := by
+  simp [WeightedProduct.wProd]
+  rw [WeightedFinsum_single ⟨(), ()⟩]
+  · simp
+  · simp +contextual
 
 attribute [-simp] WeightedFinsum_range_succ WeightedFinsum_range_add in
-theorem RPol.seq_wnka_compute' {p₁ p₂ : RPol[F,N,𝒮]} {A} {α₁ α₂ α₃} :
-      (wnk_rpol {~p₁; ~p₂}.wnka.compute' (A ++ [α₁, α₂]) ⨯ wnk_rpol {~p₁; ~p₂}.wnka.𝓁 α₂ α₃)
-    = 𝓁[
-        ⨁ᶠ γ, ⨁ᶠ i ∈ List.neSplits (A ++ [α₁, α₂]),
-          p₁.wnka.compute' (i.l ++ [i.a]) ⨯ 𝓁 p₁ i.a γ ⨯ ι p₂ ⨯ p₂.wnka.compute (γ :: i.r ++ [α₃]),
-        p₂.wnka.compute' (A ++ [α₁, α₂]) ⨯ 𝓁 p₂ α₂ α₃
-      ] := by
-  simp [𝓁]
-  -- generalize 𝓁 p₂ α₂ α₃ = 𝓁₂
-  induction A using List.reverseRecOn generalizing α₁ α₂ with
-  | nil =>
-    simp [WNKA.compute', δ, WeightedProduct.wProd_assoc]
-    rw [δ_wProd_𝓁]
-    simp
+theorem RPol.wnka_sem_seq [Encodable F] [Encodable N] {p₁ p₂ : RPol[F,N,𝒮]}
+    (ih₁ : p₁.wnka.sem = G p₁) (ih₂ : p₂.wnka.sem = G p₂) :
+    wnk_rpol {~p₁ ; ~p₂}.wnka.sem = G wnk_rpol {~p₁; ~p₂} := by
+  apply wnka_sem_eq_of'
+  intro A α α'
+  simp [ι, 𝓁]
+  simp [G]
+  rw [ashdjashd]
+  simp [GS.splitAtJoined, List.splitAt_eq]
+  simp [GS.ofPks, GS.mk]
+  simp [← ih₁, ← ih₂]
+  letI : Inhabited Pk[F,N] := ⟨α⟩
+  rw [RPol.seq_wnka_compute'']
+  rw [ι_wProd_δ']
+  simp [WeightedProduct.wProd_assoc]
+  rw [ι_wProd_𝓁]
+  simp
+  simp [← WeightedProduct.wProd_assoc]
+  simp [wProd_WeightedFinsum, WeightedFinsum_wProd, ← WeightedFinsum_add]
+  simp [← WeightedProduct.wProd_assoc]
+  rw [WeightedFinsum_comm]
+  congr with γ
+  simp [WeightedFinsum_range_add]
+  nth_rw 2 [WeightedPreSemiring.wAdd_comm]
+  rw [← List.tail_dropLast]
+  simp
+  rcases A with _ | ⟨α₀, A⟩
+  · simp [WNKA.compute', ← WeightedProduct.wProd_assoc]
+  · simp [WNKA.sem, GS.pks, List.head_append, ← WeightedProduct.wProd_assoc]
     congr! 1
-    simp [← WeightedProduct.wProd_assoc]
-    simp [wProd_WeightedFinsum, WeightedFinsum_wProd, ← WeightedFinsum_add]
-    simp [← WeightedProduct.wProd_assoc]
-    simp [WNKA.compute]
-    simp [← WeightedProduct.wProd_assoc]
-    simp [WeightedPreSemiring.wAdd_comm]
-  | append_singleton A α' ih =>
-    rw [WNKA.compute'_right]
-    simp [δ]
-    rw [WeightedProduct.wProd_assoc]
-    rw [δ_wProd_𝓁]
-    simp [← WeightedProduct.wProd_assoc]
-    simp [wProd_WeightedFinsum, WeightedFinsum_wProd, ← WeightedFinsum_add]
-    simp [← WeightedProduct.wProd_assoc]
-    sorry
-
+    · congr! 3
+      rw [WeightedProduct.wProd_assoc]
+      congr! 1
+      simp [List.take_append_eq_append_take]
+      rw [WNKA.compute_pair']
+      simp
+      congr
+      refine (List.take_self_eq_iff A).mpr ?_
+      omega
+    · apply WeightedFinsum_congr _ fun i hi ↦ ?_
+      simp at hi
+      congr! 1
+      have : i - A.length = 0 := by omega
+      rcases i with _ | i
+      · simp [List.take_append_eq_append_take, hi, this, List.getElem?_cons, List.getElem?_append]
+        simp [WeightedProduct.wProd_assoc, WNKA.compute, WNKA.compute']
+        rw [← List.cons_append]
+        rw [WNKA.compute_pair']
+        simp [WeightedProduct.wProd_assoc, WNKA.compute, WNKA.compute']
+      · simp [List.take_append_eq_append_take, hi, this, List.getElem?_cons, List.getElem?_append]
+        have : i < A.length := by omega
+        simp [WeightedProduct.wProd_assoc, WNKA.compute, WNKA.compute', this]
+        congr! 1
+        have : (i + 1 - A.length) = 0 := by omega
+        simp [List.drop_append_eq_append_drop, this]
+        simp [WNKA.compute_pair']
+        rw [← WeightedProduct.wProd_assoc]
+        congr! 1
+        generalize hL : A.take (i + 1) = L
+        set R := A.drop (i + 1)
+        have h₀ : A = L ++ R := by simp [← hL, R]
+        have h₁ : i < L.length := by simp [← hL]; omega
+        simp [h₀, h₁, List.getElem_append]
+        induction L using List.reverseRecOn with
+        | nil => simp at h₁
+        | append_singleton L α₁ ih =>
+          simp at h₁
+          simp [List.append_assoc, -List.cons_append, List.nil_append, WNKA.compute_pair', List.getElem_append]
+          grind
 
 attribute [-simp] WeightedFinsum_range_succ WeightedFinsum_range_add in
 theorem RPol.wnka_sem [Encodable F] [Encodable N] (p : RPol[F,N,𝒮]) : (RPol.wnka p).sem = G p := by
@@ -1146,194 +1231,7 @@ theorem RPol.wnka_sem [Encodable F] [Encodable N] (p : RPol[F,N,𝒮]) : (RPol.w
   | Dup => exact wnka_sem_dup h' h
   | Add p₁ p₂ ih₁ ih₂ => rw [G, ← ih₁, ← ih₂]; exact wnka_sem_add
   | Weight w p ih => rw [G, ← ih]; exact wnka_sem_weight
-  | Seq p₁ p₂ ih₁ ih₂ =>
-    -- rw [G, ← ih₁, ← ih₂]; exact wnka_sem_seq h' h
-    apply wnka_sem_eq_of'
-    intro A α α'
-    simp [ι, 𝓁]
-    simp [G]
-    rw [ashdjashd]
-    simp [GS.splitAtJoined, List.splitAt_eq]
-    simp [GS.ofPks, GS.mk]
-    -- rw [add_comm]
-    -- rw [WeightedFinsum_range_add]
-    -- simp only [Finset.range_one, WeightedFinsum_singleton, List.take_zero, List.drop_zero]
-    simp [← ih₁, ← ih₂]
-
-    induction A using List.revCases with
-    | nil =>
-      simp [WNKA.compute']
-      sorry
-    | append_singleton A α₁ =>
-      have := @RPol.seq_wnka_compute' _ _ _ _ _ _ _ _ _ _ _ _ _ (p₁:=p₁) (p₂:=p₂) (A:=A) (α₁:=α₁) (α₂:=α) (α₃:=α')
-      simp at this
-      simp
-      simp [𝓁] at this
-      simp [WeightedProduct.wProd_assoc] at this ⊢
-      rw [this]; clear this
-      rw [ι_wProd_𝓁]
-      simp
-      simp [wProd_WeightedFinsum]
-      letI : WeightedPartialOrder (𝒞 𝒮 (Unit × Unit)) := sorry
-      letI : WeightedMonotonePreSemiring (𝒞 𝒮 (Unit × Unit)) := sorry
-      nth_rw 2 [WeightedFinsum_comm]
-      congr with γ
-      symm
-      apply WeightedFinsum_bij (fun i h ↦ ⟨(A ++ [α₁, α]).take i, (A ++ [α₁, α])[i]'(by simp at h ⊢; omega), (A ++ [α₁, α]).drop (i + 1)⟩)
-      · simp
-        intro i hi
-        simp [List.neSplits]
-        use i
-        simp
-        omega
-      · simp
-        intro i hi j hj hij
-        grind
-      · simp only [List.neSplits, Finset.mem_map, Finset.mem_attach, Function.Embedding.coeFn_mk,
-        true_and, Subtype.exists, List.length_append, List.length_cons, List.length_nil, zero_add,
-        Nat.reduceAdd, Finset.mem_range, imp_self, implies_true]
-      · simp
-        simp [wnka, WNKA.sem, GS.pks, WNKA.compute]
-        rcases A with _ | ⟨α₂, A⟩
-        · simp_all [WNKA.compute']
-          intro i hi
-          rcases i with _ | i
-          · simp_all [WNKA.compute, WNKA.compute', ← WeightedProduct.wProd_assoc]
-            sorry
-          · simp_all
-            have : i = 0 := by omega
-            subst_eqs
-            simp_all [WNKA.compute, WNKA.compute', ← WeightedProduct.wProd_assoc]
-            sorry
-        · simp [WNKA.compute, WNKA.compute']
-          rcases A with _ | ⟨α₃, A⟩
-          · simp_all
-            sorry
-          · simp [WNKA.compute, WNKA.compute']
-            sorry
---       rw [instWeightedPreSemiring𝒞OfDecidableEq]
---       simp only [instFunLike𝒞]
---       simp [𝒞.to𝒲_apply, ne_eq, dite_eq_ite, 𝒲.toFun_apply]
---       rw [WeightedFinsum_𝒞_apply]
-
-
---       simp [WNKA.compute'_right, δ]
---       simp [WeightedProduct.wProd_assoc]
---       rw [δ_wProd_𝓁]
---       simp
---       induction A using List.revCases with
---       | nil =>
---         simp [WNKA.compute']
---       | append_singleton A α₂ =>
-
-
---         simp [WNKA.compute'_right, δ]
---         simp [WeightedProduct.wProd_assoc]
---         rw [δ_wProd_𝓁]
---         simp
---         simp [← WeightedProduct.wProd_assoc]
---         simp [wProd_left_distrib]
---         simp [wProd_WeightedFinsum, WeightedFinsum_wProd, ← WeightedFinsum_add]
---         simp [← WeightedProduct.wProd_assoc]
---         simp
---         rw [← WeightedFinsum_add]
---         -- simp [wProd_left_distrib]
---         simp [WeightedProduct.wProd_assoc]
-
--- /-
---   𝓁[
---     δ p₁ α₂ α₁ ⨯ (δ p₁ α₁ α ⨯ ⨁ᶠ γ, 𝓁 p₁ α γ ⨯ ι p₂ ⨯ 𝓁 p₂ γ α' ⨁ (⨁ᶠ γ, 𝓁 p₁ α₁ γ ⨯ ι p₂ ⨯ δ p₂ γ α) ⨯ 𝓁 p₂ α α') ⨁ (⨁ᶠ γ, 𝓁 p₁ α₂ γ ⨯ ι p₂ ⨯ δ p₂ γ α₁) ⨯ δ p₂ α₁ α ⨯ 𝓁 p₂ α α',δ p₂ α₂ α₁ ⨯ δ p₂ α₁ α ⨯ 𝓁 p₂ α α']
--- -/
-
---     generalize ι p₁ = ι₀
---     rcases A with _ | ⟨α₁, A⟩
---     · simp
---       sorry
---     · simp
---       rcases A with _ | ⟨α₂, A⟩
---       · simp
---         simp [WNKA.compute', δ]
---         rw [ι_wProd_δ']
---         rw [ι_wProd_𝓁]
---         simp
---         simp [big_wprod]
-
---         sorry
---       · simp
---         simp [WNKA.compute']
---         simp [WNKA.compute', δ]
---         simp [← WeightedProduct.wProd_assoc]
---         rw [ι_wProd_δ']
---         simp
-
-
---     generalize (𝟘 : 𝒞 𝒮 (Unit × S p₂)) = ι₁
---     induction A generalizing ι₀ ι₁ with
---     | nil => simp; sorry
---     | cons α₀ A ih =>
---       simp
---       rcases A with _ | ⟨α₁, A⟩
---       · sorry
---       · simp
---         simp [WNKA.compute', δ]
---         simp [← WeightedProduct.wProd_assoc]
---         rw [ι_wProd_δ']
---         simp only [WeightedProduct.wProd_wZero, WeightedPreSemiring.add_wZero]
---         simp at ih
---         rw [ih]; clear ih
---         simp [add_comm]
-
---     apply wnka_sem_eq_of
---     · intro α α'
---       simp [ι, 𝓁, G]
---       rw [ashdjashd]
---       simp [GS.mk, GS.splitAtJoined]
---       simp [← ih₁, ← ih₂]
---     rw [G]
---     ext xₙ
---     rw [ashdjashd]
---     rw [add_comm]
---     rw [← ih₁, ← ih₂]
---     letI : Inhabited Pk[F,N] := ⟨fun _ ↦ sorry⟩
---     have : ∀ i γ, p₁.wnka.sem (xₙ.splitAtJoined i γ).1 = (ι p₁ ⨯ (p₁.wnka.compute' (xₙ.1 :: xₙ.2.1) : 𝒞 𝒮 (S p₁ × S p₁)) ⨯ 𝓁 p₁ (xₙ.2.1.getD i xₙ.1) γ) ((), ()) := by
---       intro i γ
---       simp [GS.splitAtJoined]
---       split
---       rename_i g₀ g g₁
---       simp
---       simp [wnka, WNKA.sem, GS.pks, WNKA.compute]
---       induction g using List.reverseRecOn with
---       | nil => simp [WNKA.compute, WNKA.compute']
---       | append_singleton g x ih =>
---         if i < g.length then
---           simp_all
---         simp [List.take_append_eq_append_take]
---         simp [WNKA.compute']
---       sorry
---     simp only [this, List.getElem!_eq_getElem?_getD]
---     induction xₙ using GS.induction'
---     next α α₀ =>
---       sorry
---     next α α₁ A α₀ =>
---       simp only [GS.mk, List.length_append, List.length_cons, List.length_nil, zero_add]
---       simp [GS.splitAtJoined]
---       rw [add_comm]
---       simp [List.take_succ]
---       conv => right; simp [wnka, WNKA.sem, GS.pks]
---       simp [WNKA.compute_pair']
---       simp [WNKA.compute]
---       simp [WNKA.compute']
---       simp [List.take_append_eq_append_take]
---       simp [wnka, WNKA.sem, GS.pks]
---       rw [WNKA.compute_pair']
---       simp
---       simp [GS.splitAtJoined]
---       rw [add_comm]
---       simp [List.take_succ]
---       simp [List.take_append_eq_append_take]
---       simp [WNKA.compute_pair']
-
---       generalize
+  | Seq p₁ p₂ ih₁ ih₂ => exact wnka_sem_seq ih₁ ih₂
   | Iter p₁ ih => sorry
 
 end WeightedNetKAT

@@ -138,6 +138,9 @@ instance [DecidableEq X] : WeightedPreSemiring (𝒞 𝒮 X) where
     WeightedZero.instCountablePi_apply, ne_eq, not_true_eq_false, Finset.filter_False]; rfl
   mul_assoc a b c := by ext; apply WeightedPreSemiring.mul_assoc
 
+instance [DecidableEq X] : WeightedPartialOrder (𝒞 𝒮 X) := sorry
+instance [DecidableEq X] : WeightedMonotonePreSemiring (𝒞 𝒮 X) := sorry
+
 @[simp]
 def 𝒞.mk' (f : X → 𝒮) (finSupp : Finset X) (h : ∀ x, x ∈ W.supp f ↔ x ∈ finSupp) : 𝒞 𝒮 X :=
   let h : finSupp = W.supp f := by ext; simp_all
