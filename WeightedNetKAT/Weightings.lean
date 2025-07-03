@@ -54,18 +54,18 @@ instance WeightedAdd.instCountablePi : WeightedAdd (𝒲 𝒮 X) where
 @[simp] theorem WeightedAdd.instCountablePi_apply (m m' : 𝒲 𝒮 X) {x : X} : (m ⨁ m') x = m x ⨁ m' x := rfl
 
 instance WeightedMul.instCountablePi : WeightedMul (𝒲 𝒮 X) where
-  wMul := fun ⟨ a_underlying, a_property ⟩ ⟨ b_underlying, b_property ⟩ => by
-    refine ⟨a_underlying ⨀ b_underlying, ?_ ⟩
-    apply @Function.Injective.countable ((a_underlying ⨀ b_underlying).supp) (Prod a_underlying.supp b_underlying.supp) _
-    case f =>
-      intro ⟨ m_val, m_prop ⟩
-      simp at m_prop
-      refine ⟨ ⟨ m_val, ?goal1 ⟩, ⟨ m_val, ?goal2 ⟩⟩
-      all_goals (simp ; grind only [wMul, instPi, cases WeightedPreSemiring, cases
-        WeightedMonotonePreSemiring, cases WeightedOmegaContinuousPreSemiring])
-    case hf =>
-      intro ⟨v₁, p₁⟩ ⟨v₂, p₂ ⟩
-      grind only
+  wMul := fun ⟨a, ha⟩ ⟨b, hb⟩ =>
+    ⟨a ⨀ b, by
+      apply @Function.Injective.countable (W.supp (a ⨀ b)) (Prod a.supp b.supp) _
+      case f =>
+        intro ⟨ m_val, m_prop ⟩
+        simp at m_prop
+        refine ⟨ ⟨ m_val, ?goal1 ⟩, ⟨ m_val, ?goal2 ⟩⟩
+        all_goals (simp ; grind only [wMul, instPi, cases WeightedPreSemiring, cases
+          WeightedMonotonePreSemiring, cases WeightedOmegaContinuousPreSemiring])
+      case hf =>
+        intro ⟨v₁, p₁⟩ ⟨v₂, p₂ ⟩
+        grind only⟩
 
 @[simp] theorem WeightedMul.instCountablePi_apply (m m' : 𝒲 𝒮 X) {x : X} : (m ⨀ m') x = m x ⨀ m' x := rfl
 

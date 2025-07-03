@@ -20,12 +20,20 @@ class WeightedAdd (α : Type) where
   /-- Weighted addition. Type `a ⨁ b` using `\O+`. -/
   wAdd : α → α → α
 
+class WeightedHMul (α β : Type) (γ : outParam Type) where
+  /-- Weighted multiplication. Type `a ⨀ b` using `\O.`. -/
+  wHMul : α → β → γ
+
 class WeightedMul (α : Type) where
   /-- Weighted multiplication. Type `a ⨀ b` using `\O.`. -/
   wMul : α → α → α
 
+@[default_instance]
+instance instWeightedHMul {α : Type} [WeightedMul α] : WeightedHMul α α α where
+  wHMul a b := WeightedMul.wMul a b
+
 @[inherit_doc] infixl:65 " ⨁ " => WeightedAdd.wAdd
-@[inherit_doc] infixl:70 " ⨀ " => WeightedMul.wMul
+@[inherit_doc] infixl:70 " ⨀ " => WeightedHMul.wHMul
 
 @[simp] instance : WeightedAdd ℕ := ⟨(· + ·)⟩
 @[simp] instance : WeightedMul ℕ := ⟨(· * ·)⟩
@@ -382,26 +390,39 @@ instance WeightedOne.instPi [WeightedOne 𝒮] : WeightedOne (X → 𝒮) where 
 
 @[simp] theorem WeightedZero.instPi_apply [WeightedZero 𝒮] (x : X) : (𝟘 : X → 𝒮) x = 𝟘 := rfl
 
-instance WeightedAdd.instPi [WeightedAdd 𝒮] : WeightedAdd (X → 𝒮) where wAdd a b x := a x ⨁ b x
+-- instance WeightedAdd.instPi [WeightedAdd 𝒮] : WeightedAdd (X → 𝒮) where wAdd a b x := a x ⨁ b x
 instance WeightedMul.instPi [WeightedMul 𝒮] : WeightedMul (X → 𝒮) where wMul a b x := a x ⨀ b x
+instance WeightedAdd.instPi [WeightedAdd 𝒮] : WeightedAdd (X → 𝒮) where wAdd a b x := a x ⨁ b x
+instance WeightedHMul.instPi {α β γ : Type} [WeightedHMul α β γ] : WeightedHMul (X → α) (X → β) (X → γ) where
+  wHMul a b x := a x ⨀ b x
+
+@[simp] theorem WeightedMul.wMul_apply [WeightedMul 𝒮] {a b : X → 𝒮} {x} :
+    WeightedMul.wMul a b x = WeightedMul.wMul (a x) (b x) := rfl
+@[simp] theorem WeightedAdd.wAdd_apply [WeightedAdd 𝒮] {a b : X → 𝒮} {x} :
+    WeightedAdd.wAdd a b x = WeightedAdd.wAdd (a x) (b x) := rfl
+@[simp] theorem WeightedHMul.wHMul_apply {α β γ : Type} [WeightedHMul α β γ] {a : X → α} {b : X → β} {x} :
+    WeightedHMul.wHMul a b x = WeightedHMul.wHMul (a x) (b x) := rfl
 
 attribute [local simp] WeightedAdd.instPi
 attribute [local simp] WeightedMul.instPi
+attribute [local simp] WeightedHMul.instPi
+
+@[simp]
+theorem idk {α : Type} [WeightedMul α] {a b : α} : WeightedMul.wMul a b = WeightedHMul.wHMul a b := rfl
 
 instance WeightedPreSemiring.instPi [WeightedPreSemiring 𝒮] : WeightedPreSemiring (X → 𝒮) where
-  wZero := fun _ ↦ 𝟘
   wAdd_assoc := by simp [wAdd_assoc]
   wZero_add := by simp [wZero_add]
   add_wZero := by simp [wZero_add]
   wNsmul n a x := wNsmul n (a x)
-  wNsmul_wZero := by simp [wNsmul_wZero]
+  wNsmul_wZero := by simp [wNsmul_wZero]; intro; rfl
   wNsmul_succ := by simp [wNsmul_succ]
   wAdd_comm := by simp [wAdd_comm]
-  left_distrib := by simp [left_distrib]
-  right_distrib := by simp [right_distrib]
-  wZero_mul := by simp [wZero_mul]
-  mul_wZero := by simp [mul_wZero]
-  mul_assoc := by simp [mul_assoc]
+  left_distrib := by intros; ext; simp [left_distrib]
+  right_distrib := by intros; ext; simp [right_distrib]
+  wZero_mul := by intros; ext; simp [wZero_mul]
+  mul_wZero := by intros; ext; simp [mul_wZero]
+  mul_assoc := by intros; ext; simp [mul_assoc]
 
 attribute [local simp] WeightedPreSemiring.instPi
 
@@ -414,7 +435,7 @@ instance WeightedSemiring.instPi [WeightedSemiring 𝒮] : WeightedSemiring (X �
   wNpow_succ _ _ := by ext; apply wNpow_succ
   wNpow_zero _ := by ext; apply wNpow_zero
   natCast n _ := natCast n
-  natCast_zero := by simp [natCast_zero]
+  natCast_zero := by simp [natCast_zero]; rfl
   wNpow n a b := wNpow n (a b)
 }
 

@@ -82,14 +82,21 @@ omit [DecidableEq 𝒮] in
 theorem 𝒞.wAdd_apply [DecidableEq X] {m m' : 𝒞 𝒮 X} {x : X} : (m ⨁ m') x = m x ⨁ m' x := rfl
 
 open WeightedPreSemiring in
-instance [DecidableEq X] : WeightedPreSemiring (𝒞 𝒮 X) where
-  wMul a b := ⟨a.to𝒲 ⨀ b.to𝒲, (a.finSupp ∩ b.finSupp).filter fun x ↦ a.to𝒲 x ⨀ b.to𝒲 x ≠ 𝟘 , by
+instance [DecidableEq X] : WeightedMul (𝒞 𝒮 X) where
+  wMul a b := ⟨a.to𝒲 ⨀ b.to𝒲, (a.finSupp ∩ b.finSupp).filter fun x ↦ a.to𝒲 x ⨀ b.to𝒲 x ≠ 𝟘, by
     ext; simp [WeightedMul.wMul]
     contrapose!
     simp
     intro h
     apply Decidable.not_or_of_imp at h
     rcases h with (h | h) <;> simp_all⟩
+
+omit [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] in
+@[simp]
+theorem 𝒞.wMul_apply [DecidableEq X] {m m' : 𝒞 𝒮 X} {x : X} : (m ⨀ m') x = m x ⨀ m' x := rfl
+
+open WeightedPreSemiring in
+instance [DecidableEq X] : WeightedPreSemiring (𝒞 𝒮 X) where
   wNsmul n m := if h0 : n = 0 then 𝟘 else ⟨wNsmul n m.to𝒲, m.finSupp.filter (fun x ↦ wNsmul n (m.to𝒲 x) ≠ 𝟘), by
     ext x; simp_all [wNsmul, instPi]
     constructor
@@ -132,10 +139,9 @@ instance [DecidableEq X] : WeightedPreSemiring (𝒞 𝒮 X) where
   wAdd_comm a b := by ext; apply wAdd_comm
   left_distrib a b c := by ext; apply WeightedPreSemiring.left_distrib
   right_distrib a b c := by ext; apply WeightedPreSemiring.right_distrib
-  wZero_mul := by intro; simp only [𝒞.wZero_to𝒲, wZero_mul, WeightedZero.instCountablePi_apply,
-    𝒞.to𝒲_apply, ne_eq, not_true_eq_false, Finset.filter_False]; rfl
-  mul_wZero := by intro; simp only [𝒞.wZero_to𝒲, mul_wZero, 𝒞.to𝒲_apply,
-    WeightedZero.instCountablePi_apply, ne_eq, not_true_eq_false, Finset.filter_False]; rfl
+  wZero_mul := by intro; ext; simp [𝒞.wZero_to𝒲, wZero_mul, WeightedZero.instCountablePi_apply,
+    𝒞.to𝒲_apply, ne_eq, not_true_eq_false, Finset.filter_False]
+  mul_wZero := by intro; ext; simp only [𝒞.wMul_apply, 𝒞.wZero_apply, mul_wZero]
   mul_assoc a b c := by ext; apply WeightedPreSemiring.mul_assoc
 
 instance [DecidableEq X] : WeightedPartialOrder (𝒞 𝒮 X) := sorry
