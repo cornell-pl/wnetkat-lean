@@ -12,6 +12,7 @@ import Mathlib.Data.Set.Lattice
 import Mathlib.Logic.Encodable.Basic
 import Mathlib.Order.Defs.PartialOrder
 import Mathlib.Tactic.Ring.RingNF
+import Mathlib.Topology.Algebra.InfiniteSum.Defs
 
 set_option grind.warning false
 
