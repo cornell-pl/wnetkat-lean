@@ -1,5 +1,6 @@
 import WeightedNetKAT.Computation
 import Mathlib.Data.ENat.Lattice
+import WeightedNetKAT.WNKA
 
 def Bottleneck (α : Type) := α
 
@@ -14,6 +15,8 @@ instance [LinearOrder α] : LinearOrder (Bottleneck α) := inferInstanceAs (Line
 
 @[simp] instance [LinearOrder α] : WeightedAdd (Bottleneck α) := ⟨max⟩
 @[simp] instance [LinearOrder α] : WeightedMul (Bottleneck α) := ⟨min⟩
+
+attribute [local simp] WeightedHMul.wHMul
 
 @[simp]
 def WeightedPartialOrder.ofPartialOrder [PartialOrder α] : WeightedPartialOrder α where
@@ -65,6 +68,33 @@ instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedMonotonePreSemir
   wMul_mono_right s := by
     intro a b hab
     simp_all [wLe, instWeightedPartialOrderBottleneckOfPartialOrder]
+
+instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedOmegaCompletePartialOrder (Bottleneck α) where
+  wSup := sorry
+  wSup_le := sorry
+  le_wSup := sorry
+instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedOmegaContinuousPreSemiring (Bottleneck α) where
+  wAdd_wSup := sorry
+  wSup_wAdd := sorry
+  wMul_wSup := sorry
+  wSup_wMul := sorry
+
+instance [Encodable α] : Encodable (Bottleneck α) := inferInstanceAs (Encodable α)
+
+instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedNetKAT.WeightedStar (Bottleneck α) where
+  wStar {X _ _} m := m
+  wStar_eq_sum := by
+    intro X _ _
+    letI : WeightedOmegaCompletePartialOrder (𝒞 (Bottleneck α) (X × X)) := sorry
+    letI : WeightedOmegaContinuousPreSemiring (𝒞 (Bottleneck α) (X × X)) := sorry
+    use inferInstance, inferInstance
+    intro m
+    unfold WeightedNetKAT.𝒞.pow
+    rw [WeightedSum_nat_eq_succ]
+    simp
+    ext ⟨a, b⟩
+    simp [WeightedAdd.wAdd]
+    sorry
 
 example : LinearOrder (Fin 4) := inferInstance
 example : OrderBot (Fin 4) := inferInstance

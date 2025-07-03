@@ -113,11 +113,11 @@ instance [DecidableEq X] : WeightedPreSemiring (𝒞 𝒮 X) where
       clear h0
       rcases h with h | h
       · induction n with
-        | zero => simp only [𝒲.wNsmul, WeightedZero.instCountablePi, 𝒲.mk_apply]
+        | zero => simp only [𝒲.wNsmul, 𝒲.instWeightedZero_apply]
         | succ n ih => simp_all only [ne_eq, Decidable.not_not, 𝒲.wNsmul, WeightedAdd.wAdd,
           𝒞.to𝒲_apply, 𝒲.mk_apply, add_wZero]
       · induction n with
-        | zero => simp only [𝒲.wNsmul, WeightedZero.instCountablePi, 𝒲.mk_apply]
+        | zero => simp only [𝒲.wNsmul, 𝒲.instWeightedZero_apply]
         | succ n ih =>
           simp_all only [wNsmul_succ, wAdd_eq_zero_iff, 𝒲.wNsmul, WeightedAdd.wAdd, 𝒞.to𝒲_apply,
             𝒲.mk_apply, add_wZero]
@@ -139,8 +139,7 @@ instance [DecidableEq X] : WeightedPreSemiring (𝒞 𝒮 X) where
   wAdd_comm a b := by ext; apply wAdd_comm
   left_distrib a b c := by ext; apply WeightedPreSemiring.left_distrib
   right_distrib a b c := by ext; apply WeightedPreSemiring.right_distrib
-  wZero_mul := by intro; ext; simp [𝒞.wZero_to𝒲, wZero_mul, WeightedZero.instCountablePi_apply,
-    𝒞.to𝒲_apply, ne_eq, not_true_eq_false, Finset.filter_False]
+  wZero_mul := by intro; ext; simp only [𝒞.wMul_apply, 𝒞.wZero_apply, wZero_mul]
   mul_wZero := by intro; ext; simp only [𝒞.wMul_apply, 𝒞.wZero_apply, mul_wZero]
   mul_assoc a b c := by ext; apply WeightedPreSemiring.mul_assoc
 

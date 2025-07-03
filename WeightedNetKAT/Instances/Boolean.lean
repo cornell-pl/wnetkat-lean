@@ -6,6 +6,8 @@ import WeightedNetKAT.Computation
 @[simp] instance : WeightedOne Bool := ⟨True⟩
 @[simp] instance : WeightedLE Bool := ⟨(· ≤ ·)⟩
 
+attribute [local simp] WeightedHMul.wHMul
+
 instance : WeightedSemiring Bool where
   wAdd_assoc := by simp
   wZero_add := by simp

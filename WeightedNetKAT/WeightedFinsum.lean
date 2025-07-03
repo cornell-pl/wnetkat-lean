@@ -33,6 +33,20 @@ theorem wSup_apply {ι : Type} (C : WeightedChain (ι → 𝒮)) (a : ι) :
   simp [wSup]
   rfl
 
+@[simp]
+theorem wSup_const {α : Type} [WeightedOmegaCompletePartialOrder α] (x : α) :
+    wSup ⟨fun _ ↦ x, by intro; simp⟩ = x := by
+  apply wle_antisymm
+  · apply wSup_le; magic_simp [implies_true]
+  · apply le_wSup_of_le 0; magic_simp
+
+@[simp]
+theorem wSup_of_const {α : Type} [WeightedOmegaCompletePartialOrder α] (C : WeightedChain α)
+    (h : ∀ n, C n = C 0) : wSup C = C 0 := by
+  apply wle_antisymm
+  · apply wSup_le; magic_simp [implies_true]; simp_all
+  · apply le_wSup_of_le 0; magic_simp
+
 theorem WeightedFinsum_mono {α : Type} [WeightedPartialOrder α] [WeightedPreSemiring α] [WeightedMonotonePreSemiring α] [DecidableEq X] (S : Finset X) : WeightedMonotone (fun (f : X → α) ↦ ⨁ᶠ i ∈ S, f i) := by
   intro f g hfg
   simp only
@@ -66,22 +80,18 @@ theorem WeightedFinsum_cont [DecidableEq X] (S : Finset X) :
   | empty =>
     simp
     simp [WeightedChain.map]
-    apply wle_antisymm <;> simp
-    intro; magic_simp
   | insert x S hxS ih =>
     simp_all
-    simp [WeightedOmegaContinuousAddLeft, WeightedOmegaContinuousAddRight, WeightedChain.map]
-    magic_simp
-    simp only [WeightedChain.val_apply]
+    simp [WeightedOmegaContinuousAddLeft, WeightedOmegaContinuousAddRight]
+    rw [WeightedChain.map_map]
+    swap
+    · intro s₁ s₂ h; apply wSup_le_of_le _ _ fun i ↦ wAdd_mono_left _ h
     apply wle_antisymm
     · refine wSup_le fun i ↦ ?_
-      simp [WeightedOmegaCompletePartialOrder.instPi]
-      magic_simp
-      simp [WeightedOmegaContinuousAddLeft, WeightedOmegaContinuousAddRight, WeightedChain.map]
       apply wSup_le fun j ↦ ?_
       apply le_wSup_of_le (i ⊔ j)
+      simp
       magic_simp
-      simp only [WeightedChain.val_apply]
       gcongr
       · apply C.prop; simp
       · apply WeightedFinsum_mono; apply C.prop; simp
@@ -586,7 +596,8 @@ theorem WeightedSum_le_nat {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮
     a ≼ ⨁' (x : ℕ), f x :=
   wle_trans h <| WeightedSum_finset_le (Finset.range n)
 attribute [local simp] Encodable.decode₂_eq_some in
-theorem WeightedSum_nat_eq_succ {f : ℕ → 𝒮} : ⨁' (x : ℕ), f x = f 0 ⨁ ⨁' (x : ℕ), f (x + 1) := by
+theorem WeightedSum_nat_eq_succ {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+    {f : ℕ → 𝒮} : ⨁' (x : ℕ), f x = f 0 ⨁ ⨁' (x : ℕ), f (x + 1) := by
   apply wle_antisymm
   · apply WeightedSum_nat_le
     intro n

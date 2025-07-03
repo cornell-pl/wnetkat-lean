@@ -369,7 +369,7 @@ theorem Policy.sem_n_approx [Fintype N] (p : Policy[F,N,𝒮]) : p.sem = wSup �
   induction p with
   | Filter t =>
     ext h h'
-    simp_all [WeightedOmegaCompletePartialOrder.instPi, WeightedOmegaCompletePartialOrder.instCountablePi]
+    simp_all
     magic_simp
     simp
   | Mod f i => rw [wSup_of_const] <;> (magic_simp; simp)
@@ -403,8 +403,6 @@ theorem Policy.sem_n_approx [Fintype N] (p : Policy[F,N,𝒮]) : p.sem = wSup �
     simp
     magic_simp
     rw [ih]
-    simp [WeightedOmegaCompletePartialOrder.instPi, WeightedOmegaCompletePartialOrder.instCountablePi]
-    magic_simp
     simp
     rw [WeightedOmegaContinuousMulRight]
     congr
@@ -413,9 +411,8 @@ theorem Policy.sem_n_approx [Fintype N] (p : Policy[F,N,𝒮]) : p.sem = wSup �
     simp only [sem, ih₁, ih₂]
     simp only [WeightedOmegaCompletePartialOrder.instPi, WeightedOmegaContinuousAddRight,
       WeightedOmegaContinuousAddLeft]
-    magic_simp
+    magic_simp [sem_n]
     rw [wSup_wSup]
-    · simp
     · intro s₁ s₂ h₁₂ n
       apply wAdd_mono_left _ (sem_n_mono p₂ h₁₂)
     · intro s₁ s₂ h₁₂ n
@@ -431,10 +428,9 @@ theorem Policy.sem_n_approx [Fintype N] (p : Policy[F,N,𝒮]) : p.sem = wSup �
           ⟨fun n m ↦ (p.iter m).sem_n n h, fun hab m ↦ (p.iter m).sem_n_mono hab h⟩
       simp only [WeightedOmegaCompletePartialOrder.instPi, DFunLike.coe] at this
       simp only [this, sem_n, Policy.instHPow]; clear this
-      magic_simp [WeightedChain.map]
       apply wSup_le fun m ↦ ?_
       apply le_wSup_of_le (max n m)
-      magic_simp
+      simp
       apply wle_trans (WeightedFinsum_le_of_subset (S₂:=Finset.range (max n m)) (by simp))
       apply WeightedFinsum_mono
       intro i

@@ -63,7 +63,10 @@ def S.repr {F N 𝒮 : Type} {p : RPol[F,N,𝒮]} (s : S p) : String :=
     | .inl x => s!"l{x.repr}"
     | .inr x => s!"r{x.repr}"
   | wnk_rpol { ~_ ⨀ ~p₁ } => let s' : S p₁ := s; s'.repr
-  | wnk_rpol { ~p₁* } => let s' : S p₁ := s; s'.repr
+  | wnk_rpol { ~p₁* } =>
+    match s with
+    | .inl s => let s' : S p₁ := s; s'.repr
+    | .inr ⟨♡, _⟩ => "♡"
 
 instance {F N 𝒮 : Type} {p : RPol[F,N,𝒮]} : Repr (S p) where
   reprPrec s _ := s.repr
@@ -76,7 +79,7 @@ instance {X : Type} [Repr X] : Repr (X × Unit) where
 def Pk.all (F N : Type) [Fintype F] [DecidableEq F] [Fintype N] : Finset Pk[F,N] := Fintype.elems
 def Pk.pairs (F N : Type) [Fintype F] [DecidableEq F] [Fintype N] : Finset (Pk[F,N] × Pk[F,N]) := Fintype.elems
 
-unsafe def RPol.eval {F N 𝒮 : Type} [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [WeightedSemiring 𝒮] [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] [DecidableEq 𝒮] (p : RPol[F,N,𝒮]) :=
+unsafe def RPol.eval {F N 𝒮 : Type} [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [WeightedSemiring 𝒮] [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] [DecidableEq 𝒮] [WeightedStar 𝒮] (p : RPol[F,N,𝒮]) :=
   let N := p.wnka
   let ι := N.ι
   let δ := Pk.pairs _ _ |>.val.unquot.map (fun (α, β) ↦ (α, β, N.δ α β)) |>.filter (·.2.2.finSupp ≠ ∅)

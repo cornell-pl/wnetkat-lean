@@ -200,6 +200,10 @@ def WeightedMonotone [WeightedLE α] {ι : Type} [WeightedLE ι] (f : ι → α)
 def WeightedAntitone [WeightedLE α] {ι : Type} [WeightedLE ι] (f : ι → α) : Prop :=
   ∀ {s₁ s₂}, s₁ ≼ s₂ → f s₂ ≼ f s₁
 
+theorem WeightedMonotone.comp {α β γ} [WeightedLE α] [WeightedLE β] [WeightedLE γ]
+    {f : α → β} {g : β → γ} (hf : WeightedMonotone f) (hg : WeightedMonotone g) :
+    WeightedMonotone (g ∘ f) := hg ∘ hf
+
 def WeightedChain (α : Type) [WeightedPartialOrder α] :=
   { f : ℕ → α // WeightedMonotone f }
 def WeightedChain' (α : Type) [WeightedPartialOrder α] :=
@@ -227,6 +231,11 @@ def WeightedChain.map {α β : Type} [WeightedPartialOrder α] [WeightedPartialO
 @[simp]
 theorem WeightedChain.map_apply {α β : Type} [WeightedPartialOrder α] [WeightedPartialOrder β]
     (C : WeightedChain α) (f : α → β) (hf : WeightedMonotone f) {i : ℕ} : (C.map f hf) i = f (C i) := rfl
+
+@[simp]
+theorem WeightedChain.map_map {α β γ : Type} [WeightedPartialOrder α] [WeightedPartialOrder β] [WeightedPartialOrder γ]
+    (C : WeightedChain α) (f : α → β) (hf : WeightedMonotone f)  (g : β → γ) (hg : WeightedMonotone g) :
+    (C.map f hf).map g hg = C.map (g ∘ f) (WeightedMonotone.comp hf hg) := rfl
 
 class WeightedOmegaCompletePartialOrder (α : Type) extends
     WeightedPartialOrder α where
@@ -406,9 +415,6 @@ instance WeightedHMul.instPi {α β γ : Type} [WeightedHMul α β γ] : Weighte
 attribute [local simp] WeightedAdd.instPi
 attribute [local simp] WeightedMul.instPi
 attribute [local simp] WeightedHMul.instPi
-
-@[simp]
-theorem idk {α : Type} [WeightedMul α] {a b : α} : WeightedMul.wMul a b = WeightedHMul.wHMul a b := rfl
 
 instance WeightedPreSemiring.instPi [WeightedPreSemiring 𝒮] : WeightedPreSemiring (X → 𝒮) where
   wAdd_assoc := by simp [wAdd_assoc]
