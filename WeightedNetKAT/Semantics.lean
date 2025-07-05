@@ -1,12 +1,6 @@
-import Mathlib.Algebra.BigOperators.Group.Finset.Basic
-import Mathlib.Algebra.BigOperators.Group.List.Lemmas
-import Mathlib.Logic.Equiv.Finset
-import Mathlib.Logic.Equiv.Finset
-import Mathlib.Topology.Algebra.InfiniteSum.Basic
+import WeightedNetKAT.Countsupp
 import WeightedNetKAT.Subst
 import WeightedNetKAT.Syntax
-import WeightedNetKAT.WeightedFinsum
-import WeightedNetKAT.Countsupp
 
 open OmegaCompletePartialOrder
 
@@ -118,9 +112,9 @@ noncomputable def Φ (p : Policy[F,N,𝒮]) (d : H[F,N] → H[F,N] →c 𝒮) : 
 example {p : Policy[F,N,𝒮]} : Φ p (wnk_policy {~p*}.sem) = wnk_policy { skip ⨁ ~p; ~p* }.sem := by
   ext
   unfold Φ
-  simp [WeightedAdd.wAdd, Policy.sem, Predicate.sem]
+  simp [Policy.sem, Predicate.sem]
 
-open WeightedPartialOrder WeightedOmegaContinuousPreSemiring OmegaCompletePartialOrder OmegaContinuousNonUnitalSemiring
+open OmegaCompletePartialOrder OmegaContinuousNonUnitalSemiring
 
 omit [MulRightMono 𝒮] in
 theorem Φ_mono (p : Policy[F,N,𝒮]) : Monotone (Φ p) := by
@@ -208,7 +202,7 @@ theorem Policy.iter_sem_isLfp (p : Policy[F,N,𝒮]) : IsLfp (Φ p) (wnk_policy 
     simp [← ωSum_mul_left]
     rw [ωSum_comm]
   · intro f hf h
-    simp [sem, Φ, 𝒲.bind, WeightedAdd.wAdd]
+    simp [sem, Φ]
     simp [ωSum_nat_eq_ωSup]
     intro n
     -- apply WeightedSum_nat_le (𝒮:=H[F,N] →c 𝒮) (f:=(fun n ↦ (p.iter n).sem h))
@@ -219,7 +213,7 @@ theorem Policy.iter_sem_isLfp (p : Policy[F,N,𝒮]) : IsLfp (Φ p) (wnk_policy 
       rw [add_comm]
       simp [sem, Predicate.sem, Finset.sum_range_add, DFunLike.coe]
       rw [← hf]
-      simp only [WeightedAdd.wAdd, Φ]
+      simp only [Φ]
       gcongr
       simp [add_comm]
       simp [sem]
@@ -227,7 +221,6 @@ theorem Policy.iter_sem_isLfp (p : Policy[F,N,𝒮]) : IsLfp (Φ p) (wnk_policy 
         ∑ i ∈ Finset.range n, (p.sem h).bind (p.iter i).sem
           = (p.sem h).bind (∑ i ∈ Finset.range n, (p.iter i).sem) := by
           simp [Countsupp.bind]
-          magic_simp
           ext h'
           simp [Finset.mul_sum]
           rw [ωSum_sum_comm]
@@ -245,7 +238,7 @@ example {p : Policy[F,N,𝒮]} : wnk_policy {~p*}.sem = wnk_policy { skip ⨁ ~p
   rw [← this]
   ext
   unfold Φ
-  simp [WeightedAdd.wAdd, Policy.sem, Predicate.sem]
+  simp [Policy.sem, Predicate.sem]
 
 @[simp]
 instance : Zero Policy[F,N,𝒮] where

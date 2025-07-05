@@ -1,4 +1,6 @@
 import WeightedNetKAT.Language
+import WeightedNetKAT.FinsuppExt
+import Mathlib.Tactic.DeriveFintype
 
 namespace WeightedNetKAT
 
@@ -70,7 +72,7 @@ omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoi
 theorem 𝒞.wOne_finSupp {Y : Type} [DecidableEq Y] [Fintype Y] [DecidableEq 𝒮] :
     (⨯1 : (Y × Y) →₀ 𝒮).support = if (1 : 𝒮) = 0 then ∅ else Fintype.elems.map ⟨fun a ↦ (a, a), by intro; simp⟩ := by
   ext ⟨x, y⟩
-  simp [WeightedOne.wOne, dite_not, ne_eq]
+  simp [dite_not, ne_eq]
   split_ifs with h
   · simp [h]
   · simp [Fintype.complete, h]
@@ -81,7 +83,7 @@ theorem WeightedProduct.wProd_wOne {X Y : Type} [DecidableEq X] [DecidableEq Y] 
     (a ⨯ (⨯1 : (Y × Y) →₀ 𝒮)) = a := by
   ext ⟨x, y⟩; simp [WeightedProduct.wProd]
   rw [Finset.sum_eq_single ⟨x, y⟩]
-  · simp only [↓reduceIte, WeightedSemiring.mul_wOne]
+  · simp only [↓reduceIte]
   · grind only [cases eager Prod, cases Or]
   · grind only [Finsupp.mem_support_iff]
 @[simp]
@@ -92,11 +94,11 @@ theorem WeightedProduct.wOne_wProd {X Y : Type} [DecidableEq X] [DecidableEq Y] 
   split_ifs with h
   · simp; symm; apply eq_zero_of_zero_eq_one h.symm
   · rw [Finset.sum_eq_single ⟨x, x⟩]
-    · simp only [↓reduceIte, WeightedSemiring.wOne_mul]
+    · simp only [↓reduceIte]
     · grind only [Function.Embedding.coeFn_mk, Prod.mk.injEq, Finset.mem_map, Fintype.complete,
       ite_eq_right_iff, cases eager Prod]
     · simp only [Finset.mem_map_mk, Fintype.complete, not_true_eq_false, ↓reduceIte,
-      WeightedSemiring.wOne_mul, IsEmpty.forall_iff]
+      IsEmpty.forall_iff]
 
 theorem WeightedProduct.wProd_assoc {X Y Z W : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq W] [DecidableEq 𝒮]
     (a : (X × Y) →₀ 𝒮)
@@ -530,7 +532,6 @@ theorem GS.induction' (P : GS[F,N] → Prop)
 theorem ι_wProd_𝓁 {A B : Type} [DecidableEq A] [DecidableEq B] {X : (Unit × A) →₀ 𝒮} {Y : (Unit × B) →₀ 𝒮} {Z : (A × Unit) →₀ 𝒮} {W : (B × Unit) →₀ 𝒮} :
     (ι[X, Y] ⨯ 𝓁[Z, W]) = (X ⨯ Z) + (Y ⨯ W) := by
   ext a
-  simp [WeightedAdd.wAdd]
   simp [WeightedProduct.wProd, S.ι, S.𝓁]
 theorem ι_wProd_δ {A B C D : Type}
     [DecidableEq A] [DecidableEq B] [DecidableEq C] [DecidableEq D]
@@ -540,7 +541,6 @@ theorem ι_wProd_δ {A B C D : Type}
     :
     (ι[X, Y] ⨯ δ[[Z, W], [U, V]]) = ι[X ⨯ Z, X ⨯ W] + ι[Y ⨯ U, Y ⨯ V] := by
   ext ⟨_, a⟩
-  simp [WeightedAdd.wAdd]
   simp [WeightedProduct.wProd, S.ι, S.𝓁, S.δ]
   rcases a with c | d
   · simp
@@ -1026,7 +1026,7 @@ theorem RPol.wnka_sem_weight {w} {p : RPol[F,N,𝒮]} :
       Finsupp.hMul_left_apply, GS.mk, Countsupp.coe_mk, List.nil_append, WNKA.compute, 𝓁,
       Countsupp.hMul_apply_left]
   next α α₀ α₁ =>
-    simp [WNKA.sem, WNKA.compute, wnka, δ, GS.mk, 𝒲.mk_apply, ι, 𝓁, GS.pks,
+    simp [WNKA.sem, WNKA.compute, wnka, δ, GS.mk, ι, 𝓁, GS.pks,
       ← WeightedProduct.wProd_assoc, ← WeightedProduct.wHMul_wProd]
   next α A αn =>
     simp [GS.mk, wnka, WNKA.sem, ι, WNKA.compute, GS.pks, ← WeightedProduct.wProd_assoc,
@@ -1140,7 +1140,6 @@ theorem RPol.seq_wnka_compute'' {p₁ p₂ : RPol[F,N,𝒮]} [Inhabited Pk[F,N]]
         simp only [WNKA.compute'_right, wnka_δ]
         simp only [List.cons_append, ← WeightedProduct.wProd_assoc]
 
-attribute [-simp] WeightedFinsum_range_succ WeightedFinsum_range_add in
 theorem RPol.wnka_sem_seq [Encodable F] [Encodable N] {p₁ p₂ : RPol[F,N,𝒮]}
     (ih₁ : p₁.wnka.sem = G p₁) (ih₂ : p₂.wnka.sem = G p₂) :
     wnk_rpol {~p₁ ; ~p₂}.wnka.sem = G wnk_rpol {~p₁; ~p₂} := by
@@ -1197,7 +1196,6 @@ theorem RPol.wnka_sem_seq [Encodable F] [Encodable N] {p₁ p₂ : RPol[F,N,𝒮
       refine (List.take_self_eq_iff A).mpr (by omega)
 
 
-attribute [-simp] WeightedFinsum_range_succ WeightedFinsum_range_add in
 theorem RPol.wnka_sem [Encodable F] [Encodable N] (p : RPol[F,N,𝒮]) : (RPol.wnka p).sem = G p := by
   if h : (0 : 𝒮) = 1 then ext; simp [eq_zero_of_zero_eq_one h] else
   have h' : ¬1 = (0 : 𝒮) := by grind

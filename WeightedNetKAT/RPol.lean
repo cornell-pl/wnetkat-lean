@@ -2,7 +2,7 @@ import WeightedNetKAT.Syntax
 
 namespace WeightedNetKAT
 
-variable {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+variable {𝒮 : Type}
 variable {F : Type} [Fintype F] [DecidableEq F]
 variable {N : Type} [Fintype N] [DecidableEq N]
 
@@ -34,7 +34,6 @@ def RPol.iterDepth : RPol[F,N,𝒮] → ℕ
 | .Weight _ q => q.iterDepth
 | .Iter p => p.iterDepth + 1
 
-omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 omit [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] in
 @[simp]
 theorem RPol.iterDepth_iter {p : RPol[F,N,𝒮]} {n : ℕ} :

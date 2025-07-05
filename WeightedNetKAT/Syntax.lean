@@ -1,9 +1,9 @@
-import WeightedNetKAT.Weightings
+import Mathlib.Data.Countable.Basic
 import Mathlib.Logic.Encodable.Pi
 
 namespace WeightedNetKAT
 
-variable {𝒮 : Type} [WeightedOmegaCompletePartialOrder 𝒮] [WeightedPreSemiring 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮]
+variable {𝒮 : Type}
 
 variable {F : Type} [Fintype F] [DecidableEq F]
 variable {N : Type} [Fintype N] [DecidableEq N]

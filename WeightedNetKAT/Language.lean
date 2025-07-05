@@ -1,7 +1,6 @@
-import WeightedNetKAT.Computation
-import Mathlib.Computability.Language
-import Mathlib.Data.Finite.Sum
+import Mathlib.Data.Finsupp.Defs
 import WeightedNetKAT.RPol
+import WeightedNetKAT.Semantics
 
 namespace WeightedNetKAT
 
@@ -187,7 +186,6 @@ theorem Countsupp.one_bind {X : Type} [Countable X] [Encodable X] {g : X → X �
   · simp
   · simp
 
-open WeightedOmegaCompletePartialOrder in
 noncomputable def RPol.sem (p : RPol[F,N,𝒮]) : H[F,N] → H[F,N] →c 𝒮 := match p with
   | wnk_rpol {drop} => 0
   | wnk_rpol {skip} => η
@@ -238,7 +236,7 @@ theorem GS.sem_eq (g : GS[F,N]) (h) :
     | nil =>
       simp_all [RPol.sem, η]
     | cons x g ih =>
-      simp_all [RPol.sem, 𝒲.bind_apply]
+      simp_all [RPol.sem]
       rw [ωSum_eq_single ⟨⟨x, h⟩, by simp [h10]⟩ (by simp_all)]
       simp_all
       rw [ωSum_eq_single ⟨⟨x, x::h⟩, by simp [h10]⟩ (by simp_all)]
@@ -351,7 +349,7 @@ theorem RPol.sem_G.Add {p₁ p₂} (ih₁ : p₁.sem_G_theorem) (ih₂ : p₂.se
 omit [Encodable F] [Encodable N] in
 variable [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem RPol.sem_G.Weight {w} {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~w ⨀ ~p₁}.sem_G_theorem (F:=F) (N:=N) (𝒮:=𝒮) := by
-  simp only [sem_G_theorem, instWeightedHMul𝒲] at ih
+  simp only [sem_G_theorem] at ih
   simp [sem, ih, G]; clear ih
   ext h h'
   simp [← ωSum_mul_left]
@@ -407,7 +405,7 @@ theorem RPol.sem_G.Iter {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~p₁*}.sem
     simp [ih']
     clear ih ih'
     ext h h'
-    simp [𝒲.bind_apply, G]
+    simp [G]
     simp [WeightedConcat.concat]
     sorry
     -- simp [← WeightedSum_mul_left, ← WeightedPreSemiring.mul_assoc, ← WeightedSum_mul_right]
@@ -447,6 +445,5 @@ theorem RPol.sem_G (p : RPol[F,N,𝒮]) :
   | Add p₁ p₂ ih₁ ih₂ => exact RPol.sem_G.Add ih₁ ih₂
   | Weight w p₁ ih => exact RPol.sem_G.Weight ih
   | Iter p₁ ih => exact RPol.sem_G.Iter ih
-
 
 end WeightedNetKAT
