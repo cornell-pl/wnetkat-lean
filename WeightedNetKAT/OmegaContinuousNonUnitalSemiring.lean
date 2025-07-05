@@ -197,7 +197,7 @@ theorem le_ωSum_of_finset
       exact Finset.le_sup hxs
   all_goals simp +contextual
 
-theorem ωSum_finset {I : Type} [DecidableEq I] [Encodable I] (S : Finset I) (f : I → 𝒮) :
+theorem ωSum_finset {I : Type} [DecidableEq I] [Countable I] (S : Finset I) (f : I → 𝒮) :
     ω∑ x : S, f x = ∑ x ∈ S, f x := by
   apply le_antisymm
   · apply ωSum_le_of_finset fun S₀ ↦ ?_
@@ -209,7 +209,7 @@ theorem ωSum_finset {I : Type} [DecidableEq I] [Encodable I] (S : Finset I) (f 
   · apply le_trans _ (le_ωSum_of_finset S.attach)
     rw [Finset.sum_attach]
 
-theorem ωSum_fintype {I : Type} [DecidableEq I] [Encodable I] [Fintype I] (f : I → 𝒮) :
+theorem ωSum_fintype {I : Type} [DecidableEq I] [Countable I] [Fintype I] (f : I → 𝒮) :
     ω∑ x, f x = ∑ x, f x :=
   le_antisymm
     (ωSum_le_of_finset fun _ ↦ Finset.sum_le_univ_sum_of_nonneg fun x ↦ zero_le'' (f x))
