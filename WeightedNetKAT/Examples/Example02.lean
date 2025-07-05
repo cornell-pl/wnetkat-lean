@@ -1,5 +1,7 @@
 import WeightedNetKAT.Examples.Common
 
+namespace WeightedNetKAT
+
 open Fields
 
 /-! Example showing the `match`-syntax sugar. -/
@@ -18,28 +20,28 @@ def l {𝒮 : Type} [OfNat 𝒮 2] : Policy[Fields,ℕ,𝒮] := wnk_policy {
 }
 
 /--
-info: {([{dst↦4,pt↦2,sw↦0}, {dst↦4,pt↦0,sw↦0}], H),
- ([{dst↦4,pt↦3,sw↦0}, {dst↦4,pt↦0,sw↦0}], H),
- ([{dst↦4,pt↦5,sw↦0}, {dst↦4,pt↦0,sw↦0}], H),
- ([{dst↦4,pt↦2,sw↦2}, {dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}], M),
- ([{dst↦4,pt↦3,sw↦2}, {dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}], M),
- ([{dst↦4,pt↦5,sw↦2}, {dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}], M)}
+info: {(({dst↦4,pt↦2,sw↦0}, [{dst↦4,pt↦0,sw↦0}]), 3),
+ (({dst↦4,pt↦3,sw↦0}, [{dst↦4,pt↦0,sw↦0}]), 3),
+ (({dst↦4,pt↦5,sw↦0}, [{dst↦4,pt↦0,sw↦0}]), 3),
+ (({dst↦4,pt↦2,sw↦2}, [{dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}]), 2),
+ (({dst↦4,pt↦3,sw↦2}, [{dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}]), 2),
+ (({dst↦4,pt↦5,sw↦2}, [{dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}]), 2)}
 -/
 #guard_msgs in
-#wnk_eval[Bottleneck Secutiy₄, 2, [pk[dst ↦ H₄]]] {
+#wnk_eval[Bottleneck Secutiy₄, 2, ⟨pk[dst ↦ H₄], []⟩] {
   dst = H₄;   dup; (~p; ~l; dup)*; ~p;   true
 }
 
 /--
-info: {([{dst↦4,pt↦2,sw↦0}, {dst↦4,pt↦0,sw↦0}], ⊤),
- ([{dst↦4,pt↦3,sw↦0}, {dst↦4,pt↦0,sw↦0}], ⊤),
- ([{dst↦4,pt↦5,sw↦0}, {dst↦4,pt↦0,sw↦0}], ⊤),
- ([{dst↦4,pt↦2,sw↦2}, {dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}], 2),
- ([{dst↦4,pt↦3,sw↦2}, {dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}], 2),
- ([{dst↦4,pt↦5,sw↦2}, {dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}], 2)}
+info: {(({dst↦4,pt↦2,sw↦0}, [{dst↦4,pt↦0,sw↦0}]), none),
+ (({dst↦4,pt↦3,sw↦0}, [{dst↦4,pt↦0,sw↦0}]), none),
+ (({dst↦4,pt↦5,sw↦0}, [{dst↦4,pt↦0,sw↦0}]), none),
+ (({dst↦4,pt↦2,sw↦2}, [{dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}]), some 2),
+ (({dst↦4,pt↦3,sw↦2}, [{dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}]), some 2),
+ (({dst↦4,pt↦5,sw↦2}, [{dst↦4,pt↦1,sw↦2}, {dst↦4,pt↦0,sw↦0}]), some 2)}
 -/
 #guard_msgs in
-#wnk_eval[Bottleneck ℕ∞, 2, [pk[dst ↦ H₄]]] {
+#wnk_eval[Bottleneck ℕ∞, 2, ⟨pk[dst ↦ H₄], []⟩] {
   dst = H₄;   dup; (~p; ~l; dup)*; ~p;   true
 }
 
@@ -57,3 +59,5 @@ def l' {𝒮 : Type} [OfNat 𝒮 2] : Policy[Fields,ℕ,𝒮] := wnk_policy {
   drop
 }
 example {𝒮} [OfNat 𝒮 2] : l (𝒮:=𝒮) = l' := by rfl
+
+end WeightedNetKAT

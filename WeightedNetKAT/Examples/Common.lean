@@ -8,13 +8,9 @@ namespace WeightedNetKAT
 
 inductive Fields where
   | dst | pt | sw
-deriving DecidableEq
+deriving DecidableEq, Fintype
 
 open Fields
-
-instance : Fintype Fields where
-  elems := {dst, pt, sw}
-  complete x := by cases x <;> simp
 
 instance : Encodable Fields where
   encode f := match f with | dst => 0 | pt => 1 | sw => 2
@@ -41,8 +37,8 @@ def Network {F N 𝒮 : Type} (ingress : Predicate[F,N]) (p l : Policy[F,N,𝒮]
 syntax "#wnk_eval[" term "," term ("," term)? "]" "{" cwnk_policy "}" : command
 
 macro_rules
-| `(#wnk_eval[$S, $n] { $p }) => `(#wnk_eval[$S, $n, [0]] { $p })
-| `(#wnk_eval[$S, $n, $h] { $p }) => `(#eval wnk_policy { $p }.compute (𝒮:=$S) $n $h |>.pretty)
+| `(#wnk_eval[$S, $n] { $p }) => `(#wnk_eval[$S, $n, ⟨0, []⟩] { $p })
+| `(#wnk_eval[$S, $n, $h] { $p }) => `(#eval! wnk_policy { $p }.compute (𝒮:=$S) $n $h |>.pretty)
 
 def S.repr {F N 𝒮 : Type} {p : RPol[F,N,𝒮]} (s : S p) : String :=
   match p with
@@ -79,17 +75,20 @@ instance {X : Type} [Repr X] : Repr (X × Unit) where
 def Pk.all (F N : Type) [Fintype F] [DecidableEq F] [Fintype N] : Finset Pk[F,N] := Fintype.elems
 def Pk.pairs (F N : Type) [Fintype F] [DecidableEq F] [Fintype N] : Finset (Pk[F,N] × Pk[F,N]) := Fintype.elems
 
-unsafe def RPol.eval {F N 𝒮 : Type} [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [WeightedSemiring 𝒮] [WeightedPartialOrder 𝒮] [WeightedMonotonePreSemiring 𝒮] [DecidableEq 𝒮] [WeightedStar 𝒮] (p : RPol[F,N,𝒮]) :=
+unsafe def RPol.eval {F N 𝒮 : Type}
+    [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N]
+    [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
+    [DecidableEq 𝒮] [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) :=
   let N := p.wnka
   let ι := N.ι
-  let δ := Pk.pairs _ _ |>.val.unquot.map (fun (α, β) ↦ (α, β, N.δ α β)) |>.filter (·.2.2.finSupp ≠ ∅)
-  let 𝓁 := Pk.pairs _ _ |>.val.unquot.map (fun (α, β) ↦ (α, β, N.𝓁 α β)) |>.filter (·.2.2.finSupp ≠ ∅)
+  let δ := Pk.pairs _ _ |>.val.unquot.map (fun (α, β) ↦ (α, β, N.δ α β)) |>.filter (·.2.2.support ≠ ∅)
+  let 𝓁 := Pk.pairs _ _ |>.val.unquot.map (fun (α, β) ↦ (α, β, N.𝒪 α β)) |>.filter (·.2.2.support ≠ ∅)
   (ι, δ, 𝓁)
 
 syntax "#wnka_eval[" term "," term "," term "]" "{" cwnk_rpol "}" : command
 
 macro_rules
-| `(#wnka_eval[$f, $n, $s] { $p }) => `(#eval wnk_rpol { $p }.eval (F:=$f) (N:=$n) (𝒮:=$s))
+| `(#wnka_eval[$f, $n, $s] { $p }) => `(#eval! wnk_rpol { $p }.eval (F:=$f) (N:=$n) (𝒮:=$s))
 
 declare_syntax_cat pk_entry
 syntax term "↦" term : pk_entry

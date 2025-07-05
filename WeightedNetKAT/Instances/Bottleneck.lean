@@ -13,88 +13,94 @@ instance [LE α] : LE (Bottleneck α) := inferInstanceAs (LE α)
 instance [PartialOrder α] : PartialOrder (Bottleneck α) := inferInstanceAs (PartialOrder α)
 instance [LinearOrder α] : LinearOrder (Bottleneck α) := inferInstanceAs (LinearOrder α)
 
-@[simp] instance [LinearOrder α] : WeightedAdd (Bottleneck α) := ⟨max⟩
-@[simp] instance [LinearOrder α] : WeightedMul (Bottleneck α) := ⟨min⟩
+@[simp] instance [LinearOrder α] : Add (Bottleneck α) := ⟨max⟩
+@[simp] instance [LinearOrder α] : Mul (Bottleneck α) := ⟨min⟩
 
-attribute [local simp] WeightedHMul.wHMul
-
-@[simp]
-def WeightedPartialOrder.ofPartialOrder [PartialOrder α] : WeightedPartialOrder α where
-  wle := (· ≤ ·)
-  wle_refl := le_refl
-  wle_trans := le_trans
-  wle_antisymm := le_antisymm
+@[simp] theorem Bottleneck.add_eq_max [LinearOrder α] {a b : Bottleneck α} : a + b = max a b := rfl
+@[simp] theorem Bottleneck.mul_eq_min [LinearOrder α] {a b : Bottleneck α} : a * b = min a b := rfl
 
 instance [Bot α] : Bot (Bottleneck α) := inferInstanceAs (Bot α)
 instance [LE α] [OrderBot α] : OrderBot (Bottleneck α) := inferInstanceAs (OrderBot α)
 instance [Top α] : Top (Bottleneck α) := inferInstanceAs (Top α)
 instance [LE α] [OrderTop α] : OrderTop (Bottleneck α) := inferInstanceAs (OrderTop α)
-@[simp] instance [LinearOrder α] [OrderBot α] : WeightedPreSemiring (Bottleneck α) where
-  wZero := ⊥
-  wAdd_assoc := max_assoc
-  wZero_add := max_bot_left
-  add_wZero := max_bot_right
-  wNsmul n x := if n = 0 then ⊥ else x
-  wNsmul_wZero _ := by rfl
-  wNsmul_succ _ _  := by simp; split_ifs <;> simp
-  wAdd_comm := max_comm
+instance [LE α] [OrderBot α] : Zero (Bottleneck α) := ⟨⊥⟩
+@[simp] theorem Bottlenext.zero_eq_bot [LE α] [OrderBot α] : (0 : Bottleneck α) = ⊥ := rfl
+instance [LE α] [OrderTop α] : One (Bottleneck α) := ⟨⊤⟩
+@[simp] theorem Bottlenext.one_eq_top [LE α] [OrderTop α] : (1 : Bottleneck α) = ⊤ := rfl
+@[simp] instance [LinearOrder α] [OrderBot α] [OrderTop α] : Semiring (Bottleneck α) where
+  add_assoc := max_assoc
+  zero_add := max_bot_left
+  add_zero := max_bot_right
+  nsmul n x := if n = 0 then ⊥ else x
+  nsmul_zero _ := by rfl
+  nsmul_succ _ _  := by simp; split_ifs <;> simp
+  add_comm := max_comm
   left_distrib := inf_sup_left
   right_distrib := inf_sup_right
-  wZero_mul := min_bot_left
-  mul_wZero := min_bot_right
+  zero_mul := min_bot_left
+  mul_zero := min_bot_right
   mul_assoc := min_assoc
+  one_mul := by simp
+  mul_one := by simp
 
-instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedSemiring (Bottleneck α) where
-  wOne := ⊤
-  wOne_mul := min_top_left
-  mul_wOne := min_top_right
-  natCast n := if n = 0 then ⊥ else ⊤
-  natCast_zero := by simp
-  natCast_succ := by simp
-  wNpow n a := if n = 0 then ⊤ else a
-  wNpow_succ _ _ := by simp; split_ifs <;> simp_all
-  wNpow_zero := by simp
-
-instance [PartialOrder α] : WeightedPartialOrder (Bottleneck α) := WeightedPartialOrder.ofPartialOrder
-instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedMonotonePreSemiring (Bottleneck α) where
-  wle_positive := by simp; apply bot_le
-  wAdd_mono s := by
-    intro a b hab
-    simp_all [wLe, instWeightedPartialOrderBottleneckOfPartialOrder]
-    exact LE.le.ge_or_le hab s
-  wMul_mono_left s := by
-    intro a b hab
-    simp_all [wLe, instWeightedPartialOrderBottleneckOfPartialOrder]
-  wMul_mono_right s := by
-    intro a b hab
-    simp_all [wLe, instWeightedPartialOrderBottleneckOfPartialOrder]
-
-instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedOmegaCompletePartialOrder (Bottleneck α) where
-  wSup := sorry
-  wSup_le := sorry
-  le_wSup := sorry
-instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedOmegaContinuousPreSemiring (Bottleneck α) where
-  wAdd_wSup := sorry
-  wSup_wAdd := sorry
-  wMul_wSup := sorry
-  wSup_wMul := sorry
-
-instance [Encodable α] : Encodable (Bottleneck α) := inferInstanceAs (Encodable α)
-
-instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedNetKAT.WeightedStar (Bottleneck α) where
-  wStar {X _ _} m := m
-  wStar_eq_sum := by
-    intro X _ _
-    letI : WeightedOmegaCompletePartialOrder (𝒞 (Bottleneck α) (X × X)) := sorry
-    letI : WeightedOmegaContinuousPreSemiring (𝒞 (Bottleneck α) (X × X)) := sorry
-    use inferInstance, inferInstance
-    intro m
-    unfold WeightedNetKAT.𝒞.pow
-    rw [WeightedSum_nat_eq_succ]
+instance [LinearOrder α] [OrderBot α] [OrderTop α] : OmegaCompletePartialOrder (Bottleneck α) where
+  ωSup := sorry
+  le_ωSup := sorry
+  ωSup_le := sorry
+instance [LinearOrder α] [OrderBot α] [OrderTop α] : MulLeftMono (Bottleneck α) := ⟨sorry⟩
+instance [LinearOrder α] [OrderBot α] [OrderTop α] : MulRightMono (Bottleneck α) := ⟨sorry⟩
+instance [LinearOrder α] [OrderBot α] [OrderTop α] : IsPositiveOrderedAddMonoid (Bottleneck α) where
+  add_le_add_left:= by
+    intro a b hab c
     simp
-    ext ⟨a, b⟩
-    simp [WeightedAdd.wAdd]
-    sorry
+    if hac : a ≤ c then simp_all else
+    simp_all
+    exact .inr (hac.le.trans hab)
+  add_le_add_right := by
+    intro a b hab c
+    simp
+    if hac : a ≤ c then simp_all else
+    simp_all
+    exact .inl (hac.le.trans hab)
+  bot_eq_zero := rfl
+instance [LinearOrder α] [OrderBot α] [OrderTop α] : OmegaContinuousNonUnitalSemiring (Bottleneck α) where
+  ωSup_add_left := sorry
+  ωSup_add_right := sorry
+  ωSup_mul_left := sorry
+  ωSup_mul_right := sorry
+instance [LinearOrder α] [OrderBot α] [OrderTop α] : CanonicallyOrderedAdd (Bottleneck α) where
+  exists_add_of_le := by intro a b hab; simp; use b; simp_all
+  le_self_add := by simp
+
+instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedNetKAT.FinsuppStar (Bottleneck α) where
+  wStar := sorry
+instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedNetKAT.LawfulFinsuppStar (Bottleneck α) where
+  wStar_eq_sum := sorry
+
+-- instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedMonotonePreSemiring (Bottleneck α) where
+--   wle_positive := by simp; apply bot_le
+--   add_mono s := by
+--     intro a b hab
+--     simp_all [wLe, instWeightedPartialOrderBottleneckOfPartialOrder]
+--     exact LE.le.ge_or_le hab s
+--   wMul_mono_left s := by
+--     intro a b hab
+--     simp_all [wLe, instWeightedPartialOrderBottleneckOfPartialOrder]
+--   wMul_mono_right s := by
+--     intro a b hab
+--     simp_all [wLe, instWeightedPartialOrderBottleneckOfPartialOrder]
+
+-- instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedOmegaCompletePartialOrder (Bottleneck α) where
+--   wSup := sorry
+--   wSup_le := sorry
+--   le_wSup := sorry
+-- instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedOmegaContinuousPreSemiring (Bottleneck α) where
+--   add_wSup := sorry
+--   wSup_add := sorry
+--   wMul_wSup := sorry
+--   wSup_wMul := sorry
+
+instance [Countable α] : Countable (Bottleneck α) := inferInstanceAs (Countable α)
 
 example : LinearOrder (Fin 4) := inferInstance
 example : OrderBot (Fin 4) := inferInstance
@@ -129,6 +135,6 @@ instance : Repr ℕ∞ where
 instance : Repr EENat where
   reprPrec p n := if p = ⊤ then "⊤" else if p = ⊥ then "⊥" else reprPrec p.get!.toNat n
 
-#eval (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, ℕ, Bottleneck Secutiy₄]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])
-#eval (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, ℕ, Bottleneck ENat]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])
-#eval (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, ℕ, Bottleneck EENat]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])
+#eval! (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, ℕ, Bottleneck Secutiy₄]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])
+#eval! (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, ℕ, Bottleneck ENat]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])
+#eval! (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, ℕ, Bottleneck EENat]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])

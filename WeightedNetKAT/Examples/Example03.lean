@@ -1,5 +1,7 @@
 import WeightedNetKAT.Examples.Common
 
+namespace WeightedNetKAT
+
 open Fields
 
 /-! Example showing the `match`-syntax sugar. -/
@@ -17,15 +19,17 @@ def l {𝒮 : Type} [OfNat 𝒮 2] : Policy[Fields,ℕ,𝒮] := wnk_policy {
 }
 
 /--
-info: {([{dst↦2,pt↦3,sw↦0}, {dst↦2,pt↦0,sw↦0}], H), ([{dst↦2,pt↦4,sw↦0}, {dst↦2,pt↦0,sw↦0}], H)}
+info: {(({dst↦2,pt↦3,sw↦0}, [{dst↦2,pt↦0,sw↦0}]), 3), (({dst↦2,pt↦4,sw↦0}, [{dst↦2,pt↦0,sw↦0}]), 3)}
 -/
 #guard_msgs in
-#wnk_eval[Bottleneck Secutiy₄, 2, [pk[dst ↦ H₂]]] {
+#wnk_eval[Bottleneck Secutiy₄, 2, ⟨pk[dst ↦ H₂], []⟩] {
   dst = H₂;   dup; (~p; ~l; dup)*; ~p;   true
 }
 
 /-- info: ∅ -/
 #guard_msgs in
-#wnk_eval[Bottleneck ℕ∞, 2, [pk[dst ↦ H₄]]] {
+#wnk_eval[Bottleneck ℕ∞, 2, ⟨pk[dst ↦ H₄], []⟩] {
   dst = H₄;   dup; (~p; ~l; dup)*; ~p;   true
 }
+
+end WeightedNetKAT

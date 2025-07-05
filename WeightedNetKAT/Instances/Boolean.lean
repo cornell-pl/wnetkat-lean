@@ -1,82 +1,94 @@
 import WeightedNetKAT.Computation
+import Mathlib.Data.Fintype.Order
 
-@[simp] instance : WeightedAdd Bool := ⟨(· ∨ ·)⟩
-@[simp] instance : WeightedMul Bool := ⟨(· ∧ ·)⟩
-@[simp] instance : WeightedZero Bool := ⟨False⟩
-@[simp] instance : WeightedOne Bool := ⟨True⟩
-@[simp] instance : WeightedLE Bool := ⟨(· ≤ ·)⟩
+open OmegaCompletePartialOrder
 
-attribute [local simp] WeightedHMul.wHMul
+def BoolRing := Bool
+deriving DecidableEq
 
-instance : WeightedSemiring Bool where
-  wAdd_assoc := by simp
-  wZero_add := by simp
-  add_wZero := by simp
-  wNsmul n s := if n = 0 then False else s
-  wNsmul_wZero := by simp
-  wNsmul_succ := by simp
-  wAdd_comm := by simp
-  left_distrib := by simp
-  right_distrib := by simp
-  wZero_mul := by simp
-  mul_wZero := by simp
-  mul_assoc := by simp
-  wOne_mul := by simp
-  mul_wOne := by simp
-  natCast n := if n = 0 then False else True
+instance : HOr BoolRing BoolRing BoolRing := ⟨or⟩
+instance : HAnd BoolRing BoolRing BoolRing := ⟨and⟩
+
+instance : HAdd BoolRing BoolRing BoolRing := ⟨or⟩
+instance : HMul BoolRing BoolRing BoolRing := ⟨and⟩
+instance : Add BoolRing := ⟨or⟩
+instance : Mul BoolRing := ⟨and⟩
+instance : Zero BoolRing := ⟨false⟩
+instance : One BoolRing := ⟨true⟩
+
+@[simp] theorem BoolRing.add_eqq_or {a b : BoolRing} : a + b = (or a b) := by simp [HAdd.hAdd]
+@[simp] theorem BoolRing.mul_eqq_and {a b : BoolRing} : a * b = (and a b) := by simp [HMul.hMul]
+
+@[simp] theorem BoolRing.zero_eq_false : (0 : BoolRing) = false := rfl
+@[simp] theorem BoolRing.one_eq_true : (1 : BoolRing) = true := rfl
+
+example (a b c : Bool) : (a || b || c) = (a || (b || c)) := by exact Bool.or_assoc a b c
+
+instance : Semiring BoolRing where
+  add_assoc := Bool.or_assoc
+  zero_add := by simp
+  add_zero := by simp
+  nsmul n s := if n = 0 then false else s
+  nsmul_zero := by simp
+  nsmul_succ _ := by simp; split_ifs <;> simp
+  add_comm := Bool.or_comm
+  left_distrib := Bool.and_or_distrib_left
+  right_distrib := Bool.and_or_distrib_right
+  zero_mul := by simp
+  mul_zero := by simp
+  mul_assoc := Bool.and_assoc
+  one_mul := by simp
+  mul_one := by simp
+  natCast n := if n = 0 then false else true
   natCast_zero := by simp
   natCast_succ := by simp
-  wNpow n s := if n = 0 then True else s
-  wNpow_succ := by simp
-  wNpow_zero := by simp
+  npow n s := if n = 0 then true else s
+  npow_succ := by simp
+  npow_zero := by simp
 
-instance : WeightedPartialOrder Bool where
-  wle_refl := by simp [wLe]
-  wle_trans := by simp [wLe]
-  wle_antisymm := by simp [wLe]
+instance : PartialOrder BoolRing := inferInstanceAs (PartialOrder Bool)
 
-instance : WeightedMonotonePreSemiring Bool where
-  wle_positive := by simp [wLe, WeightedZero.wZero, WeightedLE.wle]
-  wAdd_mono s a b hab := by
-    simp [wLe, WeightedZero.wZero, WeightedLE.wle, WeightedAdd.wAdd, Bool.instLE]
-    aesop
-  wMul_mono_left s a b hab := by
-    simp [wLe, WeightedZero.wZero, WeightedLE.wle, WeightedMul.wMul, Bool.instLE]
-    aesop
-  wMul_mono_right s a b hab := by
-    simp [wLe, WeightedZero.wZero, WeightedLE.wle, WeightedMul.wMul, Bool.instLE]
-    aesop
+noncomputable instance : CompleteLattice BoolRing := inferInstanceAs (CompleteLattice Bool)
+noncomputable instance : OmegaCompletePartialOrder BoolRing := inferInstanceAs (OmegaCompletePartialOrder Bool)
 
-@[simp]
-noncomputable instance : WeightedOmegaCompletePartialOrder Bool where
-  wSup C := ⨆ i, C i
-  le_wSup := by
-    intro C i
-    simp_all only [wLe, WeightedLE.wle]
-    exact le_iSup_iff.mpr fun b a ↦ a i
-  wSup_le := by
-    intro C x hx
-    simp_all only [wLe, WeightedLE.wle]
-    exact iSup_le hx
-
-noncomputable instance : WeightedOmegaContinuousPreSemiring Bool where
-  wAdd_wSup := by
-    intro b C
-    simp [WeightedAdd.wAdd]
-    magic_simp
-    rcases b <;> simp
-  wSup_wAdd := by
-    intro b C
-    simp [WeightedAdd.wAdd]
-    magic_simp
-    rcases b <;> simp
-  wMul_wSup := by
-    intro b C
-    simp [WeightedMul.wMul]
-    magic_simp
-    rcases b <;> simp
-  wSup_wMul := by
-    intro b C
-    simp [WeightedMul.wMul]
-    magic_simp
-    rcases b <;> simp
+instance : MulLeftMono BoolRing := ⟨fun m _ _ h ↦
+  Bool.le_and (Bool.and_le_left m _) (le_trans (Bool.and_le_right m _) h)⟩
+instance : MulRightMono BoolRing := ⟨fun m _ _ h ↦
+  Bool.le_and (le_trans (Bool.and_le_left _ m) h) (Bool.and_le_right _ m)⟩
+instance : IsPositiveOrderedAddMonoid BoolRing where
+  add_le_add_left _ _ h m := Bool.or_le (Bool.left_le_or _ _) (le_trans h (Bool.right_le_or m _))
+  add_le_add_right _ _ h m := Bool.or_le (Bool.le_trans h (Bool.left_le_or _ _)) (Bool.right_le_or _ m)
+  bot_eq_zero := rfl
+instance : OmegaContinuousNonUnitalSemiring BoolRing where
+  ωSup_add_right := by
+    intro b
+    refine ωScottContinuous.of_monotone_map_ωSup ⟨add_right_mono, ?_⟩
+    intro C
+    simp [Add.add]
+    rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp]
+    · rfl
+    · unfold Function.comp; simp
+  ωSup_add_left := by
+    intro b
+    refine ωScottContinuous.of_monotone_map_ωSup ⟨add_left_mono, ?_⟩
+    intro C
+    simp [Add.add]
+    rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp]
+    · rfl
+    · unfold Function.comp; simp
+  ωSup_mul_left := by
+    intro b
+    refine ωScottContinuous.of_monotone_map_ωSup ⟨mul_left_mono, ?_⟩
+    intro C
+    simp [Add.add]
+    rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp]
+    · unfold Function.comp; simp
+    · rfl
+  ωSup_mul_right := by
+    intro b
+    refine ωScottContinuous.of_monotone_map_ωSup ⟨mul_right_mono, ?_⟩
+    intro C
+    simp [Add.add]
+    rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp]
+    · unfold Function.comp; simp
+    · rfl
