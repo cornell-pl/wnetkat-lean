@@ -1195,7 +1195,6 @@ theorem RPol.wnka_sem_seq [Encodable F] [Encodable N] {p₁ p₂ : RPol[F,N,𝒮
       congr! 8
       refine (List.take_self_eq_iff A).mpr (by omega)
 
-
 theorem RPol.wnka_sem [Encodable F] [Encodable N] (p : RPol[F,N,𝒮]) : (RPol.wnka p).sem = G p := by
   if h : (0 : 𝒮) = 1 then ext; simp [eq_zero_of_zero_eq_one h] else
   have h' : ¬1 = (0 : 𝒮) := by grind

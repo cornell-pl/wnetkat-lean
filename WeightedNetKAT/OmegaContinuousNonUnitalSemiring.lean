@@ -7,6 +7,9 @@ import Mathlib.Data.Nat.Lattice
 import Mathlib.Data.Set.Notation
 import Mathlib.Logic.Encodable.Basic
 import Mathlib.Order.OmegaCompletePartialOrder
+import Mathlib.Data.Countable.Basic
+
+-- TODO: min imports
 
 open OmegaCompletePartialOrder
 
@@ -615,6 +618,39 @@ theorem ωSum_eq_single {α ι : Type}
       Set.mem_singleton_iff, exists_and_left, existsAndEq, true_and]
     grind
   · simp
+
+theorem ωSum_prod {α β γ : Type}
+    [NonUnitalSemiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α]
+    [MulLeftMono α] [MulRightMono α]
+    [OmegaContinuousNonUnitalSemiring α]
+    [Countable β] [Countable γ]
+    {f : β × γ → α} :
+    ω∑ (p : β × γ), f p = ω∑ (b : β) (c : γ), f (b, c) := by
+  classical
+  apply le_antisymm
+  · refine ωSum_le_of_finset fun S ↦ ?_
+    apply le_trans _ (le_ωSum_of_finset  (S.image (·.fst)))
+    suffices ∑ x ∈ S.image (·.fst), ∑ c ∈ S.image (·.snd), f (x, c) ≤ ∑ x ∈ S.image (·.fst), ω∑ (c : γ), f (x, c) by
+      apply le_trans _ this; clear this
+      rw [← Finset.sum_product]
+      gcongr
+      · simp
+      · intro; simp; grind
+    gcongr
+    apply le_ωSum_of_finset (S.image (·.snd))
+  · refine ωSum_le_of_finset fun S ↦ ?_
+    rw [← ωSum_sum_comm]
+    refine ωSum_le_of_finset fun S' ↦ ?_
+    apply le_trans _ (le_ωSum_of_finset (S ×ˢ S'))
+    rw [Finset.sum_comm, Finset.sum_product]
+
+theorem ωSum_prod' {α β γ : Type}
+    [NonUnitalSemiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α]
+    [MulLeftMono α] [MulRightMono α]
+    [OmegaContinuousNonUnitalSemiring α]
+    [Countable β] [Countable γ]
+    {f : β → γ → α} :
+    ω∑ (p : β × γ), f p.fst p.snd = ω∑ (b : β) (c : γ), f b c := ωSum_prod
 
 -- theorem its_summable {X : Type} [Countable X] [TopologicalSpace 𝒮] [OrderClosedTopology 𝒮] (f : X → 𝒮) : Summable f := by
 --   exists ωSum f
