@@ -127,6 +127,45 @@ noncomputable def G (p : RPol[F,N,𝒮]) : GS[F,N] →c 𝒮 := match p with
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
+omit [Encodable F] [Encodable N] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+-- TODO: this proof is incredibly slow
+set_option maxHeartbeats 500000 in
+attribute [-simp] Function.iterate_succ in
+theorem G.iter (p₁ : RPol[F,N,𝒮]) (n : ℕ) :
+    G (p₁.iter (n + 1)) = (G p₁ ♢ ·)^[n] (G p₁) := by
+  induction n with
+  | zero =>
+    ext gs
+    if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
+    if hgs : ¬(G p₁) gs = 0 then
+      simp only [RPol.iter, G, ofPk, GS.mk, Function.iterate_zero, id_eq]
+      simp only [WeightedConcat.concat, Countsupp.coe_mk, mul_ite, mul_one, mul_zero]
+      rw [ωSum_eq_single ⟨gs, by simp only [Countsupp.mem_support_iff, ne_eq, hgs,
+        not_false_eq_true]⟩]
+      · rw [ωSum_eq_single ⟨⟨gs.2.2, [], gs.2.2⟩, by simp only [Countsupp.mem_support_iff,
+        Countsupp.coe_mk, exists_apply_eq_apply, ↓reduceIte, ne_eq, h10, not_false_eq_true]⟩]
+        · split
+          simp_all only [Option.ite_none_right_eq_some, Option.some.injEq, exists_apply_eq_apply,
+            ↓reduceIte]
+          grind
+        · simp_all
+          grind
+      · simp_all only [ne_eq, ωSum_eq_zero_iff, ite_eq_right_iff, forall_exists_index,
+        Subtype.forall, Countsupp.mem_support_iff, Countsupp.coe_mk, not_forall, Classical.not_imp,
+        exists_and_right, and_imp, forall_apply_eq_imp_iff, Subtype.mk.injEq, imp_false]
+        grind
+    else
+      simp_all only [not_not, RPol.iter, G, ofPk, GS.mk, Function.iterate_zero, id_eq]
+      simp only [WeightedConcat.concat, Countsupp.coe_mk, mul_ite, mul_one, mul_zero,
+        ωSum_eq_zero_iff, ite_eq_right_iff, forall_exists_index, Subtype.forall,
+        Countsupp.mem_support_iff, ne_eq, not_forall, Classical.not_imp, exists_and_right, and_imp,
+        forall_apply_eq_imp_iff]
+      grind
+  | succ n ih =>
+    simp only [RPol.iter, G, Function.iterate_succ', Function.comp_apply]
+    simp only [RPol.iter, G] at ih
+    rw [ih]
+
 def GS.pks (s : GS[F,N]) : List Pk[F,N] := s.1 :: s.2.1 ++ [s.2.2]
 def GS.H (s : GS[F,N]) : H[F,N] := (s.2.2, s.2.1.reverse)
 def GS.H' (s : GS[F,N]) : H[F,N] := (s.2.2, s.2.1)
@@ -374,7 +413,17 @@ theorem RPol.sem_G.Iter {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~p₁*}.sem
   if h0 : ((p₁.iter n).sem h₀) h₁ = 0 then
     symm
     simp [h0]
-    sorry
+    simp [G]
+    intro g n hg
+    split_ifs
+    · simp_all
+      obtain ⟨g₀, g₁, g₂⟩ := g
+      obtain ⟨h₀₀, h₀₁⟩ := h₀
+      simp_all [GS.H]
+      subst_eqs
+      rintro ⟨_⟩
+      sorry
+    · simp_all
   else
     obtain ⟨t, h⟩ := RPol.seq_of_prefix (p:=p₁.iter n) (h₀:=h₀) (h₁:=h₁) h0
     obtain ⟨h₁, _⟩ := h₁
@@ -427,7 +476,6 @@ theorem RPol.sem_G.Iter {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~p₁*}.sem
         rintro ⟨_⟩ ⟨_⟩
         simp_all
       · simp
-
 
 variable [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem RPol.sem_G (p : RPol[F,N,𝒮]) :
