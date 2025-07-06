@@ -30,7 +30,7 @@ def Pred.compute (p : Pred[F,N]) (n : ℕ) : H[F,N] → H[F,N] →₀ 𝒮 := ma
   -- TODO: update this once we fix the syntax for ;
   | .Con t u => fun h ↦ (t.compute n h).bind (u.compute n)
   | wnk_pred {¬~t} => fun h ↦ if t.compute n h = 0 then η' h else 0
-def Policy.compute (p : Policy[F,N,𝒮]) (n : ℕ) : H[F,N] → H[F,N] →₀ 𝒮 := match p with
+def Pol.compute (p : Pol[F,N,𝒮]) (n : ℕ) : H[F,N] → H[F,N] →₀ 𝒮 := match p with
   | .Filter t => t.compute n
   | wnk_policy {~f ← ~n} => fun (π, h) ↦ η' (π[f ↦ n], h)
   | wnk_policy {dup} => fun (π, h) ↦ η' (π, π::h)
@@ -169,8 +169,8 @@ theorem Pred.compute_eq_sem_n (p : Pred[F,N]) (n : ℕ):
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 variable [DecidableEq F] in
-attribute [local simp] Policy.sem_n Policy.compute in
-theorem Policy.compute_eq_sem_n (p : Policy[F,N,𝒮]) (n : ℕ) : p.sem_n n = fun h ↦ (p.compute n h).to𝒲 := by
+attribute [local simp] Pol.sem_n Pol.compute in
+theorem Pol.compute_eq_sem_n (p : Pol[F,N,𝒮]) (n : ℕ) : p.sem_n n = fun h ↦ (p.compute n h).to𝒲 := by
   induction p with
   | Filter t => simp [sem_n, compute]; apply Pred.compute_eq_sem_n
   | Mod f e => ext; simp; split; simp_all

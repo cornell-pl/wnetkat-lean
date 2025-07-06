@@ -113,7 +113,7 @@ instance : LinearOrder Secutiy₄ := inferInstanceAs (LinearOrder (Fin 4))
 instance : OrderBot Secutiy₄ := inferInstanceAs (OrderBot (Fin 4))
 instance : OrderTop Secutiy₄ := inferInstanceAs (OrderTop (Fin 4))
 
-def P : Policy[Fin 3, ℕ, Bottleneck Secutiy₄] := wnk_policy { ~0 ← 3 }
+def P : Pol[Fin 3, ℕ, Bottleneck Secutiy₄] := wnk_policy { ~0 ← 3 }
 
 instance {x : ℕ} [OfNat α x] : OfNat (Bottleneck α) x := inferInstanceAs (OfNat α x)
 instance : OfNat Secutiy₄ 0 := ⟨0, by simp⟩
@@ -135,6 +135,6 @@ instance : Repr ℕ∞ where
 instance : Repr EENat where
   reprPrec p n := if p = ⊤ then "⊤" else if p = ⊥ then "⊥" else reprPrec p.get!.toNat n
 
-#eval! (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, ℕ, Bottleneck Secutiy₄]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])
-#eval! (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, ℕ, Bottleneck ENat]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])
-#eval! (wnk_policy { ~1 ⨀ ~0 ← 3 } : Policy[Fin 3, ℕ, Bottleneck EENat]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])
+#eval! (wnk_policy { ~1 ⨀ ~0 ← 3 } : Pol[Fin 3, ℕ, Bottleneck Secutiy₄]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])
+#eval! (wnk_policy { ~1 ⨀ ~0 ← 3 } : Pol[Fin 3, ℕ, Bottleneck ENat]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])
+#eval! (wnk_policy { ~1 ⨀ ~0 ← 3 } : Pol[Fin 3, ℕ, Bottleneck EENat]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])

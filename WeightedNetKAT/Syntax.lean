@@ -27,16 +27,16 @@ inductive Pred where
 
 notation "Pred[" F "," N "]" => Pred (F:=F) (N:=N)
 
-inductive Policy (W : Type) where
+inductive Pol (W : Type) where
   | Filter (t : Pred[F,N])
   | Mod (f : F) (n : N)
   | Dup
-  | Seq (p q : Policy W)
-  | Weight (w : W) (p : Policy W)
-  | Add (p q : Policy W)
-  | Iter (p : Policy W)
+  | Seq (p q : Pol W)
+  | Weight (w : W) (p : Pol W)
+  | Add (p q : Pol W)
+  | Iter (p : Pol W)
 
-notation "Policy[" f "," n "," w "]" => Policy (F:=f) (N:=n) (W:=w)
+notation "Pol[" f "," n "," w "]" => Pol (F:=f) (N:=n) (W:=w)
 
 section Syntax
 
@@ -82,7 +82,7 @@ macro_rules
 syntax ident : cwnk_pred
 syntax cwnk_field " = " cwnk_nat : cwnk_pred
 syntax cwnk_pred " ∨ " cwnk_pred : cwnk_pred
--- TODO: we need this, but we need to fix the precedence so it doens't interfere with Policy.Seq
+-- TODO: we need this, but we need to fix the precedence so it doens't interfere with Pol.Seq
 -- syntax cwnk_pred "; " cwnk_pred : cwnk_pred
 syntax "¬" cwnk_pred : cwnk_pred
 syntax "(" cwnk_pred ")" : cwnk_pred
@@ -117,14 +117,14 @@ syntax "while" ppHardSpace cwnk_pred ppHardSpace "do"
   ppHardSpace cwnk_policy : cwnk_policy
 
 macro_rules
-| `(wnk_policy { $t:cwnk_pred }) => `(Policy.Filter wnk_pred {$t})
-| `(wnk_policy { @filter $t:cwnk_pred }) => `(Policy.Filter wnk_pred {$t})
-| `(wnk_policy { $p:cwnk_field ← $q:cwnk_nat }) => `(Policy.Mod wnk_field {$p} wnk_nat {$q})
-| `(wnk_policy { dup }) => `(Policy.Dup)
-| `(wnk_policy { $p ; $q }) => `(Policy.Seq wnk_policy {$p} wnk_policy {$q})
-| `(wnk_policy { $w:cwnk_weight ⨀ $p }) => `(Policy.Weight wnk_weight {$w} wnk_policy {$p})
-| `(wnk_policy { $p ⨁ $q }) => `(Policy.Add wnk_policy {$p} wnk_policy {$q})
-| `(wnk_policy { $p * }) => `(Policy.Iter wnk_policy {$p})
+| `(wnk_policy { $t:cwnk_pred }) => `(Pol.Filter wnk_pred {$t})
+| `(wnk_policy { @filter $t:cwnk_pred }) => `(Pol.Filter wnk_pred {$t})
+| `(wnk_policy { $p:cwnk_field ← $q:cwnk_nat }) => `(Pol.Mod wnk_field {$p} wnk_nat {$q})
+| `(wnk_policy { dup }) => `(Pol.Dup)
+| `(wnk_policy { $p ; $q }) => `(Pol.Seq wnk_policy {$p} wnk_policy {$q})
+| `(wnk_policy { $w:cwnk_weight ⨀ $p }) => `(Pol.Weight wnk_weight {$w} wnk_policy {$p})
+| `(wnk_policy { $p ⨁ $q }) => `(Pol.Add wnk_policy {$p} wnk_policy {$q})
+| `(wnk_policy { $p * }) => `(Pol.Iter wnk_policy {$p})
 | `(wnk_policy { ($t:cwnk_policy) }) => `(wnk_policy {$t})
 -- Sugar
 | `(wnk_policy { if $t then $p else $q }) => `(wnk_policy { $t:cwnk_pred ; $p ⨁ ¬$t ; $q })
@@ -133,9 +133,9 @@ macro_rules
 | `(wnk_policy { drop }) => `(wnk_policy { false })
 
 /--
-info: (Policy.Filter (Pred.Test 123 1)).Seq
-  ((Policy.Filter ((Pred.Bool false).Dis (Pred.Bool true)).Not).Seq
-    (Policy.Weight 1 ((Policy.Mod 12 2).Seq (Policy.Dup.Add Policy.Dup.Iter)))) : Policy ℕ
+info: (Pol.Filter (Pred.Test 123 1)).Seq
+  ((Pol.Filter ((Pred.Bool false).Dis (Pred.Bool true)).Not).Seq
+    (Pol.Weight 1 ((Pol.Mod 12 2).Seq (Pol.Dup.Add Pol.Dup.Iter)))) : Pol ℕ
 -/
 #guard_msgs in
 #check wnk_policy { ~123 = 1 ; ¬false ∨ true ; ~1 ⨀ ~12 ← 2 ; dup ⨁ dup* }
@@ -185,24 +185,24 @@ def Pred.unexpandTest : Unexpander
   `(wnk_pred { $x:cwnk_field = $y })
 | _ => throw ()
 
-@[app_unexpander Policy.Filter]
-def Policy.unexpandFilter : Unexpander
+@[app_unexpander Pol.Filter]
+def Pol.unexpandFilter : Unexpander
 | `($(_) $f) =>
   match f with
   | `(wnk_pred {$f}) => `(wnk_policy {$f:cwnk_pred})
   | _ => throw ()
 | _ => throw ()
 
-/-- info: wnk_policy {true} : Policy Unit -/
+/-- info: wnk_policy {true} : Pol Unit -/
 #guard_msgs in
-#check (wnk_policy { true } : Policy Unit)
+#check (wnk_policy { true } : Pol Unit)
 
-@[app_unexpander Policy.Dup]
-def Policy.unexpandDup : Unexpander
+@[app_unexpander Pol.Dup]
+def Pol.unexpandDup : Unexpander
 | _ => `(wnk_policy { dup })
 
-@[app_unexpander Policy.Seq]
-def Policy.unexpandSeq : Unexpander
+@[app_unexpander Pol.Seq]
+def Pol.unexpandSeq : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_policy{$x}) => pure x
@@ -213,8 +213,8 @@ def Policy.unexpandSeq : Unexpander
   `(wnk_policy { $x ; $y })
 | _ => throw ()
 
-@[app_unexpander Policy.Mod]
-def Policy.unexpandMod : Unexpander
+@[app_unexpander Pol.Mod]
+def Pol.unexpandMod : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_field{$x}) => pure x
@@ -225,8 +225,8 @@ def Policy.unexpandMod : Unexpander
   `(wnk_policy { $x:cwnk_field ← $y })
 | _ => throw ()
 
-@[app_unexpander Policy.Add]
-def Policy.unexpandAdd : Unexpander
+@[app_unexpander Pol.Add]
+def Pol.unexpandAdd : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_policy{$x}) => pure x
@@ -237,8 +237,8 @@ def Policy.unexpandAdd : Unexpander
   `(wnk_policy { $x ⨁ $y })
 | _ => throw ()
 
-@[app_unexpander Policy.Weight]
-def Policy.unexpandWeight : Unexpander
+@[app_unexpander Pol.Weight]
+def Pol.unexpandWeight : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_weight{$x}) => pure x
@@ -249,8 +249,8 @@ def Policy.unexpandWeight : Unexpander
   `(wnk_policy { $x:cwnk_weight ⨀ $y })
 | _ => throw ()
 
-@[app_unexpander Policy.Iter]
-def Policy.unexpandIter : Unexpander
+@[app_unexpander Pol.Iter]
+def Pol.unexpandIter : Unexpander
 | `($(_) $x) => do
   let x ← match x with
     | `(wnk_policy{$x}) => pure x
@@ -258,13 +258,13 @@ def Policy.unexpandIter : Unexpander
   `(wnk_policy { $x * })
 | _ => throw ()
 
-/-- info: wnk_policy {dup ⨁ dup} : Policy Unit -/
+/-- info: wnk_policy {dup ⨁ dup} : Pol Unit -/
 #guard_msgs in
-#check (wnk_policy { dup ⨁ dup } : Policy Unit)
+#check (wnk_policy { dup ⨁ dup } : Pol Unit)
 
-/-- info: wnk_policy {~123 = ~1; ¬false ∨ true; ~3 ⨀ ~12 ← ~2; dup ⨁ dup*} : Policy ℕ -/
+/-- info: wnk_policy {~123 = ~1; ¬false ∨ true; ~3 ⨀ ~12 ← ~2; dup ⨁ dup*} : Pol ℕ -/
 #guard_msgs in
-#check (wnk_policy { ~123 = 1 ; ¬false ∨ true ; ~3 ⨀ ~12 ← 2 ; dup ⨁ dup* } : Policy ℕ)
+#check (wnk_policy { ~123 = 1 ; ¬false ∨ true ; ~3 ⨀ ~12 ← 2 ; dup ⨁ dup* } : Pol ℕ)
 
 -- Copied from Lean's term parenthesizer - applies the precedence rules in the grammar to add
 -- parentheses as needed.
@@ -287,13 +287,13 @@ where
     let pstx ← `(($(⟨stx⟩)))
     return pstx.raw.setInfo (SourceInfo.fromRef stx)
 
-/-- info: wnk_policy {~"x" = ~2; true ⨁ ¬~"x" = ~2; false} : Policy Unit -/
+/-- info: wnk_policy {~"x" = ~2; true ⨁ ¬~"x" = ~2; false} : Pol Unit -/
 #guard_msgs in
-#check (wnk_policy { if ~"x" = 2 then skip else drop } : Policy Unit)
+#check (wnk_policy { if ~"x" = 2 then skip else drop } : Pol Unit)
 
-/-- info: wnk_policy {(~"x" = ~2; true)*; ¬~"x" = ~2} : Policy Unit -/
+/-- info: wnk_policy {(~"x" = ~2; true)*; ¬~"x" = ~2} : Pol Unit -/
 #guard_msgs in
-#check (wnk_policy { while ~"x" = 2 do skip } : Policy Unit)
+#check (wnk_policy { while ~"x" = 2 do skip } : Pol Unit)
 
 end Syntax
 

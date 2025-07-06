@@ -1,18 +1,18 @@
 
 @[grind]
-inductive Policy.Global (P : Policy[F,N,𝒮] → Prop) : Policy[F,N,𝒮] → Prop where
+inductive Pol.Global (P : Pol[F,N,𝒮] → Prop) : Pol[F,N,𝒮] → Prop where
   | Filter (t : Pred[F,N]) : P (.Filter t) → Global P (.Filter t)
   | Mod (f : F) (n : ℕ) : P (.Mod f n) → Global P (.Mod f n)
   | Dup : P .Dup → Global P .Dup
-  | Seq (p q : Policy 𝒮) : Global P p → Global P q → P (.Seq p q) → Global P (.Seq p q)
-  | Weight (w : 𝒮) (p : Policy 𝒮) : Global P p → P (.Weight w p) → Global P (.Weight w p)
-  | Add (p q : Policy 𝒮) : Global P p → Global P q → P (.Add p q) → Global P (.Add p q)
-  | Iter (p : Policy 𝒮) : Global P p → P (.Iter p) → Global P (.Iter p)
+  | Seq (p q : Pol 𝒮) : Global P p → Global P q → P (.Seq p q) → Global P (.Seq p q)
+  | Weight (w : 𝒮) (p : Pol 𝒮) : Global P p → P (.Weight w p) → Global P (.Weight w p)
+  | Add (p q : Pol 𝒮) : Global P p → Global P q → P (.Add p q) → Global P (.Add p q)
+  | Iter (p : Pol 𝒮) : Global P p → P (.Iter p) → Global P (.Iter p)
 
-theorem Policy.Global_refl {P} {p : Policy[F,N,𝒮]} (h : Global P p) : P p := by
+theorem Pol.Global_refl {P} {p : Pol[F,N,𝒮]} (h : Global P p) : P p := by
   grind
 
-def Policy.nats (p : Policy[F,N,𝒮]) : Finset ℕ :=
+def Pol.nats (p : Pol[F,N,𝒮]) : Finset ℕ :=
   match p with
   | wnk_policy {skip} => ∅
   | wnk_policy {drop} => ∅
@@ -25,7 +25,7 @@ def Policy.nats (p : Policy[F,N,𝒮]) : Finset ℕ :=
   | wnk_policy {~p ⨁ ~q} => p.nats ∪ q.nats
   | wnk_policy {~p*} => p.nats
 
-theorem Policy.nats_global (p : Policy[F,N,𝒮]) :
+theorem Pol.nats_global (p : Pol[F,N,𝒮]) :
     p.Global (fun p' ↦ match p' with
       -- TODO
       | .Filter _ => True
@@ -38,7 +38,7 @@ theorem Policy.nats_global (p : Policy[F,N,𝒮]) :
       ) := by
   induction p with constructor <;> (try simp [nats]) <;> grind [nats]
 
-def Policy.RPol (p : Policy[F,N,𝒮]) (N : Finset ℕ) : RPol[F,N,𝒮] :=
+def Pol.RPol (p : Pol[F,N,𝒮]) (N : Finset ℕ) : RPol[F,N,𝒮] :=
   match p with
   | wnk_policy {skip} => .Skip
   | wnk_policy {drop} => .Drop

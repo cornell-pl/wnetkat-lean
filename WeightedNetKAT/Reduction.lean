@@ -195,7 +195,7 @@ omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [DecidableEq F] [Encodable F] [Finty
 theorem RPol.instZero_sem : RPol.sem (F:=F) (N:=N) (𝒮:=𝒮) 0 = 0 := by
   unfold sem; rfl
 
-def Policy.toRPol (p : Policy[F,N,𝒮]) : RPol[F,N,𝒮] := match p with
+def Pol.toRPol (p : Pol[F,N,𝒮]) : RPol[F,N,𝒮] := match p with
   -- ⨁ᶠ α ∈ At, [α ≤ t] ⨀ α
   | wnk_policy {@filter ~t} =>
     let At : List Pk[F,N] := Finset.toList' Finset.univ
@@ -224,7 +224,7 @@ theorem Pred.sem_eq_test (t : Pred[F,N]) :
   | Con => sorry
   | Not => sorry
 
-theorem Policy.filter_toRol_sem_eq_sum (t : Pred[F,N]) [DecidableEq RPol[F,N,𝒮]] :
+theorem Pol.filter_toRol_sem_eq_sum (t : Pred[F,N]) [DecidableEq RPol[F,N,𝒮]] :
     (wnk_policy {@filter ~t}).toRPol.sem (𝒮:=𝒮) = ∑ α, if t.test α then η else 0 := by
   simp [toRPol]
   have : ∀ l : List RPol[F,N,𝒮], l.sum.sem = (l.map (RPol.sem)).sum := by
@@ -246,11 +246,11 @@ theorem Policy.filter_toRol_sem_eq_sum (t : Pred[F,N]) [DecidableEq RPol[F,N,�
   · sorry
   · sorry
 
-theorem Policy.toRol_sem_eq_sem (p : Policy[F,N,𝒮]) : p.toRPol.sem = p.sem := by
+theorem Pol.toRol_sem_eq_sem (p : Pol[F,N,𝒮]) : p.toRPol.sem = p.sem := by
   induction p with
   | Filter t =>
     sorry
-    -- simp [Policy.filter_toRol_sem_eq_sum]
+    -- simp [Pol.filter_toRol_sem_eq_sum]
     -- simp [toRPol, sem, RPol.sem]
     -- ext h₀ h₁
     -- simp
