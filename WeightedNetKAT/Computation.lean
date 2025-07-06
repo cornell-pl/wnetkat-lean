@@ -18,22 +18,13 @@ namespace WeightedNetKAT
 
 open Finsupp (η')
 
-def Pred.compute (p : Pred[F,N]) (n : ℕ) : H[F,N] → H[F,N] →₀ 𝒮 := match p with
-  | wnk_pred {false} => fun _ ↦ 0
-  | wnk_pred {true} => η'
-  | wnk_pred {~f = ~n} => fun (π, h) ↦ if π f = n then η' (π, h) else 0
-  | wnk_pred {~t ∨ ~u} =>
-    -- NOTE: this is the actual semantics `⟦if t then skip else u⟧`, but we use the unfolded due to
-    -- termination checking
-    fun h ↦ (t.compute n h |>.bind (fun h ↦ η' h + ((if t.compute n h = 0 then η' h else 0).bind (u.compute n))))
-  | wnk_pred {~t ∧ ~u} => fun h ↦ (t.compute n h).bind (u.compute n)
-  | wnk_pred {¬~t} => fun h ↦ if t.compute n h = 0 then η' h else 0
+def Pred.compute (p : Pred[F,N]) : H[F,N] → H[F,N] →₀ 𝒮 := fun ⟨π, h⟩ ↦ if p.test π then η' ⟨π, h⟩ else 0
+
 def Pol.compute (p : Pol[F,N,𝒮]) (n : ℕ) : H[F,N] → H[F,N] →₀ 𝒮 := match p with
-  | .Filter t => t.compute n
+  | wnk_pol {@filter ~t} => t.compute
   | wnk_pol {~f ← ~n} => fun (π, h) ↦ η' (π[f ↦ n], h)
   | wnk_pol {dup} => fun (π, h) ↦ η' (π, π::h)
-  | wnk_pol {~p; ~q} =>
-    fun h ↦ (p.compute n h).bind (q.compute n)
+  | wnk_pol {~p; ~q} => fun h ↦ (p.compute n h).bind (q.compute n)
   | wnk_pol {~w ⨀ ~p}=> fun h ↦ w * p.compute n h
   | wnk_pol {~p ⨁ ~q} => fun h ↦ p.compute n h + q.compute n h
   | wnk_pol {~p*} => fun h ↦ ∑ i ∈ Finset.range n, (p ^ i).compute n h
@@ -114,52 +105,16 @@ namespace WeightedNetKAT
 
 attribute [local simp] Pred.sem Pred.compute in
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
-theorem Pred.compute_eq_sem_n (p : Pred[F,N]) (n : ℕ):
-    p.sem (𝒮:=𝒮) = fun h ↦ (p.compute n h).to𝒲 := by
-  induction p with
-  | Bool b =>
-    cases b <;> simp; rfl
-    ext
-    simp [𝒲.η_eq_η']
-  | Test f t =>
-    ext
+theorem Pred.compute_eq_sem_n (p : Pred[F,N]) :
+    p.sem (𝒮:=𝒮) = fun h ↦ (p.compute h).to𝒲 := by
+  ext
+  rw [Pred.sem_eq_test]
+  simp
+  split_ifs
+  · split
     simp_all
-    split
-    simp; split_ifs
-    · simp
-    · rfl
-  | Dis t u iht ihu =>
+  · split
     simp_all
-    congr! with h
-    simp [Finsupp.bind]
-    ext h'
-    simp
-    rw [← Finset.sum_attach]
-    congr! with x
-    simp [𝒲.η_eq_η']
-    rw [← ωSum_finset]
-    if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
-    apply ωSum_eq_ωSum_of_ne_one_bij (fun ⟨x, hx⟩ ↦ ⟨x, by
-      simp_all; split_ifs with h'
-      · simp [h'] at hx
-        obtain ⟨hx₀, hx₁⟩ := hx
-        rw [← hx₀]
-        simp [h10]
-      · simp_all⟩)
-    · intro ⟨⟨⟨x, hx⟩, hx'⟩, hx''⟩; simp_all
-    · intro ⟨⟨x, hx⟩, hx'⟩; simp_all
-      split_ifs
-      · simp_all
-      · simp_all
-    · intro ⟨⟨⟨x, hx⟩, hx'⟩, hx''⟩
-      split_ifs <;> simp_all
-  | Con t u iht ihu => simp_all only [sem, 𝒲.bind_of_𝒞, compute]
-  | Not t ih =>
-    simp_all; clear ih
-    ext h h'
-    split_ifs with h₁
-    · simp_all [η']
-    · simp_all
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 variable [DecidableEq F] in
@@ -183,7 +138,7 @@ theorem Pol.compute_eq_sem_n (p : Pol[F,N,𝒮]) (n : ℕ) : p.sem_n n = fun h �
     congr with x
     suffices (p.iter x).sem_n n = (fun h ↦ (p.iter x).compute n h |>.to𝒲) by simp [this]
     induction x with
-    | zero => ext; simp [Pred.sem, Pred.compute, η']
+    | zero => ext; simp [Pred.sem, Pred.compute, η']; rfl
     | succ x ihx => simp_all only [iter, sem_n, 𝒲.bind_of_𝒞, compute]
 
 end WeightedNetKAT

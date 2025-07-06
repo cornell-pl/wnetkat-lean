@@ -16,6 +16,8 @@ inductive RPol (W : Type) where
   | Weight (w : W) (p : RPol W)
   | Add (p q : RPol W)
   | Iter (p : RPol W)
+-- TODO: we need to figure out how we can get `DecidableEq Pk[F,N]` to get this
+-- deriving DecidableEq
 
 notation "RPol[" f "," n "," w "]" => RPol (F:=f) (N:=n) (W:=w)
 

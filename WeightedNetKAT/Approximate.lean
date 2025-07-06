@@ -73,7 +73,7 @@ theorem Pol.approx_n_sem (p : Pol[F,N,𝒮]) (n : ℕ) : (p.approx_n n).sem = p.
     clear ih
     intro m ih
     induction n with
-    | zero => unfold sem; rfl
+    | zero => unfold sem; simp
     | succ n ihn =>
       simp_all [Finset.sum_range_add]
       rw [List.succ_range_map]

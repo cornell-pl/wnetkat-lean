@@ -2,40 +2,35 @@ import Mathlib.Data.Finsupp.Defs
 import WeightedNetKAT.RPol
 import WeightedNetKAT.Semantics
 import WeightedNetKAT.RPol
+import Mathlib.Logic.Function.Basic
 
-namespace WeightedNetKAT
+theorem Finset.filterMap_insert {α β : Type} [DecidableEq α] [DecidableEq β] (f : α → Option β) (hf : ∀ a a', ∀ b ∈ f a, b ∈ f a' → a = a') (a : α) (s : Finset α) :
+      (insert a s).filterMap f hf
+    = match f a with | some x => insert x (s.filterMap f hf) | none => s.filterMap f hf := by
+  simp only [insert_eq, map_union, map_singleton]
+  split
+  · ext
+    simp_all
+    grind
+  · ext b
+    simp_all
 
-variable {F : Type} -- [DecidableEq Pk[F,N]]
-variable {N : Type} [DecidableEq N]
-variable {𝒮 : Type}
-
-def Pred.test (t : Pred[F,N]) (pk : Pk[F,N]) : Prop :=
-  match t with
-  | wnk_pred {false} => false
-  | wnk_pred {true} => true
-  | wnk_pred {~f = ~n} => pk f = n
-  | wnk_pred {~t ∨ ~u} => t.test pk ∨ u.test pk
-  | wnk_pred {~t ∧ ~u} => t.test pk ∧ u.test pk
-  | wnk_pred {¬~t} => ¬Pred.test t pk
-def Pred.test_decidable {t : Pred[F,N]} : DecidablePred t.test := fun pk ↦
-  match h : t with
-  | wnk_pred {false} => .isFalse (by simp [Pred.test])
-  | wnk_pred {true} => .isTrue (by simp [Pred.test])
-  | wnk_pred {~f = ~n} => if h' : pk f = n then .isTrue h' else .isFalse h'
-  | wnk_pred {~t ∨ ~u} =>
-    have := t.test_decidable pk
-    have := u.test_decidable pk
-    if h' : t.test pk ∨ u.test pk then .isTrue h' else .isFalse h'
-  | wnk_pred {~t ∧ ~u} =>
-    have := t.test_decidable pk
-    have := u.test_decidable pk
-    if h' : t.test pk ∧ u.test pk then .isTrue h' else .isFalse h'
-  | wnk_pred {¬~t} =>
-    have := t.test_decidable pk
-    if h' : ¬t.test pk then .isTrue h' else .isFalse h'
-instance Pred.test_instDecidable {t : Pred[F,N]} : DecidablePred t.test := test_decidable
-
-end WeightedNetKAT
+theorem Finset.sum_filterMap {ι : Type} {κ : Type} {M : Type} [AddCommMonoid M] [DecidableEq ι] [DecidableEq κ]
+    (s : Finset ι) (e : ι → Option κ) (he : ∀ a a', ∀ b ∈ e a, b ∈ e a' → a = a') (f : κ → M) :
+    ∑ x ∈ s.filterMap e he, f x = ∑ x ∈ s, match e x with | some y => f y | none => 0 := by
+  induction s using Finset.induction with
+  | empty => simp
+  | insert x s hx ih =>
+    simp_all
+    rw [← ih]; clear ih
+    simp_all [Finset.filterMap_insert]
+    split
+    · rw [sum_insert]
+      simp_all
+      intro i hi hi'
+      have := he x i
+      simp_all
+    · simp_all
 
 namespace WeightedNetKAT
 
@@ -155,12 +150,17 @@ theorem Finset.nodup_toList' {α : Type} [Encodable α] [DecidableEq α] (s : Fi
   simp at this
   rw [toList', ← Multiset.coe_nodup, this]
   exact s.nodup
+@[simp]
 theorem Finset.mem_toList'_iff {α : Type} [Encodable α] [DecidableEq α] (s : Finset α) (x : α) :
     x ∈ (Finset.toList' s) ↔ x ∈ s := by
   have := Quotient.rep_spec s.val
   simp at this
   rw [toList', ← Multiset.mem_coe, this]
   rfl
+@[simp]
+theorem Finset.toList'_toFinset {α : Type} [Encodable α] [DecidableEq α] (s : Finset α) :
+    (Finset.toList' s).toFinset = s := by
+  ext; simp [mem_toList'_iff]
 @[simp]
 theorem Finset.toList'_empty {α : Type} [Encodable α] [DecidableEq α] :
     Finset.toList' (∅ : Finset α) = [] := by
@@ -203,22 +203,9 @@ def Pol.toRPol (p : Pol[F,N,𝒮]) : RPol[F,N,𝒮] := match p with
   | wnk_pol {~p ⨁ ~q} => wnk_rpol {~p.toRPol ⨁ ~q.toRPol}
   | wnk_pol {~p*} => wnk_rpol {~p.toRPol*}
 
-
-theorem Pred.sem_eq_test (t : Pred[F,N]) :
-    t.sem (𝒮:=𝒮) = fun (h : H[F,N]) ↦ if t.test h.1 then η h else 0 := by
-  induction t with
-  | Bool b =>
-    if b = true then
-      simp_all [sem, Pred.sem, Pred.test]
-    else
-      simp_all [sem, Pred.sem, Pred.test]
-  | Test => sorry
-  | Dis => sorry
-  | Con => sorry
-  | Not => sorry
-
-theorem Pol.filter_toRol_sem_eq_sum (t : Pred[F,N]) [DecidableEq RPol[F,N,𝒮]] :
-    (wnk_pol {@filter ~t}).toRPol.sem (𝒮:=𝒮) = ∑ α, if t.test α then η else 0 := by
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+theorem Pol.filter_toRol_sem_eq_sum (t : Pred[F,N]) :
+    (wnk_pol {@filter ~t}).toRPol.sem (𝒮:=𝒮) = ∑ α, if t.test α then wnk_rpol {@test ~α}.sem else 0 := by
   simp [toRPol]
   have : ∀ l : List RPol[F,N,𝒮], l.sum.sem = (l.map (RPol.sem)).sum := by
     intro l
@@ -226,118 +213,110 @@ theorem Pol.filter_toRol_sem_eq_sum (t : Pred[F,N]) [DecidableEq RPol[F,N,𝒮]]
     | nil => simp
     | cons p l ih => simp_all
   simp [this]; clear this
+  -- TODO: this might not be needed once we have `DecidableEq RPol`
+  classical
   rw [← List.sum_toFinset]
-  apply Finset.sum_bij_ne_zero (fun x _ _ ↦ sorry)
+  rw [List.toFinset_filterMap]
   · simp
-  · simp [Finset.mem_toList'_iff]
-    simp [RPol.sem]
-    intro a ha ha' b hb hb'
-    ext f
+    rw [Finset.sum_filterMap _ _ (by simp_all)]
+    congr with p h₀ h₁
+    split <;> simp
+  · refine List.Nodup.filterMap ?_ (Finset.nodup_toList' Finset.univ)
     simp_all
-    sorry
-  · sorry
-  · sorry
-  · sorry
 
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+theorem Pol.assign_toRol_sem_eq_sum (f : F) (v : N) :
+    (wnk_pol {~f ← ~v}).toRPol.sem (𝒮:=𝒮) = ∑ α, wnk_rpol {@test ~α; @mod ~α[f ↦ v]}.sem := by
+  simp [toRPol]
+  have : ∀ l : List RPol[F,N,𝒮], l.sum.sem = (l.map (RPol.sem)).sum := by
+    intro l
+    induction l with
+    | nil => simp
+    | cons p l ih => simp_all
+  simp [this]; clear this
+  -- TODO: this might not be needed once we have `DecidableEq RPol`
+  classical
+  rw [← List.sum_toFinset]
+  · simp
+  · exact Finset.nodup_toList' Finset.univ
+
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 theorem Pol.toRol_sem_eq_sem (p : Pol[F,N,𝒮]) : p.toRPol.sem = p.sem := by
   induction p with
   | Filter t =>
-    sorry
-    -- simp [Pol.filter_toRol_sem_eq_sum]
-    -- simp [toRPol, sem, RPol.sem]
-    -- ext h₀ h₁
-    -- simp
-    -- simp [Pred.sem_eq_test]
-    -- rw [Finset.sum_eq_single h₀.1]
-    -- split_ifs
-    -- · simp
-    -- · simp
-    -- · obtain ⟨h₀, h₀'⟩ := h₀
-    --   simp
-    --   rintro p h
-    --   split_ifs
-    --   · simp
-    --     sorry
-    --   · simp
-    -- · simp
-
-    -- have : ∀ l : List RPol[F,N,𝒮], l.sum.sem = (l.map (RPol.sem)).sum := by
-    --   intro l
-    --   induction l with
-    --   | nil => simp
-    --   | cons p l ih => simp_all
-    -- simp [this]; clear this
-    -- simp [List.map_filterMap]
-    -- have : ∀ l : List Pk[F,N],
-    --       (l.filterMap (fun x ↦ if t.test x then some (wnk_rpol {@test ~x}.sem (𝒮:=𝒮)) else none)).sum
-    --     = (l.map (fun x ↦ if t.test x then (wnk_rpol {@test ~x}.sem (𝒮:=𝒮)) else 0)).sum := by
-    --   intro l
-    --   induction l with
-    --   | nil => simp
-    --   | cons p l ih =>
-    --     simp
-    --     simp [← ih]
-    --     rw [List.filterMap_cons]
-    --     split_ifs <;> simp
-    --     -- apply?
-    --     -- simp_all
-
-    -- simp [this]; clear this
-    -- simp [List.sum_map_ite]
-    -- simp [nsmul_zero]
-    -- have :
-    --   ∀ S,
-    --     ((List.filter (fun b ↦ decide (t.test b)) (Finset.toList' S)).map (fun a ↦ wnk_rpol {@test ~a}.sem (𝒮:=𝒮))).sum =
-    --       ∑ a ∈ S, if t.test a then wnk_rpol {@test ~a}.sem else 0 := by
-    --   intro S
-    --   induction S using Finset.induction with
-    --   | empty => simp
-    --   | insert a S ha ih =>
-    --     simp_all
-    --     sorry
-
-    -- simp
-
-      -- refine List.filterMap_eq_map_iff_forall_eq_some.mpr ?_
-      -- simp [RPol.sem]
-      -- intro x hxl
-
-
-    -- induction t with
-    -- | Bool b =>
-    --   if b then
-    --     subst_eqs
-    --     simp [Pred.test, Pred.sem]
-    --     ext h₀ h₁
-    --     simp
-    --     split_ifs
-    --     · subst_eqs
-    --       generalize hS : (Finset.toList' Finset.univ : List Pk[F,N]) = S
-    --       have : S ≠ [] := sorry
-    --       have : S.Nodup := by sorry
-    --       clear hS
-    --       induction S with
-    --       | nil => sorry
-    --       | cons x S ih =>
-    --         simp at *
-    --         simp_all
-    --         rcases S with _ | ⟨y, S⟩
-    --         · simp_all [RPol.sem]
-    --           split; split_ifs <;> simp_all
-    --         simp_all [ih, RPol.sem]
-    --         split
-    --         · split_ifs
-    --           · subst_eqs
-    --             simp
-    --             sorry
-    --           · simp
-    --     · sorry
-    --   else
-    --     simp_all
-    --     subst_eqs
-    --     sorry
-    -- | _ => sorry
-  | Mod => simp [toRPol, sem, RPol.sem]; sorry
+    simp [Pol.sem, Pred.sem_eq_test]
+    simp [Pol.filter_toRol_sem_eq_sum]
+    ext h₀ h₁
+    if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
+    simp [RPol.sem]
+    split_ifs
+    · simp_all
+      split_ifs
+      · subst_eqs
+        rw [Finset.sum_eq_single h₀.1]
+        · simp_all
+          split
+          simp
+        · simp_all
+          intro p
+          split_ifs
+          · simp_all
+            split
+            simp_all
+            intro h
+            split_ifs
+            · simp_all
+            · simp_all
+          · simp_all
+        · simp_all
+      · simp_all
+        intro p
+        split_ifs
+        · simp_all
+          split
+          split_ifs
+          · simp_all
+          · simp_all
+        · simp_all
+    · simp_all
+      intro p
+      split_ifs
+      · simp_all
+        split
+        split_ifs
+        · simp_all
+        · simp_all
+      · simp_all
+  | Mod f v =>
+    simp [Pol.sem, Pred.sem_eq_test]
+    simp [Pol.assign_toRol_sem_eq_sum, RPol.sem]
+    ext h₀ h₁
+    if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
+    simp
+    split
+    rename_i π h₀
+    simp_all
+    split_ifs
+    · subst_eqs
+      rw [Finset.sum_eq_single π]
+      · simp
+        rw [ωSum_eq_single ⟨(π, h₀), by simp [h10]⟩]
+        · simp
+        · simp
+      · simp_all
+        intro p hp a
+        split_ifs
+        · simp_all
+        · simp_all
+      · simp_all
+    · simp_all
+      intro p a
+      split_ifs
+      · subst_eqs
+        split
+        · simp_all
+          grind
+      · simp_all
   | Dup => simp [toRPol, sem, RPol.sem]; rfl
   | Seq p₁ p₂ ih₁ ih₂ => simp [toRPol, sem, RPol.sem, ih₁, ih₂]
   | Add p₁ p₂ ih₁ ih₂ => simp [toRPol, sem, RPol.sem, ih₁, ih₂]

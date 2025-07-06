@@ -49,16 +49,103 @@ variable {N : Type} [DecidableEq N]
 noncomputable instance : DecidableEq (X →c 𝒮) := Classical.typeDecidableEq _
 -- noncomputable instance : DecidableEq (H[F,N] →c 𝒮) := Classical.typeDecidableEq (𝒲 𝒮 H)
 
+@[simp]
+def Pred.orDepth : Pred[F,N] → ℕ
+| wnk_pred {false} => 0
+| wnk_pred {true} => 0
+| wnk_pred {~_ = ~_} => 0
+| wnk_pred {~t ∨ ~u} => t.orDepth ⊔ u.orDepth + 1
+| wnk_pred {~t ∧ ~u} => t.orDepth ⊔ u.orDepth
+| wnk_pred {¬~t} => t.orDepth
+
 noncomputable def Pred.sem (p : Pred[F,N]) : H[F,N] → H[F,N] →c 𝒮 := match p with
   | wnk_pred {false} => fun _ ↦ 0
   | wnk_pred {true} => η
   | wnk_pred {~f = ~n} => fun (π, h) ↦ if π f = n then η (π, h) else 0
-  | wnk_pred {~t ∨ ~u} =>
-    -- NOTE: this is the actual semantics `⟦if t then skip else u⟧`, but we use the unfolded due to
-    -- termination checking
-    fun h ↦ (t.sem h).bind fun h ↦ η h + ((if t.sem h = 0 then η h else 0).bind u.sem)
+  | wnk_pred {~t ∨ ~u} => fun h ↦
+    -- ⟦t ⨁ ¬t; u⟧
+    t.sem h + (wnk_pred {¬~t}.sem h).bind u.sem
   | wnk_pred {~t ∧ ~u} => fun h ↦ (t.sem h).bind u.sem
   | wnk_pred {¬~t} => fun h ↦ if t.sem h = 0 then η h else 0
+termination_by (p.orDepth, sizeOf p)
+decreasing_by all_goals simp_all; omega
+
+def Pred.test (t : Pred[F,N]) (pk : Pk[F,N]) : Prop :=
+  match t with
+  | wnk_pred {false} => false
+  | wnk_pred {true} => true
+  | wnk_pred {~f = ~n} => pk f = n
+  | wnk_pred {~t ∨ ~u} => t.test pk ∨ u.test pk
+  | wnk_pred {~t ∧ ~u} => t.test pk ∧ u.test pk
+  | wnk_pred {¬~t} => ¬Pred.test t pk
+def Pred.test_decidable {t : Pred[F,N]} : DecidablePred t.test := fun pk ↦
+  match h : t with
+  | wnk_pred {false} => .isFalse (by simp [Pred.test])
+  | wnk_pred {true} => .isTrue (by simp [Pred.test])
+  | wnk_pred {~f = ~n} => if h' : pk f = n then .isTrue h' else .isFalse h'
+  | wnk_pred {~t ∨ ~u} =>
+    have := t.test_decidable pk
+    have := u.test_decidable pk
+    if h' : t.test pk ∨ u.test pk then .isTrue h' else .isFalse h'
+  | wnk_pred {~t ∧ ~u} =>
+    have := t.test_decidable pk
+    have := u.test_decidable pk
+    if h' : t.test pk ∧ u.test pk then .isTrue h' else .isFalse h'
+  | wnk_pred {¬~t} =>
+    have := t.test_decidable pk
+    if h' : ¬t.test pk then .isTrue h' else .isFalse h'
+instance Pred.test_instDecidable {t : Pred[F,N]} : DecidablePred t.test := test_decidable
+
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [DecidableEq F] in
+theorem Pred.sem_eq_test (t : Pred[F,N]) :
+    t.sem (𝒮:=𝒮) = fun (h : H[F,N]) ↦ if t.test h.1 then η h else 0 := by
+  induction t with
+  | Bool b =>
+    if b = true then
+      simp_all [sem, Pred.sem, Pred.test]
+    else
+      simp_all [sem, Pred.sem, Pred.test]
+  | Test =>
+    ext h₀ h₁
+    simp_all [sem, Pred.sem, Pred.test]
+    split_ifs
+    subst_eqs
+    · split
+      simp_all
+    · split
+      simp_all
+  | Dis u v =>
+    ext h₀ h₁
+    simp_all [sem, Pred.sem, Pred.test]
+    split_ifs
+    · simp_all
+    · simp_all
+    · simp_all
+      if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
+      split_ifs
+      · rw [ωSum_eq_single ⟨h₀, by simp_all⟩]
+        · simp_all
+        · simp_all
+      · simp_all
+    · simp_all
+  | Con =>
+    ext h₀ h₁
+    simp_all [sem, Pred.sem, Pred.test]
+    split_ifs
+    · simp_all
+      if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
+      rw [ωSum_eq_single ⟨h₀, by simp_all⟩]
+      · simp
+      · simp_all
+    · simp_all
+  | Not =>
+    ext h₀ h₁
+    simp_all [sem, Pred.sem, Pred.test]
+    split_ifs
+    · simp_all
+    · simp_all
+    · simp_all
+    · simp_all
 
 instance : Subst Pk[F,N] F N where
   subst pk f n := fun f' ↦ if f = f' then n else pk f'
@@ -72,6 +159,7 @@ def Pol.iter (p : Pol[F,N,X]) : ℕ → Pol[F,N,X]
 
 @[simp]
 def Pol.iterDepth : Pol[F,N,X] → ℕ
+-- TODO: use syntax
 | .Filter _ | wnk_pol {~_ ← ~_} | wnk_pol {dup} => 0
 | wnk_pol {~p ⨁ ~q} | wnk_pol {~p ; ~q} => p.iterDepth ⊔ q.iterDepth
 | wnk_pol {~_ ⨀ ~q} => q.iterDepth
@@ -97,7 +185,7 @@ termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
 example {t u : Pred[F,N]} :
-    wnk_pol { ~t ∨ ~u }.sem (𝒮:=𝒮) = wnk_pol { if ~t then skip else @filter ~u }.sem := by
+    wnk_pol { ~t ∨ ~u }.sem (𝒮:=𝒮) = wnk_pol { @filter ~t ⨁ (¬~t; @filter ~u) }.sem := by
   simp [Pol.sem, Pred.sem]
 
 noncomputable def Φ (p : Pol[F,N,𝒮]) (d : H[F,N] → H[F,N] →c 𝒮) : H[F,N] → H[F,N] →c 𝒮 :=
