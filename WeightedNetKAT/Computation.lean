@@ -27,22 +27,17 @@ def Pred.compute (p : Pred[F,N]) (n : ℕ) : H[F,N] → H[F,N] →₀ 𝒮 := ma
     -- NOTE: this is the actual semantics `⟦if t then skip else u⟧`, but we use the unfolded due to
     -- termination checking
     fun h ↦ (t.compute n h |>.bind (fun h ↦ η' h + ((if t.compute n h = 0 then η' h else 0).bind (u.compute n))))
-  -- TODO: update this once we fix the syntax for ;
-  | .Con t u => fun h ↦ (t.compute n h).bind (u.compute n)
+  | wnk_pred {~t ∧ ~u} => fun h ↦ (t.compute n h).bind (u.compute n)
   | wnk_pred {¬~t} => fun h ↦ if t.compute n h = 0 then η' h else 0
 def Pol.compute (p : Pol[F,N,𝒮]) (n : ℕ) : H[F,N] → H[F,N] →₀ 𝒮 := match p with
   | .Filter t => t.compute n
-  | wnk_policy {~f ← ~n} => fun (π, h) ↦ η' (π[f ↦ n], h)
-  | wnk_policy {dup} => fun (π, h) ↦ η' (π, π::h)
-  -- TODO: this should use the syntax
-  | .Seq p q =>
+  | wnk_pol {~f ← ~n} => fun (π, h) ↦ η' (π[f ↦ n], h)
+  | wnk_pol {dup} => fun (π, h) ↦ η' (π, π::h)
+  | wnk_pol {~p; ~q} =>
     fun h ↦ (p.compute n h).bind (q.compute n)
-  -- TODO: this should use the syntax
-  | .Weight w p => fun h ↦ w * p.compute n h
-  -- TODO: this should use the syntax
-  | .Add p q => fun h ↦ p.compute n h + q.compute n h
-  -- TODO: this should use the syntax
-  | .Iter p => fun h ↦ ∑ i ∈ Finset.range n, (p ^ i).compute n h
+  | wnk_pol {~w ⨀ ~p}=> fun h ↦ w * p.compute n h
+  | wnk_pol {~p ⨁ ~q} => fun h ↦ p.compute n h + q.compute n h
+  | wnk_pol {~p*} => fun h ↦ ∑ i ∈ Finset.range n, (p ^ i).compute n h
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 

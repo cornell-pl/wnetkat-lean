@@ -32,13 +32,13 @@ abbrev S₅ := 5
 
 def Network {F N 𝒮 : Type} (ingress : Pred[F,N]) (p l : Pol[F,N,𝒮]) (egress : Pred[F,N]) :
     Pol[F,N,𝒮] :=
-  wnk_policy { @filter ~ingress; dup; (~p; ~l; dup)*; ~p; @filter ~egress }
+  wnk_pol { @filter ~ingress; dup; (~p; ~l; dup)*; ~p; @filter ~egress }
 
-syntax "#wnk_eval[" term "," term ("," term)? "]" "{" cwnk_policy "}" : command
+syntax "#wnk_eval[" term "," term ("," term)? "]" "{" cwnk_pol "}" : command
 
 macro_rules
 | `(#wnk_eval[$S, $n] { $p }) => `(#wnk_eval[$S, $n, ⟨0, []⟩] { $p })
-| `(#wnk_eval[$S, $n, $h] { $p }) => `(#eval! wnk_policy { $p }.compute (𝒮:=$S) $n $h |>.pretty)
+| `(#wnk_eval[$S, $n, $h] { $p }) => `(#eval! wnk_pol { $p }.compute (𝒮:=$S) $n $h |>.pretty)
 
 def S.repr {F N 𝒮 : Type} {p : RPol[F,N,𝒮]} (s : S p) : String :=
   match p with
@@ -105,23 +105,23 @@ macro_rules
 declare_syntax_cat' wnk_match_case
 macro_rules|`(wnk_match_case{~$t})=>`($t)
 
-syntax "|" cwnk_pred "↦" cwnk_policy : cwnk_match_case
-syntax "|" "_" "↦" cwnk_policy : cwnk_match_case
-syntax "|" cwnk_pred "=>" cwnk_policy : cwnk_match_case
-syntax "|" "_" "=>" cwnk_policy : cwnk_match_case
+syntax "|" cwnk_pred "↦" cwnk_pol : cwnk_match_case
+syntax "|" "_" "↦" cwnk_pol : cwnk_match_case
+syntax "|" cwnk_pred "=>" cwnk_pol : cwnk_match_case
+syntax "|" "_" "=>" cwnk_pol : cwnk_match_case
 
-syntax "match" cwnk_match_case* : cwnk_policy
+syntax "match" cwnk_match_case* : cwnk_pol
 
 macro_rules
-| `(wnk_policy { match $cases:cwnk_match_case* }) => do
-  let p := ← cases.foldrM (β:=Lean.TSyntax `cwnk_policy) (fun y x ↦
+| `(wnk_pol { match $cases:cwnk_match_case* }) => do
+  let p := ← cases.foldrM (β:=Lean.TSyntax `cwnk_pol) (fun y x ↦
     match y with
     | `(cwnk_match_case|| $t ↦ $p) | `(cwnk_match_case|| $t => $p) =>
-      `(cwnk_policy|if $t then $p else $x)
+      `(cwnk_pol|if $t then $p else $x)
     | `(cwnk_match_case|| _ ↦ $p) | `(cwnk_match_case|| _ => $p) =>
       pure p
     | _ => return x
-    ) (← `(cwnk_policy|drop))
-  `(wnk_policy {$p})
+    ) (← `(cwnk_pol|drop))
+  `(wnk_pol {$p})
 
 end WeightedNetKAT

@@ -134,4 +134,4 @@ instance : WeightedMonotonePreSemiring (Tropical ℕ∞) where
 
 instance {x : ℕ} : OfNat (Tropical ℕ∞) x := ⟨some x⟩
 
-#eval (wnk_policy { ~1 ⨀ ~0 ← 3 } : Pol[Fin 3, Tropical ENat]).compute 10 [fun _ ↦ 0] [fun x ↦ if x = 0 then 3 else 0]
+#eval (wnk_pol { ~1 ⨀ ~0 ← 3 } : Pol[Fin 3, Tropical ENat]).compute 10 [fun _ ↦ 0] [fun x ↦ if x = 0 then 3 else 0]

@@ -19,28 +19,6 @@ inductive RPol (W : Type) where
 
 notation "RPol[" f "," n "," w "]" => RPol (F:=f) (N:=n) (W:=w)
 
-
-@[simp]
-def RPol.iter (p : RPol[F,N,𝒮]) : ℕ → RPol[F,N,𝒮]
-  | 0 => .Skip
-  | n+1 => p.Seq (p.iter n)
-
-@[simp, reducible] instance RPol.instHPow : HPow RPol[F,N,𝒮] ℕ RPol[F,N,𝒮] where hPow p n := p.iter n
-
-@[simp]
-def RPol.iterDepth : RPol[F,N,𝒮] → ℕ
-| .Skip | .Drop | .Test _ | .Mod _ | .Dup => 0
-| .Add p q | .Seq p q => p.iterDepth ⊔ q.iterDepth
-| .Weight _ q => q.iterDepth
-| .Iter p => p.iterDepth + 1
-
-omit [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] in
-@[simp]
-theorem RPol.iterDepth_iter {p : RPol[F,N,𝒮]} {n : ℕ} :
-    (p.iter n).iterDepth = if n = 0 then 0 else p.iterDepth := by
-  rcases n with _ | n <;> simp_all
-  induction n with simp_all
-
 section Syntax
 
 open Lean Elab PrettyPrinter Delaborator Meta Command Term
@@ -180,5 +158,30 @@ where
     return pstx.raw.setInfo (SourceInfo.fromRef stx)
 
 end Syntax
+
+section Semantics
+
+@[simp]
+def RPol.iter (p : RPol[F,N,𝒮]) : ℕ → RPol[F,N,𝒮]
+  | 0 => .Skip
+  | n+1 => p.Seq (p.iter n)
+
+@[simp, reducible] instance RPol.instHPow : HPow RPol[F,N,𝒮] ℕ RPol[F,N,𝒮] where hPow p n := p.iter n
+
+@[simp]
+def RPol.iterDepth : RPol[F,N,𝒮] → ℕ
+| wnk_rpol { skip } | wnk_rpol { drop } | wnk_rpol { @test ~_ } | wnk_rpol { @mod ~_ } | wnk_rpol { dup } => 0
+| wnk_rpol {~p ⨁ ~q} | wnk_rpol {~p; ~q} => p.iterDepth ⊔ q.iterDepth
+| wnk_rpol { ~_ ⨀ ~q } => q.iterDepth
+| wnk_rpol {~p*} => p.iterDepth + 1
+
+omit [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] in
+@[simp]
+theorem RPol.iterDepth_iter {p : RPol[F,N,𝒮]} {n : ℕ} :
+    (p.iter n).iterDepth = if n = 0 then 0 else p.iterDepth := by
+  rcases n with _ | n <;> simp_all
+  induction n with simp_all
+
+end Semantics
 
 end WeightedNetKAT

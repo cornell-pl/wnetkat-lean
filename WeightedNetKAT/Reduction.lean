@@ -15,8 +15,7 @@ def Pred.test (t : Pred[F,N]) (pk : Pk[F,N]) : Prop :=
   | wnk_pred {true} => true
   | wnk_pred {~f = ~n} => pk f = n
   | wnk_pred {~t ∨ ~u} => t.test pk ∨ u.test pk
-  -- TODO: update this once we fix the syntax for ;
-  | .Con t u => t.test pk ∧ u.test pk
+  | wnk_pred {~t ∧ ~u} => t.test pk ∧ u.test pk
   | wnk_pred {¬~t} => ¬Pred.test t pk
 def Pred.test_decidable {t : Pred[F,N]} : DecidablePred t.test := fun pk ↦
   match h : t with
@@ -27,8 +26,7 @@ def Pred.test_decidable {t : Pred[F,N]} : DecidablePred t.test := fun pk ↦
     have := t.test_decidable pk
     have := u.test_decidable pk
     if h' : t.test pk ∨ u.test pk then .isTrue h' else .isFalse h'
-  -- TODO: update this once we fix the syntax for ;
-  | .Con t u =>
+  | wnk_pred {~t ∧ ~u} =>
     have := t.test_decidable pk
     have := u.test_decidable pk
     if h' : t.test pk ∧ u.test pk then .isTrue h' else .isFalse h'
@@ -79,15 +77,10 @@ noncomputable def RPol.sem (p : RPol[F,N,𝒮]) : H[F,N] → H[F,N] →c 𝒮 :=
   | wnk_rpol {@test ~t} => fun (π, h) ↦ if π = t then η (π, h) else 0
   | wnk_rpol {@mod ~t} => fun (_, h) ↦ η (t, h)
   | wnk_rpol {dup} => fun (π, h) ↦ η (π, π::h)
-  -- TODO: this should use the syntax
-  | .Seq p q =>
-    fun h ↦ (p.sem h).bind q.sem
-  -- TODO: this should use the syntax
-  | .Weight w p => fun h ↦ w * p.sem h
-  -- TODO: this should use the syntax
-  | .Add p q => fun h ↦ p.sem h + q.sem h
-  -- TODO: this should use the syntax
-  | .Iter p => fun h ↦ ω∑ n : ℕ, (p ^ n).sem h
+  | wnk_rpol {~p; ~q} => fun h ↦ (p.sem h).bind q.sem
+  | wnk_rpol {~w ⨀ ~p}=> fun h ↦ w * p.sem h
+  | wnk_rpol {~p ⨁ ~q} => fun h ↦ p.sem h + q.sem h
+  | wnk_rpol {~p*} => fun h ↦ ω∑ n : ℕ, (p ^ n).sem h
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
@@ -197,18 +190,18 @@ theorem RPol.instZero_sem : RPol.sem (F:=F) (N:=N) (𝒮:=𝒮) 0 = 0 := by
 
 def Pol.toRPol (p : Pol[F,N,𝒮]) : RPol[F,N,𝒮] := match p with
   -- ⨁ᶠ α ∈ At, [α ≤ t] ⨀ α
-  | wnk_policy {@filter ~t} =>
+  | wnk_pol {@filter ~t} =>
     let At : List Pk[F,N] := Finset.toList' Finset.univ
     At.filterMap (fun α ↦ if t.test α then some (wnk_rpol {@test ~α}) else none) |>.sum
   -- ⨁ᶠ α ∈ At, α; α[f ↦ n]
-  | wnk_policy {~f ← ~n} =>
+  | wnk_pol {~f ← ~n} =>
     let At : List Pk[F,N] := Finset.toList' Finset.univ
     At.map (fun α ↦ wnk_rpol {@test ~α; @mod ~α[f ↦ n]}) |>.sum
-  | wnk_policy {dup} => wnk_rpol {dup}
-  | wnk_policy {~p; ~q} => wnk_rpol {~p.toRPol; ~q.toRPol}
-  | wnk_policy {~w ⨀ ~p} => wnk_rpol {~w ⨀ ~p.toRPol}
-  | wnk_policy {~p ⨁ ~q} => wnk_rpol {~p.toRPol ⨁ ~q.toRPol}
-  | wnk_policy {~p*} => wnk_rpol {~p.toRPol*}
+  | wnk_pol {dup} => wnk_rpol {dup}
+  | wnk_pol {~p; ~q} => wnk_rpol {~p.toRPol; ~q.toRPol}
+  | wnk_pol {~w ⨀ ~p} => wnk_rpol {~w ⨀ ~p.toRPol}
+  | wnk_pol {~p ⨁ ~q} => wnk_rpol {~p.toRPol ⨁ ~q.toRPol}
+  | wnk_pol {~p*} => wnk_rpol {~p.toRPol*}
 
 
 theorem Pred.sem_eq_test (t : Pred[F,N]) :
@@ -225,7 +218,7 @@ theorem Pred.sem_eq_test (t : Pred[F,N]) :
   | Not => sorry
 
 theorem Pol.filter_toRol_sem_eq_sum (t : Pred[F,N]) [DecidableEq RPol[F,N,𝒮]] :
-    (wnk_policy {@filter ~t}).toRPol.sem (𝒮:=𝒮) = ∑ α, if t.test α then η else 0 := by
+    (wnk_pol {@filter ~t}).toRPol.sem (𝒮:=𝒮) = ∑ α, if t.test α then η else 0 := by
   simp [toRPol]
   have : ∀ l : List RPol[F,N,𝒮], l.sum.sem = (l.map (RPol.sem)).sum := by
     intro l

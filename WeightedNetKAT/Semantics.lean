@@ -57,8 +57,7 @@ noncomputable def Pred.sem (p : Pred[F,N]) : H[F,N] → H[F,N] →c 𝒮 := matc
     -- NOTE: this is the actual semantics `⟦if t then skip else u⟧`, but we use the unfolded due to
     -- termination checking
     fun h ↦ (t.sem h).bind fun h ↦ η h + ((if t.sem h = 0 then η h else 0).bind u.sem)
-  -- TODO: update this once we fix the syntax for ;
-  | .Con t u => fun h ↦ (t.sem h).bind u.sem
+  | wnk_pred {~t ∧ ~u} => fun h ↦ (t.sem h).bind u.sem
   | wnk_pred {¬~t} => fun h ↦ if t.sem h = 0 then η h else 0
 
 instance : Subst Pk[F,N] F N where
@@ -66,17 +65,17 @@ instance : Subst Pk[F,N] F N where
 
 @[simp]
 def Pol.iter (p : Pol[F,N,X]) : ℕ → Pol[F,N,X]
-  | 0 => wnk_policy { skip }
-  | n+1 => wnk_policy {~p ; ~(p.iter n)}
+  | 0 => wnk_pol { skip }
+  | n+1 => wnk_pol {~p ; ~(p.iter n)}
 
 @[simp, reducible] instance Pol.instHPow : HPow Pol[F,N,X] ℕ Pol[F,N,X] where hPow p n := p.iter n
 
 @[simp]
 def Pol.iterDepth : Pol[F,N,X] → ℕ
-| .Filter _ | wnk_policy {~_ ← ~_} | wnk_policy {dup} => 0
-| wnk_policy {~p ⨁ ~q} | wnk_policy {~p ; ~q} => p.iterDepth ⊔ q.iterDepth
-| wnk_policy {~_ ⨀ ~q} => q.iterDepth
-| wnk_policy {~p *} => p.iterDepth + 1
+| .Filter _ | wnk_pol {~_ ← ~_} | wnk_pol {dup} => 0
+| wnk_pol {~p ⨁ ~q} | wnk_pol {~p ; ~q} => p.iterDepth ⊔ q.iterDepth
+| wnk_pol {~_ ⨀ ~q} => q.iterDepth
+| wnk_pol {~p *} => p.iterDepth + 1
 
 omit [Fintype F] [DecidableEq F] [DecidableEq N] in
 @[simp]
@@ -88,28 +87,23 @@ theorem Pol.iterDepth_iter {p : Pol[F,N,X]} {n : ℕ} :
 open OmegaCompletePartialOrder in
 noncomputable def Pol.sem (p : Pol[F,N,𝒮]) : H[F,N] → H[F,N] →c 𝒮 := match p with
   | .Filter t => t.sem
-  | wnk_policy {~f ← ~n} => fun (π, h) ↦ η (π[f ↦ n], h)
-  | wnk_policy {dup} => fun (π, h) ↦ η (π, π::h)
-  -- TODO: this should use the syntax
-  | .Seq p q =>
-    fun h ↦ (p.sem h).bind q.sem
-  -- TODO: this should use the syntax
-  | .Weight w p => fun h ↦ w * p.sem h
-  -- TODO: this should use the syntax
-  | .Add p q => fun h ↦ p.sem h + q.sem h
-  -- TODO: this should use the syntax
-  | .Iter p => fun h ↦ ω∑ n : ℕ, (p ^ n).sem h
+  | wnk_pol {~f ← ~n} => fun (π, h) ↦ η (π[f ↦ n], h)
+  | wnk_pol {dup} => fun (π, h) ↦ η (π, π::h)
+  | wnk_pol {~p; ~q} => fun h ↦ (p.sem h).bind q.sem
+  | wnk_pol {~w ⨀ ~p}=> fun h ↦ w * p.sem h
+  | wnk_pol {~p ⨁ ~q} => fun h ↦ p.sem h + q.sem h
+  | wnk_pol {~p*} => fun h ↦ ω∑ n : ℕ, (p ^ n).sem h
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
 example {t u : Pred[F,N]} :
-    wnk_policy { ~t ∨ ~u }.sem (𝒮:=𝒮) = wnk_policy { if ~t then skip else @filter ~u }.sem := by
+    wnk_pol { ~t ∨ ~u }.sem (𝒮:=𝒮) = wnk_pol { if ~t then skip else @filter ~u }.sem := by
   simp [Pol.sem, Pred.sem]
 
 noncomputable def Φ (p : Pol[F,N,𝒮]) (d : H[F,N] → H[F,N] →c 𝒮) : H[F,N] → H[F,N] →c 𝒮 :=
   fun h ↦ η h + (p.sem h).bind d
 
-example {p : Pol[F,N,𝒮]} : Φ p (wnk_policy {~p*}.sem) = wnk_policy { skip ⨁ ~p; ~p* }.sem := by
+example {p : Pol[F,N,𝒮]} : Φ p (wnk_pol {~p*}.sem) = wnk_pol { skip ⨁ ~p; ~p* }.sem := by
   ext
   unfold Φ
   simp [Pol.sem, Pred.sem]
@@ -185,7 +179,7 @@ theorem Pol.Φ_ωSup_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (Φ_ωSup p) := by
       rw [← hx]
       apply Φ_mono p ih
 
-theorem Pol.iter_sem_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (wnk_policy {~p*}.sem) := by
+theorem Pol.iter_sem_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (wnk_pol {~p*}.sem) := by
   constructor
   · ext h h'
     simp only [Φ, sem, instHPow, Countsupp.add_apply, η_apply, Countsupp.ωSum_apply]
@@ -230,10 +224,10 @@ theorem Pol.iter_sem_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (wnk_policy {~p*}.
           convert ih h₁
           simp [DFunLike.coe]
 
-theorem Pol.iter_sem_eq_lfp (p : Pol[F,N,𝒮]) : wnk_policy {~p*}.sem = Φ_ωSup p :=
+theorem Pol.iter_sem_eq_lfp (p : Pol[F,N,𝒮]) : wnk_pol {~p*}.sem = Φ_ωSup p :=
   IsLfp_unique p.iter_sem_isLfp p.Φ_ωSup_isLfp
 
-example {p : Pol[F,N,𝒮]} : wnk_policy {~p*}.sem = wnk_policy { skip ⨁ ~p; ~p* }.sem := by
+example {p : Pol[F,N,𝒮]} : wnk_pol {~p*}.sem = wnk_pol { skip ⨁ ~p; ~p* }.sem := by
   have := Pol.iter_sem_isLfp p |>.left
   rw [← this]
   ext
@@ -242,7 +236,7 @@ example {p : Pol[F,N,𝒮]} : wnk_policy {~p*}.sem = wnk_policy { skip ⨁ ~p; ~
 
 @[simp]
 instance : Zero Pol[F,N,𝒮] where
-  zero := wnk_policy {drop}
+  zero := wnk_pol {drop}
 @[simp]
 instance : HAdd Pol[F,N,𝒮] Pol[F,N,𝒮] Pol[F,N,𝒮] where
   hAdd p q := p.Add q
@@ -263,31 +257,23 @@ theorem Pol.instZero_sem : Pol.sem (F:=F) (N:=N) (𝒮:=𝒮) 0 = 0 := by
 open OmegaCompletePartialOrder in
 noncomputable def Pol.approx_n (p : Pol[F,N,𝒮]) (n : ℕ) : Pol[F,N,𝒮] := match p with
   | .Filter t => .Filter t
-  | wnk_policy {~f ← ~n} => wnk_policy {~f ← ~n}
-  | wnk_policy {dup} => wnk_policy {dup}
-  -- TODO: this should use the syntax
-  | .Seq p q => (p.approx_n n).Seq (q.approx_n n)
-  -- TODO: this should use the syntax
-  | .Weight w p => .Weight w (p.approx_n n)
-  -- TODO: this should use the syntax
-  | .Add p q => .Add (p.approx_n n) (q.approx_n n)
-  -- TODO: this should use the syntax
-  | .Iter p => List.range n |>.map ((p.approx_n n) ^ ·) |>.sum
+  | wnk_pol {~f ← ~n} => wnk_pol {~f ← ~n}
+  | wnk_pol {dup} => wnk_pol {dup}
+  | wnk_pol {~p; ~q} => (p.approx_n n).Seq (q.approx_n n)
+  | wnk_pol {~w ⨀ ~p}=> .Weight w (p.approx_n n)
+  | wnk_pol {~p ⨁ ~q} => .Add (p.approx_n n) (q.approx_n n)
+  | wnk_pol {~p*} => List.range n |>.map ((p.approx_n n) ^ ·) |>.sum
 
 open OmegaCompletePartialOrder in
 noncomputable def Pol.sem_n (p : Pol[F,N,𝒮]) (n : ℕ) : H[F,N] → H[F,N] →c 𝒮 := match p with
   | .Filter t => t.sem
-  | wnk_policy {~f ← ~n} => fun (π, h) ↦ η (π[f ↦ n], h)
-  | wnk_policy {dup} => fun (π, h) ↦ η (π, π::h)
-  -- TODO: this should use the syntax
-  | .Seq p q =>
+  | wnk_pol {~f ← ~n} => fun (π, h) ↦ η (π[f ↦ n], h)
+  | wnk_pol {dup} => fun (π, h) ↦ η (π, π::h)
+  | wnk_pol {~p; ~q} =>
     fun h ↦ (p.sem_n n h).bind (q.sem_n n)
-  -- TODO: this should use the syntax
-  | .Weight w p => fun h ↦ w * p.sem_n n h
-  -- TODO: this should use the syntax
-  | .Add p q => fun h ↦ p.sem_n n h + q.sem_n n h
-  -- TODO: this should use the syntax
-  | .Iter p => fun h ↦ ∑ i ∈ Finset.range n, (p ^ i).sem_n n h
+  | wnk_pol {~w ⨀ ~p}=> fun h ↦ w * p.sem_n n h
+  | wnk_pol {~p ⨁ ~q} => fun h ↦ p.sem_n n h + q.sem_n n h
+  | wnk_pol {~p*} => fun h ↦ ∑ i ∈ Finset.range n, (p ^ i).sem_n n h
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 

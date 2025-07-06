@@ -6,12 +6,12 @@ open Fields
 
 /-! Example showing the `match`-syntax sugar. -/
 
-def p {𝒮 : Type} : Pol[Fields,ℕ,𝒮] := wnk_policy {
+def p {𝒮 : Type} : Pol[Fields,ℕ,𝒮] := wnk_pol {
   match
   | dst = H₂ ↦ pt ← 3 ⨁ pt ← 4
   | dst = H₁ ↦ pt ← 1
 }
-def l {𝒮 : Type} [OfNat 𝒮 2] : Pol[Fields,ℕ,𝒮] := wnk_policy {
+def l {𝒮 : Type} [OfNat 𝒮 2] : Pol[Fields,ℕ,𝒮] := wnk_pol {
   match
   | pt = 2 ↦ 2 ⨀ sw ← S₂ ; pt ← 1
   | pt = 3 ↦ sw ← S₃ ; pt ← 1
