@@ -3,11 +3,10 @@ import WeightedNetKAT.FinsuppExt
 
 variable {X : Type} {𝒮 : Type}
   [Semiring 𝒮]
-  [OmegaCompletePartialOrder 𝒮]
+  [PartialOrder 𝒮]
   [OrderBot 𝒮]
   [MulLeftMono 𝒮]
   [MulRightMono 𝒮]
-  [CanonicallyOrderedAdd 𝒮]
   [IsPositiveOrderedAddMonoid 𝒮]
   [DecidableEq 𝒮]
 
@@ -49,7 +48,7 @@ end
 section
 
 variable {X : Type} {𝒮 : Type}
-variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [Semiring 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] [DecidableEq 𝒮] [CanonicallyOrderedAdd 𝒮]
+variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [Semiring 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] [DecidableEq 𝒮]
 variable {F : Type} [Fintype F]
 variable {N : Type} [Fintype N] [DecidableEq N]
 
@@ -84,7 +83,7 @@ theorem 𝒲.bind_of_𝒞' (m : H[F,N] →₀ 𝒮) (f : H[F,N] → H[F,N] →c 
 open WeightedNetKAT (η)
 open Finsupp (η')
 
-omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] [CanonicallyOrderedAdd 𝒮] in
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem 𝒲.η_eq_η' (x : H[F,N]) : η (α:=𝒮) x = (η' x).to𝒲 := by ext; simp
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in

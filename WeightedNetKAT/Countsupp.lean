@@ -87,31 +87,31 @@ variable {𝒮 : Type}
   [OrderBot 𝒮]
   [MulLeftMono 𝒮]
   [MulRightMono 𝒮]
-  [CanonicallyOrderedAdd 𝒮]
+  [IsPositiveOrderedAddMonoid 𝒮]
 
 instance : Add (X →c 𝒮) where
   add a b := ⟨fun x ↦ a x + b x,
     Set.Countable.mono (by intro; simp; grind)
       (Set.countable_union.mpr ⟨a.support_countable, b.support_countable⟩)⟩
-omit [OrderBot 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 @[simp] theorem add_apply (a b : X →c 𝒮) (x : X) : (a + b) x = a x + b x := rfl
 instance : Mul (X →c 𝒮) where
   mul a b := ⟨fun x ↦ a x * b x,
     Set.Countable.mono (by intro; contrapose!; simp +contextual)
       (Set.countable_union.mpr ⟨a.support_countable, b.support_countable⟩)⟩
-omit [OmegaCompletePartialOrder 𝒮] [CanonicallyOrderedAdd 𝒮] in
+omit [OmegaCompletePartialOrder 𝒮] in
 @[simp] theorem mul_apply (a b : X →c 𝒮) (x : X) : (a * b) x = a x * b x := rfl
 
 instance : HMul 𝒮 (X →c 𝒮) (X →c 𝒮) where
   hMul a b := ⟨fun x ↦ a * b x,
     Set.Countable.mono (by intro; contrapose!; simp +contextual) b.support_countable⟩
-omit [OmegaCompletePartialOrder 𝒮] [CanonicallyOrderedAdd 𝒮] in
+omit [OmegaCompletePartialOrder 𝒮] in
 @[simp] theorem hMul_apply_left (a : 𝒮) (b : X →c 𝒮) (x : X) : (a * b) x = a * b x := rfl
 
 instance : HMul (X →c 𝒮) 𝒮 (X →c 𝒮) where
   hMul a b := ⟨fun x ↦ a x * b,
     Set.Countable.mono (by intro; contrapose!; simp +contextual) a.support_countable⟩
-omit [OmegaCompletePartialOrder 𝒮] [CanonicallyOrderedAdd 𝒮] in
+omit [OmegaCompletePartialOrder 𝒮] in
 @[simp] theorem hMul_apply_right (a : X →c 𝒮) (b : 𝒮) (x : X) : (a * b) x = a x * b := rfl
 
 instance : NonUnitalSemiring (X →c 𝒮) where
@@ -138,8 +138,6 @@ instance : PartialOrder (X →c 𝒮) where
   le_trans _ _ _ h₁ h₂ i := le_trans (h₁ i) (h₂ i)
   le_antisymm _ _ h₁ h₂ := by ext i; apply le_antisymm (h₁ i) (h₂ i)
 
-variable [IsPositiveOrderedAddMonoid 𝒮]
-
 instance : OmegaCompletePartialOrder (X →c 𝒮) where
   ωSup C := ⟨fun x ↦ ωSup (C.map ⟨(· x), fun ⦃_ _⦄ a ↦ a x⟩), by
     apply Set.Countable.mono _ (Set.countable_iUnion fun i ↦ (C i).support_countable)
@@ -154,7 +152,7 @@ instance : OmegaCompletePartialOrder (X →c 𝒮) where
     refine le_ωSup_of_le i ?_
     simp only [Chain.map_coe, OrderHom.coe_mk, Function.comp_apply, le_refl]
 
-omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [CanonicallyOrderedAdd 𝒮] in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 @[simp]
 theorem ωSup_apply {X : Type} [Fintype X] [DecidableEq 𝒮] (C : Chain (X →c 𝒮)) (x : X) :
     (ωSup C) x = ωSup (C.map ⟨(· x), (fun ⦃_ _⦄ a ↦ a x)⟩) := rfl
@@ -216,12 +214,12 @@ noncomputable def bind {Y : Type} (f : X →c 𝒮) (g : X → Y →c 𝒮) : Y 
     replace h₂ : g x y = 0 := h₂
     simp [h₂]⟩
 
-omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [CanonicallyOrderedAdd 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 @[simp]
 theorem bind_apply {Y : Type} (f : X →c 𝒮) (g : X → Y →c 𝒮) (y : Y) :
     f.bind g y = ω∑ (i : f.support), f i * g i y := by rfl
 
-omit [MulRightMono 𝒮] [CanonicallyOrderedAdd 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
+omit [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem bind_mono_right {Y : Type} (f : X →c 𝒮) (g₁ g₂ : X → Y →c 𝒮) (h : g₁ ≤ g₂) :
     f.bind g₁ ≤ f.bind g₂ := by
   intro y
@@ -230,7 +228,7 @@ theorem bind_mono_right {Y : Type} (f : X →c 𝒮) (g₁ g₂ : X → Y →c �
   gcongr
   exact h n y
 
-omit [MulLeftMono 𝒮] [CanonicallyOrderedAdd 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
+omit [MulLeftMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem bind_mono_left {Y : Type} {f₁ f₂ : X →c 𝒮} (g : X → Y →c 𝒮) (h : f₁ ≤ f₂) :
     f₁.bind g ≤ f₂.bind g := by
   intro y
@@ -265,7 +263,6 @@ theorem bind_mono_left {Y : Type} {f₁ f₂ : X →c 𝒮} (g : X → Y →c �
     exists_eq_right, exists_prop, imp_self, implies_true, S']
   · intro _ _; rfl
 
-omit [CanonicallyOrderedAdd 𝒮] in
 theorem bind_continuous_right {Y : Type} (f : X →c 𝒮) :
     ωScottContinuous (f.bind (Y:=Y)) := by
   refine ωScottContinuous.of_monotone_map_ωSup ⟨bind_mono_right f, ?_⟩
@@ -282,7 +279,7 @@ theorem bind_continuous_right {Y : Type} (f : X →c 𝒮) :
   simp
   congr
 
-omit [OrderBot 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 @[simp]
 theorem sum_apply [DecidableEq X] {Y : Type} {f : X → Y →c 𝒮} {y : Y} (S : Finset X) :
     (∑ x ∈ S, f x) y = ∑ x ∈ S, f x y := by
@@ -300,7 +297,6 @@ theorem ωSum_apply [Countable X] {Y : Type} {f : X → Y →c 𝒮} {y : Y} :
   congr with x
   split <;> simp_all
 
-omit [CanonicallyOrderedAdd 𝒮] in
 theorem bind_continuous_left {Y : Type} (g : X → Y →c 𝒮) :
     ωScottContinuous (bind (g:=g)) := by
   refine ωScottContinuous.of_monotone_map_ωSup ⟨fun f₁ f₂ ↦ bind_mono_left g, ?_⟩

@@ -296,7 +296,6 @@ class LawfulFinsuppStar (𝒮 : Type)
     [MulRightMono 𝒮]
     [IsPositiveOrderedAddMonoid 𝒮]
     [OmegaContinuousNonUnitalSemiring 𝒮]
-    [CanonicallyOrderedAdd 𝒮]
     [DecidableEq 𝒮]
     extends FinsuppStar 𝒮 where
   wStar_eq_sum :
@@ -792,8 +791,6 @@ theorem RPol.wnka_sem_eq_of (p : RPol[F,N,𝒮]) (f)
     simp [← WeightedProduct.wProd_assoc]
     exact h₂ A α α'
 
-variable [CanonicallyOrderedAdd 𝒮]
-
 theorem RPol.wnka_sem_drop :
     (RPol.wnka wnk_rpol {drop}).sem = G (F:=F) (N:=N) (𝒮:=𝒮) wnk_rpol {drop} := by
   ext x
@@ -878,11 +875,10 @@ theorem RPol.wnka_sem_mod {π} :
       forall_exists_index]
     grind
 -- TODO: remove
-omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq 𝒮] [FinsuppStar 𝒮] [CanonicallyOrderedAdd 𝒮] in
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq 𝒮] [FinsuppStar 𝒮] in
 @[simp]
 theorem 𝒞.ite_apply {X : Type} (p : Prop) [Decidable p] (m₁ m₂ : X →₀ 𝒮) (x : X) :
     (if p then m₁ else m₂) x = (if p then m₁ x else m₂ x) := by grind
-omit [CanonicallyOrderedAdd 𝒮] in
 theorem RPol.wnka_compute'_dup {A : List Pk[F,N]} :
       wnk_rpol {dup}.wnka.compute' (𝒮:=𝒮) A
     = match A with
@@ -1016,7 +1012,6 @@ theorem RPol.wnka_sem_add {p₁ p₂ : RPol[F,N,𝒮]} :
         simp [ι_wProd_δ']
         rw [ih]
 
-omit [CanonicallyOrderedAdd 𝒮] in
 theorem RPol.wnka_sem_weight {w} {p : RPol[F,N,𝒮]} :
     wnk_rpol {~w ⨀ ~p}.wnka.sem = (w * p.wnka.sem) := by
   ext x
@@ -1109,7 +1104,6 @@ theorem G.concat_apply [Encodable F] [Encodable N] {p₁ p₂ : RPol[F,N,𝒮]} 
       have : (i - min i A.length) = 0 := by omega
       simp [this]
 
-omit [CanonicallyOrderedAdd 𝒮] in
 theorem RPol.seq_wnka_compute'' {p₁ p₂ : RPol[F,N,𝒮]} [Inhabited Pk[F,N]] {A} :
         wnk_rpol {~p₁; ~p₂}.wnka.compute' A =
     δ[[p₁.wnka.compute' A,

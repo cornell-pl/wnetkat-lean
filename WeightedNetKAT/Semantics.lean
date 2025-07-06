@@ -40,7 +40,6 @@ variable {X : Type} {𝒮 : Type}
   [OrderBot 𝒮]
   [MulLeftMono 𝒮]
   [MulRightMono 𝒮]
-  [CanonicallyOrderedAdd 𝒮]
   [IsPositiveOrderedAddMonoid 𝒮]
 
 variable {F : Type} [Fintype F] [DecidableEq F]
@@ -212,9 +211,9 @@ theorem Φ_continuous [OmegaContinuousNonUnitalSemiring 𝒮] (p : Pol[F,N,𝒮]
   simp [(p.sem h).bind_continuous_right.map_ωSup, ωSup_add_left _ |>.map_ωSup]
   congr! 1
 
-omit [OrderBot 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Fintype F] [DecidableEq F] [DecidableEq N] in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [Fintype F] [DecidableEq F] [DecidableEq N] in
 @[simp] theorem 𝒲.wZero_le (p : H[F,N] →c 𝒮) : 0 ≤ p := by intro; simp
-omit [OrderBot 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Fintype F] [DecidableEq F] [DecidableEq N] in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [Fintype F] [DecidableEq F] [DecidableEq N] in
 @[simp] theorem 𝒲.Pi_wZero_le {X : Type} (p : X → H[F,N] →c 𝒮) : 0 ≤ p := fun _ ↦ 𝒲.wZero_le _
 
 noncomputable def Φ_chain (p : Pol[F,N,𝒮]) : Chain (H[F,N] → H[F,N] →c 𝒮) :=

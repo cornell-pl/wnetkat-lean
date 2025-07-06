@@ -90,6 +90,11 @@ syntax "#wnka_eval[" term "," term "," term "]" "{" cwnk_rpol "}" : command
 macro_rules
 | `(#wnka_eval[$f, $n, $s] { $p }) => `(#eval! wnk_rpol { $p }.eval (F:=$f) (N:=$n) (𝒮:=$s))
 
+syntax "#wnka_eval'[" term "," term "," term "]" "{" cwnk_pol "}" : command
+
+macro_rules
+| `(#wnka_eval'[$f, $n, $s] { $p }) => `(#eval! wnk_pol { $p }.toRPol.eval (F:=$f) (N:=$n) (𝒮:=$s))
+
 declare_syntax_cat pk_entry
 syntax term "↦" term : pk_entry
 syntax "pk[" pk_entry,* "]" : term

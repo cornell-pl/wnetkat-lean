@@ -37,7 +37,7 @@ namespace WeightedNetKAT
 variable {𝒮 : Type} [Semiring 𝒮]
 variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
 
-variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [CanonicallyOrderedAdd 𝒮]
+variable [MulLeftMono 𝒮] [MulRightMono 𝒮]
 
 variable {F : Type} [Fintype F] [DecidableEq F] [Encodable F]
 variable {N : Type} [Fintype N] [DecidableEq N] [Encodable N]
@@ -45,11 +45,11 @@ variable {N : Type} [Fintype N] [DecidableEq N] [Encodable N]
 instance {X : Type} [Countable X] : One (X →c 𝒮) where
   one := ⟨1, SetCoe.countable _⟩
 
-omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [CanonicallyOrderedAdd 𝒮] in
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 @[simp]
 theorem Countsupp.one_apply {X : Type} [Countable X] {x : X} : (1 : X →c 𝒮) x = 1 := by rfl
 
-omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [CanonicallyOrderedAdd 𝒮] in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 @[simp]
 theorem Countsupp.zero_bind {X : Type} [Countable X] [Encodable X] {g : X → X →c 𝒮} :
     ((0 : X →c 𝒮).bind g) = 0 := by ext x; simp

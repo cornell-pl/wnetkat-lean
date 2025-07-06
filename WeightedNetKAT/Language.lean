@@ -107,7 +107,7 @@ omit [DecidableEq N] [DecidableEq F] [OmegaCompletePartialOrder 𝒮] [OrderBot 
 theorem G.ofConst_apply [DecidableEq GS[F,N]] (f : GS[F,N]) (x : GS[F,N]) :
     G.ofConst f x = if f = x then (1 : 𝒮) else 0 := rfl
 
-variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [CanonicallyOrderedAdd 𝒮]
+variable [MulLeftMono 𝒮] [MulRightMono 𝒮]
 
 open scoped Classical in
 noncomputable def G (p : RPol[F,N,𝒮]) : GS[F,N] →c 𝒮 := match p with

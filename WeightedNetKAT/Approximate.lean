@@ -10,7 +10,6 @@ variable {X : Type} {𝒮 : Type}
   [OrderBot 𝒮]
   [MulLeftMono 𝒮]
   [MulRightMono 𝒮]
-  [CanonicallyOrderedAdd 𝒮]
   [IsPositiveOrderedAddMonoid 𝒮]
   [OmegaContinuousNonUnitalSemiring 𝒮]
 

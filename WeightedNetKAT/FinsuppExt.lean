@@ -218,15 +218,15 @@ end
 
 end Basic
 
+section Basic
+
 variable {M : Type}
   [Semiring M]
-  [OmegaCompletePartialOrder M]
+  [PartialOrder M]
   [OrderBot M]
   [MulLeftMono M]
   [MulRightMono M]
   [IsPositiveOrderedAddMonoid M]
-  [OmegaContinuousNonUnitalSemiring M]
-  [CanonicallyOrderedAdd M]
 
 variable {ι : Type}
 
@@ -273,7 +273,7 @@ instance : AddCommMonoid (ι →₀ M) where
     simp
     split_ifs <;> simp_all [right_distrib]
 
-omit [OmegaCompletePartialOrder M] [OrderBot M] [MulLeftMono M] [MulRightMono M] [IsPositiveOrderedAddMonoid M] [OmegaContinuousNonUnitalSemiring M] [CanonicallyOrderedAdd M] in
+omit [PartialOrder M] [OrderBot M] [MulLeftMono M] [MulRightMono M] [IsPositiveOrderedAddMonoid M] in
 @[simp]
 theorem sum_apply {Y : Type} [DecidableEq Y] {S : Finset ι} {f : ι → Y →₀ M} {a : Y} :
     (∑ x ∈ S, f x) a = ∑ x ∈ S, f x a := by
@@ -281,12 +281,47 @@ theorem sum_apply {Y : Type} [DecidableEq Y] {S : Finset ι} {f : ι → Y →�
   | empty => simp
   | insert x S hx ih => simp_all
 
--- omit [OrderBot M] [IsPositiveOrderedAddMonoid M] [OmegaContinuousNonUnitalSemiring M] [CanonicallyOrderedAdd M] in
+omit [OrderBot M] [IsPositiveOrderedAddMonoid M] in
 instance : IsPositiveOrderedAddMonoid (ι →₀ M) where
   add_le_add_left _ _ hfg c i := add_le_add_left (hfg i) (c i)
   bot_eq_zero := rfl
 
-omit [OrderBot M] [IsPositiveOrderedAddMonoid M] [OmegaContinuousNonUnitalSemiring M] [CanonicallyOrderedAdd M] in
+instance : NonUnitalSemiring (ι →₀ M) where
+  left_distrib f g h := by ext i; exact LeftDistribClass.left_distrib (f i) (g i) (h i)
+  right_distrib f g h := by ext i; exact RightDistribClass.right_distrib (f i) (g i) (h i)
+  mul_assoc a b c := by ext i; exact mul_assoc (a i) (b i) (c i)
+
+variable {ι : Type} {Y : Type}
+
+def bind [DecidableEq M] [DecidableEq Y] (f : ι →₀ M) (g : ι → Y →₀ M) : Y →₀ M :=
+  ⟨(f.support.biUnion (fun x ↦ (g x).support.filter (fun y ↦ f x * g x y ≠ 0))),
+    fun y ↦ ∑ x : f.support, f x * g x y, by
+    intro y
+    simp
+    congr! 2 with x
+    simp
+    intro h h'
+    contrapose! h'
+    simp_all⟩
+
+end Basic
+
+section OmegaCompletePartialOrder
+
+variable {M : Type}
+  [Semiring M]
+  [OmegaCompletePartialOrder M]
+  [OrderBot M]
+  [MulLeftMono M]
+  [MulRightMono M]
+  [IsPositiveOrderedAddMonoid M]
+  [OmegaContinuousNonUnitalSemiring M]
+
+variable {ι : Type}
+
+variable [DecidableEq ι] [DecidableEq M]
+
+omit [OrderBot M] [IsPositiveOrderedAddMonoid M] in
 instance [Fintype ι] : OmegaCompletePartialOrder (ι →₀ M) where
   ωSup C :=
     let C' : ι → M := fun x ↦ ωSup (C.map ⟨(· x), (fun ⦃_ _ ⦄ a ↦ a x)⟩)
@@ -297,12 +332,7 @@ instance [Fintype ι] : OmegaCompletePartialOrder (ι →₀ M) where
       Function.comp_apply]
     exact fun j ↦ hm j i
 
-instance : NonUnitalSemiring (ι →₀ M) where
-  left_distrib f g h := by ext i; exact LeftDistribClass.left_distrib (f i) (g i) (h i)
-  right_distrib f g h := by ext i; exact RightDistribClass.right_distrib (f i) (g i) (h i)
-  mul_assoc a b c := by ext i; exact mul_assoc (a i) (b i) (c i)
-
-omit [MulLeftMono M] [MulRightMono M] [OmegaContinuousNonUnitalSemiring M] [CanonicallyOrderedAdd M] [DecidableEq M] in
+omit [MulLeftMono M] [MulRightMono M] [OmegaContinuousNonUnitalSemiring M] [DecidableEq M] in
 @[simp]
 theorem ωSup_apply {ι : Type} [Fintype ι] [DecidableEq M] (C : Chain (ι →₀ M)) (x : ι) :
     (ωSup C) x = ωSup (C.map ⟨(· x), (fun ⦃_ _⦄ a ↦ a x)⟩) := rfl
@@ -338,17 +368,6 @@ instance [Fintype ι] : OmegaContinuousNonUnitalSemiring (ι →₀ M) where
     simp only [mul_apply, ωSup_apply, h]; clear h
     congr! 1
 
-variable {ι : Type} {Y : Type}
-
-def bind [DecidableEq M] [DecidableEq Y] (f : ι →₀ M) (g : ι → Y →₀ M) : Y →₀ M :=
-  ⟨(f.support.biUnion (fun x ↦ (g x).support.filter (fun y ↦ f x * g x y ≠ 0))),
-    fun y ↦ ∑ x : f.support, f x * g x y, by
-    intro y
-    simp
-    congr! 2 with x
-    simp
-    intro h h'
-    contrapose! h'
-    simp_all⟩
+end OmegaCompletePartialOrder
 
 end Finsupp

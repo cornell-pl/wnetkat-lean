@@ -16,6 +16,10 @@ info: ({(♡, ⊤)},
 #guard_msgs in
 #wnka_eval[Fin 2, Fin 2, Bottleneck ℕ∞] { skip }
 
+/-- info: ({(l♡, ⊤), (r♡, ⊤)}, [], [(![0, 0], ![0, 0], {(l♡, ⊤)})]) -/
+#guard_msgs in
+#wnka_eval'[Fin 2, Fin 1, Bottleneck ℕ∞] { ~1 = ~1 }
+
 /--
 info: ({(♡, ⊤)},
  [(![0, 0], ![0, 0], {((♡, ♣), ⊤)}),

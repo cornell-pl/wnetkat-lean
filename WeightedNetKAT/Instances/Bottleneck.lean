@@ -2,6 +2,8 @@ import WeightedNetKAT.Computation
 import Mathlib.Data.ENat.Lattice
 import WeightedNetKAT.WNKA
 
+open OmegaCompletePartialOrder
+
 def Bottleneck (α : Type) := α
 
 variable {α : Type}
@@ -43,12 +45,6 @@ instance [LE α] [OrderTop α] : One (Bottleneck α) := ⟨⊤⟩
   one_mul := by simp
   mul_one := by simp
 
-instance [LinearOrder α] [OrderBot α] [OrderTop α] : OmegaCompletePartialOrder (Bottleneck α) where
-  ωSup := sorry
-  le_ωSup := sorry
-  ωSup_le := sorry
-instance [LinearOrder α] [OrderBot α] [OrderTop α] : MulLeftMono (Bottleneck α) := ⟨sorry⟩
-instance [LinearOrder α] [OrderBot α] [OrderTop α] : MulRightMono (Bottleneck α) := ⟨sorry⟩
 instance [LinearOrder α] [OrderBot α] [OrderTop α] : IsPositiveOrderedAddMonoid (Bottleneck α) where
   add_le_add_left:= by
     intro a b hab c
@@ -63,18 +59,47 @@ instance [LinearOrder α] [OrderBot α] [OrderTop α] : IsPositiveOrderedAddMono
     simp_all
     exact .inl (hac.le.trans hab)
   bot_eq_zero := rfl
-instance [LinearOrder α] [OrderBot α] [OrderTop α] : OmegaContinuousNonUnitalSemiring (Bottleneck α) where
-  ωSup_add_left := sorry
-  ωSup_add_right := sorry
-  ωSup_mul_left := sorry
-  ωSup_mul_right := sorry
 instance [LinearOrder α] [OrderBot α] [OrderTop α] : CanonicallyOrderedAdd (Bottleneck α) where
   exists_add_of_le := by intro a b hab; simp; use b; simp_all
   le_self_add := by simp
-
+instance [LinearOrder α] [OrderBot α] [OrderTop α] : MulLeftMono (Bottleneck α) := ⟨sorry⟩
+instance [LinearOrder α] [OrderBot α] [OrderTop α] : MulRightMono (Bottleneck α) := ⟨sorry⟩
 instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedNetKAT.FinsuppStar (Bottleneck α) where
-  wStar := sorry
-instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedNetKAT.LawfulFinsuppStar (Bottleneck α) where
+  wStar m := m
+
+instance [CompleteLinearOrder α] : OmegaCompletePartialOrder (Bottleneck α) := inferInstanceAs (OmegaCompletePartialOrder α)
+instance [CompleteLinearOrder α] : OmegaContinuousNonUnitalSemiring (Bottleneck α) where
+  ωSup_add_left x := by
+    sorry
+    -- refine ωScottContinuous.of_monotone_map_ωSup ?_
+    -- apply Exists.intro
+    -- · intro c
+    --   apply le_antisymm
+    --   · apply max_le
+    --     · apply le_ωSup_of_le 0
+    --       · simp
+    --         simp only [DFunLike.coe]
+    --         simp
+    --       · sorry
+    --     · apply ωSup_le_ωSup_of_le
+    --       intro i
+    --       simp
+    --       use i
+    --       simp
+    --   · if h : x ≤ ωSup c then
+    --       simp_all
+    --       exact fun i ↦ le_ωSup c i
+    --     else
+    --       simp_all
+    --       left
+    --       intro i
+    --       apply le_trans _ h.le
+    --       exact le_ωSup c i
+  ωSup_add_right := sorry
+  ωSup_mul_left := sorry
+  ωSup_mul_right := sorry
+
+instance [CompleteLinearOrder α] : WeightedNetKAT.LawfulFinsuppStar (Bottleneck α) where
   wStar_eq_sum := sorry
 
 -- instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedMonotonePreSemiring (Bottleneck α) where
