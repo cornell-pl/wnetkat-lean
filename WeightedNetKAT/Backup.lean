@@ -1,7 +1,7 @@
 
 @[grind]
 inductive Policy.Global (P : Policy[F,N,𝒮] → Prop) : Policy[F,N,𝒮] → Prop where
-  | Filter (t : Predicate[F,N]) : P (.Filter t) → Global P (.Filter t)
+  | Filter (t : Pred[F,N]) : P (.Filter t) → Global P (.Filter t)
   | Mod (f : F) (n : ℕ) : P (.Mod f n) → Global P (.Mod f n)
   | Dup : P .Dup → Global P .Dup
   | Seq (p q : Policy 𝒮) : Global P p → Global P q → P (.Seq p q) → Global P (.Seq p q)

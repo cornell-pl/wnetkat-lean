@@ -9,7 +9,7 @@ variable {F : Type} -- [DecidableEq Pk[F,N]]
 variable {N : Type} [DecidableEq N]
 variable {𝒮 : Type}
 
-def Predicate.test (t : Predicate[F,N]) (pk : Pk[F,N]) : Prop :=
+def Pred.test (t : Pred[F,N]) (pk : Pk[F,N]) : Prop :=
   match t with
   | wnk_pred {false} => false
   | wnk_pred {true} => true
@@ -17,11 +17,11 @@ def Predicate.test (t : Predicate[F,N]) (pk : Pk[F,N]) : Prop :=
   | wnk_pred {~t ∨ ~u} => t.test pk ∨ u.test pk
   -- TODO: update this once we fix the syntax for ;
   | .Con t u => t.test pk ∧ u.test pk
-  | wnk_pred {¬~t} => ¬Predicate.test t pk
-def Predicate.test_decidable {t : Predicate[F,N]} : DecidablePred t.test := fun pk ↦
+  | wnk_pred {¬~t} => ¬Pred.test t pk
+def Pred.test_decidable {t : Pred[F,N]} : DecidablePred t.test := fun pk ↦
   match h : t with
-  | wnk_pred {false} => .isFalse (by simp [Predicate.test])
-  | wnk_pred {true} => .isTrue (by simp [Predicate.test])
+  | wnk_pred {false} => .isFalse (by simp [Pred.test])
+  | wnk_pred {true} => .isTrue (by simp [Pred.test])
   | wnk_pred {~f = ~n} => if h' : pk f = n then .isTrue h' else .isFalse h'
   | wnk_pred {~t ∨ ~u} =>
     have := t.test_decidable pk
@@ -35,7 +35,7 @@ def Predicate.test_decidable {t : Predicate[F,N]} : DecidablePred t.test := fun 
   | wnk_pred {¬~t} =>
     have := t.test_decidable pk
     if h' : ¬t.test pk then .isTrue h' else .isFalse h'
-instance Predicate.test_instDecidable {t : Predicate[F,N]} : DecidablePred t.test := test_decidable
+instance Pred.test_instDecidable {t : Pred[F,N]} : DecidablePred t.test := test_decidable
 
 end WeightedNetKAT
 
@@ -211,20 +211,20 @@ def Policy.toRPol (p : Policy[F,N,𝒮]) : RPol[F,N,𝒮] := match p with
   | wnk_policy {~p*} => wnk_rpol {~p.toRPol*}
 
 
-theorem Predicate.sem_eq_test (t : Predicate[F,N]) :
+theorem Pred.sem_eq_test (t : Pred[F,N]) :
     t.sem (𝒮:=𝒮) = fun (h : H[F,N]) ↦ if t.test h.1 then η h else 0 := by
   induction t with
   | Bool b =>
     if b = true then
-      simp_all [sem, Predicate.sem, Predicate.test]
+      simp_all [sem, Pred.sem, Pred.test]
     else
-      simp_all [sem, Predicate.sem, Predicate.test]
+      simp_all [sem, Pred.sem, Pred.test]
   | Test => sorry
   | Dis => sorry
   | Con => sorry
   | Not => sorry
 
-theorem Policy.filter_toRol_sem_eq_sum (t : Predicate[F,N]) [DecidableEq RPol[F,N,𝒮]] :
+theorem Policy.filter_toRol_sem_eq_sum (t : Pred[F,N]) [DecidableEq RPol[F,N,𝒮]] :
     (wnk_policy {@filter ~t}).toRPol.sem (𝒮:=𝒮) = ∑ α, if t.test α then η else 0 := by
   simp [toRPol]
   have : ∀ l : List RPol[F,N,𝒮], l.sum.sem = (l.map (RPol.sem)).sum := by
@@ -254,7 +254,7 @@ theorem Policy.toRol_sem_eq_sem (p : Policy[F,N,𝒮]) : p.toRPol.sem = p.sem :=
     -- simp [toRPol, sem, RPol.sem]
     -- ext h₀ h₁
     -- simp
-    -- simp [Predicate.sem_eq_test]
+    -- simp [Pred.sem_eq_test]
     -- rw [Finset.sum_eq_single h₀.1]
     -- split_ifs
     -- · simp
@@ -314,7 +314,7 @@ theorem Policy.toRol_sem_eq_sem (p : Policy[F,N,𝒮]) : p.toRPol.sem = p.sem :=
     -- | Bool b =>
     --   if b then
     --     subst_eqs
-    --     simp [Predicate.test, Predicate.sem]
+    --     simp [Pred.test, Pred.sem]
     --     ext h₀ h₁
     --     simp
     --     split_ifs
@@ -357,8 +357,8 @@ theorem Policy.toRol_sem_eq_sem (p : Policy[F,N,𝒮]) : p.toRPol.sem = p.sem :=
     suffices (p₁.toRPol.iter n).sem= (p₁.iter n).sem by simp_all
     clear h₀ h₁
     induction n with
-    | zero => simp [sem, Predicate.sem, RPol.sem]
-    | succ n ih' => simp [sem, Predicate.sem, RPol.sem, ih, ih']
+    | zero => simp [sem, Pred.sem, RPol.sem]
+    | succ n ih' => simp [sem, Pred.sem, RPol.sem, ih, ih']
 
 
 end WeightedNetKAT

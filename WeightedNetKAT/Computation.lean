@@ -19,7 +19,7 @@ namespace WeightedNetKAT
 
 open Finsupp (η')
 
-def Predicate.compute (p : Predicate[F,N]) (n : ℕ) : H[F,N] → H[F,N] →₀ 𝒮 := match p with
+def Pred.compute (p : Pred[F,N]) (n : ℕ) : H[F,N] → H[F,N] →₀ 𝒮 := match p with
   | wnk_pred {false} => fun _ ↦ 0
   | wnk_pred {true} => η'
   | wnk_pred {~f = ~n} => fun (π, h) ↦ if π f = n then η' (π, h) else 0
@@ -118,9 +118,9 @@ theorem 𝒲.η_bind (x : H[F,N]) (f : H[F,N] → H[F,N] →c 𝒮) :
 
 namespace WeightedNetKAT
 
-attribute [local simp] Predicate.sem Predicate.compute in
+attribute [local simp] Pred.sem Pred.compute in
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
-theorem Predicate.compute_eq_sem_n (p : Predicate[F,N]) (n : ℕ):
+theorem Pred.compute_eq_sem_n (p : Pred[F,N]) (n : ℕ):
     p.sem (𝒮:=𝒮) = fun h ↦ (p.compute n h).to𝒲 := by
   induction p with
   | Bool b =>
@@ -172,7 +172,7 @@ variable [DecidableEq F] in
 attribute [local simp] Policy.sem_n Policy.compute in
 theorem Policy.compute_eq_sem_n (p : Policy[F,N,𝒮]) (n : ℕ) : p.sem_n n = fun h ↦ (p.compute n h).to𝒲 := by
   induction p with
-  | Filter t => simp [sem_n, compute]; apply Predicate.compute_eq_sem_n
+  | Filter t => simp [sem_n, compute]; apply Pred.compute_eq_sem_n
   | Mod f e => ext; simp; split; simp_all
   | Dup => ext; simp; split; simp_all
   | Seq p q ihp ihq => simp_all only [sem_n, 𝒲.bind_of_𝒞, compute]
@@ -189,7 +189,7 @@ theorem Policy.compute_eq_sem_n (p : Policy[F,N,𝒮]) (n : ℕ) : p.sem_n n = f
     congr with x
     suffices (p.iter x).sem_n n = (fun h ↦ (p.iter x).compute n h |>.to𝒲) by simp [this]
     induction x with
-    | zero => ext; simp [Predicate.sem, Predicate.compute, η']
+    | zero => ext; simp [Pred.sem, Pred.compute, η']
     | succ x ihx => simp_all only [iter, sem_n, 𝒲.bind_of_𝒞, compute]
 
 end WeightedNetKAT

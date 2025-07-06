@@ -49,7 +49,7 @@ variable {N : Type} [DecidableEq N]
 noncomputable instance : DecidableEq (X →c 𝒮) := Classical.typeDecidableEq _
 -- noncomputable instance : DecidableEq (H[F,N] →c 𝒮) := Classical.typeDecidableEq (𝒲 𝒮 H)
 
-noncomputable def Predicate.sem (p : Predicate[F,N]) : H[F,N] → H[F,N] →c 𝒮 := match p with
+noncomputable def Pred.sem (p : Pred[F,N]) : H[F,N] → H[F,N] →c 𝒮 := match p with
   | wnk_pred {false} => fun _ ↦ 0
   | wnk_pred {true} => η
   | wnk_pred {~f = ~n} => fun (π, h) ↦ if π f = n then η (π, h) else 0
@@ -102,9 +102,9 @@ noncomputable def Policy.sem (p : Policy[F,N,𝒮]) : H[F,N] → H[F,N] →c �
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
-example {t u : Predicate[F,N]} :
+example {t u : Pred[F,N]} :
     wnk_policy { ~t ∨ ~u }.sem (𝒮:=𝒮) = wnk_policy { if ~t then skip else @filter ~u }.sem := by
-  simp [Policy.sem, Predicate.sem]
+  simp [Policy.sem, Pred.sem]
 
 noncomputable def Φ (p : Policy[F,N,𝒮]) (d : H[F,N] → H[F,N] →c 𝒮) : H[F,N] → H[F,N] →c 𝒮 :=
   fun h ↦ η h + (p.sem h).bind d
@@ -112,7 +112,7 @@ noncomputable def Φ (p : Policy[F,N,𝒮]) (d : H[F,N] → H[F,N] →c 𝒮) : 
 example {p : Policy[F,N,𝒮]} : Φ p (wnk_policy {~p*}.sem) = wnk_policy { skip ⨁ ~p; ~p* }.sem := by
   ext
   unfold Φ
-  simp [Policy.sem, Predicate.sem]
+  simp [Policy.sem, Pred.sem]
 
 open OmegaCompletePartialOrder OmegaContinuousNonUnitalSemiring
 
@@ -194,7 +194,7 @@ theorem Policy.iter_sem_isLfp (p : Policy[F,N,𝒮]) : IsLfp (Φ p) (wnk_policy 
         = ω∑ (n : ℕ), (p.sem h).bind fun h ↦ (p.iter n).sem h by
       simp [this]; clear this
       nth_rw 2 [ωSum_nat_eq_succ]
-      simp [Policy.sem, Predicate.sem]
+      simp [Policy.sem, Pred.sem]
     ext
 
     simp [Countsupp.bind]
@@ -211,7 +211,7 @@ theorem Policy.iter_sem_isLfp (p : Policy[F,N,𝒮]) : IsLfp (Φ p) (wnk_policy 
     | zero => simp [DFunLike.coe]
     | succ n ih =>
       rw [add_comm]
-      simp [sem, Predicate.sem, Finset.sum_range_add, DFunLike.coe]
+      simp [sem, Pred.sem, Finset.sum_range_add, DFunLike.coe]
       rw [← hf]
       simp only [Φ]
       gcongr
@@ -238,7 +238,7 @@ example {p : Policy[F,N,𝒮]} : wnk_policy {~p*}.sem = wnk_policy { skip ⨁ ~p
   rw [← this]
   ext
   unfold Φ
-  simp [Policy.sem, Predicate.sem]
+  simp [Policy.sem, Pred.sem]
 
 @[simp]
 instance : Zero Policy[F,N,𝒮] where
@@ -258,7 +258,7 @@ theorem Policy.instAdd_sem (p q : Policy[F,N,𝒮]) : (p + q).sem = p.sem + q.se
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 @[simp]
 theorem Policy.instZero_sem : Policy.sem (F:=F) (N:=N) (𝒮:=𝒮) 0 = 0 := by
-  unfold sem Predicate.sem; rfl
+  unfold sem Pred.sem; rfl
 
 open OmegaCompletePartialOrder in
 noncomputable def Policy.approx_n (p : Policy[F,N,𝒮]) (n : ℕ) : Policy[F,N,𝒮] := match p with
@@ -292,7 +292,7 @@ termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
-attribute [local simp] Policy.approx_n Policy.sem Policy.sem_n Predicate.sem in
+attribute [local simp] Policy.approx_n Policy.sem Policy.sem_n Pred.sem in
 theorem Policy.approx_n_sem (p : Policy[F,N,𝒮]) (n : ℕ) : (p.approx_n n).sem = p.sem_n n := by
   induction p with simp_all
   | Iter p ih =>
@@ -353,7 +353,7 @@ theorem Policy.sem_n_mono (p : Policy[F,N,𝒮]) : Monotone p.sem_n := by
       apply Countsupp.bind_mono_right _ _ _
       exact fun h ↦ ih' h (by simp; omega)
 
-attribute [local simp] Policy.sem Policy.sem_n Predicate.sem in
+attribute [local simp] Policy.sem Policy.sem_n Pred.sem in
 theorem Policy.iter_m_sem_eq_ωSup_sem_n [Fintype N] {p : Policy[F,N,𝒮]} (h : p.sem = ωSup ⟨p.sem_n, p.sem_n_mono⟩) (m : ℕ) :
     (p.iter m).sem = ωSup ⟨fun n ↦ (p.iter m).sem_n n, (p.iter m).sem_n_mono⟩ := by
   induction m with

@@ -18,17 +18,17 @@ instance : DecidableEq H[F,N] := inferInstanceAs (DecidableEq (_ × _))
 instance : Countable H[F,N] := inferInstanceAs (Countable (_ × _))
 instance [Encodable F] [Encodable N] : Encodable H[F,N] := inferInstanceAs (Encodable (_ × _))
 
-inductive Predicate where
+inductive Pred where
   | Bool (b : Bool)
   | Test (f : F) (n : N)
-  | Dis (t u : Predicate)
-  | Con (t u : Predicate)
-  | Not (t : Predicate)
+  | Dis (t u : Pred)
+  | Con (t u : Pred)
+  | Not (t : Pred)
 
-notation "Predicate[" F "," N "]" => Predicate (F:=F) (N:=N)
+notation "Pred[" F "," N "]" => Pred (F:=F) (N:=N)
 
 inductive Policy (W : Type) where
-  | Filter (t : Predicate[F,N])
+  | Filter (t : Pred[F,N])
   | Mod (f : F) (n : N)
   | Dup
   | Seq (p q : Policy W)
@@ -88,12 +88,12 @@ syntax "¬" cwnk_pred : cwnk_pred
 syntax "(" cwnk_pred ")" : cwnk_pred
 
 macro_rules
-| `(wnk_pred { true }) => `(Predicate.Bool true)
-| `(wnk_pred { false }) => `(Predicate.Bool false)
-| `(wnk_pred { $f:cwnk_field = $n:cwnk_nat }) => `(Predicate.Test wnk_field {$f} wnk_nat {$n})
-| `(wnk_pred { $l:cwnk_pred ∨ $r:cwnk_pred }) => `(Predicate.Dis wnk_pred {$l} wnk_pred {$r})
--- | `(wnk_pred { $l:cwnk_pred ; $r:cwnk_pred }) => `(Predicate.And wnk_pred {$l} wnk_pred {$r})
-| `(wnk_pred { ¬$l:cwnk_pred }) => `(Predicate.Not wnk_pred {$l})
+| `(wnk_pred { true }) => `(Pred.Bool true)
+| `(wnk_pred { false }) => `(Pred.Bool false)
+| `(wnk_pred { $f:cwnk_field = $n:cwnk_nat }) => `(Pred.Test wnk_field {$f} wnk_nat {$n})
+| `(wnk_pred { $l:cwnk_pred ∨ $r:cwnk_pred }) => `(Pred.Dis wnk_pred {$l} wnk_pred {$r})
+-- | `(wnk_pred { $l:cwnk_pred ; $r:cwnk_pred }) => `(Pred.And wnk_pred {$l} wnk_pred {$r})
+| `(wnk_pred { ¬$l:cwnk_pred }) => `(Pred.Not wnk_pred {$l})
 | `(wnk_pred { ($t) }) => `(wnk_pred {$t})
 
 -- TODO: add proper precedence
@@ -133,8 +133,8 @@ macro_rules
 | `(wnk_policy { drop }) => `(wnk_policy { false })
 
 /--
-info: (Policy.Filter (Predicate.Test 123 1)).Seq
-  ((Policy.Filter ((Predicate.Bool false).Dis (Predicate.Bool true)).Not).Seq
+info: (Policy.Filter (Pred.Test 123 1)).Seq
+  ((Policy.Filter ((Pred.Bool false).Dis (Pred.Bool true)).Not).Seq
     (Policy.Weight 1 ((Policy.Mod 12 2).Seq (Policy.Dup.Add Policy.Dup.Iter)))) : Policy ℕ
 -/
 #guard_msgs in
@@ -143,8 +143,8 @@ info: (Policy.Filter (Predicate.Test 123 1)).Seq
 macro_rules|`(wnk_pred{~$t})=>`($t)
 macro_rules|`(wnk_policy{~$t})=>`($t)
 
-@[app_unexpander Predicate.Bool]
-def Predicate.unexpandBool : Unexpander
+@[app_unexpander Pred.Bool]
+def Pred.unexpandBool : Unexpander
 | `($(_) $x) =>
   match x with
   | `(true)  => let s := mkIdent $ .mkSimple "true";  `(wnk_pred { $s:ident })
@@ -152,8 +152,8 @@ def Predicate.unexpandBool : Unexpander
   | _ => throw ()
 | _ => throw ()
 
-@[app_unexpander Predicate.Not]
-def Predicate.unexpandNot : Unexpander
+@[app_unexpander Pred.Not]
+def Pred.unexpandNot : Unexpander
 | `($(_) $x) => do
   let x ← match x with
     | `(wnk_pred{$x}) => pure x
@@ -161,8 +161,8 @@ def Predicate.unexpandNot : Unexpander
   `(wnk_pred { ¬$x })
 | _ => throw ()
 
-@[app_unexpander Predicate.Dis]
-def Predicate.unexpandDis : Unexpander
+@[app_unexpander Pred.Dis]
+def Pred.unexpandDis : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_pred{$x}) => pure x
@@ -173,8 +173,8 @@ def Predicate.unexpandDis : Unexpander
   `(wnk_pred { $x ∨ $y })
 | _ => throw ()
 
-@[app_unexpander Predicate.Test]
-def Predicate.unexpandTest : Unexpander
+@[app_unexpander Pred.Test]
+def Pred.unexpandTest : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_field{$x}) => pure x
