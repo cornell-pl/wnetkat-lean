@@ -1,6 +1,5 @@
-import WeightedNetKAT.Semantics
+import WeightedNetKAT.Approximate
 import WeightedNetKAT.FinsuppExt
-import Mathlib.Data.Set.Finite.Basic
 
 variable {X : Type} {𝒮 : Type}
   [Semiring 𝒮]
