@@ -152,14 +152,17 @@ def EENat := WithBot ENat
 instance (n : ℕ) : OfNat EENat n := ⟨some (some n)⟩
 
 instance : LinearOrder EENat := inferInstanceAs (LinearOrder (WithBot ENat))
-instance : OrderBot EENat := inferInstanceAs (OrderBot (WithBot ENat))
-instance : OrderTop EENat := inferInstanceAs (OrderTop (WithBot ENat))
+-- TODO: this became noncomputable for some reason
+-- instance : OrderBot EENat := inferInstanceAs (OrderBot (WithBot ENat))
+-- instance : OrderTop EENat := inferInstanceAs (OrderTop (WithBot ENat))
 
 instance : Repr ℕ∞ where
   reprPrec p n := if p = ⊤ then "⊤" else reprPrec p.toNat n
-instance : Repr EENat where
-  reprPrec p n := if p = ⊤ then "⊤" else if p = ⊥ then "⊥" else reprPrec p.get!.toNat n
+-- TODO: this became noncomputable for some reason
+-- instance : Repr EENat where
+--   reprPrec p n := if p = ⊤ then "⊤" else if p = ⊥ then "⊥" else reprPrec p.get!.toNat n
 
 #eval! (wnk_pol { ~1 ⨀ ~0 ← 3 } : Pol[Fin 3, ℕ, Bottleneck Secutiy₄]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])
 #eval! (wnk_pol { ~1 ⨀ ~0 ← 3 } : Pol[Fin 3, ℕ, Bottleneck ENat]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])
-#eval! (wnk_pol { ~1 ⨀ ~0 ← 3 } : Pol[Fin 3, ℕ, Bottleneck EENat]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])
+-- TODO: this became noncomputable for some reason
+-- #eval! (wnk_pol { ~1 ⨀ ~0 ← 3 } : Pol[Fin 3, ℕ, Bottleneck EENat]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])

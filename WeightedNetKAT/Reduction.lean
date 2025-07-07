@@ -91,7 +91,7 @@ theorem RPol.seq_of_prefix {p : RPol[F,N,𝒮]} {h₀ h₁ : H[F,N]} (h : (p.sem
     obtain ⟨_, _⟩ := h
     · subst_eqs
       simp
-    · simp_all
+    · simp_all only [Countsupp.coe_zero, Pi.zero_apply, not_true_eq_false]
   | Mod γ =>
     simp [RPol.sem] at h; split at h
     obtain ⟨_, _⟩ := h₁
@@ -207,12 +207,12 @@ omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 theorem Pol.filter_toRol_sem_eq_sum (t : Pred[F,N]) :
     (wnk_pol {@filter ~t}).toRPol.sem (𝒮:=𝒮) = ∑ α, if t.test α then wnk_rpol {@test ~α}.sem else 0 := by
   simp [toRPol]
-  have : ∀ l : List RPol[F,N,𝒮], l.sum.sem = (l.map (RPol.sem)).sum := by
+  have : ∀ l : List RPol[F,N,𝒮], l.sum.sem = (l.map RPol.sem).sum := by
     intro l
     induction l with
     | nil => simp
     | cons p l ih => simp_all
-  simp [this]; clear this
+  rw [this]; clear this
   -- TODO: this might not be needed once we have `DecidableEq RPol`
   classical
   rw [← List.sum_toFinset]
@@ -220,15 +220,15 @@ theorem Pol.filter_toRol_sem_eq_sum (t : Pred[F,N]) :
   · simp
     rw [Finset.sum_filterMap _ _ (by simp_all)]
     congr with p h₀ h₁
-    split <;> simp
+    split <;> simp only [Pi.zero_apply, Countsupp.coe_zero]
   · refine List.Nodup.filterMap ?_ (Finset.nodup_toList' Finset.univ)
-    simp_all
+    grind
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 theorem Pol.assign_toRol_sem_eq_sum (f : F) (v : N) :
     (wnk_pol {~f ← ~v}).toRPol.sem (𝒮:=𝒮) = ∑ α, wnk_rpol {@test ~α; @mod ~α[f ↦ v]}.sem := by
   simp [toRPol]
-  have : ∀ l : List RPol[F,N,𝒮], l.sum.sem = (l.map (RPol.sem)).sum := by
+  have : ∀ l : List RPol[F,N,𝒮], l.sum.sem = (l.map RPol.sem).sum := by
     intro l
     induction l with
     | nil => simp

@@ -26,11 +26,10 @@ instance {X Y Z : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [Decidab
         simp only [Prod.mk.eta, ne_eq, Finset.mem_biUnion, Finsupp.mem_support_iff,
           Finset.mem_filterMap, Finset.mem_image, Prod.exists, exists_eq_right,
           Option.ite_none_right_eq_some, Option.some.injEq, Finset.sum_eq_zero_iff,
-          ite_eq_right_iff, Prod.forall, not_forall, Classical.not_imp, Prod.mk.injEq, existsAndEq,
-          and_true, true_and]
+          ite_eq_right_iff, Prod.forall, not_forall, Prod.mk.injEq, existsAndEq, and_true, true_and]
         intro x z
         constructor
-        · simp only [exists_prop, exists_and_left, exists_eq_left', forall_exists_index, and_imp]
+        · simp only [exists_prop, forall_exists_index, and_imp]
           rintro _ y hxy hyz h' ⟨_⟩
           use x, y
         · simp
@@ -72,7 +71,7 @@ omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoi
 theorem 𝒞.wOne_finSupp {Y : Type} [DecidableEq Y] [Fintype Y] [DecidableEq 𝒮] :
     (⨯1 : (Y × Y) →₀ 𝒮).support = if (1 : 𝒮) = 0 then ∅ else Fintype.elems.map ⟨fun a ↦ (a, a), by intro; simp⟩ := by
   ext ⟨x, y⟩
-  simp [dite_not, ne_eq]
+  simp only [Finsupp.mem_support_iff, wProd_id_apply, ne_eq, ite_eq_right_iff, Classical.not_imp]
   split_ifs with h
   · simp [h]
   · simp [Fintype.complete, h]
@@ -107,8 +106,7 @@ theorem WeightedProduct.wProd_assoc {X Y Z W : Type} [DecidableEq X] [DecidableE
     (a ⨯ b ⨯ c) = (a ⨯ (b ⨯ c)) := by
   ext ⟨x, w⟩
   simp only [wProd, Prod.mk.eta, ne_eq, Finsupp.coe_mk, Finset.sum_mul, ite_mul, zero_mul,
-    Finset.sum_eq_zero_iff, Finsupp.mem_support_iff, ite_eq_right_iff, Prod.forall, not_forall,
-    Classical.not_imp]
+    Finset.sum_eq_zero_iff, Finsupp.mem_support_iff, ite_eq_right_iff, Prod.forall, not_forall]
   simp only [Finset.ite_sum_zero]
   rw [Finset.sum_comm]
   congr! with ⟨x, y⟩ h
@@ -121,8 +119,8 @@ theorem WeightedProduct.wProd_assoc {X Y Z W : Type} [DecidableEq X] [DecidableE
     · grind only [Prod.mk.injEq, Finset.mem_filter, cases eager Prod]
     · simp only [Finsupp.mem_support_iff, ne_eq, ite_eq_right_iff, Classical.not_imp, exists_prop,
       Finset.mem_biUnion, Finset.mem_filterMap, Finset.mem_image, Prod.exists, exists_eq_right,
-      Option.ite_none_right_eq_some, Option.some.injEq, exists_and_left, Prod.mk.injEq, existsAndEq,
-      and_true, true_and, and_imp, Prod.forall, ]
+      Option.ite_none_right_eq_some, Option.some.injEq, Prod.mk.injEq, existsAndEq, and_true,
+      true_and, and_imp, Prod.forall]
       grind [mul_zero, zero_mul, mul_assoc]
     · grind [Finset.mem_filter, mul_assoc, cases eager Prod]
   · grind [ite_self, Finset.sum_const_zero]
@@ -345,7 +343,7 @@ where 𝒪_heart (p₁ : RPol[F,N,𝒮]) := (ι p₁ ⨯ 𝒪 p₁ α β)^*
 def δ [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) (α β : Pk[F,N]) : (S p × S p) →₀ 𝒮 := match p with
   | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} =>
     0
-  | wnk_rpol {dup} => Finsupp.liftPi fun s ↦ if s.val = ♡ ∧ α = β then η' ⟨♣, by simp [S]⟩ else 0
+  | wnk_rpol {dup} => Finsupp.liftPi fun s ↦ if s.val = ♡ ∧ α = β then η' ⟨♣, by simp⟩ else 0
   | wnk_rpol {~_ ⨀ ~p₁} => δ p₁ α β
   | wnk_rpol {~p₁ ⨁ ~p₂} =>
       δ[[δ p₁ α β,    0],
@@ -419,21 +417,18 @@ def WNKA.compute {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]
 def WNKA.compute_pair {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (A : List Pk[F,N]) (α' α'' : Pk[F,N]) :
     𝒜.compute (A ++ [α', α'']) = (𝒜.compute' (A ++ [α']) ⨯ 𝒜.𝒪 α' α'') := by
   induction A with
-  | nil => simp [compute, compute']
+  | nil => grind [List.nil_append, compute, compute', WeightedProduct.wOne_wProd]
   | cons α₀ A ih =>
-    simp [compute, compute']
     rcases A with _ | ⟨α₁, A⟩
-    · simp_all [compute, compute']
-    · simp [compute, compute']
-      simp at ih
-      rw [ih]
-      simp [WeightedProduct.wProd_assoc]
+    · grind only [=_ List.cons_append, WeightedProduct.wProd_wOne, WeightedProduct.wOne_wProd,
+      compute', List.cons_append, List.nil_append, compute, List.append_nil, =_ List.append_assoc, →
+      List.eq_nil_of_append_eq_nil]
+    · grind only [List.append_eq_nil_iff, WeightedProduct.wProd_assoc, List.cons_append, →
+      List.eq_nil_of_append_eq_nil, compute', compute]
 
 def WNKA.compute_pair' {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (A : List Pk[F,N]) (α₀ α' α'' : Pk[F,N]) :
     𝒜.compute (α₀ :: (A ++ [α', α''])) = (𝒜.compute' (α₀ :: (A ++ [α'])) ⨯ 𝒜.𝒪 α' α'') := by
-  rw [← List.cons_append]
-  rw [WNKA.compute_pair]
-  rfl
+  rw [← List.cons_append, WNKA.compute_pair]; rfl
 
 omit [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] in
 theorem WNKA.compute_eq_of {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 𝒜' : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) (hδ : 𝒜.δ = 𝒜'.δ) (h𝒪 : 𝒜.𝒪 = 𝒜'.𝒪) :
@@ -447,8 +442,7 @@ theorem WNKA.compute_eq_of {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 𝒜' : 
       unfold compute
       split <;> try rfl
       · simp [h𝒪]
-      · simp [hδ, ih]
-        simp_all
+      · simp [hδ]; grind
 
 omit [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] in
 theorem WNKA.compute'_eq_of {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 𝒜' : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) (hδ : 𝒜.δ = 𝒜'.δ) :
@@ -540,7 +534,7 @@ theorem ι_wProd_δ {A B C D : Type}
     :
     (ι[X, Y] ⨯ δ[[Z, W], [U, V]]) = ι[X ⨯ Z, X ⨯ W] + ι[Y ⨯ U, Y ⨯ V] := by
   ext ⟨_, a⟩
-  simp [WeightedProduct.wProd, S.ι, S.𝒪, S.δ]
+  simp [WeightedProduct.wProd, S.ι, S.δ]
   rcases a with c | d
   · simp
   · simp
@@ -552,7 +546,7 @@ theorem ι_wProd_δ' {A B C D : Type}
     :
     (ι[X, Y] ⨯ δ[[Z, W], [U, V]]) = ι[X ⨯ Z + Y ⨯ U, X ⨯ W + Y ⨯ V] := by
   ext ⟨_, a⟩
-  simp [WeightedProduct.wProd, S.ι, S.𝒪, S.δ]
+  simp [WeightedProduct.wProd, S.ι, S.δ]
   rcases a with c | d <;> simp
 theorem δ_wProd_δ {A B C D E F : Type}
     [DecidableEq A] [DecidableEq B] [DecidableEq C] [DecidableEq D] [DecidableEq E] [DecidableEq F]
@@ -574,7 +568,7 @@ theorem δ_wProd_δ {A B C D E F : Type}
       all_goals
         intro h h' h'' ⟨ab, cd⟩ h'''
         have := h' h'''
-        simp_all only [Finset.le_eq_subset, Finset.mem_map, ne_eq,
+        simp_all only [Finset.le_eq_subset, Finset.mem_map,
           Function.Embedding.coeFn_mk, Prod.exists, Prod.map_apply, Prod.mk.injEq,
           Finset.bot_eq_empty, Finset.notMem_empty]
         obtain ⟨a, b, h₀, ⟨_⟩, ⟨_⟩⟩ := this
@@ -587,7 +581,7 @@ theorem δ_wProd_δ {A B C D E F : Type}
       all_goals
         intro h h' h'' ⟨ab, cd⟩ h'''
         have := h' h'''
-        simp_all only [Finset.le_eq_subset, Finset.mem_map, ne_eq,
+        simp_all only [Finset.le_eq_subset, Finset.mem_map,
           Function.Embedding.coeFn_mk, Prod.exists, Prod.map_apply, Prod.mk.injEq,
           Finset.bot_eq_empty, Finset.notMem_empty]
         obtain ⟨a, b, h₀, ⟨_⟩, ⟨_⟩⟩ := this
@@ -601,7 +595,7 @@ theorem δ_wProd_δ {A B C D E F : Type}
       all_goals
         intro h h' h'' ⟨ab, cd⟩ h'''
         have := h' h'''
-        simp_all only [Finset.le_eq_subset, Finset.mem_map, ne_eq,
+        simp_all only [Finset.le_eq_subset, Finset.mem_map,
           Function.Embedding.coeFn_mk, Prod.exists, Prod.map_apply, Prod.mk.injEq,
           Finset.bot_eq_empty, Finset.notMem_empty]
         obtain ⟨a, b, h₀, ⟨_⟩, ⟨_⟩⟩ := this
@@ -614,7 +608,7 @@ theorem δ_wProd_δ {A B C D E F : Type}
       all_goals
         intro h h' h'' ⟨ab, cd⟩ h'''
         have := h' h'''
-        simp_all only [Finset.le_eq_subset, Finset.mem_map, ne_eq,
+        simp_all only [Finset.le_eq_subset, Finset.mem_map,
           Function.Embedding.coeFn_mk, Prod.exists, Prod.map_apply, Prod.mk.injEq,
           Finset.bot_eq_empty, Finset.notMem_empty]
         obtain ⟨a, b, h₀, ⟨_⟩, ⟨_⟩⟩ := this
@@ -629,7 +623,7 @@ theorem δ_wProd_𝒪 {A B C D : Type}
     :
     (δ[[Z, W], [U, V]] ⨯ 𝒪[X, Y]) = 𝒪[Z ⨯ X + W ⨯ Y, U ⨯ X + V ⨯ Y] := by
   ext ⟨a, _⟩
-  simp [WeightedProduct.wProd, S.ι, S.𝒪, S.δ]
+  simp [WeightedProduct.wProd, S.𝒪, S.δ]
   rw [Finset.sum_union, Finset.sum_union, Finset.sum_union]
   · rcases a with c | d <;> simp
   · intro h h' h'' ⟨ab, cd⟩ h'''
@@ -914,10 +908,11 @@ theorem RPol.wnka_compute'_dup {A : List Pk[F,N]} :
         grind [mul_zero, δ,  𝒞.ite_apply, Finsupp.η'_apply]
       next => simp_all
 
-theorem RPol.wnka_sem_dup (h10 : ((1 : 𝒮) ≠ 0)) (h01 : ((0 : 𝒮) ≠ 1)) :
+theorem RPol.wnka_sem_dup :
     (RPol.wnka wnk_rpol {dup}).sem = G (F:=F) (N:=N) (𝒮:=𝒮) wnk_rpol {dup} := by
   apply wnka_sem_eq_of
   intro A α β
+  if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
   rw [RPol.wnka_compute'_dup]
   split
   next => grind only [=_ List.cons_append, List.length_append, → List.eq_nil_of_append_eq_nil]
@@ -933,7 +928,7 @@ theorem RPol.wnka_sem_dup (h10 : ((1 : 𝒮) ≠ 0)) (h01 : ((0 : 𝒮) ≠ 1)) 
     simp [G, GS.mk, GS.ofPks, ι, 𝒪]
     grind
   next α₀ α₁ h =>
-    simp_all
+    -- simp_all
     have : A = [α₀] := by
       rcases A
       · have := congrArg List.length h
@@ -968,7 +963,7 @@ theorem RPol.wnka_sem_dup (h10 : ((1 : 𝒮) ≠ 0)) (h01 : ((0 : 𝒮) ≠ 1)) 
     suffices A = [x] by grind
     rw [Prod.eq_iff_fst_eq_snd_eq] at h
     simp at h
-    have := congrArg List.length h.2.1
+    have := congrArg List.length h.1.2.1
     simp at this
     rcases A with _ | ⟨α₀, A⟩
     · grind
@@ -983,14 +978,11 @@ theorem RPol.wnka_sem_add {p₁ p₂ : RPol[F,N,𝒮]} :
   ext S
   induction S using GS.induction'
   next α α₀ =>
-    simp [G]
-    simp [wnka, WNKA.sem, GS.mk, WNKA.compute, ι, GS.pks, 𝒪, G]
+    simp [wnka, WNKA.sem, GS.mk, WNKA.compute, ι, GS.pks, 𝒪]
     rw [ι_wProd_𝒪]
     simp
   next α α₀ α₁ A α₂ =>
-    simp [G]
-    simp [WNKA.sem, GS.mk, WNKA.compute, GS.pks, ι, 𝒪, G, δ]
-    simp [WNKA.compute_pair', 𝒪, δ]
+    simp [WNKA.sem, GS.mk, GS.pks, ι, WNKA.compute_pair', 𝒪]
     generalize ι p₁ = ι₁
     generalize ι p₂ = ι₂
     generalize 𝒪 p₁ α₁ α₂ = 𝒪₁
@@ -1007,9 +999,7 @@ theorem RPol.wnka_sem_add {p₁ p₂ : RPol[F,N,𝒮]} :
       · simp [WNKA.compute']
         rw [ι_wProd_𝒪]
         rfl
-      · simp [WNKA.compute']
-        simp [← WeightedProduct.wProd_assoc, δ]
-        simp [ι_wProd_δ']
+      · simp [WNKA.compute', ← WeightedProduct.wProd_assoc, δ, ι_wProd_δ']
         rw [ih]
 
 theorem RPol.wnka_sem_weight {w} {p : RPol[F,N,𝒮]} :
@@ -1025,7 +1015,7 @@ theorem RPol.wnka_sem_weight {w} {p : RPol[F,N,𝒮]} :
       ← WeightedProduct.wProd_assoc, ← WeightedProduct.wHMul_wProd]
   next α A αn =>
     simp [GS.mk, wnka, WNKA.sem, ι, WNKA.compute, GS.pks, ← WeightedProduct.wProd_assoc,
-      ← WeightedProduct.wHMul_wProd, δ, ι, 𝒪]
+      ← WeightedProduct.wHMul_wProd, δ, ι]
     congr! 3
     apply WNKA.compute_eq_of
     · rfl
@@ -1099,7 +1089,7 @@ theorem G.concat_apply [Encodable F] [Encodable N] {p₁ p₂ : RPol[F,N,𝒮]} 
       obtain ⟨h₁, ⟨_⟩⟩ := h₁
       suffices y = List.drop i A by subst_eqs; simp_all
       rw [← h₁]
-      rw [List.drop_append_eq_append_drop]
+      rw [List.drop_append]
       simp
       have : (i - min i A.length) = 0 := by omega
       simp [this]
@@ -1129,7 +1119,9 @@ theorem RPol.seq_wnka_compute'' {p₁ p₂ : RPol[F,N,𝒮]} [Inhabited Pk[F,N]]
       congr! 2 with n hn
       · congr; simp [List.take_append]
       · simp at hn
-        simp [List.take_append_eq_append_take, List.getElem?_append, hn, (by omega : n + 1 - A.length = 0),  (by omega : n - A.length = 0), List.drop_append_eq_append_drop]
+        simp only [List.take_append, (by omega : n + 1 - A.length = 0), List.take_zero,
+          List.append_nil, List.getElem?_append, hn, ↓reduceIte, getElem?_pos, Option.getD_some,
+          List.drop_append, List.drop_zero]
         nth_rw 2 [← List.cons_append]
         simp only [WNKA.compute'_right, wnka_δ]
         simp only [List.cons_append, ← WeightedProduct.wProd_assoc]
@@ -1163,45 +1155,42 @@ theorem RPol.wnka_sem_seq [Encodable F] [Encodable N] {p₁ p₂ : RPol[F,N,𝒮
     congr! 1
     · congr! 2 with n hn
       simp at hn
-      simp [List.take_append_eq_append_take, WNKA.compute_pair', List.getElem?_append, List.getElem?_cons, (by omega : n - A.length = 0)]
+      simp [List.take_append, List.getElem?_append, List.getElem?_cons, (by omega : n - A.length = 0)]
       rcases n with _ | n
       · simp_all [WNKA.compute, WNKA.compute',  WNKA.compute_pair', WeightedProduct.wProd_assoc]
       · simp_all only [add_lt_add_iff_right, Nat.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
         add_tsub_cancel_right, getElem?_pos, Option.getD_some, WeightedProduct.wProd_assoc,
-        List.drop_append_eq_append_drop, (by omega : n + 1 - A.length = 0), List.drop_zero,
-        List.append_assoc, List.cons_append, List.nil_append, WNKA.compute_pair', wnka_𝒪]
+        List.drop_append, (by omega : n + 1 - A.length = 0), List.drop_zero, List.append_assoc,
+        List.cons_append, List.nil_append, WNKA.compute_pair', wnka_𝒪]
         nth_rw 2 [← WeightedProduct.wProd_assoc]
         congr! 3
         induction A using List.reverseRecOn with
         | nil => simp at hn
         | append_singleton A α₁ ih =>
           simp at hn
-          simp [List.take_append_eq_append_take, List.getElem_append]
+          simp [List.take_append, List.getElem_append]
           split_ifs
+          · grind [List.take_eq_nil_iff, List.cons_ne_self]
           · simp_all
-            have : List.take (n + 1 - A.length) [α₁] = [] := by simp_all; omega
+            have : List.take (n + 1 - A.length) [α₁] = [α₁] := by
+              grind [List.take_eq_self_iff, List.length_cons, List.length_nil, zero_add]
             simp [this, WNKA.compute_pair']
-            rw [ih]
-          · simp_all
-            have : List.take (n + 1 - A.length) [α₁] = [α₁] := by simp_all; omega
-            simp [this, WNKA.compute_pair']
-    · simp [List.take_append_eq_append_take, WNKA.compute_pair', ← WeightedProduct.wProd_assoc]
+    · simp [List.take_append, WNKA.compute_pair', ← WeightedProduct.wProd_assoc]
       congr! 8
       refine (List.take_self_eq_iff A).mpr (by omega)
 
 theorem RPol.wnka_sem [Encodable F] [Encodable N] (p : RPol[F,N,𝒮]) : (RPol.wnka p).sem = G p := by
-  if h : (0 : 𝒮) = 1 then ext; simp [eq_zero_of_zero_eq_one h] else
-  have h' : ¬1 = (0 : 𝒮) := by grind
   induction p with
   | Drop => exact wnka_sem_drop
   | Skip => exact wnka_sem_skip
   | Test t => exact wnka_sem_test
   | Mod π => exact wnka_sem_mod
-  | Dup => exact wnka_sem_dup h' h
+  | Dup => exact wnka_sem_dup
   | Add p₁ p₂ ih₁ ih₂ => rw [G, ← ih₁, ← ih₂]; exact wnka_sem_add
   | Weight w p ih => rw [G, ← ih]; exact wnka_sem_weight
   | Seq p₁ p₂ ih₁ ih₂ => exact wnka_sem_seq ih₁ ih₂
   | Iter p₁ ih =>
+
     sorry
 
 end WeightedNetKAT

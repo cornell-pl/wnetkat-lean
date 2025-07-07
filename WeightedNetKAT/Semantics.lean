@@ -30,7 +30,7 @@ abbrev η {ι : Type} {α : Type} [DecidableEq ι] [Zero α] [One α] (i : ι): 
 
 @[simp] theorem η_apply {ι : Type} {α : Type} [DecidableEq ι] [Zero α] [One α] {x y : ι} :
     η x y = if x = y then (1 : α) else 0 := by
-  simp [η, DFunLike.coe, Pi.single, Function.update]; grind
+  simp [DFunLike.coe, Pi.single, Function.update]; grind
 
 -- @[simp] theorem η_subtype_apply {x y : H[F,N]} : η x y = if x = y then (1 : 𝒮) else 0 := by rfl
 
@@ -283,7 +283,7 @@ theorem Pol.iter_sem_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (wnk_pol {~p*}.sem
     simp [← ωSum_mul_left]
     rw [ωSum_comm]
   · intro f hf h
-    simp [sem, Φ]
+    simp [sem]
     simp [ωSum_nat_eq_ωSup]
     intro n
     -- apply WeightedSum_nat_le (𝒮:=H[F,N] →c 𝒮) (f:=(fun n ↦ (p.iter n).sem h))
