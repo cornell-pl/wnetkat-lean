@@ -1,7 +1,7 @@
 import WeightedNetKAT.Computation
 import Mathlib.Data.ENat.Basic
 
-def Tropical (α : Type) := OrderDual α
+def Tropical (α : Type*) := OrderDual α
 
 attribute [local simp] wLe WeightedSemiring.ofSemiring
 
@@ -108,7 +108,7 @@ instance : WeightedSemiring (Tropical ℕ∞) where
   wNpow_zero := by simp; rfl
 
 @[simp]
-def WeightedPartialOrder.ofPartialOrder (α : Type) [PartialOrder α] : WeightedPartialOrder α where
+def WeightedPartialOrder.ofPartialOrder (α : Type*) [PartialOrder α] : WeightedPartialOrder α where
   wle := (· ≤ ·)
   wle_refl := le_refl
   wle_trans := le_trans

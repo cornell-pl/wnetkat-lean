@@ -4,17 +4,17 @@ import Mathlib.Tactic.DeriveFintype
 
 namespace WeightedNetKAT
 
-variable {F : Type} [Fintype F] [DecidableEq F]
-variable {N : Type} [Fintype N] [DecidableEq N]
-variable {𝒮 : Type} [Semiring 𝒮]
+variable {F : Type*} [Fintype F] [DecidableEq F]
+variable {N : Type*} [Fintype N] [DecidableEq N]
+variable {𝒮 : Type*} [Semiring 𝒮]
 variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
 
-class WeightedProduct (α : Type) (β : Type) (γ : outParam Type) where
+class WeightedProduct (α : Type*) (β : Type*) (γ : outParam Type*) where
   wProd : α → β → γ
 
 infixl:70 " ⨯ " => WeightedProduct.wProd
 
-instance {X Y Z : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq 𝒮] :
+instance {X Y Z : Type*} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq 𝒮] :
     WeightedProduct ((X × Y) →₀ 𝒮) ((Y × Z) →₀ 𝒮) ((X × Z) →₀ 𝒮) where
   wProd m m' :=
     ⟨(m.support.biUnion (fun (x, y) ↦
@@ -39,7 +39,7 @@ instance {X Y Z : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [Decidab
           contrapose! h'
           simp [h'])⟩
 
-def 𝒞.wProd_id {𝒮 X : Type} [Fintype X] [DecidableEq X] [Semiring 𝒮] [DecidableEq 𝒮] : (X × X) →₀ 𝒮 :=
+def 𝒞.wProd_id {𝒮 X : Type*} [Fintype X] [DecidableEq X] [Semiring 𝒮] [DecidableEq 𝒮] : (X × X) →₀ 𝒮 :=
   if h : ¬(1 : 𝒮) = 0 then
     ⟨(Fintype.elems.map ⟨fun a ↦ (a, a), by intro; simp⟩),
       (fun (x, y) ↦ if x = y then 1 else 0),
@@ -50,25 +50,25 @@ notation "⨯1" => 𝒞.wProd_id
 
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[simp]
-theorem 𝒞.wProd_id_apply {X : Type} [Fintype X] [DecidableEq X] [DecidableEq 𝒮] (x : X × X) :
+theorem 𝒞.wProd_id_apply {X : Type*} [Fintype X] [DecidableEq X] [DecidableEq 𝒮] (x : X × X) :
     (⨯1 : (X × X) →₀ 𝒮) x = if x.1 = x.2 then 1 else 0 := by
   simp [𝒞.wProd_id]
   split_ifs <;> simp_all
 
 @[simp]
-theorem WeightedProduct.wProd_wZero {X Y Z : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq 𝒮]
+theorem WeightedProduct.wProd_wZero {X Y Z : Type*} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq 𝒮]
     (a : (X × Y) →₀ 𝒮) :
     (a ⨯ (0 : (Y × Z) →₀ 𝒮)) = 0 := by
   ext ⟨x, Z⟩; simp [WeightedProduct.wProd]
 @[simp]
-theorem WeightedProduct.wZero_wProd {X Y Z : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq 𝒮]
+theorem WeightedProduct.wZero_wProd {X Y Z : Type*} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq 𝒮]
     (a : (Y × Z) →₀ 𝒮) :
     ((0 : (X × Y) →₀ 𝒮) ⨯ a) = 0 := by
   ext ⟨x, Z⟩; simp [WeightedProduct.wProd]
 
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[simp]
-theorem 𝒞.wOne_finSupp {Y : Type} [DecidableEq Y] [Fintype Y] [DecidableEq 𝒮] :
+theorem 𝒞.wOne_finSupp {Y : Type*} [DecidableEq Y] [Fintype Y] [DecidableEq 𝒮] :
     (⨯1 : (Y × Y) →₀ 𝒮).support = if (1 : 𝒮) = 0 then ∅ else Fintype.elems.map ⟨fun a ↦ (a, a), by intro; simp⟩ := by
   ext ⟨x, y⟩
   simp only [Finsupp.mem_support_iff, wProd_id_apply, ne_eq, ite_eq_right_iff, Classical.not_imp]
@@ -77,7 +77,7 @@ theorem 𝒞.wOne_finSupp {Y : Type} [DecidableEq Y] [Fintype Y] [DecidableEq �
   · simp [Fintype.complete, h]
 
 @[simp]
-theorem WeightedProduct.wProd_wOne {X Y : Type} [DecidableEq X] [DecidableEq Y] [Fintype Y] [DecidableEq 𝒮]
+theorem WeightedProduct.wProd_wOne {X Y : Type*} [DecidableEq X] [DecidableEq Y] [Fintype Y] [DecidableEq 𝒮]
     (a : (X × Y) →₀ 𝒮) :
     (a ⨯ (⨯1 : (Y × Y) →₀ 𝒮)) = a := by
   ext ⟨x, y⟩; simp [WeightedProduct.wProd]
@@ -86,7 +86,7 @@ theorem WeightedProduct.wProd_wOne {X Y : Type} [DecidableEq X] [DecidableEq Y] 
   · grind only [cases eager Prod, cases Or]
   · grind only [Finsupp.mem_support_iff]
 @[simp]
-theorem WeightedProduct.wOne_wProd {X Y : Type} [DecidableEq X] [DecidableEq Y] [Fintype X] [DecidableEq 𝒮]
+theorem WeightedProduct.wOne_wProd {X Y : Type*} [DecidableEq X] [DecidableEq Y] [Fintype X] [DecidableEq 𝒮]
     (a : (X × Y) →₀ 𝒮) :
     ((⨯1 : (X × X) →₀ 𝒮) ⨯ a) = a := by
   ext ⟨x, y⟩; simp [WeightedProduct.wProd]
@@ -99,7 +99,7 @@ theorem WeightedProduct.wOne_wProd {X Y : Type} [DecidableEq X] [DecidableEq Y] 
     · simp only [Finset.mem_map_mk, Fintype.complete, not_true_eq_false, ↓reduceIte,
       IsEmpty.forall_iff]
 
-theorem WeightedProduct.wProd_assoc {X Y Z W : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq W] [DecidableEq 𝒮]
+theorem WeightedProduct.wProd_assoc {X Y Z W : Type*} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq W] [DecidableEq 𝒮]
     (a : (X × Y) →₀ 𝒮)
     (b : (Y × Z) →₀ 𝒮)
     (c : (Z × W) →₀ 𝒮) :
@@ -125,7 +125,7 @@ theorem WeightedProduct.wProd_assoc {X Y Z W : Type} [DecidableEq X] [DecidableE
     · grind [Finset.mem_filter, mul_assoc, cases eager Prod]
   · grind [ite_self, Finset.sum_const_zero]
 
-theorem WeightedProduct.wHMul_wProd {X Y Z : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq 𝒮]
+theorem WeightedProduct.wHMul_wProd {X Y Z : Type*} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq 𝒮]
     (m : (X × Y) →₀ 𝒮) (m' : (Y × Z) →₀ 𝒮) (w : 𝒮) :
     w * (m ⨯ m') = w * m ⨯ m' := by
   ext ⟨x, z⟩
@@ -149,7 +149,7 @@ theorem WeightedProduct.wHMul_wProd {X Y Z : Type} [DecidableEq X] [DecidableEq 
 - `𝒪` is a family of output weightings `𝒪[α,β] : 𝒞 𝒮 Q` indexed by packet pairs. Note that we
   use 𝒪 instead of λ, since λ is the function symbol in Lean.
 -/
-structure WNKA (F N 𝒮 Q: Type)
+structure WNKA (F N 𝒮 Q: Type*)
     [Semiring 𝒮]
 where
   /-- `ι` is the initial weightings. -/
@@ -204,7 +204,7 @@ def S.decidableEq (p : RPol[F,N,𝒮]) : DecidableEq (S p) :=
 instance S.instDecidableEq {p : RPol[F,N,𝒮]} : DecidableEq (S p) := S.decidableEq p
 instance : DecidableEq (S.I {♡}) := Subtype.instDecidableEq
 
-def S.ι {X Y : Type} : ((Unit × X) →₀ 𝒮) → ((Unit × Y) →₀ 𝒮) → ((Unit × (X ⊕ Y)) →₀ 𝒮) :=
+def S.ι {X Y : Type*} : ((Unit × X) →₀ 𝒮) → ((Unit × Y) →₀ 𝒮) → ((Unit × (X ⊕ Y)) →₀ 𝒮) :=
   fun m₁ m₂ ↦
     ⟨(let sx := m₁.support.map ⟨(·.snd), by intro; grind⟩
       let sy := m₂.support.map ⟨(·.snd), by intro; grind⟩
@@ -212,7 +212,7 @@ def S.ι {X Y : Type} : ((Unit × X) →₀ 𝒮) → ((Unit × Y) →₀ 𝒮) 
       (fun ⟨_, x⟩ ↦ x.elim (m₁ ⟨(), ·⟩) (m₂ ⟨(), ·⟩)),
       (by simp; grind)⟩
 notation "ι[" a "," b"]" => S.ι a b
-def S.𝒪 {X Y : Type} : ((X × Unit) →₀ 𝒮) → ((Y × Unit) →₀ 𝒮) → (((X ⊕ Y) × Unit) →₀ 𝒮) :=
+def S.𝒪 {X Y : Type*} : ((X × Unit) →₀ 𝒮) → ((Y × Unit) →₀ 𝒮) → (((X ⊕ Y) × Unit) →₀ 𝒮) :=
   fun m₁ m₂ ↦
     ⟨(let sx := m₁.support.map ⟨(·.fst), by intro; grind⟩
       let sy := m₂.support.map ⟨(·.fst), by intro; grind⟩
@@ -221,7 +221,7 @@ def S.𝒪 {X Y : Type} : ((X × Unit) →₀ 𝒮) → ((Y × Unit) →₀ 𝒮
       (by simp; grind)⟩
 notation "𝒪[" a "," b"]" => S.𝒪 a b
 attribute [grind] Prod.map Function.Injective in
-def S.δ {X Y Z W : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq W] :
+def S.δ {X Y Z W : Type*} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] [DecidableEq W] :
     ((X × Y) →₀ 𝒮) →
     ((X × W) →₀ 𝒮) →
     ((Z × Y) →₀ 𝒮) →
@@ -271,22 +271,22 @@ open Finsupp (η')
 
 def ι (p : RPol[F,N,𝒮]) : (Unit × S p) →₀ 𝒮 := match p with
   | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} =>
-    η' ⟨(), ♡, rfl⟩
+    η' ⟨(), ⟨♡, rfl⟩⟩
   | wnk_rpol {dup} => η' ⟨(), ♡, by simp⟩
   | wnk_rpol {~w ⨀ ~p₁} => w * ι p₁
   | wnk_rpol {~p₁ ⨁ ~p₂} => ι[ι p₁, ι p₂]
   | wnk_rpol {~p₁ ; ~p₂} => ι[ι p₁, 0]
   | wnk_rpol {~p₁*} => ι[0, 1]
 
-def 𝒞.pow {X : Type} [Fintype X] [DecidableEq X] (m : (X × X) →₀ 𝒮) : ℕ → (X × X) →₀ 𝒮
+def 𝒞.pow {X : Type*} [Fintype X] [DecidableEq X] (m : (X × X) →₀ 𝒮) : ℕ → (X × X) →₀ 𝒮
   | 0 => ⨯1
   | n+1 => 𝒞.pow m n ⨯ m
 
-class FinsuppStar (𝒮 : Type) [Semiring 𝒮] where
-  wStar : {X : Type} → [Fintype X] → [DecidableEq X] → ((X × X) →₀ 𝒮) → (X × X) →₀ 𝒮
+class FinsuppStar (𝒮 : Type*) [Semiring 𝒮] where
+  wStar : {X : Type*} → [Fintype X] → [DecidableEq X] → ((X × X) →₀ 𝒮) → (X × X) →₀ 𝒮
 postfix:max "^*" => FinsuppStar.wStar
 
-class LawfulFinsuppStar (𝒮 : Type)
+class LawfulFinsuppStar (𝒮 : Type*)
     [Semiring 𝒮]
     [OmegaCompletePartialOrder 𝒮]
     [OrderBot 𝒮]
@@ -297,30 +297,74 @@ class LawfulFinsuppStar (𝒮 : Type)
     [DecidableEq 𝒮]
     [FinsuppStar 𝒮] where
   wStar_eq_sum :
-    ∀ {X : Type} [Fintype X] [DecidableEq X],
+    ∀ {X : Type*} [Fintype X] [DecidableEq X],
         ∀ m : (X × X) →₀ 𝒮, m^* = ω∑ n, 𝒞.pow m n
 
 -- noncomputable instance :
---     [∀ {X : Type} [Fintype X] [DecidableEq X], WeightedOmegaCompletePartialOrder ((X × X) →₀ 𝒮)]
---     [∀ {X : Type} [Fintype X] [DecidableEq X], WeightedOmegaContinuousPreSemiring ((X × X) →₀ 𝒮)] :
+--     [∀ {X : Type*} [Fintype X] [DecidableEq X], WeightedOmegaCompletePartialOrder ((X × X) →₀ 𝒮)]
+--     [∀ {X : Type*} [Fintype X] [DecidableEq X], WeightedOmegaContinuousPreSemiring ((X × X) →₀ 𝒮)] :
 --     FinsuppStar 𝒮 where
 --   wStar m := ω∑ n, 𝒞.pow m n
 --   wStar_eq_sum := by intro x _ _; use inferInstance, inferInstance; intro m; rfl
 
-def 𝒞.left_to_unit {X : Type} [DecidableEq X] (m : (S.I {♡} × X) →₀ 𝒮) : ((Unit × X) →₀ 𝒮) :=
+def 𝒞.left_to_unit {X : Type*} [DecidableEq X] (m : (S.I {♡} × X) →₀ 𝒮) : ((Unit × X) →₀ 𝒮) :=
   ⟨(m.support.image (fun (_, x) ↦ ((), x))), (fun (_, x) ↦ m (⟨♡, rfl⟩, x)), (by simp)⟩
-def 𝒞.left_to_heart {X : Type} [DecidableEq X] (m : ((Unit × X) →₀ 𝒮)) : (S.I {♡} × X) →₀ 𝒮 :=
+def 𝒞.left_to_heart {X : Type*} [DecidableEq X] (m : ((Unit × X) →₀ 𝒮)) : (S.I {♡} × X) →₀ 𝒮 :=
   ⟨(m.support.image (fun (_, x) ↦ (⟨♡, rfl⟩, x))), (fun (_, x) ↦ m ((), x)), (by simp; grind)⟩
 
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq 𝒮] in
-@[simp] theorem 𝒞.left_to_unit_apply {X : Type} [DecidableEq X] (m : (S.I {♡} × X) →₀ 𝒮) (x) :
+@[simp] theorem 𝒞.left_to_unit_apply {X : Type*} [DecidableEq X] (m : (S.I {♡} × X) →₀ 𝒮) (x) :
     𝒞.left_to_unit m x = m (⟨♡, rfl⟩, x.2) := rfl
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq 𝒮] in
-@[simp] theorem 𝒞.left_to_heart_apply {X : Type} [DecidableEq X] (m : ((Unit × X) →₀ 𝒮)) (x) :
+@[simp] theorem 𝒞.left_to_heart_apply {X : Type*} [DecidableEq X] (m : ((Unit × X) →₀ 𝒮)) (x) :
     𝒞.left_to_heart m x = m ((), x.2) := rfl
 
-def 𝒞.transpose {X Y : Type} [DecidableEq X] [DecidableEq Y] (m : (X × Y) →₀ 𝒮) : (Y × X) →₀ 𝒮 :=
+def 𝒞.transpose {X Y : Type*} [DecidableEq X] [DecidableEq Y] (m : (X × Y) →₀ 𝒮) : (Y × X) →₀ 𝒮 :=
   ⟨(m.support.image (fun (y, x) ↦ (x, y))), (fun (y, x) ↦ m (x, y)), (by simp)⟩
+
+universe u
+
+class Star (α : Type*) where
+  -- X Z Y W : Type u
+  -- promote : α → ((X ⊕ Z) × (Y ⊕ W))
+  -- β : match u with | 0 => Type | v+1 => Type v
+  -- promote : α → β
+  star : α → α
+postfix:max "^**" => Star.star
+
+variable [Star 𝒮]
+
+instance instUnitStar : Star ((Unit × Unit) →₀ 𝒮) where
+  star := sorry
+
+def mmm
+  {n₁ n₂ : Type*}
+  [Fintype n₁] [Fintype n₂]
+  [DecidableEq n₁] [DecidableEq n₂]
+  [Star ((n₁ × n₁) →₀ 𝒮)]
+  [Star ((n₂ × n₂) →₀ 𝒮)]
+  :
+    Star (((n₁ ⊕ n₂) × (n₁ ⊕ n₂)) →₀ 𝒮) where
+  star m :=
+    let a : (n₁ × n₁) →₀ 𝒮 := ⟨sorry, fun (x, y) ↦ m (.inl x, .inl y), sorry⟩
+    let b : (n₁ × n₂) →₀ 𝒮 := ⟨sorry, fun (x, w) ↦ m (.inl x, .inr w), sorry⟩
+    let c : (n₂ × n₁) →₀ 𝒮 := ⟨sorry, fun (z, y) ↦ m (.inr z, .inl y), sorry⟩
+    let d : (n₂ × n₂) →₀ 𝒮 := ⟨sorry, fun (z, y) ↦ m (.inr z, .inr y), sorry⟩
+    let δ : (n₂ × n₂) →₀ 𝒮 := (d + c ⨯ a^** ⨯ b)^**
+    let γ : (n₂ × n₁) →₀ 𝒮 := δ ⨯ c ⨯ a^**
+    let β : (n₁ × n₂) →₀ 𝒮 := a^** ⨯ b ⨯ δ
+    let α : (n₁ × n₁) →₀ 𝒮 := a^** + a^** ⨯ b ⨯ δ ⨯ c ⨯ a^**
+    δ[[α,β],[γ,δ]]
+
+
+-- def my_star {X Y Z W : Type*} [Fintype X] [Fintype Y] [DecidableEq X] [DecidableEq Y] (m : ((X ⊕ Z) × (Y ⊕ W)) →₀ 𝒮) :
+--     ((X ⊕ Z) × (Y ⊕ W)) →₀ 𝒮 :=
+--   let a : (X × Y) →₀ 𝒮 := ⟨sorry, fun (x, y) ↦ m (.inl x, .inl y), sorry⟩
+--   let b : (X × W) →₀ 𝒮 := ⟨sorry, fun (x, w) ↦ m (.inl x, .inr w), sorry⟩
+--   let c : (Z × Y) →₀ 𝒮 := ⟨sorry, fun (z, y) ↦ m (.inr z, .inl y), sorry⟩
+--   let d : (Z × W) →₀ 𝒮 := ⟨sorry, fun (z, y) ↦ m (.inr z, .inr y), sorry⟩
+--   let δ := (d + c ⨯ my_star a ⨯ b)
+--   sorry
 
 def 𝒪 [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) (α β : Pk[F,N]) : (S p × Unit) →₀ 𝒮 :=
   match p with
@@ -339,6 +383,13 @@ def 𝒪 [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) (α β : Pk[F,N]) : (S p × Uni
       𝒞.left_to_heart q
     ]
 where 𝒪_heart (p₁ : RPol[F,N,𝒮]) := (ι p₁ ⨯ 𝒪 p₁ α β)^*
+      -- box (p₁ : RPol[F,N,𝒮]) : (Pk[F,N] × Pk[F,N]) → S.I {♡} × Unit →₀ 𝒮 :=
+      --   (fun (α, β) ↦ (⟨Finset.univ.filter (fun (_, _) ↦ (ι p₁ ⨯ 𝒪 p₁ α β) ((), ()) ≠ 0),
+      --     fun (_, _) ↦ (ι p₁ ⨯ 𝒪 p₁ α β) ((), ()), by simp; sorry⟩) : (Pk[F,N] × Pk[F,N]) → S.I {♡} × Unit →₀ 𝒮)
+      -- 𝒪_heart' (p₁ : RPol[F,N,𝒮]) : (Pk[F,N] × Pk[F,N]) → S.I {♡} × Unit →₀ 𝒮 := (box p₁)^**
+      -- 𝒪_heart' (p₁ : RPol[F,N,𝒮]) : (Pk[F,N] × Pk[F,N]) → S.I {♡} × Unit →₀ 𝒮 :=
+      --   (fun (α, β) ↦ (⟨Finset.univ.filter (fun (_, _) ↦ (ι p₁ ⨯ 𝒪 p₁ α β) ((), ()) ≠ 0),
+      --     fun (_, _) ↦ (ι p₁ ⨯ 𝒪 p₁ α β) ((), ()), by simp⟩) : (Pk[F,N] × Pk[F,N]) → S.I {♡} × Unit →₀ 𝒮)^**
 
 def δ [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) (α β : Pk[F,N]) : (S p × S p) →₀ 𝒮 := match p with
   | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} =>
@@ -368,17 +419,17 @@ def RPol.wnka [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) : WNKA[F,N,𝒮,S p] where
 @[simp] theorem RPol.wnka_δ [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) : p.wnka.δ = δ p := rfl
 @[simp] theorem RPol.wnka_𝒪 [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) : p.wnka.𝒪 = 𝒪 p := rfl
 
-def big_wprod {X : Type} [Fintype X] [DecidableEq X] (l : List ((X × X) →₀ 𝒮)) : (X × X) →₀ 𝒮 :=
+def big_wprod {X : Type*} [Fintype X] [DecidableEq X] (l : List ((X × X) →₀ 𝒮)) : (X × X) →₀ 𝒮 :=
   l.foldl (· ⨯ ·) 1
 
-def WNKA.compute' {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) :
+def WNKA.compute' {Q : Type*} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) :
     (Q × Q) →₀ 𝒮 :=
   match s with
   -- NOTE: these are unreachable in practice, but setting them to 1 is okay by idempotency
   | [] | [_] => ⨯1
   | α::α'::s => 𝒜.δ α α' ⨯ 𝒜.compute' (α' :: s)
 
-def WNKA.compute'_right {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) {α α'} :
+def WNKA.compute'_right {Q : Type*} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) {α α'} :
     𝒜.compute' (s ++ [α, α']) = (𝒜.compute' (s ++ [α]) ⨯ 𝒜.δ α α') := by
   induction s with
   | nil => simp [compute']
@@ -391,7 +442,7 @@ def WNKA.compute'_right {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,
       rw [ih]
       simp [WeightedProduct.wProd_assoc]
 
-def WNKA.compute {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) :
+def WNKA.compute {Q : Type*} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) :
     (Q × Unit) →₀ 𝒮 :=
   match s with
   -- NOTE: these are unreachable in practice, but setting them to 1 is okay by idempotency
@@ -399,7 +450,7 @@ def WNKA.compute {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]
   | [α, α'] => 𝒜.𝒪 α α'
   | α::α'::s => 𝒜.δ α α' ⨯ 𝒜.compute (α' :: s)
 
--- def WNKA.compute_cons_append {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (A : List Pk[F,N]) (α α' : Pk[F,N]) :
+-- def WNKA.compute_cons_append {Q : Type*} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (A : List Pk[F,N]) (α α' : Pk[F,N]) :
 --     𝒜.compute (α :: A ++ [α']) =  (𝒜.compute' A ⨯ 𝒜.𝒪 α' α'') := by
 --   induction A generalizing α with
 --   | nil => simp [compute, compute']
@@ -414,7 +465,7 @@ def WNKA.compute {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]
 --       rw [ih]
 --       simp [WeightedProduct.wProd_assoc]
 
-def WNKA.compute_pair {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (A : List Pk[F,N]) (α' α'' : Pk[F,N]) :
+def WNKA.compute_pair {Q : Type*} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (A : List Pk[F,N]) (α' α'' : Pk[F,N]) :
     𝒜.compute (A ++ [α', α'']) = (𝒜.compute' (A ++ [α']) ⨯ 𝒜.𝒪 α' α'') := by
   induction A with
   | nil => grind [List.nil_append, compute, compute', WeightedProduct.wOne_wProd]
@@ -426,12 +477,12 @@ def WNKA.compute_pair {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,�
     · grind only [List.append_eq_nil_iff, WeightedProduct.wProd_assoc, List.cons_append, →
       List.eq_nil_of_append_eq_nil, compute', compute]
 
-def WNKA.compute_pair' {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (A : List Pk[F,N]) (α₀ α' α'' : Pk[F,N]) :
+def WNKA.compute_pair' {Q : Type*} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (A : List Pk[F,N]) (α₀ α' α'' : Pk[F,N]) :
     𝒜.compute (α₀ :: (A ++ [α', α''])) = (𝒜.compute' (α₀ :: (A ++ [α'])) ⨯ 𝒜.𝒪 α' α'') := by
   rw [← List.cons_append, WNKA.compute_pair]; rfl
 
 omit [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] in
-theorem WNKA.compute_eq_of {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 𝒜' : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) (hδ : 𝒜.δ = 𝒜'.δ) (h𝒪 : 𝒜.𝒪 = 𝒜'.𝒪) :
+theorem WNKA.compute_eq_of {Q : Type*} [Fintype Q] [DecidableEq Q] (𝒜 𝒜' : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) (hδ : 𝒜.δ = 𝒜'.δ) (h𝒪 : 𝒜.𝒪 = 𝒜'.𝒪) :
     𝒜.compute s = 𝒜'.compute s := by
   induction s with
   | nil => simp [compute]
@@ -445,7 +496,7 @@ theorem WNKA.compute_eq_of {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 𝒜' : 
       · simp [hδ]; grind
 
 omit [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] in
-theorem WNKA.compute'_eq_of {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 𝒜' : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) (hδ : 𝒜.δ = 𝒜'.δ) :
+theorem WNKA.compute'_eq_of {Q : Type*} [Fintype Q] [DecidableEq Q] (𝒜 𝒜' : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) (hδ : 𝒜.δ = 𝒜'.δ) :
     𝒜.compute' s = 𝒜'.compute' s := by
   induction s with
   | nil => simp [compute']
@@ -456,14 +507,14 @@ theorem WNKA.compute'_eq_of {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 𝒜' :
       unfold compute'
       simp [ih, hδ]
 
-def WNKA.sem {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) : GS[F,N] →c 𝒮 :=
+def WNKA.sem {Q : Type*} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) : GS[F,N] →c 𝒮 :=
   ⟨(𝒜.ι ⨯ 𝒜.compute ·.pks <| ((), ())), SetCoe.countable _⟩
 
-def asdasd_supp {X Y Z : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] (xy : X × Y) (m : (Y × Z) →₀ 𝒮) :=
+def asdasd_supp {X Y Z : Type*} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] (xy : X × Y) (m : (Y × Z) →₀ 𝒮) :=
   (η' (α:=𝒮) xy ⨯ m).support
 
 @[simp]
-theorem asdasd {X Y Z : Type} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] (xy : X × Y) (m : (Y × Z) →₀ 𝒮) :
+theorem asdasd {X Y Z : Type*} [DecidableEq X] [DecidableEq Y] [DecidableEq Z] (xy : X × Y) (m : (Y × Z) →₀ 𝒮) :
       (η' (α:=𝒮) xy ⨯ m)
     = (⟨(asdasd_supp xy m), (fun y ↦ if y.1 = xy.1 then m (xy.2, y.2) else 0), (by
         obtain ⟨x, y⟩:= xy
@@ -512,21 +563,21 @@ theorem GS.induction' (P : GS[F,N] → Prop)
     grind
 
 -- @[simp]
--- theorem WeightedFinsum_map {α ι γ : Type} [DecidableEq γ] [DecidableEq ι] [WeightedPreSemiring α] (I : Finset ι) (g : ι ↪ γ) (f : γ → α) :
+-- theorem WeightedFinsum_map {α ι γ : Type*} [DecidableEq γ] [DecidableEq ι] [WeightedPreSemiring α] (I : Finset ι) (g : ι ↪ γ) (f : γ → α) :
 --     (∑ i ∈ I.map g, f i) = ∑ i ∈ I, f (g i) := by
 --   simp [WeightedFinsum_eq_finset_sum]
 
 -- @[simp]
--- theorem WeightedFinsum_disjSum {α ι γ : Type} [DecidableEq γ] [DecidableEq ι] [WeightedPreSemiring α] (I : Finset ι) (J : Finset γ) (f : ι ⊕ γ → α) :
+-- theorem WeightedFinsum_disjSum {α ι γ : Type*} [DecidableEq γ] [DecidableEq ι] [WeightedPreSemiring α] (I : Finset ι) (J : Finset γ) (f : ι ⊕ γ → α) :
 --     (∑ i ∈ I.disjSum J, f i) = (∑ i ∈ I, f (.inl i)) ⨁ ∑ j ∈ J, f (.inr j) := by
 --   simp [WeightedFinsum_eq_finset_sum]
 --   rfl
 
-theorem ι_wProd_𝒪 {A B : Type} [DecidableEq A] [DecidableEq B] {X : (Unit × A) →₀ 𝒮} {Y : (Unit × B) →₀ 𝒮} {Z : (A × Unit) →₀ 𝒮} {W : (B × Unit) →₀ 𝒮} :
+theorem ι_wProd_𝒪 {A B : Type*} [DecidableEq A] [DecidableEq B] {X : (Unit × A) →₀ 𝒮} {Y : (Unit × B) →₀ 𝒮} {Z : (A × Unit) →₀ 𝒮} {W : (B × Unit) →₀ 𝒮} :
     (ι[X, Y] ⨯ 𝒪[Z, W]) = (X ⨯ Z) + (Y ⨯ W) := by
   ext a
   simp [WeightedProduct.wProd, S.ι, S.𝒪]
-theorem ι_wProd_δ {A B C D : Type}
+theorem ι_wProd_δ {A B C D : Type*}
     [DecidableEq A] [DecidableEq B] [DecidableEq C] [DecidableEq D]
     {X : (Unit × A) →₀ 𝒮} {Y : (Unit × B) →₀ 𝒮}
     {Z : (A × C) →₀ 𝒮} {W : (A × D) →₀ 𝒮}
@@ -538,7 +589,7 @@ theorem ι_wProd_δ {A B C D : Type}
   rcases a with c | d
   · simp
   · simp
-theorem ι_wProd_δ' {A B C D : Type}
+theorem ι_wProd_δ' {A B C D : Type*}
     [DecidableEq A] [DecidableEq B] [DecidableEq C] [DecidableEq D]
     {X : (Unit × A) →₀ 𝒮} {Y : (Unit × B) →₀ 𝒮}
     {Z : (A × C) →₀ 𝒮} {W : (A × D) →₀ 𝒮}
@@ -548,7 +599,7 @@ theorem ι_wProd_δ' {A B C D : Type}
   ext ⟨_, a⟩
   simp [WeightedProduct.wProd, S.ι, S.δ]
   rcases a with c | d <;> simp
-theorem δ_wProd_δ {A B C D E F : Type}
+theorem δ_wProd_δ {A B C D E F : Type*}
     [DecidableEq A] [DecidableEq B] [DecidableEq C] [DecidableEq D] [DecidableEq E] [DecidableEq F]
     {A₁₁ : (A × C) →₀ 𝒮} {A₁₂ : (A × D) →₀ 𝒮}
     {A₂₁ : (B × C) →₀ 𝒮} {A₂₂ : (B × D) →₀ 𝒮}
@@ -615,7 +666,7 @@ theorem δ_wProd_δ {A B C D E F : Type}
         have := h'' h'''
         simp_all
 
-theorem δ_wProd_𝒪 {A B C D : Type}
+theorem δ_wProd_𝒪 {A B C D : Type*}
     [DecidableEq A] [DecidableEq B] [DecidableEq C] [DecidableEq D]
     {X : (C × Unit) →₀ 𝒮} {Y : (D × Unit) →₀ 𝒮}
     {Z : (A × C) →₀ 𝒮} {W : (A × D) →₀ 𝒮}
@@ -650,7 +701,7 @@ theorem δ_wProd_𝒪 {A B C D : Type}
 
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[simp]
-theorem S.δ_identity {A B : Type} [DecidableEq A] [DecidableEq B] [Fintype A] [Fintype B] :
+theorem S.δ_identity {A B : Type*} [DecidableEq A] [DecidableEq B] [Fintype A] [Fintype B] :
     (δ[[⨯1,0],[0,⨯1]] : ((A ⊕ B) × (A ⊕ B)) →₀ 𝒮) = ⨯1 := by
   ext ⟨ab₁, ab₂⟩
   simp
@@ -661,7 +712,7 @@ theorem S.δ_identity {A B : Type} [DecidableEq A] [DecidableEq B] [Fintype A] [
     · grind
     · grind
 
-theorem wProd_left_distrib {A B C : Type}
+theorem wProd_left_distrib {A B C : Type*}
     [DecidableEq A] [DecidableEq B] [DecidableEq C]
     {AB : (A × B) →₀ 𝒮} {BC : (B × C) →₀ 𝒮} {BC' : (B × C) →₀ 𝒮} :
     AB ⨯ (BC + BC') = (AB ⨯ BC) + (AB ⨯ BC') := by
@@ -674,12 +725,12 @@ theorem wProd_left_distrib {A B C : Type}
   split_ifs
   · subst_eqs; simp [left_distrib]
   · simp
-theorem ite_wAdd {α : Type} [NonUnitalSemiring α] {p : Prop} [Decidable p] {a b : α} :
+theorem ite_wAdd {α : Type*} [NonUnitalSemiring α] {p : Prop} [Decidable p] {a b : α} :
     (if p then a + b else 0) = (if p then a else 0) + if p then b else 0 := by
   split_ifs
   · rfl
   · simp
-theorem wProd_right_distrib {A B C : Type}
+theorem wProd_right_distrib {A B C : Type*}
     [DecidableEq A] [DecidableEq B] [DecidableEq C]
     {AB : (A × B) →₀ 𝒮} {AB' : (A × B) →₀ 𝒮} {BC : (B × C) →₀ 𝒮} :
     (AB + AB') ⨯ BC = (AB ⨯ BC) + (AB' ⨯ BC) := by
@@ -698,14 +749,14 @@ theorem wProd_right_distrib {A B C : Type}
     · simp; grind [mul_zero, zero_mul]
     · simp
 
-theorem wProd_WeightedFinsum {ι A B C : Type} [DecidableEq ι] [DecidableEq A] [DecidableEq B] [DecidableEq C]
+theorem wProd_WeightedFinsum {ι A B C : Type*} [DecidableEq ι] [DecidableEq A] [DecidableEq B] [DecidableEq C]
     (AB : (A × B) →₀ 𝒮) (fBC : ι → (B × C) →₀ 𝒮) (S : Finset ι) :
     (AB ⨯ ∑ i ∈ S, fBC i) = ∑ i ∈ S, AB ⨯ fBC i := by
   induction S using Finset.induction with
   | empty => simp
   | insert i S hi ih => simp_all [wProd_left_distrib]
 
-theorem WeightedFinsum_wProd {ι A B C : Type} [DecidableEq ι] [DecidableEq A] [DecidableEq B] [DecidableEq C]
+theorem WeightedFinsum_wProd {ι A B C : Type*} [DecidableEq ι] [DecidableEq A] [DecidableEq B] [DecidableEq C]
     (BC : (B × C) →₀ 𝒮) (fAB : ι → (A × B) →₀ 𝒮) (S : Finset ι) :
     ((∑ i ∈ S, fAB i) ⨯ BC) = ∑ i ∈ S, (fAB i ⨯ BC) := by
   induction S using Finset.induction with
@@ -871,7 +922,7 @@ theorem RPol.wnka_sem_mod {π} :
 -- TODO: remove
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq 𝒮] [FinsuppStar 𝒮] in
 @[simp]
-theorem 𝒞.ite_apply {X : Type} (p : Prop) [Decidable p] (m₁ m₂ : X →₀ 𝒮) (x : X) :
+theorem 𝒞.ite_apply {X : Type*} (p : Prop) [Decidable p] (m₁ m₂ : X →₀ 𝒮) (x : X) :
     (if p then m₁ else m₂) x = (if p then m₁ x else m₂ x) := by grind
 theorem RPol.wnka_compute'_dup {A : List Pk[F,N]} :
       wnk_rpol {dup}.wnka.compute' (𝒮:=𝒮) A
@@ -1245,29 +1296,30 @@ theorem RPol.wnka_sem
       simp [𝒪.𝒪_heart]
       simp [LawfulFinsuppStar.wStar_eq_sum]
       simp [𝒞.left_to_heart]
-      have : @Finset.card (Unit × S.I {♡}) (Finsupp.support (1 : Unit × S.I {♡} →₀ 𝒮)) = 1 := by
-        refine Finset.card_eq_one.mpr ?_
-        simp
-        use ()
-        ext ⟨_, ⟨_, _, _⟩⟩
-        simp_all
-      simp only [this, Nat.cast_one, one_mul]; clear this
-      congr with n
-      induction n with
-      | zero =>
-        simp [𝒞.pow, GS.mk, h10]
-        sorry
-      | succ n ih =>
-        simp only [Function.iterate_succ', Function.comp_apply]
-        simp [𝒞.pow]
-        nth_rw 1 [WeightedProduct.wProd]
-        rw [instWeightedProductFinsuppProdOfDecidableEq]
-        simp
-        rw [ih]
-        nth_rw 2 [WeightedConcat.concat]
-        nth_rw 2 [instWeightedConcatCountsuppGS]
-        simp
-        sorry
+      sorry
+      -- have : @Finset.card (Unit × S.I {♡}) (Finsupp.support (1 : Unit × S.I {♡} →₀ 𝒮)) = 1 := by
+      --   refine Finset.card_eq_one.mpr ?_
+      --   simp
+      --   use ()
+      --   ext ⟨_, ⟨_, _, _⟩⟩
+      --   simp_all
+      -- simp only [this, Nat.cast_one, one_mul]; clear this
+      -- congr with n
+      -- induction n with
+      -- | zero =>
+      --   simp [𝒞.pow, GS.mk, h10]
+      --   sorry
+      -- | succ n ih =>
+      --   simp only [Function.iterate_succ', Function.comp_apply]
+      --   simp [𝒞.pow]
+      --   nth_rw 1 [WeightedProduct.wProd]
+      --   rw [instWeightedProductFinsuppProdOfDecidableEq]
+      --   simp
+      --   rw [ih]
+      --   nth_rw 2 [WeightedConcat.concat]
+      --   nth_rw 2 [instWeightedConcatCountsuppGS]
+      --   simp
+      --   sorry
         -- simp
         -- have : ∀ x, @Finset.card (Unit × Unit) x = if x = ∅ then 0 else 1 := by
         --   intro x

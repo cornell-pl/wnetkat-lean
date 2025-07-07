@@ -4,9 +4,9 @@ import WeightedNetKAT.WNKA
 
 open OmegaCompletePartialOrder
 
-def Bottleneck (α : Type) := α
+def Bottleneck (α : Type*) := α
 
-variable {α : Type}
+variable {α : Type*}
 
 instance [i : Repr α] : Repr (Bottleneck α) := ⟨@reprPrec α i⟩
 

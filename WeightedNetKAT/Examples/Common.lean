@@ -30,7 +30,7 @@ abbrev S₃ := 3
 abbrev S₄ := 4
 abbrev S₅ := 5
 
-def Network {F N 𝒮 : Type} (ingress : Pred[F,N]) (p l : Pol[F,N,𝒮]) (egress : Pred[F,N]) :
+def Network {F N 𝒮 : Type*} (ingress : Pred[F,N]) (p l : Pol[F,N,𝒮]) (egress : Pred[F,N]) :
     Pol[F,N,𝒮] :=
   wnk_pol { @filter ~ingress; dup; (~p; ~l; dup)*; ~p; @filter ~egress }
 
@@ -40,7 +40,7 @@ macro_rules
 | `(#wnk_eval[$S, $n] { $p }) => `(#wnk_eval[$S, $n, ⟨0, []⟩] { $p })
 | `(#wnk_eval[$S, $n, $h] { $p }) => `(#eval! wnk_pol { $p }.compute (𝒮:=$S) $n $h |>.pretty)
 
-def S.repr {F N 𝒮 : Type} {p : RPol[F,N,𝒮]} (s : S p) : String :=
+def S.repr {F N 𝒮 : Type*} {p : RPol[F,N,𝒮]} (s : S p) : String :=
   match p with
   | wnk_rpol { drop } => "♡"
   | wnk_rpol { skip } => "♡"
@@ -64,18 +64,18 @@ def S.repr {F N 𝒮 : Type} {p : RPol[F,N,𝒮]} (s : S p) : String :=
     | .inl s => let s' : S p₁ := s; s'.repr
     | .inr ⟨♡, _⟩ => "♡"
 
-instance {F N 𝒮 : Type} {p : RPol[F,N,𝒮]} : Repr (S p) where
+instance {F N 𝒮 : Type*} {p : RPol[F,N,𝒮]} : Repr (S p) where
   reprPrec s _ := s.repr
 
-instance {X : Type} [Repr X] : Repr (Unit × X) where
+instance {X : Type*} [Repr X] : Repr (Unit × X) where
   reprPrec x n := reprPrec x.2 n
-instance {X : Type} [Repr X] : Repr (X × Unit) where
+instance {X : Type*} [Repr X] : Repr (X × Unit) where
   reprPrec x n := reprPrec x.1 n
 
-def Pk.all (F N : Type) [Fintype F] [DecidableEq F] [Fintype N] : Finset Pk[F,N] := Fintype.elems
-def Pk.pairs (F N : Type) [Fintype F] [DecidableEq F] [Fintype N] : Finset (Pk[F,N] × Pk[F,N]) := Fintype.elems
+def Pk.all (F N : Type*) [Fintype F] [DecidableEq F] [Fintype N] : Finset Pk[F,N] := Fintype.elems
+def Pk.pairs (F N : Type*) [Fintype F] [DecidableEq F] [Fintype N] : Finset (Pk[F,N] × Pk[F,N]) := Fintype.elems
 
-unsafe def RPol.eval {F N 𝒮 : Type}
+unsafe def RPol.eval {F N 𝒮 : Type*}
     [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N]
     [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
     [DecidableEq 𝒮] [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) :=

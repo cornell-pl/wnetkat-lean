@@ -1,7 +1,7 @@
 import WeightedNetKAT.Approximate
 import WeightedNetKAT.FinsuppExt
 
-variable {X : Type} {𝒮 : Type}
+variable {X : Type*} {𝒮 : Type*}
   [Semiring 𝒮]
   [PartialOrder 𝒮]
   [OrderBot 𝒮]
@@ -10,8 +10,8 @@ variable {X : Type} {𝒮 : Type}
   [IsPositiveOrderedAddMonoid 𝒮]
   [DecidableEq 𝒮]
 
-variable {F : Type} [Fintype F] [DecidableEq F]
-variable {N : Type} [DecidableEq N]
+variable {F : Type*} [Fintype F] [DecidableEq F]
+variable {N : Type*} [DecidableEq N]
 
 namespace WeightedNetKAT
 
@@ -34,9 +34,9 @@ end WeightedNetKAT
 
 section
 
-def Finset.toList' {α : Type} [Encodable α] [DecidableEq α] (s : Finset α) : List α := s.val.rep
+def Finset.toList' {α : Type*} [Encodable α] [DecidableEq α] (s : Finset α) : List α := s.val.rep
 
-instance {F : Type} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] : Repr Pk[F,N] where
+instance {F : Type*} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] : Repr Pk[F,N] where
   reprPrec x _ := s!"\{{List.range i.card |>.filterMap e.decode |>.map (fun k ↦ s!"{reprStr k}↦{reprStr (x k)}") |> ",".intercalate}}"
 
 def Finsupp.pretty [DecidableEq X] (m : X →₀ 𝒮) : Finset (X × 𝒮) := m.support.image (fun s ↦ (s, m s))
@@ -47,10 +47,10 @@ end
 
 section
 
-variable {X : Type} {𝒮 : Type}
+variable {X : Type*} {𝒮 : Type*}
 variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [Semiring 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] [DecidableEq 𝒮]
-variable {F : Type} [Fintype F]
-variable {N : Type} [Fintype N] [DecidableEq N]
+variable {F : Type*} [Fintype F]
+variable {N : Type*} [Fintype N] [DecidableEq N]
 
 def Finsupp.to𝒲 (m : H[F,N] →₀ 𝒮) : H[F,N] →c 𝒮 := ⟨m.toFun, Set.to_countable _⟩
 

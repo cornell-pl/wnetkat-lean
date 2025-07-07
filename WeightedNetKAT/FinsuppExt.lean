@@ -27,14 +27,14 @@ open OmegaCompletePartialOrder
 
 namespace Finsupp
 
-def η' {X α : Type} [DecidableEq X] [DecidableEq α] [Zero α] [One α] (x : X) : X →₀ α := ⟨
+def η' {X α : Type*} [DecidableEq X] [DecidableEq α] [Zero α] [One α] (x : X) : X →₀ α := ⟨
   if (1 : α) = 0 then ∅ else {x}, fun y ↦ if x = y then 1 else 0, by intro x; split_ifs <;> simp_all; grind⟩
 
 notation "η'[" α "]" => η' (α:=α)
 
 section η'
 
-variable {X α : Type} [DecidableEq X] [DecidableEq α] [Zero α] [One α]
+variable {X α : Type*} [DecidableEq X] [DecidableEq α] [Zero α] [One α]
 
 @[simp]
 theorem η'_apply (x y : X) :
@@ -48,7 +48,7 @@ end η'
 
 section One
 
-variable {α X : Type} [Fintype X] [Zero α] [One α] [DecidableEq α]
+variable {α X : Type*} [Fintype X] [Zero α] [One α] [DecidableEq α]
 
 instance instOne : One (X →₀ α) :=
   ⟨if (1 : α) = 0 then ∅ else Fintype.elems, fun _ ↦ 1, by intro x; split_ifs <;> simp_all [Fintype.complete]⟩
@@ -220,7 +220,7 @@ end Basic
 
 section Basic
 
-variable {M : Type}
+variable {M : Type*}
   [Semiring M]
   [PartialOrder M]
   [OrderBot M]
@@ -228,7 +228,7 @@ variable {M : Type}
   [MulRightMono M]
   [IsPositiveOrderedAddMonoid M]
 
-variable {ι : Type}
+variable {ι : Type*}
 
 variable [DecidableEq ι] [DecidableEq M]
 
@@ -275,7 +275,7 @@ instance : AddCommMonoid (ι →₀ M) where
 
 omit [PartialOrder M] [OrderBot M] [MulLeftMono M] [MulRightMono M] [IsPositiveOrderedAddMonoid M] in
 @[simp]
-theorem sum_apply {Y : Type} [DecidableEq Y] {S : Finset ι} {f : ι → Y →₀ M} {a : Y} :
+theorem sum_apply {Y : Type*} [DecidableEq Y] {S : Finset ι} {f : ι → Y →₀ M} {a : Y} :
     (∑ x ∈ S, f x) a = ∑ x ∈ S, f x a := by
   induction S using Finset.induction with
   | empty => simp
@@ -291,7 +291,7 @@ instance : NonUnitalSemiring (ι →₀ M) where
   right_distrib f g h := by ext i; exact RightDistribClass.right_distrib (f i) (g i) (h i)
   mul_assoc a b c := by ext i; exact mul_assoc (a i) (b i) (c i)
 
-variable {ι : Type} {Y : Type}
+variable {ι : Type*} {Y : Type*}
 
 def bind [DecidableEq M] [DecidableEq Y] (f : ι →₀ M) (g : ι → Y →₀ M) : Y →₀ M :=
   ⟨(f.support.biUnion (fun x ↦ (g x).support.filter (fun y ↦ f x * g x y ≠ 0))),
@@ -308,7 +308,7 @@ end Basic
 
 section OmegaCompletePartialOrder
 
-variable {M : Type}
+variable {M : Type*}
   [Semiring M]
   [OmegaCompletePartialOrder M]
   [OrderBot M]
@@ -317,7 +317,7 @@ variable {M : Type}
   [IsPositiveOrderedAddMonoid M]
   [OmegaContinuousNonUnitalSemiring M]
 
-variable {ι : Type}
+variable {ι : Type*}
 
 variable [DecidableEq ι] [DecidableEq M]
 
@@ -334,7 +334,7 @@ instance [Fintype ι] : OmegaCompletePartialOrder (ι →₀ M) where
 
 omit [MulLeftMono M] [MulRightMono M] [OmegaContinuousNonUnitalSemiring M] [DecidableEq M] in
 @[simp]
-theorem ωSup_apply {ι : Type} [Fintype ι] [DecidableEq M] (C : Chain (ι →₀ M)) (x : ι) :
+theorem ωSup_apply {ι : Type*} [Fintype ι] [DecidableEq M] (C : Chain (ι →₀ M)) (x : ι) :
     (ωSup C) x = ωSup (C.map ⟨(· x), (fun ⦃_ _⦄ a ↦ a x)⟩) := rfl
 
 open OmegaContinuousNonUnitalSemiring in
@@ -370,7 +370,7 @@ instance [Fintype ι] : OmegaContinuousNonUnitalSemiring (ι →₀ M) where
 
 omit [MulLeftMono M] [MulRightMono M] [OmegaContinuousNonUnitalSemiring M] [DecidableEq ι] in
 @[simp]
-theorem ωSum_apply [Countable ι] {Y : Type} [DecidableEq Y] [Fintype Y] {f : ι → Y →₀ M} {y : Y} :
+theorem ωSum_apply [Countable ι] {Y : Type*} [DecidableEq Y] [Fintype Y] {f : ι → Y →₀ M} {y : Y} :
     (ω∑ (x : ι), f x) y = ω∑ (x : ι), f x y := by
   simp [ωSum, Chain.map]
   congr with n

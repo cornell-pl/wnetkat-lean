@@ -1,6 +1,6 @@
 import WeightedNetKAT.Computation
 
-variable {α β : Type}
+variable {α β : Type*}
 
 namespace WeightedChain
 
@@ -51,36 +51,36 @@ instance Lex.instWeightedLE [WeightedLE α] [WeightedLE β] : WeightedLE (Lex (�
   wle a b := a.1 ≺ b.1 ∨ (a.1 = b.1 ∧ a.2 ≼ b.2)
 
 -- TODO: find a more appropriate name
-class WeightedAddIsSelect (α : Type) [WeightedLE α] [WeightedAdd α] where
+class WeightedAddIsSelect (α : Type*) [WeightedLE α] [WeightedAdd α] where
   wAdd_eq_left_or_right : ∀ a b : α, a ⨁ b = a ∨ a ⨁ b = b
 
 attribute [simp] WeightedAddIsSelect.wAdd_eq_left_or_right
 
 @[simp]
-theorem WeightedAddIsSelect.wAdd_self {α : Type} [WeightedLE α] [WeightedAdd α] [WeightedAddIsSelect α] {s : α} :
+theorem WeightedAddIsSelect.wAdd_self {α : Type*} [WeightedLE α] [WeightedAdd α] [WeightedAddIsSelect α] {s : α} :
     s ⨁ s = s := by
   grind [wAdd_eq_left_or_right]
 
 @[simp]
-theorem WeightedAddIsSelect.not_wAdd_eq_left {α : Type} [WeightedLE α] [WeightedAdd α] [WeightedAddIsSelect α] {s₁ s₂ : α} :
+theorem WeightedAddIsSelect.not_wAdd_eq_left {α : Type*} [WeightedLE α] [WeightedAdd α] [WeightedAddIsSelect α] {s₁ s₂ : α} :
     ¬s₁ ⨁ s₂ = s₁ ↔ s₁ ≠ s₂ ∧ s₁ ⨁ s₂ = s₂ := by
   have := WeightedAddIsSelect.wAdd_eq_left_or_right s₁ s₂
   grind
 
 @[simp]
-theorem WeightedAddIsSelect.not_wAdd_eq_left' {α : Type} [WeightedLE α] [WeightedAdd α] [WeightedAddIsSelect α] {s₁ s₂ s₃ : α} :
+theorem WeightedAddIsSelect.not_wAdd_eq_left' {α : Type*} [WeightedLE α] [WeightedAdd α] [WeightedAddIsSelect α] {s₁ s₂ s₃ : α} :
     s₁ ⨁ s₂ = s₃ → s₁ = s₃ ∨ s₂ = s₃ := by
   have := WeightedAddIsSelect.wAdd_eq_left_or_right s₁ s₂
   grind
 
 @[simp]
-theorem WeightedAddIsSelect.not_wAdd_eq_left'' {α : Type} [WeightedLE α] [WeightedAdd α] [WeightedAddIsSelect α] {s₁ s₂ s₃ : α} :
+theorem WeightedAddIsSelect.not_wAdd_eq_left'' {α : Type*} [WeightedLE α] [WeightedAdd α] [WeightedAddIsSelect α] {s₁ s₂ s₃ : α} :
     ¬s₁ = s₃ → ¬s₂ = s₃ → ¬s₁ ⨁ s₂ = s₃ := by
   have := WeightedAddIsSelect.wAdd_eq_left_or_right s₁ s₂
   grind
 
 @[simp]
-theorem WeightedAddIsSelect.wAdd_wAdd {α : Type} [WeightedLE α] [WeightedPreSemiring α] [WeightedAddIsSelect α] {s₁ s₂ s₃ : α} :
+theorem WeightedAddIsSelect.wAdd_wAdd {α : Type*} [WeightedLE α] [WeightedPreSemiring α] [WeightedAddIsSelect α] {s₁ s₂ s₃ : α} :
     s₁ ⨁ s₂ ⨁ s₃ = s₃ ↔ s₁ ⨁ s₃ = s₃ ∧ s₂ ⨁ s₃ = s₃ := by
   constructor
   · intro h
@@ -112,13 +112,13 @@ instance
 @[simp] instance [WeightedOne α] [WeightedOne β] : WeightedOne (Lex (α × β)) := ⟨(𝟙, 𝟙)⟩
 
 -- TODO: find a more appropriate name
-class WeightedMulNoZeroDivisors (α : Type) [WeightedZero α] [WeightedMul α] where
+class WeightedMulNoZeroDivisors (α : Type*) [WeightedZero α] [WeightedMul α] where
   wMul_eq_zero_iff : ∀ {a b : α}, a ⨀ b = 𝟘 ↔ a = 𝟘 ∨ b = 𝟘
 
 attribute [simp] WeightedMulNoZeroDivisors.wMul_eq_zero_iff
 
 @[simp]
-theorem WeightedMulNoZeroDivisors.zero_eq_wMul_iff {α : Type}  [WeightedZero α] [WeightedMul α] [WeightedMulNoZeroDivisors α] :
+theorem WeightedMulNoZeroDivisors.zero_eq_wMul_iff {α : Type*}  [WeightedZero α] [WeightedMul α] [WeightedMulNoZeroDivisors α] :
     ∀ {a b : α}, 𝟘 = a ⨀ b ↔ a = 𝟘 ∨ b = 𝟘 := by
   simp [eq_comm]
 

@@ -3,10 +3,10 @@ import Mathlib.Logic.Encodable.Pi
 
 namespace WeightedNetKAT
 
-variable {𝒮 : Type}
+variable {𝒮 : Type*}
 
-variable {F : Type} [Fintype F] [DecidableEq F]
-variable {N : Type} [Fintype N] [DecidableEq N]
+variable {F : Type*} [Fintype F] [DecidableEq F]
+variable {N : Type*} [Fintype N] [DecidableEq N]
 
 abbrev Pk := F → N
 notation "Pk[" f "," n "]" => Pk (F:=f) (N:=n)
@@ -27,7 +27,7 @@ inductive Pred where
 
 notation "Pred[" f "," n "]" => Pred (F:=f) (N:=n)
 
-inductive Pol (W : Type) where
+inductive Pol (W : Type*) where
   | Filter (t : Pred[F,N])
   | Mod (f : F) (n : N)
   | Dup

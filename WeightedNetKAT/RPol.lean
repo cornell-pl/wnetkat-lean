@@ -2,11 +2,11 @@ import WeightedNetKAT.Syntax
 
 namespace WeightedNetKAT
 
-variable {𝒮 : Type}
-variable {F : Type} [Fintype F] [DecidableEq F]
-variable {N : Type} [Fintype N] [DecidableEq N]
+variable {𝒮 : Type*}
+variable {F : Type*} [Fintype F] [DecidableEq F]
+variable {N : Type*} [Fintype N] [DecidableEq N]
 
-inductive RPol (W : Type) where
+inductive RPol (W : Type*) where
   | Drop
   | Skip
   | Test (pk : Pk[F,N])

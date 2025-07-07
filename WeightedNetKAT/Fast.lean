@@ -3,22 +3,22 @@ import Init.Data.Vector.Basic
 import Batteries.Lean.HashMap
 import Mathlib.Std.Data.HashMap
 
-variable {𝒮 : Type} [WeightedPartialOrder 𝒮] [WeightedSemiring 𝒮] [WeightedMonotonePreSemiring 𝒮] [DecidableEq 𝒮]
-variable {X : Type} [DecidableEq X] [Hashable X]
-variable {F : Type} [Ffin : Fintype F] [DecidableEq F] [Hashable F] [Encodable F]
+variable {𝒮 : Type*} [WeightedPartialOrder 𝒮] [WeightedSemiring 𝒮] [WeightedMonotonePreSemiring 𝒮] [DecidableEq 𝒮]
+variable {X : Type*} [DecidableEq X] [Hashable X]
+variable {F : Type*} [Ffin : Fintype F] [DecidableEq F] [Hashable F] [Encodable F]
 
-def FinMap (α : Type) (β : Type) [i : Fintype α] := Vector β i.card
+def FinMap (α : Type*) (β : Type*) [i : Fintype α] := Vector β i.card
 
-instance instHashableVector {α : Type} [Hashable α] (n : ℕ) : Hashable (Vector α n) where
+instance instHashableVector {α : Type*} [Hashable α] (n : ℕ) : Hashable (Vector α n) where
   hash x := hash x.toArray
 
-instance (α : Type) (β : Type) [i : Fintype α] [Hashable β] : Hashable (FinMap α β) :=
+instance (α : Type*) (β : Type*) [i : Fintype α] [Hashable β] : Hashable (FinMap α β) :=
   inferInstanceAs (Hashable (Vector β i.card))
 
-instance (α : Type) (β : Type) [i : Fintype α] [DecidableEq β] : DecidableEq (FinMap α β) :=
+instance (α : Type*) (β : Type*) [i : Fintype α] [DecidableEq β] : DecidableEq (FinMap α β) :=
   inferInstanceAs (DecidableEq (Vector β i.card))
 
-instance (α : Type) (β : Type) [i : Fintype α] [BEq β] : BEq (FinMap α β) :=
+instance (α : Type*) (β : Type*) [i : Fintype α] [BEq β] : BEq (FinMap α β) :=
   inferInstanceAs (BEq (Vector β i.card))
 
 abbrev Pk' := FinMap F ℕ
@@ -35,8 +35,8 @@ def Pk'.toPk (pk : Pk'[F]) : Pk[F,N] := fun x ↦ pk.getD ((Ffin.truncEquivFinOf
 def H'.toH (h : H'[F]) : H[F,N] := h.toList.map Pk'.toPk
 
 structure 𝒟
-    (𝒮 : Type) [WeightedPartialOrder 𝒮] [WeightedSemiring 𝒮] [WeightedMonotonePreSemiring 𝒮]
-    (X : Type) [DecidableEq X] [Hashable X] where
+    (𝒮 : Type*) [WeightedPartialOrder 𝒮] [WeightedSemiring 𝒮] [WeightedMonotonePreSemiring 𝒮]
+    (X : Type*) [DecidableEq X] [Hashable X] where
   map : Std.HashMap X 𝒮
 
 def 𝒟.toFun (m : 𝒟 𝒮 X) : W X 𝒮 := (m.map.getD · 𝟘)
