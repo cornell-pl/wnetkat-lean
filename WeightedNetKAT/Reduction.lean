@@ -7,7 +7,7 @@ import Mathlib.Logic.Function.Basic
 theorem Finset.filterMap_insert {α β : Type} [DecidableEq α] [DecidableEq β] (f : α → Option β) (hf : ∀ a a', ∀ b ∈ f a, b ∈ f a' → a = a') (a : α) (s : Finset α) :
       (insert a s).filterMap f hf
     = match f a with | some x => insert x (s.filterMap f hf) | none => s.filterMap f hf := by
-  simp only [insert_eq, map_union, map_singleton]
+  simp only [insert_eq]
   split
   · ext
     simp_all
@@ -288,7 +288,7 @@ theorem Pol.toRol_sem_eq_sem (p : Pol[F,N,𝒮]) : p.toRPol.sem = p.sem := by
         · simp_all
       · simp_all
   | Mod f v =>
-    simp [Pol.sem, Pred.sem_eq_test]
+    simp [Pol.sem]
     simp [Pol.assign_toRol_sem_eq_sum, RPol.sem]
     ext h₀ h₁
     if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
@@ -322,7 +322,7 @@ theorem Pol.toRol_sem_eq_sem (p : Pol[F,N,𝒮]) : p.toRPol.sem = p.sem := by
   | Add p₁ p₂ ih₁ ih₂ => simp [toRPol, sem, RPol.sem, ih₁, ih₂]
   | Weight w p₁ ih => simp [toRPol, sem, RPol.sem, ih]
   | Iter p₁ ih =>
-    simp [toRPol, sem, RPol.sem, ih]
+    simp [toRPol, sem, RPol.sem]
     ext h₀ h₁
     simp
     congr with n
@@ -330,7 +330,7 @@ theorem Pol.toRol_sem_eq_sem (p : Pol[F,N,𝒮]) : p.toRPol.sem = p.sem := by
     clear h₀ h₁
     induction n with
     | zero => simp [sem, Pred.sem, RPol.sem]
-    | succ n ih' => simp [sem, Pred.sem, RPol.sem, ih, ih']
+    | succ n ih' => simp [sem, RPol.sem, ih, ih']
 
 
 end WeightedNetKAT

@@ -131,7 +131,7 @@ omit [Encodable F] [Encodable N] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 -- TODO: this proof is incredibly slow
 set_option maxHeartbeats 500000 in
 attribute [-simp] Function.iterate_succ in
-theorem G.iter (p₁ : RPol[F,N,𝒮]) (n : ℕ) :
+theorem G.iter_succ (p₁ : RPol[F,N,𝒮]) (n : ℕ) :
     G (p₁.iter (n + 1)) = (G p₁ ♢ ·)^[n] (G p₁) := by
   induction n with
   | zero =>
@@ -140,31 +140,47 @@ theorem G.iter (p₁ : RPol[F,N,𝒮]) (n : ℕ) :
     if hgs : ¬(G p₁) gs = 0 then
       simp only [RPol.iter, G, ofPk, GS.mk, Function.iterate_zero, id_eq]
       simp only [WeightedConcat.concat, Countsupp.coe_mk, mul_ite, mul_one, mul_zero]
-      rw [ωSum_eq_single ⟨gs, by simp only [Countsupp.mem_support_iff, ne_eq, hgs,
-        not_false_eq_true]⟩]
+      rw [ωSum_eq_single ⟨gs, by grind [Countsupp.mem_support_iff]⟩]
       · rw [ωSum_eq_single ⟨⟨gs.2.2, [], gs.2.2⟩, by simp only [Countsupp.mem_support_iff,
         Countsupp.coe_mk, exists_apply_eq_apply, ↓reduceIte, ne_eq, h10, not_false_eq_true]⟩]
         · split
-          simp_all only [Option.ite_none_right_eq_some, Option.some.injEq, exists_apply_eq_apply,
+          simp only [Option.ite_none_right_eq_some, Option.some.injEq, exists_apply_eq_apply,
             ↓reduceIte]
           grind
-        · simp_all
-          grind
-      · simp_all only [ne_eq, ωSum_eq_zero_iff, ite_eq_right_iff, forall_exists_index,
-        Subtype.forall, Countsupp.mem_support_iff, Countsupp.coe_mk, not_forall, Classical.not_imp,
-        exists_and_right, and_imp, forall_apply_eq_imp_iff, Subtype.mk.injEq, imp_false]
-        grind
+        · grind only [= List.append_assoc, Countsupp.coe_mk, Countsupp.mem_support_iff,
+          ite_eq_right_iff, =_ List.append_assoc, Subtype.mk.injEq, → List.eq_nil_of_append_eq_nil,
+          cases eager Subtype]
+      · grind only [Countsupp.coe_mk, List.append_nil, Countsupp.mem_support_iff, ite_eq_right_iff,
+          Subtype.mk.injEq, → List.eq_nil_of_append_eq_nil, ωSum_zero, cases eager Subtype, cases
+          Or]
     else
-      simp_all only [not_not, RPol.iter, G, ofPk, GS.mk, Function.iterate_zero, id_eq]
-      simp only [WeightedConcat.concat, Countsupp.coe_mk, mul_ite, mul_one, mul_zero,
-        ωSum_eq_zero_iff, ite_eq_right_iff, forall_exists_index, Subtype.forall,
-        Countsupp.mem_support_iff, ne_eq, not_forall, Classical.not_imp, exists_and_right, and_imp,
+      simp at hgs
+      simp only [RPol.iter, G, WeightedConcat.concat, ofPk, GS.mk, Countsupp.coe_mk, mul_ite,
+        mul_one, mul_zero, Function.iterate_zero, id_eq, hgs, ωSum_eq_zero_iff, ite_eq_right_iff,
+        forall_exists_index, Subtype.forall, Countsupp.mem_support_iff, ne_eq, not_forall,
         forall_apply_eq_imp_iff]
       grind
   | succ n ih =>
     simp only [RPol.iter, G, Function.iterate_succ', Function.comp_apply]
-    simp only [RPol.iter, G] at ih
-    rw [ih]
+    grind only [G, RPol.iter]
+
+omit [Encodable F] [Encodable N] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+attribute [-simp] Function.iterate_succ in
+theorem G.iter (p₁ : RPol[F,N,𝒮]) (n : ℕ) :
+    G (p₁.iter n) = (G p₁ ♢ ·)^[n] (G wnk_rpol {skip}) := by
+  induction n with
+  | zero =>
+    ext gs
+    if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
+    if hgs : ¬(G p₁) gs = 0 then
+      simp only [RPol.iter, G, ofPk, GS.mk, Function.iterate_zero, id_eq]
+    else
+      simp at hgs
+      simp only [RPol.iter, G, ofPk, GS.mk, Countsupp.coe_mk, WeightedConcat.concat,
+        Function.iterate_zero, id_eq]
+  | succ n ih =>
+    simp only [RPol.iter, G, Function.iterate_succ', Function.comp_apply]
+    grind only [G, RPol.iter]
 
 def GS.pks (s : GS[F,N]) : List Pk[F,N] := s.1 :: s.2.1 ++ [s.2.2]
 def GS.H (s : GS[F,N]) : H[F,N] := (s.2.2, s.2.1.reverse)

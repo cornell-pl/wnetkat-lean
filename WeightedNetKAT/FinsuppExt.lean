@@ -368,6 +368,16 @@ instance [Fintype ι] : OmegaContinuousNonUnitalSemiring (ι →₀ M) where
     simp only [mul_apply, ωSup_apply, h]; clear h
     congr! 1
 
+omit [MulLeftMono M] [MulRightMono M] [OmegaContinuousNonUnitalSemiring M] [DecidableEq ι] in
+@[simp]
+theorem ωSum_apply [Countable ι] {Y : Type} [DecidableEq Y] [Fintype Y] {f : ι → Y →₀ M} {y : Y} :
+    (ω∑ (x : ι), f x) y = ω∑ (x : ι), f x y := by
+  simp [ωSum, Chain.map]
+  congr with n
+  simp
+  congr with x
+  split <;> simp_all
+
 end OmegaCompletePartialOrder
 
 end Finsupp

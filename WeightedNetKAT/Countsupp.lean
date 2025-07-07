@@ -145,7 +145,7 @@ instance : OmegaCompletePartialOrder (X →c 𝒮) where
     simp⟩
   ωSup_le := by
     intro C f h x
-    simp only [DFunLike.coe, ωSup_le_iff, Chain.map_coe, OrderHom.coe_mk, Function.comp_apply]
+    simp only [DFunLike.coe, ωSup_le_iff]
     exact fun i ↦ h i x
   le_ωSup := by
     intro C i X
@@ -207,7 +207,7 @@ noncomputable def bind {Y : Type} (f : X →c 𝒮) (g : X → Y →c 𝒮) : Y 
     apply Set.Countable.mono _ (Set.Countable.biUnion f.countable fun a _ ↦ (g a).countable : Countable s)
     intro y
     simp only [Function.mem_support, ne_eq, ωSum_eq_zero_iff, Subtype.forall, mem_support_iff,
-      not_forall, Classical.not_imp, Set.mem_iUnion, exists_prop, forall_exists_index, and_imp]
+      not_forall, Set.mem_iUnion, exists_prop, forall_exists_index, and_imp]
     intro x h₁ h₂
     use x, h₁
     contrapose! h₂
@@ -260,7 +260,7 @@ theorem bind_mono_left {Y : Type} {f₁ f₂ : X →c 𝒮} (g : X → Y →c �
   · simp +contextual
   · grind
   · simp only [Finset.mem_image, Subtype.exists, mem_support_iff, ne_eq, exists_and_right,
-    exists_eq_right, exists_prop, imp_self, implies_true, S']
+    exists_eq_right, exists_prop, imp_self, implies_true]
   · intro _ _; rfl
 
 theorem bind_continuous_right {Y : Type} (f : X →c 𝒮) :
@@ -332,17 +332,15 @@ theorem bind_continuous_left {Y : Type} (g : X → Y →c 𝒮) :
       clear h'
       contrapose! h
       simp_all only [DFunLike.coe]
-      simp_all only [zero_mul, not_true_eq_false, S']
-    · simp only [ne_eq, Subtype.mk.injEq, Subtype.forall, mem_support_iff, ωSup_apply,
-      ωSup_eq_zero_iff, Chain.map_coe, OrderHom.coe_mk, Function.comp_apply, not_forall,
-      forall_exists_index, imp_self, implies_true, S']
+      grind [zero_mul]
+    · grind only [cases eager Subtype]
     · simp_all only [mem_support_iff, ne_eq, dite_not, Finset.mem_filterMap,
       Option.dite_none_left_eq_some, Option.some.injEq, Subtype.exists, ωSup_apply,
       ωSup_eq_zero_iff, Chain.map_coe, OrderHom.coe_mk, Function.comp_apply, not_forall,
       exists_prop, forall_exists_index, and_imp, Subtype.forall, Subtype.mk.injEq, exists_and_right,
       exists_eq_right_right, not_false_eq_true, and_true, S']
       simp only [DFunLike.coe]
-      simp_all only [OrderHom.toFun_eq_coe, S']
+      simp_all only [OrderHom.toFun_eq_coe]
       rintro x hx x' n hn h h' ⟨_⟩ h''
       apply Exists.intro
       · exact h
@@ -354,8 +352,7 @@ theorem bind_continuous_left {Y : Type} (g : X → Y →c 𝒮) :
     apply le_trans (le_of_eq _) (le_ωSum_of_finset S')
     apply Finset.sum_bij_ne_zero (fun ⟨x, h₀⟩ _ hx ↦ ⟨x, by
       simp only [mem_support_iff, ωSup_apply, ne_eq, ωSup_eq_zero_iff, Chain.map_coe, OrderHom.coe_mk, Function.comp_apply, not_forall]
-      contrapose! hx
-      exact False.elim (h₀ (hx i))⟩)
+      exact Decidable.not_forall.mp fun a ↦ h₀ (a i)⟩)
     · simp_all only [ne_eq, mem_support_iff, ωSup_apply, ωSup_eq_zero_iff, Chain.map_coe,
       OrderHom.coe_mk, Function.comp_apply, not_forall, Finset.mem_filterMap,
       Option.dite_none_right_eq_some, Option.some.injEq, Subtype.mk.injEq, exists_prop,
@@ -364,19 +361,9 @@ theorem bind_continuous_left {Y : Type} (g : X → Y →c 𝒮) :
       intro x n h h'
       clear h'
       use i
-    · simp only [ne_eq, Subtype.mk.injEq, Subtype.forall, mem_support_iff, ωSup_apply,
-      ωSup_eq_zero_iff, Chain.map_coe, OrderHom.coe_mk, Function.comp_apply, not_forall,
-      forall_exists_index, imp_self, implies_true, S']
-    · simp only [mem_support_iff, ωSup_apply, ne_eq, ωSup_eq_zero_iff, Chain.map_coe,
-      OrderHom.coe_mk, Function.comp_apply, not_forall, Finset.mem_filterMap,
-      Option.dite_none_right_eq_some, Option.some.injEq, Subtype.exists, exists_prop,
-      forall_exists_index, and_imp, Subtype.forall, Subtype.mk.injEq, exists_and_right,
-      exists_eq_right_right, S']
-      clear S'
-      simp_all only [not_false_eq_true, and_true]
-      rintro x n hnx y hiy hyS m hmy ⟨_⟩
-      contrapose!
-      exact fun a ↦ False.elim (a hiy hyS)
+    · grind only [cases eager Subtype]
+    · grind only [Finset.mem_filterMap, Option.some.injEq, mem_support_iff, Subtype.mk.injEq,
+        ωSup_eq_zero_iff, cases eager Subtype, cases Or]
     · simp
 
 end OmegaContinuousNonUnitalSemiring

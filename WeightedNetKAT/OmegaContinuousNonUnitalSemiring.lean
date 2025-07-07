@@ -139,7 +139,7 @@ noncomputable def ωSum (f : X → 𝒮) : 𝒮 :=
 @[inherit_doc ωSum]
 notation3 "ω∑ "(...)", "r:67:(scoped f => ωSum f) => r
 
-@[simp]
+@[simp, grind]
 theorem ωSum_zero : ω∑ (_ : X), (0 : 𝒮) = 0 := by
   simp [ωSum, DFunLike.coe]; grind
 

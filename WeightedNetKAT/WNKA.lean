@@ -295,10 +295,10 @@ class LawfulFinsuppStar (𝒮 : Type)
     [IsPositiveOrderedAddMonoid 𝒮]
     [OmegaContinuousNonUnitalSemiring 𝒮]
     [DecidableEq 𝒮]
-    extends FinsuppStar 𝒮 where
+    [FinsuppStar 𝒮] where
   wStar_eq_sum :
     ∀ {X : Type} [Fintype X] [DecidableEq X],
-        ∀ m : (X × X) →₀ 𝒮, wStar m = ω∑ n, 𝒞.pow m n
+        ∀ m : (X × X) →₀ 𝒮, m^* = ω∑ n, 𝒞.pow m n
 
 -- noncomputable instance :
 --     [∀ {X : Type} [Fintype X] [DecidableEq X], WeightedOmegaCompletePartialOrder ((X × X) →₀ 𝒮)]
@@ -1179,7 +1179,46 @@ theorem RPol.wnka_sem_seq [Encodable F] [Encodable N] {p₁ p₂ : RPol[F,N,𝒮
       congr! 8
       refine (List.take_self_eq_iff A).mpr (by omega)
 
-theorem RPol.wnka_sem [Encodable F] [Encodable N] (p : RPol[F,N,𝒮]) : (RPol.wnka p).sem = G p := by
+-- δ[[δ p α₄ α₃ ⨯ δ p α₃ α₂ ⨯ δ p α₂ α₁ ⨯ δ p α₁ α₀,                                             0],
+--   [𝒞.left_to_heart (δ.𝒪_heart α₄ α₃ p ⨯ ι p) ⨯ δ p α₄ α₃ ⨯ δ p α₃ α₂ ⨯ δ p α₂ α₁ ⨯ δ p α₁ α₀, 0]]
+
+def RPol.upper_left (p : RPol[F,N,𝒮]) (A : List Pk[F,N]) : S p × S p →₀ 𝒮 :=
+  match A with
+  | [] | [_] => ⨯1
+  | α::α'::A => δ p α α' ⨯ p.upper_left (α' :: A)
+
+theorem RPol.wnka_seq_δ [Encodable F] [Encodable N] (p : RPol[F,N,𝒮]) (A : List Pk[F,N]) :
+      wnk_rpol {~p*}.wnka.compute' A =
+    match A with
+    | [] | [_] => ⨯1
+    | α₀::α₁::A =>
+      δ[[p.upper_left (α₀::α₁::A),0],[𝒞.left_to_heart (δ.𝒪_heart α₀ α₁ p ⨯ ι p) ⨯ p.upper_left (α₀::α₁::A),0]]
+  := by
+  induction A with
+  | nil => simp [WNKA.compute']
+  | cons α₀ A ih =>
+    simp only [S.I, upper_left]
+    induction A with
+    | nil => simp [WNKA.compute']
+    | cons α₁ A ih' =>
+      simp only [WNKA.compute', wnka_δ, δ, S.I]
+      rw [ih]; clear ih ih'
+      simp only [S.I]
+      split
+      · simp_all
+      · simp_all [RPol.upper_left]
+      · simp_all [RPol.upper_left]
+        simp [← WeightedProduct.wProd_assoc]
+        rename_i α₂ A h
+        obtain ⟨⟨_⟩, ⟨_⟩⟩ := h
+        rw [δ_wProd_δ]
+        simp [← WeightedProduct.wProd_assoc]
+
+attribute [-simp] Function.iterate_succ in
+theorem RPol.wnka_sem
+    [Encodable F] [Encodable N] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮]
+    [i : LawfulFinsuppStar 𝒮] (p : RPol[F,N,𝒮]) :
+    (RPol.wnka p).sem = G p := by
   induction p with
   | Drop => exact wnka_sem_drop
   | Skip => exact wnka_sem_skip
@@ -1190,7 +1229,77 @@ theorem RPol.wnka_sem [Encodable F] [Encodable N] (p : RPol[F,N,𝒮]) : (RPol.w
   | Weight w p ih => rw [G, ← ih]; exact wnka_sem_weight
   | Seq p₁ p₂ ih₁ ih₂ => exact wnka_sem_seq ih₁ ih₂
   | Iter p₁ ih =>
+    apply wnka_sem_eq_of
+    simp [RPol.wnka_seq_δ]
+    simp [G, GS.ofPks, GS.mk, ← List.tail_dropLast, List.head_append]
+    simp [G.iter]
+    simp [G]
+    intro A α α'
+    if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
+    simp [RPol.upper_left]
+    rcases A with _ | ⟨α₀, A⟩
+    · simp [ι, 𝒪]
+      rw [ι_wProd_𝒪]
+      simp
+      simp [WeightedProduct.wProd]
+      simp [𝒪.𝒪_heart]
+      simp [LawfulFinsuppStar.wStar_eq_sum]
+      simp [𝒞.left_to_heart]
+      have : @Finset.card (Unit × S.I {♡}) (Finsupp.support (1 : Unit × S.I {♡} →₀ 𝒮)) = 1 := by
+        refine Finset.card_eq_one.mpr ?_
+        simp
+        use ()
+        ext ⟨_, ⟨_, _, _⟩⟩
+        simp_all
+      simp only [this, Nat.cast_one, one_mul]; clear this
+      congr with n
+      induction n with
+      | zero =>
+        simp [𝒞.pow, GS.mk, h10]
+        sorry
+      | succ n ih =>
+        simp only [Function.iterate_succ', Function.comp_apply]
+        simp [𝒞.pow]
+        nth_rw 1 [WeightedProduct.wProd]
+        rw [instWeightedProductFinsuppProdOfDecidableEq]
+        simp
+        rw [ih]
+        nth_rw 2 [WeightedConcat.concat]
+        nth_rw 2 [instWeightedConcatCountsuppGS]
+        simp
+        sorry
+        -- simp
+        -- have : ∀ x, @Finset.card (Unit × Unit) x = if x = ∅ then 0 else 1 := by
+        --   intro x
+        --   split_ifs with h
+        --   · simp_all
+        --   · refine Finset.card_eq_one.mpr ?_
+        --     simp
+        --     use (), ()
+        --     ext ⟨_, _⟩
+        --     simp_all
+        --     sorry
+        -- simp [this]; clear this
+        -- split_ifs with h
+        -- · sorry
+        -- · sorry
 
-    sorry
+
+
+
+
+      -- sorry
+    · rcases A with _ | ⟨α₁, A⟩
+      · simp
+        sorry
+      · simp
+        simp [ι]
+        rw [ι_wProd_δ']
+        simp [𝒪]
+        rw [ι_wProd_𝒪]
+        simp
+        simp [← WeightedProduct.wProd_assoc, 𝒪.𝒪_heart, δ.𝒪_heart]
+        sorry
+
 
 end WeightedNetKAT
