@@ -8,35 +8,35 @@ variable {𝒮 : Type*}
 variable {F : Type*} [Fintype F] [DecidableEq F]
 variable {N : Type*} [Fintype N] [DecidableEq N]
 
-abbrev Pk := F → N
-notation "Pk[" f "," n "]" => Pk (F:=f) (N:=n)
+abbrev Pk (F N : Type*) := F → N
+notation "Pk[" F "," N "]" => Pk F N
 
-def H := Pk[F,N] × List Pk[F,N]
-notation "H[" f "," n "]" => H (F:=f) (N:=n)
+def H (F N : Type*) := Pk[F,N] × List Pk[F,N]
+notation "H[" F "," N "]" => H F N
 
 instance : DecidableEq H[F,N] := inferInstanceAs (DecidableEq (_ × _))
 instance : Countable H[F,N] := inferInstanceAs (Countable (_ × _))
 instance [Encodable F] [Encodable N] : Encodable H[F,N] := inferInstanceAs (Encodable (_ × _))
 
-inductive Pred where
+inductive Pred (F N : Type*) where
   | Bool (b : Bool)
   | Test (f : F) (n : N)
-  | Dis (t u : Pred)
-  | Con (t u : Pred)
-  | Not (t : Pred)
+  | Dis (t u : Pred F N)
+  | Con (t u : Pred F N)
+  | Not (t : Pred F N)
 
-notation "Pred[" f "," n "]" => Pred (F:=f) (N:=n)
+notation "Pred[" F "," N "]" => Pred F N
 
-inductive Pol (W : Type*) where
+inductive Pol (F N W : Type*) where
   | Filter (t : Pred[F,N])
   | Mod (f : F) (n : N)
   | Dup
-  | Seq (p q : Pol W)
-  | Weight (w : W) (p : Pol W)
-  | Add (p q : Pol W)
-  | Iter (p : Pol W)
+  | Seq (p q : Pol F N W)
+  | Weight (w : W) (p : Pol F N W)
+  | Add (p q : Pol F N W)
+  | Iter (p : Pol F N W)
 
-notation "Pol[" f "," n "," w "]" => Pol (F:=f) (N:=n) (W:=w)
+notation "Pol[" F "," N "," W "]" => Pol F N W
 
 section Syntax
 
@@ -96,7 +96,7 @@ macro_rules
 | `(wnk_pred { ¬$l:cwnk_pred }) => `(Pred.Not wnk_pred {$l})
 | `(wnk_pred { ($t) }) => `(wnk_pred {$t})
 
-/-- info: ((Pred.Bool true).Con (Pred.Bool false)).Dis (Pred.Bool true).Not : Pred -/
+/-- info: ((Pred.Bool true).Con (Pred.Bool false)).Dis (Pred.Bool true).Not : Pred[Unit,ℕ] -/
 #guard_msgs in
 #check (wnk_pred { true ∧ false ∨ ¬true } : Pred[Unit,ℕ])
 
@@ -138,7 +138,7 @@ macro_rules
 
 /--
 info: ((Pol.Filter (Pred.Test 123 1)).Seq (Pol.Filter ((Pred.Bool false).Dis (Pred.Bool true)).Not)).Seq
-  (Pol.Weight 1 ((Pol.Mod 12 2).Seq (Pol.Dup.Add Pol.Dup.Iter))) : Pol ℕ
+  (Pol.Weight 1 ((Pol.Mod 12 2).Seq (Pol.Dup.Add Pol.Dup.Iter))) : Pol[ℕ,ℕ,ℕ]
 -/
 #guard_msgs in
 #check wnk_pol { ~123 = 1 ; ¬false ∨ true ; ~1 ⨀ ~12 ← 2 ; dup ⨁ dup* }
@@ -208,9 +208,9 @@ def Pol.unexpandFilter : Unexpander
   | _ => throw ()
 | _ => throw ()
 
-/-- info: wnk_pol {true ∧ ¬false ∨ true} : Pol Unit -/
+/-- info: wnk_pol {true ∧ ¬false ∨ true} : Pol[Unit,Unit,Unit] -/
 #guard_msgs in
-#check (wnk_pol { true ∧ ¬false ∨ true } : Pol Unit)
+#check (wnk_pol { true ∧ ¬false ∨ true } : Pol[Unit,Unit,Unit])
 
 @[app_unexpander Pol.Dup]
 def Pol.unexpandDup : Unexpander
@@ -273,13 +273,13 @@ def Pol.unexpandIter : Unexpander
   `(wnk_pol { $x * })
 | _ => throw ()
 
-/-- info: wnk_pol {dup ⨁ dup} : Pol Unit -/
+/-- info: wnk_pol {dup ⨁ dup} : Pol[Unit,Unit,Unit] -/
 #guard_msgs in
-#check (wnk_pol { dup ⨁ dup } : Pol Unit)
+#check (wnk_pol { dup ⨁ dup } : Pol[Unit,Unit,Unit])
 
-/-- info: wnk_pol {~123 = ~1; ¬false ∨ true; ~3 ⨀ ~12 ← ~2; dup ⨁ dup*} : Pol ℕ -/
+/-- info: wnk_pol {~123 = ~1; ¬false ∨ true; ~3 ⨀ ~12 ← ~2; dup ⨁ dup*} : Pol[ℕ,ℕ,ℕ] -/
 #guard_msgs in
-#check (wnk_pol { ~123 = 1 ; ¬false ∨ true ; ~3 ⨀ ~12 ← 2 ; dup ⨁ dup* } : Pol ℕ)
+#check (wnk_pol { ~123 = 1 ; ¬false ∨ true ; ~3 ⨀ ~12 ← 2 ; dup ⨁ dup* } : Pol[ℕ,ℕ,ℕ])
 
 -- Copied from Lean's term parenthesizer - applies the precedence rules in the grammar to add
 -- parentheses as needed.
@@ -302,13 +302,13 @@ where
     let pstx ← `(($(⟨stx⟩)))
     return pstx.raw.setInfo (SourceInfo.fromRef stx)
 
-/-- info: wnk_pol {~"x" = ~2; true ⨁ ¬~"x" = ~2; false} : Pol Unit -/
+/-- info: wnk_pol {~"x" = ~2; true ⨁ ¬~"x" = ~2; false} : Pol[String,ℕ,Unit] -/
 #guard_msgs in
-#check (wnk_pol { if ~"x" = 2 then skip else drop } : Pol Unit)
+#check (wnk_pol { if ~"x" = 2 then skip else drop } : Pol[String,ℕ,Unit])
 
-/-- info: wnk_pol {(~"x" = ~2; true)*; ¬~"x" = ~2} : Pol Unit -/
+/-- info: wnk_pol {(~"x" = ~2; true)*; ¬~"x" = ~2} : Pol[String,ℕ,Unit] -/
 #guard_msgs in
-#check (wnk_pol { while ~"x" = 2 do skip } : Pol Unit)
+#check (wnk_pol { while ~"x" = 2 do skip } : Pol[String,ℕ,Unit])
 
 end Syntax
 

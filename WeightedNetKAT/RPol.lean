@@ -134,9 +134,9 @@ def RPol.unexpandIter : Unexpander
 #guard_msgs in
 #check (wnk_rpol { dup ⨁ dup } : RPol Unit)
 
-/-- info: fun x ↦ wnk_rpol {@test ~x; ~3 ⨀ @mod ~x; dup ⨁ dup*} : Pk → RPol ℕ -/
+/-- info: fun x ↦ wnk_rpol {@test ~x; ~3 ⨀ @mod ~x; dup ⨁ dup*} : Pk[F,N] → RPol ℕ -/
 #guard_msgs in
-#check fun x : Pk[F,N] ↦ (wnk_rpol { @test ~x ; ~3 ⨀ @mod ~x ; dup ⨁ dup* } : RPol ℕ)
+#check fun x : Pk[F,N] ↦ (wnk_rpol { @test ~x ; ~3 ⨀ @mod ~x ; dup ⨁ dup* } : RPol[F,N,ℕ])
 
 -- Copied from Lean's term parenthesizer - applies the precedence rules in the grammar to add
 -- parentheses as needed.

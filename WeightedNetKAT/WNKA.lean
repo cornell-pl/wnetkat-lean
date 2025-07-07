@@ -335,7 +335,10 @@ postfix:max "^**" => Star.star
 variable [Star 𝒮]
 
 instance instUnitStar : Star ((Unit × Unit) →₀ 𝒮) where
-  star := sorry
+  star m := ⟨sorry, fun (α, β) ↦ (m (α, β))^**, sorry⟩
+
+instance instPkStar : Star ((Pk[F,N] × Pk[F,N]) →₀ 𝒮) where
+  star m := ⟨sorry, fun (α, β) ↦ (m (α, β))^**, sorry⟩
 
 def mmm
   {n₁ n₂ : Type*}
@@ -383,6 +386,10 @@ def 𝒪 [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) (α β : Pk[F,N]) : (S p × Uni
       𝒞.left_to_heart q
     ]
 where 𝒪_heart (p₁ : RPol[F,N,𝒮]) := (ι p₁ ⨯ 𝒪 p₁ α β)^*
+      𝒪_heart' (p₁ : RPol[F,N,𝒮]) := (box' p₁)^**
+      box' (p₁ : RPol[F,N,𝒮]) : (Pk[F,N] × Pk[F,N]) →₀ 𝒮 :=
+        ((⟨Finset.univ.filter (fun (α, β) ↦ (ι p₁ ⨯ 𝒪 p₁ α β) ((), ()) ≠ 0),
+          fun (α, β) ↦ (ι p₁ ⨯ 𝒪 p₁ α β) ((), ()), by simp⟩) : (Pk[F,N] × Pk[F,N]) →₀ 𝒮)
       -- box (p₁ : RPol[F,N,𝒮]) : (Pk[F,N] × Pk[F,N]) → S.I {♡} × Unit →₀ 𝒮 :=
       --   (fun (α, β) ↦ (⟨Finset.univ.filter (fun (_, _) ↦ (ι p₁ ⨯ 𝒪 p₁ α β) ((), ()) ≠ 0),
       --     fun (_, _) ↦ (ι p₁ ⨯ 𝒪 p₁ α β) ((), ()), by simp; sorry⟩) : (Pk[F,N] × Pk[F,N]) → S.I {♡} × Unit →₀ 𝒮)
