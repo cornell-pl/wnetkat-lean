@@ -275,8 +275,11 @@ def RPol.wnka [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) : WNKA[F,N,𝒮,S p] where
   δ := δ p
   𝒪 := 𝒪 p
 
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq 𝒮] in
 @[simp] theorem RPol.wnka_ι [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) : p.wnka.ι = ι p := rfl
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq 𝒮] in
 @[simp] theorem RPol.wnka_δ [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) : p.wnka.δ = δ p := rfl
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq 𝒮] in
 @[simp] theorem RPol.wnka_𝒪 [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) : p.wnka.𝒪 = 𝒪 p := rfl
 
 def big_wprod {X : Type*} [Fintype X] [DecidableEq X] (l : List ((X × X) →₀ 𝒮)) : (X × X) →₀ 𝒮 :=
@@ -931,6 +934,7 @@ theorem G.concat_apply [Encodable F] [Encodable N] {p₁ p₂ : RPol[F,N,𝒮]} 
       have : (i - min i A.length) = 0 := by omega
       simp [this]
 
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq 𝒮] in
 theorem RPol.seq_wnka_compute'' {p₁ p₂ : RPol[F,N,𝒮]} [Inhabited Pk[F,N]] {A} :
         wnk_rpol {~p₁; ~p₂}.wnka.compute' A =
     δ[[p₁.wnka.compute' A,
@@ -962,6 +966,7 @@ theorem RPol.seq_wnka_compute'' {p₁ p₂ : RPol[F,N,𝒮]} [Inhabited Pk[F,N]]
         simp only [WNKA.compute'_right, wnka_δ]
         simp only [List.cons_append, ← Matrix.mul_assoc]
 
+omit [DecidableEq 𝒮] in
 theorem RPol.wnka_sem_seq [Encodable F] [Encodable N] {p₁ p₂ : RPol[F,N,𝒮]}
     (ih₁ : p₁.wnka.sem = G p₁) (ih₂ : p₂.wnka.sem = G p₂) :
     wnk_rpol {~p₁ ; ~p₂}.wnka.sem = G wnk_rpol {~p₁; ~p₂} := by
@@ -1030,6 +1035,7 @@ def RPol.upper_left (p : RPol[F,N,𝒮]) (A : List Pk[F,N]) : Matrix (S p) (S p)
   | [] | [_] => 1
   | α::α'::A => δ p α α' * p.upper_left (α' :: A)
 
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq 𝒮] in
 theorem RPol.wnka_seq_δ [Encodable F] [Encodable N] (p : RPol[F,N,𝒮]) (A : List Pk[F,N]) :
       wnk_rpol {~p*}.wnka.compute' A =
     match A with
