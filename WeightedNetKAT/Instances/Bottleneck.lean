@@ -102,6 +102,9 @@ instance [CompleteLinearOrder α] : OmegaContinuousNonUnitalSemiring (Bottleneck
 instance [CompleteLinearOrder α] : WeightedNetKAT.LawfulFinsuppStar (Bottleneck α) where
   wStar_eq_sum := sorry
 
+instance [CompleteLinearOrder α] : WeightedNetKAT.Star (Bottleneck α) where
+  star := sorry
+
 -- instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedMonotonePreSemiring (Bottleneck α) where
 --   wle_positive := by simp; apply bot_le
 --   add_mono s := by

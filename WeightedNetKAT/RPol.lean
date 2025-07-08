@@ -186,4 +186,22 @@ theorem RPol.iterDepth_iter {p : RPol[F,N,𝒮]} {n : ℕ} :
 
 end Semantics
 
+section Repr
+
+def RPol.repr {F : Type*} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] [Repr 𝒮] : RPol[F,N,𝒮] → String
+| wnk_rpol { @test ~t } => s!"@test {reprStr t}"
+| wnk_rpol { @mod ~t } => s!"@mod {reprStr t}"
+| wnk_rpol { dup } => s!"dup"
+| wnk_rpol { ~p ; ~q } => s!"{p.repr} ; {q.repr}"
+| wnk_rpol { ~w ⨀ ~p } => s!"{reprStr w} ⨀ {p.repr}"
+| wnk_rpol { ~p ⨁ ~q } => s!"{p.repr} ⨁ {q.repr}"
+| wnk_rpol { ~p * } => s!"{p.repr}*"
+| wnk_rpol { skip } => s!"skip"
+| wnk_rpol { drop } => s!"drop"
+
+instance {F : Type*} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] [Repr 𝒮] : Repr RPol[F,N,𝒮] where
+  reprPrec p _ := p.repr
+
+end Repr
+
 end WeightedNetKAT

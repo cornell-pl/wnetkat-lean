@@ -12,6 +12,11 @@ deriving DecidableEq, Fintype
 
 open Fields
 
+instance : Listed Fields where
+  list := [dst, pt, sw]
+  nodup := by simp
+  complete := by intro a; cases a <;> simp
+
 instance : Encodable Fields where
   encode f := match f with | dst => 0 | pt => 1 | sw => 2
   decode n := match n with | 0 => some dst | 1 => some pt | 2 => some sw | _ => none
@@ -78,7 +83,7 @@ def Pk.pairs (F N : Type*) [Fintype F] [DecidableEq F] [Fintype N] : Finset (Pk[
 unsafe def RPol.eval {F N 𝒮 : Type*}
     [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N]
     [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
-    [DecidableEq 𝒮] [FinsuppStar 𝒮] (p : RPol[F,N,𝒮]) :=
+    [DecidableEq 𝒮] [FinsuppStar 𝒮] [Star 𝒮] (p : RPol[F,N,𝒮]) :=
   let N := p.wnka
   let ι := N.ι
   let δ := Pk.pairs _ _ |>.val.unquot.map (fun (α, β) ↦ (α, β, N.δ α β)) |>.filter (·.2.2.support ≠ ∅)

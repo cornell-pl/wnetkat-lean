@@ -11,6 +11,9 @@ variable {N : Type*} [Fintype N] [DecidableEq N]
 abbrev Pk (F N : Type*) := F → N
 notation "Pk[" F "," N "]" => Pk F N
 
+instance {F : Type*} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] : Repr Pk[F,N] where
+  reprPrec x _ := s!"\{{List.range i.card |>.filterMap e.decode |>.map (fun k ↦ s!"{reprStr k}↦{reprStr (x k)}") |> ",".intercalate}}"
+
 def H (F N : Type*) := Pk[F,N] × List Pk[F,N]
 notation "H[" F "," N "]" => H F N
 

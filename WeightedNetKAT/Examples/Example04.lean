@@ -16,6 +16,56 @@ info: ({(♡, ⊤)},
 #guard_msgs in
 #wnka_eval[Fin 2, Fin 2, Bottleneck ℕ∞] { skip }
 
+/--
+info: ({(ll♡, ⊤), (lrl♡, ⊤), (lrrl♡, ⊤), (lrrrl♡, ⊤), (lrrrr♡, ⊤)},
+ [],
+ [([(dst, 0), (pt, 0), (sw, 0)], [(dst, 0), (pt, 0), (sw, 1)], {(rlll♡, ⊤), (rllr♡, ⊤), (rlrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 0), (sw, 0)], [(dst, 0), (pt, 1), (sw, 1)], {(rlrrlr♡, ⊤), (rlrrrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 0), (sw, 0)], [(dst, 1), (pt, 0), (sw, 1)], {(rlrlr♡, ⊤), (rlrrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 0), (sw, 0)], [(dst, 1), (pt, 1), (sw, 1)], {(rlrrrlr♡, ⊤), (rlrrrrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 0), (sw, 1)], [(dst, 0), (pt, 0), (sw, 1)], {(rllr♡, ⊤), (rlrrrrll♡, ⊤), (rlrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 0), (sw, 1)], [(dst, 0), (pt, 1), (sw, 1)], {(rlrrlr♡, ⊤), (rlrrrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 0), (sw, 1)], [(dst, 1), (pt, 0), (sw, 1)], {(rlrlr♡, ⊤), (rlrrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 0), (sw, 1)], [(dst, 1), (pt, 1), (sw, 1)], {(rlrrrlr♡, ⊤), (rlrrrrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 1), (sw, 0)], [(dst, 0), (pt, 0), (sw, 1)], {(rllr♡, ⊤), (rlrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 1), (sw, 0)],
+   [(dst, 0), (pt, 1), (sw, 1)],
+   {(ll♡, 2), (rlrrll♡, ⊤), (rlrrlr♡, ⊤), (rlrrrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 1), (sw, 0)], [(dst, 1), (pt, 0), (sw, 1)], {(rlrlr♡, ⊤), (rlrrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 1), (sw, 0)], [(dst, 1), (pt, 1), (sw, 1)], {(rlrrrlr♡, ⊤), (rlrrrrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 1), (sw, 1)], [(dst, 0), (pt, 0), (sw, 1)], {(rllr♡, ⊤), (rlrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 1), (sw, 1)],
+   [(dst, 0), (pt, 1), (sw, 1)],
+   {(lrrl♡, 2), (rlrrlr♡, ⊤), (rlrrrrrrll♡, ⊤), (rlrrrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 1), (sw, 1)], [(dst, 1), (pt, 0), (sw, 1)], {(rlrlr♡, ⊤), (rlrrrrrlr♡, ⊤)}),
+  ([(dst, 0), (pt, 1), (sw, 1)], [(dst, 1), (pt, 1), (sw, 1)], {(rlrrrlr♡, ⊤), (rlrrrrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 0), (sw, 0)], [(dst, 0), (pt, 0), (sw, 1)], {(rllr♡, ⊤), (rlrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 0), (sw, 0)], [(dst, 0), (pt, 1), (sw, 1)], {(rlrrlr♡, ⊤), (rlrrrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 0), (sw, 0)], [(dst, 1), (pt, 0), (sw, 1)], {(rlrll♡, ⊤), (rlrlr♡, ⊤), (rlrrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 0), (sw, 0)], [(dst, 1), (pt, 1), (sw, 1)], {(rlrrrlr♡, ⊤), (rlrrrrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 0), (sw, 1)], [(dst, 0), (pt, 0), (sw, 1)], {(rllr♡, ⊤), (rlrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 0), (sw, 1)], [(dst, 0), (pt, 1), (sw, 1)], {(rlrrlr♡, ⊤), (rlrrrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 0), (sw, 1)], [(dst, 1), (pt, 0), (sw, 1)], {(rlrlr♡, ⊤), (rlrrrrrll♡, ⊤), (rlrrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 0), (sw, 1)], [(dst, 1), (pt, 1), (sw, 1)], {(rlrrrlr♡, ⊤), (rlrrrrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 1), (sw, 0)], [(dst, 0), (pt, 0), (sw, 1)], {(rllr♡, ⊤), (rlrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 1), (sw, 0)], [(dst, 0), (pt, 1), (sw, 1)], {(rlrrlr♡, ⊤), (rlrrrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 1), (sw, 0)], [(dst, 1), (pt, 0), (sw, 1)], {(rlrlr♡, ⊤), (rlrrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 1), (sw, 0)],
+   [(dst, 1), (pt, 1), (sw, 1)],
+   {(lrl♡, 2), (rlrrrll♡, ⊤), (rlrrrlr♡, ⊤), (rlrrrrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 1), (sw, 1)], [(dst, 0), (pt, 0), (sw, 1)], {(rllr♡, ⊤), (rlrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 1), (sw, 1)], [(dst, 0), (pt, 1), (sw, 1)], {(rlrrlr♡, ⊤), (rlrrrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 1), (sw, 1)], [(dst, 1), (pt, 0), (sw, 1)], {(rlrlr♡, ⊤), (rlrrrrrlr♡, ⊤)}),
+  ([(dst, 1), (pt, 1), (sw, 1)],
+   [(dst, 1), (pt, 1), (sw, 1)],
+   {(lrrrl♡, 2), (rlrrrlr♡, ⊤), (rlrrrrrrrll♡, ⊤), (rlrrrrrrrlr♡, ⊤)})])
+-/
+#guard_msgs in
+#wnka_eval'[Fields, Fin 2, Bottleneck ℕ∞] {
+  if pt = 3 then ~2 ⨀ sw ← 3 else drop
+  -- if pt = 4 then ~4 ⨀ sw ← 4 else drop
+}
+
 /-- info: ({(l♡, ⊤), (r♡, ⊤)}, [], [(![0, 0], ![0, 0], {(l♡, ⊤)})]) -/
 #guard_msgs in
 #wnka_eval'[Fin 2, Fin 1, Bottleneck ℕ∞] { ~1 = ~1 }

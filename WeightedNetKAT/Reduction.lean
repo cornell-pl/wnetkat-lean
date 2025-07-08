@@ -2,6 +2,7 @@ import Mathlib.Data.Finsupp.Defs
 import WeightedNetKAT.RPol
 import WeightedNetKAT.Semantics
 import WeightedNetKAT.RPol
+import WeightedNetKAT.Listed
 import Mathlib.Logic.Function.Basic
 
 theorem Finset.filterMap_insert {α β : Type*} [DecidableEq α] [DecidableEq β] (f : α → Option β) (hf : ∀ a a', ∀ b ∈ f a, b ∈ f a' → a = a') (a : α) (s : Finset α) :
@@ -143,30 +144,30 @@ theorem RPol.seq_of_prefix {p : RPol[F,N,𝒮]} {h₀ h₁ : H[F,N]} (h : (p.sem
       specialize ih l
       exact List.IsSuffix.trans ih ih'
 
-def Finset.toList' {α : Type*} [Encodable α] [DecidableEq α] (s : Finset α) : List α := s.val.rep
-theorem Finset.nodup_toList' {α : Type*} [Encodable α] [DecidableEq α] (s : Finset α) :
-    (Finset.toList' s).Nodup := by
-  have := Quotient.rep_spec s.val
-  simp at this
-  rw [toList', ← Multiset.coe_nodup, this]
-  exact s.nodup
-@[simp]
-theorem Finset.mem_toList'_iff {α : Type*} [Encodable α] [DecidableEq α] (s : Finset α) (x : α) :
-    x ∈ (Finset.toList' s) ↔ x ∈ s := by
-  have := Quotient.rep_spec s.val
-  simp at this
-  rw [toList', ← Multiset.mem_coe, this]
-  rfl
-@[simp]
-theorem Finset.toList'_toFinset {α : Type*} [Encodable α] [DecidableEq α] (s : Finset α) :
-    (Finset.toList' s).toFinset = s := by
-  ext; simp [mem_toList'_iff]
-@[simp]
-theorem Finset.toList'_empty {α : Type*} [Encodable α] [DecidableEq α] :
-    Finset.toList' (∅ : Finset α) = [] := by
-  have := Quotient.rep_spec (∅ : Finset α).val
-  simp at this
-  exact (Multiset.coe_eq_zero (toList' ∅)).mp this
+-- def Finset.toList' {α : Type*} [Encodable α] [DecidableEq α] (s : Finset α) : List α := s.val.rep
+-- theorem Finset.nodup_toList' {α : Type*} [Encodable α] [DecidableEq α] (s : Finset α) :
+--     (Finset.toList' s).Nodup := by
+--   have := Quotient.rep_spec s.val
+--   simp at this
+--   rw [toList', ← Multiset.coe_nodup, this]
+--   exact s.nodup
+-- @[simp]
+-- theorem Finset.mem_toList'_iff {α : Type*} [Encodable α] [DecidableEq α] (s : Finset α) (x : α) :
+--     x ∈ (Finset.toList' s) ↔ x ∈ s := by
+--   have := Quotient.rep_spec s.val
+--   simp at this
+--   rw [toList', ← Multiset.mem_coe, this]
+--   rfl
+-- @[simp]
+-- theorem Finset.toList'_toFinset {α : Type*} [Encodable α] [DecidableEq α] (s : Finset α) :
+--     (Finset.toList' s).toFinset = s := by
+--   ext; simp [mem_toList'_iff]
+-- @[simp]
+-- theorem Finset.toList'_empty {α : Type*} [Encodable α] [DecidableEq α] :
+--     Finset.toList' (∅ : Finset α) = [] := by
+--   have := Quotient.rep_spec (∅ : Finset α).val
+--   simp at this
+--   exact (Multiset.coe_eq_zero (toList' ∅)).mp this
 
 @[simp]
 instance RPol.instZero : Zero RPol[F,N,𝒮] where
@@ -188,14 +189,17 @@ omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [DecidableEq F] [Encodable F] [Finty
 theorem RPol.instZero_sem : RPol.sem (F:=F) (N:=N) (𝒮:=𝒮) 0 = 0 := by
   unfold sem; rfl
 
+variable [Listed F]
+variable [Listed N] [Inhabited N]
+
 def Pol.toRPol (p : Pol[F,N,𝒮]) : RPol[F,N,𝒮] := match p with
   -- ⨁ᶠ α ∈ At, [α ≤ t] ⨀ α
   | wnk_pol {@filter ~t} =>
-    let At : List Pk[F,N] := Finset.toList' Finset.univ
+    let At : List Pk[F,N] := Listed.list
     At.filterMap (fun α ↦ if t.test α then some (wnk_rpol {@test ~α}) else none) |>.sum
   -- ⨁ᶠ α ∈ At, α; α[f ↦ n]
   | wnk_pol {~f ← ~n} =>
-    let At : List Pk[F,N] := Finset.toList' Finset.univ
+    let At : List Pk[F,N] := Listed.list
     At.map (fun α ↦ wnk_rpol {@test ~α; @mod ~α[f ↦ n]}) |>.sum
   | wnk_pol {dup} => wnk_rpol {dup}
   | wnk_pol {~p; ~q} => wnk_rpol {~p.toRPol; ~q.toRPol}
@@ -203,7 +207,7 @@ def Pol.toRPol (p : Pol[F,N,𝒮]) : RPol[F,N,𝒮] := match p with
   | wnk_pol {~p ⨁ ~q} => wnk_rpol {~p.toRPol ⨁ ~q.toRPol}
   | wnk_pol {~p*} => wnk_rpol {~p.toRPol*}
 
-omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [Encodable F] [Encodable N] in
 theorem Pol.filter_toRol_sem_eq_sum (t : Pred[F,N]) :
     (wnk_pol {@filter ~t}).toRPol.sem (𝒮:=𝒮) = ∑ α, if t.test α then wnk_rpol {@test ~α}.sem else 0 := by
   simp [toRPol]
@@ -217,14 +221,15 @@ theorem Pol.filter_toRol_sem_eq_sum (t : Pred[F,N]) :
   classical
   rw [← List.sum_toFinset]
   rw [List.toFinset_filterMap]
-  · simp
-    rw [Finset.sum_filterMap _ _ (by simp_all)]
-    congr with p h₀ h₁
-    split <;> simp only [Pi.zero_apply, Countsupp.coe_zero]
-  · refine List.Nodup.filterMap ?_ (Finset.nodup_toList' Finset.univ)
+  · rw [Finset.sum_filterMap _ _ (by simp_all)]
+    congr with p
+    · simp
+    · rename_i h₀ h₁
+      split <;> simp only [Pi.zero_apply, Countsupp.coe_zero]
+  · refine List.Nodup.filterMap ?_ Listed.nodup
     grind
 
-omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [Encodable F] [Encodable N] in
 theorem Pol.assign_toRol_sem_eq_sum (f : F) (v : N) :
     (wnk_pol {~f ← ~v}).toRPol.sem (𝒮:=𝒮) = ∑ α, wnk_rpol {@test ~α; @mod ~α[f ↦ v]}.sem := by
   simp [toRPol]
@@ -236,9 +241,9 @@ theorem Pol.assign_toRol_sem_eq_sum (f : F) (v : N) :
   simp [this]; clear this
   -- TODO: this might not be needed once we have `DecidableEq RPol`
   classical
-  rw [← List.sum_toFinset]
-  · simp
-  · exact Finset.nodup_toList' Finset.univ
+  rw [← List.sum_toFinset _ Listed.nodup]
+  simp
+  apply Finset.sum_bij (fun a _ ↦ a) <;> simp
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 theorem Pol.toRol_sem_eq_sem (p : Pol[F,N,𝒮]) : p.toRPol.sem = p.sem := by
