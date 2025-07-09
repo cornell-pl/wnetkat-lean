@@ -4,9 +4,9 @@ import WeightedNetKAT.WNKA
 
 open OmegaCompletePartialOrder
 
-def Bottleneck (α : Type*) := α
+def Bottleneck (α : Type) := α
 
-variable {α : Type*}
+variable {α : Type}
 
 instance [i : Repr α] : Repr (Bottleneck α) := ⟨@reprPrec α i⟩
 
@@ -64,8 +64,6 @@ instance [LinearOrder α] [OrderBot α] [OrderTop α] : CanonicallyOrderedAdd (B
   le_self_add := by simp
 instance [LinearOrder α] [OrderBot α] [OrderTop α] : MulLeftMono (Bottleneck α) := ⟨sorry⟩
 instance [LinearOrder α] [OrderBot α] [OrderTop α] : MulRightMono (Bottleneck α) := ⟨sorry⟩
-instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedNetKAT.FinsuppStar (Bottleneck α) where
-  wStar m := m
 
 instance [CompleteLinearOrder α] : OmegaCompletePartialOrder (Bottleneck α) := inferInstanceAs (OmegaCompletePartialOrder α)
 instance [CompleteLinearOrder α] : OmegaContinuousNonUnitalSemiring (Bottleneck α) where
@@ -99,11 +97,21 @@ instance [CompleteLinearOrder α] : OmegaContinuousNonUnitalSemiring (Bottleneck
   ωSup_mul_left := sorry
   ωSup_mul_right := sorry
 
-instance [CompleteLinearOrder α] : WeightedNetKAT.LawfulFinsuppStar (Bottleneck α) where
-  wStar_eq_sum := sorry
-
-instance [CompleteLinearOrder α] : WeightedNetKAT.Star (Bottleneck α) where
-  star := sorry
+instance [Top α] : WeightedNetKAT.Star (Bottleneck α) where
+  star _ := ⊤
+instance [CompleteLinearOrder α] : WeightedNetKAT.LawfulStar (Bottleneck α) where
+  star_eq_sum m := by
+    rw [ωSum_nat_eq_ωSup]
+    unfold WeightedNetKAT.Star.star
+    rw [instStarBottleneckOfTop]
+    apply le_antisymm
+    · apply le_ωSup_of_le 1
+      simp only [DFunLike.coe]
+      simp only [Finset.sum_range_one]
+      exact eq_top_iff.mp rfl
+    · apply ωSup_le _ _ fun i ↦ ?_
+      simp only [DFunLike.coe]
+      exact OrderTop.le_top (∑ x ∈ Finset.range i, m ^ x)
 
 -- instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedMonotonePreSemiring (Bottleneck α) where
 --   wle_positive := by simp; apply bot_le

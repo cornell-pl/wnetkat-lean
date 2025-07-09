@@ -29,8 +29,12 @@ instance : OmegaContinuousNonUnitalSemiring ℕ∞ where
     intro c
     exact ENat.iSup_mul (⇑c) x
 
-instance : WeightedNetKAT.FinsuppStar ℕ∞ where
-  wStar {X _ _} m := m
+instance : WeightedNetKAT.Star ℕ∞ where
+  star | some 0 => 1 | _ => ⊤
 
-instance : WeightedNetKAT.LawfulFinsuppStar ℕ∞ where
-  wStar_eq_sum := sorry
+instance : WeightedNetKAT.LawfulStar ℕ∞ where
+  star_eq_sum n := by
+    simp [WeightedNetKAT.Star.star]
+    split
+    · sorry
+    · sorry

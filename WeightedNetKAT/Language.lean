@@ -5,45 +5,43 @@ import WeightedNetKAT.Reduction
 
 section
 
-variable {F : Type*}
-variable {N : Type*} [DecidableEq N]
-variable {𝒮 : Type*}
+variable {F : Type}
+variable {N : Type} [DecidableEq N]
+variable {𝒮 : Type}
 variable [Semiring 𝒮]
 
--- def 𝒲.map {X Y : Type*} (m : X →c 𝒮) (f : Y → X) (hf : f.Injective) : 𝒲 𝒮 Y :=
+-- def 𝒲.map {X Y : Type} (m : X →c 𝒮) (f : Y → X) (hf : f.Injective) : 𝒲 𝒮 Y :=
 --   ⟨(m <| f ·), by
 --     simp only [Set.countable_coe_iff]
 --     convert Set.Countable.preimage_of_injOn m.countable (fun ⦃x₁⦄ a ⦃x₂⦄ a ↦ by apply hf)⟩
 
--- def 𝒲.liftPi {Q : Type*} [Countable Q] (f : Q → 𝒲 𝒮 Q) : 𝒲 𝒮 (Q × Q) :=
+-- def 𝒲.liftPi {Q : Type} [Countable Q] (f : Q → 𝒲 𝒮 Q) : 𝒲 𝒮 (Q × Q) :=
 --   ⟨fun (x, y) ↦ f x y, SetCoe.countable _⟩
-def Finsupp.liftPi {Q P : Type*} [i : Fintype Q] [DecidableEq Q] [DecidableEq P] (f : Q → P →₀ 𝒮) : (Q × P) →₀ 𝒮 :=
+def Finsupp.liftPi {Q P : Type} [i : Fintype Q] [DecidableEq Q] [DecidableEq P] (f : Q → P →₀ 𝒮) : (Q × P) →₀ 𝒮 :=
   ⟨(i.elems.biUnion (fun q ↦ (f q).support.map ⟨(q, ·), (Prod.mk_right_injective q)⟩)),
     (fun (x, y) ↦ f x y),
     (by simp [Fintype.complete])⟩
 
 -- omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 -- @[simp]
--- theorem 𝒲.liftPi_apply {Q : Type*} [Countable Q]
+-- theorem 𝒲.liftPi_apply {Q : Type} [Countable Q]
 --     (f : Q → 𝒲 𝒮 Q) (q : Q) (p : Q) : 𝒲.liftPi f ⟨q, p⟩ = f q p := rfl
 -- omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 @[simp]
-theorem 𝒞.liftPi_apply {Q P : Type*} [i : Fintype Q] [DecidableEq Q] [DecidableEq P]
+theorem 𝒞.liftPi_apply {Q P : Type} [i : Fintype Q] [DecidableEq Q] [DecidableEq P]
     (f : Q → P →₀ 𝒮) (q : Q) (p : P) : Finsupp.liftPi f ⟨q, p⟩ = f q p := rfl
 
--- def 𝒲.equiv {X Y : Type*} (m : X →c 𝒮) {e : Y ≃ X} : 𝒲 𝒮 Y := m.map _ e.injective
+-- def 𝒲.equiv {X Y : Type} (m : X →c 𝒮) {e : Y ≃ X} : 𝒲 𝒮 Y := m.map _ e.injective
 
 end
 
 namespace WeightedNetKAT
 
-universe u v
-
 /-- `At` is the set of complete tests. -/
-def At (F : Type u) (N : Type v) : Type (max u v) := Pk[F,N]
+def At (F : Type) (N : Type) : Type := Pk[F,N]
 
 /-- `Π` is the set of all complete assignments. -/
-def Pi (F : Type u) (N : Type v) : Type (max u v) := Pk[F,N]
+def Pi (F : Type) (N : Type) : Type := Pk[F,N]
 @[inherit_doc] notation "Π" => WeightedNetKAT.Pi
 
 /--
@@ -51,19 +49,19 @@ The language of guarded strings.
 
 Isomorphically defined as `At ⬝ (Π ⬝ dup)* ⬝ Π`.
 -/
-def GS (F : Type*) (N : Type*) := Pk[F,N] × List Pk[F,N] × Pk[F,N]
+def GS (F : Type) (N : Type) := Pk[F,N] × List Pk[F,N] × Pk[F,N]
 notation "GS[" f "," n "]" => GS (F:=f) (N:=n)
 
-instance {F N : Type*} [Fintype F] [DecidableEq F] [DecidableEq N] : DecidableEq GS[F,N] := instDecidableEqProd
-instance {F N : Type*} [Fintype F] [Fintype N] : Countable GS[F,N] := instCountableProd
-instance {F N : Type*} [Fintype F] [Fintype N] [Encodable F] [Encodable N] : Encodable GS[F,N] := Encodable.Prod.encodable
+instance {F N : Type} [Fintype F] [DecidableEq F] [DecidableEq N] : DecidableEq GS[F,N] := instDecidableEqProd
+instance {F N : Type} [Fintype F] [Fintype N] : Countable GS[F,N] := instCountableProd
+instance {F N : Type} [Fintype F] [Fintype N] [Encodable F] [Encodable N] : Encodable GS[F,N] := Encodable.Prod.encodable
 
-variable {F : Type*} [Fintype F] [DecidableEq F] [Encodable F]
-variable {N : Type*} [Fintype N] [DecidableEq N] [Encodable N]
+variable {F : Type} [Fintype F] [DecidableEq F] [Encodable F]
+variable {N : Type} [Fintype N] [DecidableEq N] [Encodable N]
 
 def GS.mk (α : Pk[F,N]) (x : List Pk[F,N]) (β : Pk[F,N]) : GS[F,N] := ⟨α, x, β⟩
 
-class WeightedConcat (α : Type u) (β : outParam (Type u) := Option α) where
+class WeightedConcat (α : Type) (β : outParam Type := Option α) where
   /-- Weighted concatination -/
   concat : α → α → β
 
@@ -73,7 +71,7 @@ infixl:50 " ♢ " => WeightedConcat.concat
 instance : WeightedConcat GS[F,N] where
   concat | ⟨α, x, β⟩, ⟨γ, y, ξ⟩ => if β = γ then some ⟨α, x ++ y, ξ⟩ else none
 
-variable {𝒮 : Type*} [Semiring 𝒮]
+variable {𝒮 : Type} [Semiring 𝒮]
 variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
 
 noncomputable instance : WeightedConcat (GS[F,N] →c 𝒮) (GS[F,N] →c 𝒮) where
@@ -87,6 +85,7 @@ noncomputable instance : WeightedConcat (GS[F,N] →c 𝒮) (GS[F,N] →c 𝒮) 
 notation "gs[" α ";" β "]" => GS.mk α [] β
 notation "gs[" α ";" x ";" "dup" ";" β "]" => GS.mk α [x] β
 notation "gs[" α ";" x ";" "dup" ";" y ";" "dup" ";" β "]" => GS.mk α [x, y] β
+notation "gs[" α ";" x ";" "dup" ";" y ";" "dup" ";" z ";" "dup" ";" β "]" => GS.mk α [x, y, z] β
 
 #check gs[1;2]
 #check gs[1;2;dup;3]

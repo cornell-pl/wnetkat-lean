@@ -4,14 +4,14 @@ namespace WeightedNetKAT
 
 open Fields
 
-def p {𝒮 : Type*} : Pol[Fields,ℕ,𝒮] := wnk_pol {
+def p {𝒮 : Type} : Pol[Fields,ℕ,𝒮] := wnk_pol {
   if dst = H₄ then pt ← 2 ⨁ pt ← 3 ⨁ pt ← 5 else
   if dst = H₃ then pt ← 3 ⨁ pt ← 5 else
   if dst = H₂ then pt ← 2 ⨁ pt ← 5 else
   drop
 }
 
-def l {𝒮 : Type*} : Pol[Fields,ℕ,𝒮] := wnk_pol {
+def l {𝒮 : Type} : Pol[Fields,ℕ,𝒮] := wnk_pol {
   if pt = 2 then sw ← S₂ ; pt ← 1 else
   if pt = 3 then sw ← S₃ ; pt ← 1 else
   if pt = 5 then sw ← S₅ ; pt ← 1 else

@@ -35,7 +35,7 @@ abbrev S₃ := 3
 abbrev S₄ := 4
 abbrev S₅ := 5
 
-def Network {F N 𝒮 : Type*} (ingress : Pred[F,N]) (p l : Pol[F,N,𝒮]) (egress : Pred[F,N]) :
+def Network {F N 𝒮 : Type} (ingress : Pred[F,N]) (p l : Pol[F,N,𝒮]) (egress : Pred[F,N]) :
     Pol[F,N,𝒮] :=
   wnk_pol { @filter ~ingress; dup; (~p; ~l; dup)*; ~p; @filter ~egress }
 
@@ -45,7 +45,7 @@ macro_rules
 | `(#wnk_eval[$S, $n] { $p }) => `(#wnk_eval[$S, $n, ⟨0, []⟩] { $p })
 | `(#wnk_eval[$S, $n, $h] { $p }) => `(#eval! wnk_pol { $p }.compute (𝒮:=$S) $n $h |>.pretty)
 
-def S.repr {F N 𝒮 : Type*} {p : RPol[F,N,𝒮]} (s : S p) : String :=
+def S.repr {F N 𝒮 : Type} {p : RPol[F,N,𝒮]} (s : S p) : String :=
   match p with
   | wnk_rpol { drop } => "♡"
   | wnk_rpol { skip } => "♡"
@@ -67,33 +67,111 @@ def S.repr {F N 𝒮 : Type*} {p : RPol[F,N,𝒮]} (s : S p) : String :=
   | wnk_rpol { ~p₁* } =>
     match s with
     | .inl s => let s' : S p₁ := s; s'.repr
-    | .inr ⟨♡, _⟩ => "♡"
+    | .inr ⟨♡, _⟩ => "♡*"
 
-instance {F N 𝒮 : Type*} {p : RPol[F,N,𝒮]} : Repr (S p) where
+instance {F N 𝒮 : Type} {p : RPol[F,N,𝒮]} : Repr (S p) where
   reprPrec s _ := s.repr
 
-instance {X : Type*} [Repr X] : Repr (Unit × X) where
+instance {X : Type} [Repr X] : Repr (Unit × X) where
   reprPrec x n := reprPrec x.2 n
-instance {X : Type*} [Repr X] : Repr (X × Unit) where
+instance {X : Type} [Repr X] : Repr (X × Unit) where
   reprPrec x n := reprPrec x.1 n
 
-def Pk.all (F N : Type*) [Fintype F] [DecidableEq F] [Fintype N] : Finset Pk[F,N] := Fintype.elems
-def Pk.pairs (F N : Type*) [Fintype F] [DecidableEq F] [Fintype N] : Finset (Pk[F,N] × Pk[F,N]) := Fintype.elems
+def Pk.all (F N : Type) [Fintype F] [DecidableEq F] [Fintype N] : Finset Pk[F,N] := Fintype.elems
+def Pk.pairs (F N : Type) [Fintype F] [DecidableEq F] [Fintype N] : Finset (Pk[F,N] × Pk[F,N]) := Fintype.elems
 
-unsafe def RPol.eval {F N 𝒮 : Type*}
-    [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N]
+unsafe def RPol.eval {F N 𝒮 : Type}
+    [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Listed F] [Listed N] [Inhabited N]
     [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
-    [DecidableEq 𝒮] [FinsuppStar 𝒮] [Star 𝒮] (p : RPol[F,N,𝒮]) :=
-  let N := p.wnka
-  let ι := N.ι
-  let δ := Pk.pairs _ _ |>.val.unquot.map (fun (α, β) ↦ (α, β, N.δ α β)) |>.filter (·.2.2.support ≠ ∅)
-  let 𝓁 := Pk.pairs _ _ |>.val.unquot.map (fun (α, β) ↦ (α, β, N.𝒪 α β)) |>.filter (·.2.2.support ≠ ∅)
-  (ι, δ, 𝓁)
+    [DecidableEq 𝒮] [Star 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) : Std.Format :=
+  let n : WNKA F N 𝒮 (S p) := p.wnka
+  let ι := n.ι
+  let δ : List (Pk[F,N] × Pk[F,N] × 𝒲[S p, S p, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, n.δ α β)) |>.filter (·.2.2 ≠ 0)
+  let 𝓁 : List (Pk[F,N] × Pk[F,N] × 𝒲[S p, 𝟙, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, n.𝒪 α β)) |>.filter (·.2.2 ≠ 0)
+
+  let q : Pk[F,N] → String := fun x ↦ reprStr <| Listed.list.map x
+
+  f!"ι := {
+    Listed.listOf (S p) |>.filter (ι () · ≠ 0) |>.map (fun s ↦ s!"{reprStr s} = {reprStr (ι () s)}")
+  }\nδ := {
+    δ.map (fun (α, β, x) ↦
+      Listed.listOf (S p × S p) |>.filter (fun (s, s') ↦ x s s' ≠ 0) |>.map (fun (s, s') ↦ s!"{reprStr s} -> {reprStr s'} = {reprStr (x s s')} {q α};{q β}")
+    )
+  }\n𝓁 := {
+    𝓁.map (fun (α, β, x) ↦
+      Listed.listOf (S p) |>.filter (x · () ≠ 0) |>.map (fun s ↦ s!"{reprStr s} = {reprStr (x s ())} {q α};{q β}")
+    )
+  }"
+
+  -- (ι, δ, 𝓁)
+
+unsafe def RPol.eval_string {F N 𝒮 : Type}
+    [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Listed F] [Listed N] [Inhabited N]
+    [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
+    [DecidableEq 𝒮] [Star 𝒮] (p : RPol[F,N,𝒮]) (s : GS[F,N])
+    :=
+      p.wnka.sem s
+
+instance : Listed Unit where
+  list := [()]
+  complete := by simp
+  nodup := by simp
+
+instance myRepr {α A B : Type} [DecidableEq α] [Zero α] [Listed A] [Listed B] [Repr α] [Repr A] [Repr B] : Repr 𝒲[A, B, α] where
+  reprPrec m n :=
+    reprPrec (Listed.listOf (A × B) |>.filter (fun (a, b) ↦ m a b ≠ 0) |>.map (fun (a, b) ↦ s!"{reprStr a},{reprStr b}↦{reprStr (m a b)}")) n
+
+instance {F N 𝒮 : Type}
+    [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Listed F] [Listed N] [Inhabited N]
+    [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
+    [DecidableEq 𝒮] [Star 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) : Repr (WNKA F N 𝒮 (S p)) where
+  reprPrec m n :=
+    let ι := m.ι
+    let δ : List (Pk[F,N] × Pk[F,N] × 𝒲[S p, S p, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, m.δ α β)) |>.filter (·.2.2 ≠ 0)
+    let 𝓁 : List (Pk[F,N] × Pk[F,N] × 𝒲[S p, 𝟙, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, m.𝒪 α β)) |>.filter (·.2.2 ≠ 0)
+
+    let q : Pk[F,N] → String := fun x ↦ reprStr <| Listed.list.map x
+
+    -- reprPrec (Listed.listOf (A × B) |>.map (fun (a, b) ↦ s!"≫{reprStr a},{reprStr b}↦{reprStr (m a b)}")) n
+
+    let x :=
+        Listed.listOf (S p) |>.filter (ι () · ≠ 0) |>.map (fun s ↦ s!"{reprStr s} [label=\"{reprStr s} {reprStr (ι () s)}\"]")
+    let y :=
+        δ.map (fun (α, β, x) ↦
+          Listed.listOf (S p × S p) |>.filter (fun (s, s') ↦ x s s' ≠ 0) |>.map (fun (s, s') ↦ s!"{reprStr s} -> {reprStr s'} [label=\"{reprStr (x s s')} {q α};{q β}\"]")
+        )
+    let z :=
+        𝓁.map (fun (α, β, x) ↦
+          Listed.listOf (S p) |>.filter (x · () ≠ 0) |>.map (fun s ↦ s!"{reprStr s} -> F{reprStr s} [label=\"{reprStr (x s ())} {q α};{q β}\"]")
+        )
+
+    f!"{x ++ y.flatten ++ z.flatten |> "\n".intercalate}"
+    -- f!"ι := {
+    --     Listed.listOf (S p) |>.filter (ι () · ≠ 0) |>.map (fun s ↦ s!"{reprStr s} = {reprStr (ι () s)}")
+    --   }\nδ := {
+    --     δ.map (fun (α, β, x) ↦
+    --       Listed.listOf (S p × S p) |>.filter (fun (s, s') ↦ x s s' ≠ 0) |>.map (fun (s, s') ↦ s!"{reprStr s} -> {reprStr s'} = {reprStr (x s s')} {q α};{q β}")
+    --     )
+    --   }\n𝓁 := {
+    --     𝓁.map (fun (α, β, x) ↦
+    --       Listed.listOf (S p) |>.filter (x · () ≠ 0) |>.map (fun s ↦ s!"{reprStr s} = {reprStr (x s ())} {q α};{q β}")
+    --     )
+    --   }"
 
 syntax "#wnka_eval[" term "," term "," term "]" "{" cwnk_rpol "}" : command
 
 macro_rules
 | `(#wnka_eval[$f, $n, $s] { $p }) => `(#eval! wnk_rpol { $p }.eval (F:=$f) (N:=$n) (𝒮:=$s))
+
+syntax "#wnka_dot[" term "," term "," term "]" "{" cwnk_rpol "}" : command
+
+macro_rules
+| `(#wnka_dot[$f, $n, $s] { $p }) => `(#eval! wnk_rpol { $p }.wnka (F:=$f) (N:=$n) (𝒮:=$s))
+
+syntax "#wnka_eval_str[" term "," term "," term "]" "{" cwnk_rpol "}" "(" term ")" : command
+
+macro_rules
+| `(#wnka_eval_str[$f, $n, $s] { $p } ( $x )) => `(#eval! wnk_rpol { $p }.eval_string (F:=$f) (N:=$n) (𝒮:=$s) $x)
 
 syntax "#wnka_eval'[" term "," term "," term "]" "{" cwnk_pol "}" : command
 

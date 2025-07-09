@@ -5,7 +5,7 @@ import Mathlib.Algebra.Ring.Hom.Defs
 
 open OmegaCompletePartialOrder
 
-theorem List.succ_range_map {α : Type*} (f : ℕ → α) {n : Nat} :
+theorem List.succ_range_map {α : Type} (f : ℕ → α) {n : Nat} :
     (range (n + 1)).map f = (range n).map f ++ [f n] := by
   apply List.ext_getElem
   · simp
@@ -19,16 +19,16 @@ theorem List.succ_range_map {α : Type*} (f : ℕ → α) {n : Nat} :
 
 namespace WeightedNetKAT
 
-abbrev η {ι : Type*} {α : Type*} [DecidableEq ι] [Zero α] [One α] (i : ι): ι →c α :=
+abbrev η {ι : Type} {α : Type} [DecidableEq ι] [Zero α] [One α] (i : ι): ι →c α :=
   ⟨Pi.single i 1, Set.Countable.mono Pi.support_single_subset (Set.countable_singleton i)⟩
 
-@[simp] theorem η_apply {ι : Type*} {α : Type*} [DecidableEq ι] [Zero α] [One α] {x y : ι} :
+@[simp] theorem η_apply {ι : Type} {α : Type} [DecidableEq ι] [Zero α] [One α] {x y : ι} :
     η x y = if x = y then (1 : α) else 0 := by
   simp [DFunLike.coe, Pi.single, Function.update]; grind
 
 -- @[simp] theorem η_subtype_apply {x y : H[F,N]} : η x y = if x = y then (1 : 𝒮) else 0 := by rfl
 
-variable {X : Type*} {𝒮 : Type*}
+variable {X : Type} {𝒮 : Type}
   [Semiring 𝒮]
   [OmegaCompletePartialOrder 𝒮]
   [OrderBot 𝒮]
@@ -36,8 +36,8 @@ variable {X : Type*} {𝒮 : Type*}
   [MulRightMono 𝒮]
   [IsPositiveOrderedAddMonoid 𝒮]
 
-variable {F : Type*} [Fintype F] [DecidableEq F]
-variable {N : Type*} [DecidableEq N]
+variable {F : Type} [Fintype F] [DecidableEq F]
+variable {N : Type} [DecidableEq N]
 
 noncomputable instance : DecidableEq (X →c 𝒮) := Classical.typeDecidableEq _
 -- noncomputable instance : DecidableEq (H[F,N] →c 𝒮) := Classical.typeDecidableEq (𝒲 𝒮 H)
@@ -177,7 +177,7 @@ noncomputable def Pol.sem (p : Pol[F,N,𝒮]) : H[F,N] → H[F,N] →c 𝒮 := m
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
-variable {M : Type*} [Semiring M] [OmegaCompletePartialOrder M] [OrderBot M] [MulLeftMono M] [MulRightMono M] [IsPositiveOrderedAddMonoid M] in
+variable {M : Type} [Semiring M] [OmegaCompletePartialOrder M] [OrderBot M] [MulLeftMono M] [MulRightMono M] [IsPositiveOrderedAddMonoid M] in
 open OmegaCompletePartialOrder in
 noncomputable def Pol.map (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) : Pol[F,N,M] := match p with
   | .Filter t => .Filter t
@@ -187,7 +187,7 @@ noncomputable def Pol.map (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) : Pol[F,N,M] :=
   | wnk_pol {~w ⨀ ~p}=> wnk_pol {~(f w) ⨀ ~(p.map f)}
   | wnk_pol {~p ⨁ ~q} => wnk_pol {~(p.map f) ⨁ ~(q.map f)}
   | wnk_pol {~p*} => wnk_pol {~(p.map f)*}
-variable {M : Type*} [Semiring M] [OmegaCompletePartialOrder M] [OrderBot M] [MulLeftMono M] [MulRightMono M] [IsPositiveOrderedAddMonoid M] in
+variable {M : Type} [Semiring M] [OmegaCompletePartialOrder M] [OrderBot M] [MulLeftMono M] [MulRightMono M] [IsPositiveOrderedAddMonoid M] in
 open OmegaCompletePartialOrder in
 noncomputable def Pol.map_preserve (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) (h h') :
     (p.map f).sem h h' = f (p.sem h h') := by
@@ -239,7 +239,7 @@ theorem Φ_continuous [OmegaContinuousNonUnitalSemiring 𝒮] (p : Pol[F,N,𝒮]
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [Fintype F] [DecidableEq F] [DecidableEq N] in
 @[simp] theorem 𝒲.wZero_le (p : H[F,N] →c 𝒮) : 0 ≤ p := by intro; simp
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [Fintype F] [DecidableEq F] [DecidableEq N] in
-@[simp] theorem 𝒲.Pi_wZero_le {X : Type*} (p : X → H[F,N] →c 𝒮) : 0 ≤ p := fun _ ↦ 𝒲.wZero_le _
+@[simp] theorem 𝒲.Pi_wZero_le {X : Type} (p : X → H[F,N] →c 𝒮) : 0 ≤ p := fun _ ↦ 𝒲.wZero_le _
 
 noncomputable def Φ_chain (p : Pol[F,N,𝒮]) : Chain (H[F,N] → H[F,N] →c 𝒮) :=
   ⟨fun n ↦ (Φ p)^[n] 0, by
@@ -256,11 +256,11 @@ noncomputable def Φ_chain (p : Pol[F,N,𝒮]) : Chain (H[F,N] → H[F,N] →c �
         apply Φ_mono _ ih⟩
 noncomputable def Φ_ωSup (p : Pol[F,N,𝒮]) := ωSup (Φ_chain p)
 
-def IsLfp {α : Type*} [OmegaCompletePartialOrder α]
+def IsLfp {α : Type} [OmegaCompletePartialOrder α]
     (f : α → α) (p : α) : Prop :=
   f p = p ∧ ∀ p', f p' = p' → p ≤ p'
 
-theorem IsLfp_unique {α : Type*} [OmegaCompletePartialOrder α] {f : α → α} {p₁ p₂ : α}
+theorem IsLfp_unique {α : Type} [OmegaCompletePartialOrder α] {f : α → α} {p₁ p₂ : α}
     (h₁ : IsLfp f p₁) (h₂ : IsLfp f p₂) : p₁ = p₂ :=
   le_antisymm (h₁.right _ h₂.left) (h₂.right _ h₁.left)
 

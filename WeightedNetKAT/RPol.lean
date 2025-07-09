@@ -2,11 +2,11 @@ import WeightedNetKAT.Syntax
 
 namespace WeightedNetKAT
 
-variable {𝒮 : Type*}
-variable {F : Type*} [Fintype F] [DecidableEq F]
-variable {N : Type*} [Fintype N] [DecidableEq N]
+variable {𝒮 : Type}
+variable {F : Type} [Fintype F] [DecidableEq F]
+variable {N : Type} [Fintype N] [DecidableEq N]
 
-inductive RPol (W : Type*) where
+inductive RPol (W : Type) where
   | Drop
   | Skip
   | Test (pk : Pk[F,N])
@@ -188,7 +188,7 @@ end Semantics
 
 section Repr
 
-def RPol.repr {F : Type*} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] [Repr 𝒮] : RPol[F,N,𝒮] → String
+def RPol.repr {F : Type} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] [Repr 𝒮] : RPol[F,N,𝒮] → String
 | wnk_rpol { @test ~t } => s!"@test {reprStr t}"
 | wnk_rpol { @mod ~t } => s!"@mod {reprStr t}"
 | wnk_rpol { dup } => s!"dup"
@@ -199,7 +199,7 @@ def RPol.repr {F : Type*} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] [R
 | wnk_rpol { skip } => s!"skip"
 | wnk_rpol { drop } => s!"drop"
 
-instance {F : Type*} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] [Repr 𝒮] : Repr RPol[F,N,𝒮] where
+instance {F : Type} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] [Repr 𝒮] : Repr RPol[F,N,𝒮] where
   reprPrec p _ := p.repr
 
 end Repr

@@ -3,21 +3,21 @@ import Mathlib.Data.Finset.Dedup
 import Mathlib.Data.List.ProdSigma
 import Mathlib.Data.List.FinRange
 
-class Listed (α : Type*) where
+class Listed (α : Type) where
   list : List α
   nodup : list.Nodup
   complete : ∀ a, a ∈ list
 
 namespace Listed
 
-variable {α : Type*} {β : Type*}
+variable {α : Type} {β : Type}
 variable [Listed α] [Listed β]
 
 @[simp] theorem mem_list (a : α) : a ∈ list := complete a
 
 attribute [simp] Listed.nodup
 
-def listOf (α : Type*) [Listed α] : List α := Listed.list
+def listOf (α : Type) [Listed α] : List α := Listed.list
 
 def encode [DecidableEq α] (a : α) : ℕ := list.findIdx (· = a)
 def decode [DecidableEq α] (i : ℕ) : Option α := list[i]?
@@ -72,6 +72,16 @@ instance : Listed (α × β) where
   nodup := List.Nodup.product nodup nodup
   complete := by intro ⟨a, b⟩; simp [complete]
 
+instance : Listed (α ⊕ β) where
+  list := list.map .inl ++ list.map .inr
+  nodup := by
+    refine List.nodup_append.mpr ?_
+    split_ands
+    · refine List.Nodup.map Sum.inl_injective nodup
+    · refine List.Nodup.map Sum.inr_injective nodup
+    · simp
+  complete := by rintro (a | b) <;> simp_all
+
 inductive T where | a | b | c | d
 deriving DecidableEq, Repr, Inhabited
 
@@ -85,9 +95,22 @@ instance {n : ℕ} : Listed (Fin n) where
   nodup := List.nodup_finRange n
   complete := List.mem_finRange
 
+/--
+info: [(0, Listed.T.a),
+ (0, Listed.T.b),
+ (0, Listed.T.c),
+ (0, Listed.T.d),
+ (1, Listed.T.a),
+ (1, Listed.T.b),
+ (1, Listed.T.c),
+ (1, Listed.T.d),
+ (2, Listed.T.a),
+ (2, Listed.T.b),
+ (2, Listed.T.c),
+ (2, Listed.T.d)]
+-/
+#guard_msgs in
 #eval listOf (Fin 3) ×ˢ listOf T
-
-#eval List.permutations (listOf (Fin 3)) ×ˢ List.permutations (listOf T)
 
 instance [Inhabited β] [DecidableEq α] [DecidableEq β] : Listed (α → β) where
   list := (listOf α).foldl (fun (acc : List (α → β)) a ↦ (listOf β).flatMap (fun b ↦ acc.map (fun f ↦  Function.update f a b))) [(fun _ ↦ default)]
@@ -99,6 +122,25 @@ instance [Inhabited β] [DecidableEq α] [DecidableEq β] : Listed (α → β) w
 instance [Repr α] [Repr β] : Repr (α → β) where
   reprPrec f n := reprPrec ((listOf α).map (fun a ↦ (a, f a))) n
 
+/--
+info: [[(Listed.T.a, 0), (Listed.T.b, 0), (Listed.T.c, 0), (Listed.T.d, 0)],
+ [(Listed.T.a, 1), (Listed.T.b, 0), (Listed.T.c, 0), (Listed.T.d, 0)],
+ [(Listed.T.a, 0), (Listed.T.b, 1), (Listed.T.c, 0), (Listed.T.d, 0)],
+ [(Listed.T.a, 1), (Listed.T.b, 1), (Listed.T.c, 0), (Listed.T.d, 0)],
+ [(Listed.T.a, 0), (Listed.T.b, 0), (Listed.T.c, 1), (Listed.T.d, 0)],
+ [(Listed.T.a, 1), (Listed.T.b, 0), (Listed.T.c, 1), (Listed.T.d, 0)],
+ [(Listed.T.a, 0), (Listed.T.b, 1), (Listed.T.c, 1), (Listed.T.d, 0)],
+ [(Listed.T.a, 1), (Listed.T.b, 1), (Listed.T.c, 1), (Listed.T.d, 0)],
+ [(Listed.T.a, 0), (Listed.T.b, 0), (Listed.T.c, 0), (Listed.T.d, 1)],
+ [(Listed.T.a, 1), (Listed.T.b, 0), (Listed.T.c, 0), (Listed.T.d, 1)],
+ [(Listed.T.a, 0), (Listed.T.b, 1), (Listed.T.c, 0), (Listed.T.d, 1)],
+ [(Listed.T.a, 1), (Listed.T.b, 1), (Listed.T.c, 0), (Listed.T.d, 1)],
+ [(Listed.T.a, 0), (Listed.T.b, 0), (Listed.T.c, 1), (Listed.T.d, 1)],
+ [(Listed.T.a, 1), (Listed.T.b, 0), (Listed.T.c, 1), (Listed.T.d, 1)],
+ [(Listed.T.a, 0), (Listed.T.b, 1), (Listed.T.c, 1), (Listed.T.d, 1)],
+ [(Listed.T.a, 1), (Listed.T.b, 1), (Listed.T.c, 1), (Listed.T.d, 1)]]
+-/
+#guard_msgs in
 #eval! listOf (T → Fin 2)
 
 end Listed

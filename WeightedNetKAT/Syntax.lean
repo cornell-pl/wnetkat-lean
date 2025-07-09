@@ -3,25 +3,25 @@ import Mathlib.Logic.Encodable.Pi
 
 namespace WeightedNetKAT
 
-variable {𝒮 : Type*}
+variable {𝒮 : Type}
 
-variable {F : Type*} [Fintype F] [DecidableEq F]
-variable {N : Type*} [Fintype N] [DecidableEq N]
+variable {F : Type} [Fintype F] [DecidableEq F]
+variable {N : Type} [Fintype N] [DecidableEq N]
 
-abbrev Pk (F N : Type*) := F → N
+abbrev Pk (F N : Type) := F → N
 notation "Pk[" F "," N "]" => Pk F N
 
-instance {F : Type*} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] : Repr Pk[F,N] where
+instance {F : Type} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] : Repr Pk[F,N] where
   reprPrec x _ := s!"\{{List.range i.card |>.filterMap e.decode |>.map (fun k ↦ s!"{reprStr k}↦{reprStr (x k)}") |> ",".intercalate}}"
 
-def H (F N : Type*) := Pk[F,N] × List Pk[F,N]
+def H (F N : Type) := Pk[F,N] × List Pk[F,N]
 notation "H[" F "," N "]" => H F N
 
 instance : DecidableEq H[F,N] := inferInstanceAs (DecidableEq (_ × _))
 instance : Countable H[F,N] := inferInstanceAs (Countable (_ × _))
 instance [Encodable F] [Encodable N] : Encodable H[F,N] := inferInstanceAs (Encodable (_ × _))
 
-inductive Pred (F N : Type*) where
+inductive Pred (F N : Type) where
   | Bool (b : Bool)
   | Test (f : F) (n : N)
   | Dis (t u : Pred F N)
@@ -30,7 +30,7 @@ inductive Pred (F N : Type*) where
 
 notation "Pred[" F "," N "]" => Pred F N
 
-inductive Pol (F N W : Type*) where
+inductive Pol (F N W : Type) where
   | Filter (t : Pred[F,N])
   | Mod (f : F) (n : N)
   | Dup

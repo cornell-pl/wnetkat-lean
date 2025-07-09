@@ -5,7 +5,7 @@ import WeightedNetKAT.RPol
 import WeightedNetKAT.Listed
 import Mathlib.Logic.Function.Basic
 
-theorem Finset.filterMap_insert {α β : Type*} [DecidableEq α] [DecidableEq β] (f : α → Option β) (hf : ∀ a a', ∀ b ∈ f a, b ∈ f a' → a = a') (a : α) (s : Finset α) :
+theorem Finset.filterMap_insert {α β : Type} [DecidableEq α] [DecidableEq β] (f : α → Option β) (hf : ∀ a a', ∀ b ∈ f a, b ∈ f a' → a = a') (a : α) (s : Finset α) :
       (insert a s).filterMap f hf
     = match f a with | some x => insert x (s.filterMap f hf) | none => s.filterMap f hf := by
   simp only [insert_eq]
@@ -16,7 +16,7 @@ theorem Finset.filterMap_insert {α β : Type*} [DecidableEq α] [DecidableEq β
   · ext b
     simp_all
 
-theorem Finset.sum_filterMap {ι : Type*} {κ : Type*} {M : Type*} [AddCommMonoid M] [DecidableEq ι] [DecidableEq κ]
+theorem Finset.sum_filterMap {ι : Type} {κ : Type} {M : Type} [AddCommMonoid M] [DecidableEq ι] [DecidableEq κ]
     (s : Finset ι) (e : ι → Option κ) (he : ∀ a a', ∀ b ∈ e a, b ∈ e a' → a = a') (f : κ → M) :
     ∑ x ∈ s.filterMap e he, f x = ∑ x ∈ s, match e x with | some y => f y | none => 0 := by
   induction s using Finset.induction with
@@ -35,29 +35,29 @@ theorem Finset.sum_filterMap {ι : Type*} {κ : Type*} {M : Type*} [AddCommMonoi
 
 namespace WeightedNetKAT
 
-variable {𝒮 : Type*} [Semiring 𝒮]
+variable {𝒮 : Type} [Semiring 𝒮]
 variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
 
 variable [MulLeftMono 𝒮] [MulRightMono 𝒮]
 
-variable {F : Type*} [Fintype F] [DecidableEq F] [Encodable F]
-variable {N : Type*} [Fintype N] [DecidableEq N] [Encodable N]
+variable {F : Type} [Fintype F] [DecidableEq F] [Encodable F]
+variable {N : Type} [Fintype N] [DecidableEq N] [Encodable N]
 
-instance {X : Type*} [Countable X] : One (X →c 𝒮) where
+instance {X : Type} [Countable X] : One (X →c 𝒮) where
   one := ⟨1, SetCoe.countable _⟩
 
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 @[simp]
-theorem Countsupp.one_apply {X : Type*} [Countable X] {x : X} : (1 : X →c 𝒮) x = 1 := by rfl
+theorem Countsupp.one_apply {X : Type} [Countable X] {x : X} : (1 : X →c 𝒮) x = 1 := by rfl
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 @[simp]
-theorem Countsupp.zero_bind {X : Type*} [Countable X] [Encodable X] {g : X → X →c 𝒮} :
+theorem Countsupp.zero_bind {X : Type} [Countable X] [Encodable X] {g : X → X →c 𝒮} :
     ((0 : X →c 𝒮).bind g) = 0 := by ext x; simp
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 @[simp]
-theorem Countsupp.one_bind {X : Type*} [Countable X] [Encodable X] {g : X → X →c 𝒮} :
+theorem Countsupp.one_bind {X : Type} [Countable X] [Encodable X] {g : X → X →c 𝒮} :
     ((1 : X →c 𝒮).bind g) = ω∑ x, g x := by
   ext x
   simp
@@ -144,26 +144,26 @@ theorem RPol.seq_of_prefix {p : RPol[F,N,𝒮]} {h₀ h₁ : H[F,N]} (h : (p.sem
       specialize ih l
       exact List.IsSuffix.trans ih ih'
 
--- def Finset.toList' {α : Type*} [Encodable α] [DecidableEq α] (s : Finset α) : List α := s.val.rep
--- theorem Finset.nodup_toList' {α : Type*} [Encodable α] [DecidableEq α] (s : Finset α) :
+-- def Finset.toList' {α : Type} [Encodable α] [DecidableEq α] (s : Finset α) : List α := s.val.rep
+-- theorem Finset.nodup_toList' {α : Type} [Encodable α] [DecidableEq α] (s : Finset α) :
 --     (Finset.toList' s).Nodup := by
 --   have := Quotient.rep_spec s.val
 --   simp at this
 --   rw [toList', ← Multiset.coe_nodup, this]
 --   exact s.nodup
 -- @[simp]
--- theorem Finset.mem_toList'_iff {α : Type*} [Encodable α] [DecidableEq α] (s : Finset α) (x : α) :
+-- theorem Finset.mem_toList'_iff {α : Type} [Encodable α] [DecidableEq α] (s : Finset α) (x : α) :
 --     x ∈ (Finset.toList' s) ↔ x ∈ s := by
 --   have := Quotient.rep_spec s.val
 --   simp at this
 --   rw [toList', ← Multiset.mem_coe, this]
 --   rfl
 -- @[simp]
--- theorem Finset.toList'_toFinset {α : Type*} [Encodable α] [DecidableEq α] (s : Finset α) :
+-- theorem Finset.toList'_toFinset {α : Type} [Encodable α] [DecidableEq α] (s : Finset α) :
 --     (Finset.toList' s).toFinset = s := by
 --   ext; simp [mem_toList'_iff]
 -- @[simp]
--- theorem Finset.toList'_empty {α : Type*} [Encodable α] [DecidableEq α] :
+-- theorem Finset.toList'_empty {α : Type} [Encodable α] [DecidableEq α] :
 --     Finset.toList' (∅ : Finset α) = [] := by
 --   have := Quotient.rep_spec (∅ : Finset α).val
 --   simp at this

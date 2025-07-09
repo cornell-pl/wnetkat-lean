@@ -5,7 +5,7 @@ import Mathlib.Computability.Language
 
 open OmegaCompletePartialOrder
 
-variable {α : Type*}
+variable {α : Type}
 
 instance : IsPositiveOrderedAddMonoid (Language α) where
   bot_eq_zero := rfl
@@ -32,9 +32,9 @@ instance : OmegaContinuousNonUnitalSemiring (Language α) where
     intro c
     exact Language.iSup_mul (⇑c) x
 
-instance : WeightedNetKAT.FinsuppStar (Language α) where
-  wStar {X _ _} m := m
+instance : WeightedNetKAT.Star (Language α) where
+  star m := KStar.kstar m
 
 open scoped Classical in
-instance : WeightedNetKAT.LawfulFinsuppStar (Language α) where
-  wStar_eq_sum := sorry
+instance : WeightedNetKAT.LawfulStar (Language α) where
+  star_eq_sum := by sorry
