@@ -35,6 +35,30 @@ theorem encode_decode [DecidableEq α] (a : α) : decode (encode a) = some a := 
     simp [Function.Injective] at this
     have := this (a₁:=⟨i, by omega⟩) (a₂:=⟨j, by omega⟩)
     grind
+theorem decode_eq_some [DecidableEq α] (n : ℕ) (a : α) : decode n = some a ↔ encode a = n := by
+  simp [encode, decode]
+  constructor
+  · intro h
+    refine (List.findIdx_eq ?_).mpr ?_
+    · grind
+    · simp_all
+      constructor
+      · grind
+      · intro j hj hq
+        have := h.trans (by grind : list[j]? = some a).symm
+        have hq' := hq
+        rw [List.getElem_eq_getElem?_get] at hq'
+        simp [← this] at hq'
+        have h := hq.trans hq'.symm
+        have := nodup (α:=α)
+        have : j = n := by exact (List.Nodup.getElem_inj_iff this).mp h
+        omega
+  · intro h
+    subst_eqs
+    simp
+    have := List.findIdx_getElem (xs:=list (α:=α)) (p:=(fun x ↦ decide (x = a))) (w:=(by simp))
+    simp at this
+    grind
 
 def fintype [DecidableEq α] : Fintype α := {
   elems := (listOf α).toFinset
