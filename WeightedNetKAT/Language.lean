@@ -420,80 +420,120 @@ theorem RPol.sem_G.Weight {w} {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~w �
   · simp [G]
     intro g h₀ h₁
     simp_all [← mul_assoc, G]
+
+def GS.splitAtJoined (g : GS[F,N]) (n : ℕ) (γ : Pk[F,N]) : GS[F,N] × GS[F,N] :=
+  let (g₀, g, gₙ)  := g
+  let (l, r) := g.splitAt n
+  ((g₀, l, γ), (γ, r, gₙ))
+
+example {α α₁ α₂ α₃ γ : Pk[F,N]} :
+    gs[α;α₁;dup;α₂;dup;α₃].splitAtJoined 0 γ = (gs[α;γ], gs[γ;α₁;dup;α₂;dup;α₃]) := rfl
+example {α α₁ α₂ α₃ γ : Pk[F,N]} :
+    gs[α;α₁;dup;α₂;dup;α₃].splitAtJoined 1 γ = (gs[α;α₁;dup; γ], gs[γ;α₂;dup;α₃]) := rfl
+example {α α₁ α₂ α₃ γ : Pk[F,N]} :
+    gs[α;α₁;dup;α₂;dup;α₃].splitAtJoined 2 γ = (gs[α;α₁;dup;α₂;dup;γ], gs[γ;α₃]) := rfl
+example {α α₁ α₂ α₃ γ : Pk[F,N]} :
+    gs[α;α₁;dup;α₂;dup;α₃].splitAtJoined 3 γ = (gs[α;α₁;dup;α₂;dup;γ], gs[γ;α₃]) := rfl
+
+-- a;b;dup;c
+--  ^     ^
+-- a;γ ◇ γ;b;dup;c
+-- a;b;dup;γ ◇ γ;c
+
+omit [Encodable F] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+theorem G.concat_apply {L R : GS F N →c 𝒮} {xₙ : GS F N} :
+      ((L ♢ R) : _ →c 𝒮) xₙ
+    = ∑ i ∈ Finset.range (xₙ.2.1.length + 1), ∑ (γ : Pk[F,N]), L (xₙ.splitAtJoined i γ).1 * R (xₙ.splitAtJoined i γ).2 := by
+  obtain ⟨α, A, αₙ⟩ := xₙ
+  simp
+  simp [WeightedConcat.concat]
+  rw [← Finset.sum_product']
+  rw [← ωSum_finset]
+  apply ωSum_eq_ωSum_of_ne_one_bij (fun ⟨⟨⟨i, γ⟩, hi⟩, hi'⟩ ↦ by
+    exact ⟨(α, A.take i, γ), by simp; contrapose! hi'; simp [hi', GS.splitAtJoined]⟩)
+  · intro ⟨⟨⟨i, γ⟩, hi⟩, b⟩
+    simp_all
+    simp_all
+    simp_all
+    rintro i' γ' hi' h h'
+    rw [Prod.eq_iff_fst_eq_snd_eq] at h'
+    simp at h'
+    grind
+  · intro ⟨g₀, hg₀⟩
+    simp at hg₀ ⊢
+    intro g₁ hg₁ h h'
+    split at h
+    split at h
+    · subst_eqs
+      simp only [List.length_append]
+      rename_i A₀ γ A₁
+      simp [GS.splitAtJoined]
+      use A₀.length
+      simp +arith only [List.take_left', List.drop_left', true_and]
+      use γ
+    · contradiction
+  · simp [GS.splitAtJoined]
+    intro i γ hi hγ
+    rw [ωSum_eq_single ⟨(γ, List.drop i A, αₙ), by simp; contrapose! hγ; simp [hγ]⟩]
+    · simp
+    · simp
+      intro g hg hg' h
+      split at h
+      rename_i α' x β' γ' y ξ h'
+      split_ifs at h
+      subst_eqs
+      simp at h
+      rw [Prod.eq_iff_fst_eq_snd_eq] at h
+      obtain ⟨h₀, h₁⟩ := h
+      simp at h₁
+      obtain ⟨h₁, ⟨_⟩⟩ := h₁
+      suffices y = List.drop i A by subst_eqs; simp_all
+      rw [← h₁]
+      rw [List.drop_append]
+      simp
+      have : (i - min i A.length) = 0 := by omega
+      simp [this]
+
 variable [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem RPol.sem_G.Iter {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~p₁*}.sem_G_theorem (F:=F) (N:=N) (𝒮:=𝒮) := by
-  simp only [sem_G_theorem, sem, instHPow, G, Countsupp.ωSum_apply] at ih ⊢
-  simp [GS.sem_eq]
-  ext h₀ h₁
+  funext h₀
+  simp [sem]
+  if h10 : (1 : 𝒮) = 0 then ext; simp [eq_zero_of_zero_eq_one h10.symm] else
+  have : ∀ n, (p₁.iter n).sem_G_theorem (F:=F) (N:=N) (𝒮:=𝒮) := by
+    intro n
+    induction n with
+    | zero =>
+      simp [G, sem]
+      ext h h'
+      simp
+      rw [ωSum_eq_single ⟨⟨h.1, [], h.1⟩, by simp [G, h10, GS.mk]⟩]
+      · split_ifs with hα hβ
+        · subst_eqs
+          simp [GS.sem_eq, GS.H, GS.mk]
+        · subst_eqs
+          simp at hβ
+        · simp_all [GS.sem_eq, GS.mk, GS.H]
+        · simp_all [GS.sem_eq, GS.H]
+      · simp [GS.mk, GS.sem_eq, GS.H, G]
+        rintro α h10 h' β ⟨_⟩
+        rw [Prod.eq_iff_fst_eq_snd_eq] at h'
+        simp at h'
+        simp_all
+    | succ n ih' =>
+      have := RPol.sem_G.Seq (p₁:=p₁) (p₂:=p₁.iter n) ih ih'
+      simp_all
+  simp only [sem_G_theorem] at this; simp only [this]; clear this
+  simp [G, Countsupp.instHMul]
+  ext α
   simp [← ωSum_mul_right]
   rw [ωSum_comm]
   congr with n
-  if h0 : ((p₁.iter n).sem h₀) h₁ = 0 then
-    symm
-    simp [h0]
-    simp [G]
-    intro g n hg
-    split_ifs
-    · simp_all
-      obtain ⟨g₀, g₁, g₂⟩ := g
-      obtain ⟨h₀₀, h₀₁⟩ := h₀
-      simp_all [GS.H]
-      subst_eqs
-      rintro ⟨_⟩
-      sorry
-    · simp_all
-  else
-    obtain ⟨t, h⟩ := RPol.seq_of_prefix (p:=p₁.iter n) (h₀:=h₀) (h₁:=h₁) h0
-    obtain ⟨h₁, _⟩ := h₁
-    simp_all
-    subst_eqs
-    rw [ωSum_eq_single ⟨⟨h₀.1, t.reverse, h₁⟩, by
-      simp_all [G]; use n
-      contrapose! h0
-      rw [← h0]; clear h0
-      sorry
-      ⟩]
-    · simp_all [GS.H]
-      clear h0
-      induction n with
-      | zero =>
-        simp [sem, G, GS.mk]
-        obtain ⟨h₀, h₀'⟩ := h₀
-        simp only
-        rcases t with _ | ⟨t₀, t⟩
-        · simp
-          split_ifs with h h'
-          · rfl
-          · rw [Prod.eq_iff_fst_eq_snd_eq] at h; simp_all
-          · grind
-          · grind
-        · simp_all
-          split_ifs with h h'
-          · grind
-          · simp_all
-            rw [Prod.eq_iff_fst_eq_snd_eq] at h
-            simp at h
-            obtain ⟨⟨_⟩, h⟩ := h
-            have := congrArg List.length h
-            simp at this
-            omega
-          · grind
-          · grind
-      | succ n ih' =>
-        simp_all [G, sem, WeightedConcat.concat]
-        simp [← ωSum_mul_right]
-        sorry
-    · simp_all [GS.H, G]
-      rintro ⟨a₀, a₁, a₂⟩ n' ha ha'
-      simp_all
-      split_ifs
-      · subst_eqs
-        simp_all
-        rw [Prod.eq_iff_fst_eq_snd_eq]
-        simp_all
-        rintro ⟨_⟩ ⟨_⟩
-        simp_all
-      · simp
+  apply ωSum_eq_ωSum_of_ne_one_bij
+  rotate_right
+  · exact fun ⟨x, hx⟩ ↦ ⟨x, by simp_all; contrapose! hx; simp [hx]⟩
+  · intro; grind
+  · simp_all [G]; grind
+  · simp
 
 variable [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem RPol.sem_G (p : RPol[F,N,𝒮]) :

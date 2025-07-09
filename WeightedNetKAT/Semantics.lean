@@ -1,15 +1,9 @@
 import WeightedNetKAT.Countsupp
 import WeightedNetKAT.Subst
 import WeightedNetKAT.Syntax
+import Mathlib.Algebra.Ring.Hom.Defs
 
 open OmegaCompletePartialOrder
-
-@[simp]
-theorem OmegaCompletePartialOrder.ωSup_const {α : Type*} [OmegaCompletePartialOrder α] (x : α) :
-    ωSup ⟨fun _ ↦ x, by intro; simp⟩ = x := by
-  apply le_antisymm
-  · apply ωSup_le _ _ fun i ↦ ?_; rfl
-  · apply le_ωSup_of_le 0; rfl
 
 theorem List.succ_range_map {α : Type*} (f : ℕ → α) {n : Nat} :
     (range (n + 1)).map f = (range n).map f ++ [f n] := by
@@ -182,6 +176,37 @@ noncomputable def Pol.sem (p : Pol[F,N,𝒮]) : H[F,N] → H[F,N] →c 𝒮 := m
   | wnk_pol {~p*} => fun h ↦ ω∑ n : ℕ, (p ^ n).sem h
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
+
+variable {M : Type*} [Semiring M] [OmegaCompletePartialOrder M] [OrderBot M] [MulLeftMono M] [MulRightMono M] [IsPositiveOrderedAddMonoid M] in
+open OmegaCompletePartialOrder in
+noncomputable def Pol.map (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) : Pol[F,N,M] := match p with
+  | .Filter t => .Filter t
+  | wnk_pol {~f ← ~n} => wnk_pol {~f ← ~n}
+  | wnk_pol {dup} => wnk_pol {dup}
+  | wnk_pol {~p; ~q} => wnk_pol {~(p.map f); ~(q.map f)}
+  | wnk_pol {~w ⨀ ~p}=> wnk_pol {~(f w) ⨀ ~(p.map f)}
+  | wnk_pol {~p ⨁ ~q} => wnk_pol {~(p.map f) ⨁ ~(q.map f)}
+  | wnk_pol {~p*} => wnk_pol {~(p.map f)*}
+variable {M : Type*} [Semiring M] [OmegaCompletePartialOrder M] [OrderBot M] [MulLeftMono M] [MulRightMono M] [IsPositiveOrderedAddMonoid M] in
+open OmegaCompletePartialOrder in
+noncomputable def Pol.map_preserve (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) (h h') :
+    (p.map f).sem h h' = f (p.sem h h') := by
+  induction p with
+  | Filter =>
+    simp [map, sem, Pred.sem_eq_test]
+    split_ifs
+    · simp
+    · simp
+  | Mod => simp only [map, sem]; split; simp
+  | Dup => simp only [map, sem]; split; simp
+  | Seq p q =>
+    simp only [map, sem, Countsupp.bind_apply]
+    sorry
+  | Add p q ihp ihq => simp only [map, sem, Countsupp.add_apply, ihp, ihq, map_add]
+  | Weight w p ih => simp only [map, sem, Countsupp.hMul_apply_left, ih, map_mul]
+  | Iter p ih =>
+    simp only [map, sem, instHPow, Countsupp.ωSum_apply]
+    sorry
 
 example {t u : Pred[F,N]} :
     wnk_pol { ~t ∨ ~u }.sem (𝒮:=𝒮) = wnk_pol { @filter ~t ⨁ (¬~t; @filter ~u) }.sem := by

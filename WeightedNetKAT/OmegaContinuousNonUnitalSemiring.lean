@@ -13,6 +13,13 @@ import Mathlib.Data.Countable.Basic
 
 open OmegaCompletePartialOrder
 
+@[simp]
+theorem OmegaCompletePartialOrder.ωSup_const {α : Type*} [OmegaCompletePartialOrder α] (x : α) :
+    ωSup ⟨fun _ ↦ x, by intro; simp⟩ = x := by
+  apply le_antisymm
+  · apply ωSup_le _ _ fun i ↦ ?_; rfl
+  · apply le_ωSup_of_le 0; rfl
+
 theorem OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup {α : Type*} [OmegaCompletePartialOrder α] (f : ℕ →o ℕ →o α) :
       ωSup ⟨fun i ↦ ωSup ⟨fun j ↦ f i j, (f i).mono⟩, fun _ _ hij ↦ ωSup_le _ _ fun k ↦ le_ωSup_of_le k (f.mono hij k)⟩
     = ωSup ⟨fun i ↦ f i i, fun i j hij ↦ le_trans (f.mono hij i) ((f j).mono hij)⟩ := by
@@ -107,7 +114,7 @@ class OmegaContinuousNonUnitalSemiring (𝒮 : Type*)
 section ωSum
 
 variable {𝒮 : Type*}
-  [NonUnitalSemiring 𝒮]
+  [AddCommMonoid 𝒮]
   [OmegaCompletePartialOrder 𝒮]
   [OrderBot 𝒮]
   [IsPositiveOrderedAddMonoid 𝒮]
@@ -218,11 +225,12 @@ theorem ωSum_fintype {I : Type*} [DecidableEq I] [Countable I] [Fintype I] (f :
     (ωSum_le_of_finset fun _ ↦ Finset.sum_le_univ_sum_of_nonneg fun x ↦ zero_le'' (f x))
     (le_ωSum_of_finset Finset.univ)
 
-omit [NonUnitalSemiring 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Countable X] in
+omit [AddCommMonoid 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Countable X] in
 @[simp]
 theorem asdsad {c : Chain (X → 𝒮)} {x} : ωSup c x = ωSup (c.map ⟨(· x), fun ⦃_ _⦄ a ↦ a x⟩) := by
   rfl
 
+@[simp]
 theorem ωSum_apply {Y : Type*} {f : X → Y → 𝒮} {y : Y} :
     (ω∑ (x : X), f x) y = ω∑ (x : X), f x y := by
   simp [ωSum, Chain.map]
@@ -231,8 +239,74 @@ theorem ωSum_apply {Y : Type*} {f : X → Y → 𝒮} {y : Y} :
   congr with x
   split <;> simp_all
 
+attribute [local simp] Encodable.decode₂_eq_some in
+theorem ωSum_nat_eq_ωSup
+    {f : ℕ → 𝒮} : ω∑ (x : ℕ), f x = ωSup ⟨fun n ↦ ∑ x ∈ Finset.range n, f x, fun i j h ↦ by apply Finset.sum_mono_set_of_nonneg <;> simp [h]⟩ := by
+  let e₀ : Encodable ℕ := Encodable.ofCountable ℕ
+  let e₁ : Encodable ℕ := Nat.encodable
+  apply le_antisymm
+  · apply ωSup_le _ _ fun i ↦ ?_
+    simp [DFunLike.coe]
+    let t := (Finset.range i).filterMap e₀.decode₂ (by intro; simp_all)
+    rw [Finset.sum_bij_ne_zero (s:=Finset.range i) (t:=t) (g:=f) (fun x _ h ↦ (e₀.decode₂ _ x).get (by split at h <;> simp_all; subst_eqs; simp))]
+    ·
+      apply le_ωSup_of_le (t.sup id + 1)
+      simp [DFunLike.coe]
+      apply Finset.sum_mono_set_of_nonneg
+      · simp
+      · intro a ha
+        rcases a with _ | a
+        · simp
+        · simp_all [t]
+          grind
+    · simp_all [t]
+      intro a hai
+      grind
+    · clear t
+      simp
+      intro a hai ha b hbi hb h'
+      by_cases hq : ∃ q, e₀.decode₂ ℕ a = some q
+      · obtain ⟨q, hq⟩ := hq
+        simp [hq] at ha
+        simp_all
+        subst_eqs
+        simp_all
+        by_cases hq : ∃ q', e₀.decode₂ ℕ b = some q'
+        · obtain ⟨q, hq⟩ := hq
+          simp [hq] at ha
+          simp_all
+        · grind
+      · grind
+    · simp_all [t]
+      intro b hb h'
+      use e₀.encode b
+      simp [*]
+    · simp_all
+      intro a hai h
+      by_cases hq : ∃ q', e₀.decode₂ ℕ a = some q'
+      · obtain ⟨q, hq⟩ := hq
+        simp [hq] at h
+        simp_all
+        grind
+      · grind
+  · simp [DFunLike.coe]; exact fun i ↦ le_ωSum_of_finset (Finset.range i)
+
+end ωSum
+
+section ωSum
+
+variable {𝒮 : Type*}
+  [NonUnitalSemiring 𝒮]
+  [OmegaCompletePartialOrder 𝒮]
+  [OrderBot 𝒮]
+  [IsPositiveOrderedAddMonoid 𝒮]
+  [MulLeftMono 𝒮]
+  [MulRightMono 𝒮]
+  [OmegaContinuousNonUnitalSemiring 𝒮]
+
+variable {X : Type*} [Countable X]
+
 omit [Countable X] in
-variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem Finset.sum_ωScottContinuous [DecidableEq X] (S : Finset X) :
     ωScottContinuous (fun (f : X → 𝒮) ↦ ∑ i ∈ S, f i) := by
   refine ωScottContinuous.of_monotone_map_ωSup ⟨fun a b hab ↦ sum_le_sum fun i a ↦ hab i, ?_⟩
@@ -265,7 +339,6 @@ theorem Finset.sum_ωScottContinuous [DecidableEq X] (S : Finset X) :
       apply le_ωSup_of_le i
       simp
 
-variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem ωSum_ωSup (C : Chain (X → 𝒮)) :
     ω∑ n, ωSup C n = ωSup ⟨fun x ↦ ω∑ n, C x n, fun _ _ h ↦ ωSum_mono (C.mono h)⟩ := by
   letI e : Encodable X := Encodable.ofCountable X
@@ -356,64 +429,34 @@ theorem ωSum_ωSup (C : Chain (X → 𝒮)) :
       simp
     · rfl
 
-variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem ωSum_ωSup' (C : X → Chain 𝒮) :
     ω∑ n, ωSup (C n) = ωSup ⟨fun x ↦ ω∑ n, C n x, fun _ _ h ↦ ωSum_mono fun n ↦ (C n).mono h⟩ :=
   ωSum_ωSup ⟨fun x i ↦ C i x, fun _ _ h i ↦ (C i).mono h⟩
 
-attribute [local simp] Encodable.decode₂_eq_some in
-theorem ωSum_nat_eq_ωSup
-    {f : ℕ → 𝒮} : ω∑ (x : ℕ), f x = ωSup ⟨fun n ↦ ∑ x ∈ Finset.range n, f x, fun i j h ↦ by apply Finset.sum_mono_set_of_nonneg <;> simp [h]⟩ := by
-  let e₀ : Encodable ℕ := Encodable.ofCountable ℕ
-  let e₁ : Encodable ℕ := Nat.encodable
-  apply le_antisymm
-  · apply ωSup_le _ _ fun i ↦ ?_
-    simp [DFunLike.coe]
-    let t := (Finset.range i).filterMap e₀.decode₂ (by intro; simp_all)
-    rw [Finset.sum_bij_ne_zero (s:=Finset.range i) (t:=t) (g:=f) (fun x _ h ↦ (e₀.decode₂ _ x).get (by split at h <;> simp_all; subst_eqs; simp))]
-    ·
-      apply le_ωSup_of_le (t.sup id + 1)
-      simp [DFunLike.coe]
-      apply Finset.sum_mono_set_of_nonneg
-      · simp
-      · intro a ha
-        rcases a with _ | a
-        · simp
-        · simp_all [t]
-          grind
-    · simp_all [t]
-      intro a hai
-      grind
-    · clear t
+omit [Countable X] in
+theorem sum_ωSup [DecidableEq X] (S : Finset X) (C : Chain (X → 𝒮)) :
+    ∑ n ∈ S, ωSup C n = ωSup ⟨fun x ↦ ∑ n ∈ S, C x n, fun _ _ h ↦ by simp only; gcongr; apply C.mono h⟩ := by
+  induction S using Finset.induction with
+  | empty => simp
+  | insert n S hn ih =>
+    simp_all; clear ih
+    simp [OmegaContinuousNonUnitalSemiring.ωSup_add_left _ |>.map_ωSup, Chain.map]
+    unfold Function.comp
+    simp
+    simp [OmegaContinuousNonUnitalSemiring.ωSup_add_right _ |>.map_ωSup, Chain.map]
+    simp [OrderHom.comp]
+    rw [OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup']
+    · rfl
+    · intro a b hab m
       simp
-      intro a hai ha b hbi hb h'
-      by_cases hq : ∃ q, e₀.decode₂ ℕ a = some q
-      · obtain ⟨q, hq⟩ := hq
-        simp [hq] at ha
-        simp_all
-        subst_eqs
-        simp_all
-        by_cases hq : ∃ q', e₀.decode₂ ℕ b = some q'
-        · obtain ⟨q, hq⟩ := hq
-          simp [hq] at ha
-          simp_all
-        · grind
-      · grind
-    · simp_all [t]
-      intro b hb h'
-      use e₀.encode b
-      simp [*]
-    · simp_all
-      intro a hai h
-      by_cases hq : ∃ q', e₀.decode₂ ℕ a = some q'
-      · obtain ⟨q, hq⟩ := hq
-        simp [hq] at h
-        simp_all
-        grind
-      · grind
-  · simp [DFunLike.coe]; exact fun i ↦ le_ωSum_of_finset (Finset.range i)
+      gcongr
+      apply C.mono hab
 
-variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
+omit [Countable X] in
+theorem sum_ωSup' [DecidableEq X] (S : Finset X) (C : X → Chain 𝒮) :
+    ∑ n ∈ S, ωSup (C n) = ωSup ⟨fun x ↦ ∑ n ∈ S, C n x, fun _ _ h ↦ by simp only; gcongr⟩ :=
+  sum_ωSup S ⟨fun x i ↦ C i x, fun _ _ h i ↦ (C i).mono h⟩
+
 theorem ωSum_nat_eq_succ
     {f : ℕ → 𝒮} : ω∑ (x : ℕ), f x = f 0 + ω∑ (x : ℕ), f (x + 1) := by
   simp [ωSum_nat_eq_ωSup]
@@ -435,7 +478,6 @@ theorem ωSum_nat_eq_succ
     simp [add_comm]
 
 attribute [local simp] Encodable.decode₂_eq_some in
-variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem ωSum_add {f g : X → 𝒮} :
     ω∑ (x : X), (f x + g x) = ω∑ (x : X), f x + ω∑ x, g x := by
   apply le_antisymm
@@ -495,7 +537,6 @@ theorem ωSum_add {f g : X → 𝒮} :
         · simp
       · simp_all
 
-variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem ωSum_mul_left {f : X → 𝒮} {a : 𝒮} :
     ω∑ (x : X), a * f x = a * ω∑ (x : X), f x := by
   simp [ωSum]
@@ -505,7 +546,6 @@ theorem ωSum_mul_left {f : X → 𝒮} {a : 𝒮} :
   congr with m
   split <;> simp
 
-variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem ωSum_mul_right {f : X → 𝒮} {a : 𝒮} :
     ω∑ (x : X), f x * a = (ω∑ (x : X), f x) * a := by
   simp [ωSum]
@@ -515,7 +555,6 @@ theorem ωSum_mul_right {f : X → 𝒮} {a : 𝒮} :
   congr with m
   split <;> simp
 
-variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem ωSum_sum_comm {Y : Type*} (S : Finset Y) {f : X → Y → 𝒮} :
     ω∑ (x : X), ∑ y ∈ S, f x y = ∑ y ∈ S, ω∑ (x : X), f x y := by
   classical
@@ -524,7 +563,6 @@ theorem ωSum_sum_comm {Y : Type*} (S : Finset Y) {f : X → Y → 𝒮} :
   | insert y S hy ih =>
     simp_all [ωSum_add]
 
-variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem ωSum_comm_le {Y : Type*} [Countable Y] {f : X → Y → 𝒮} :
     ω∑ (x : X) (y : Y), f x y ≤ ω∑ (y : Y) (x : X), f x y := by
   apply ωSum_le_of_finset fun S ↦ ?_
@@ -532,11 +570,8 @@ theorem ωSum_comm_le {Y : Type*} [Countable Y] {f : X → Y → 𝒮} :
   apply ωSum_mono fun n ↦ ?_
   exact le_ωSum_of_finset S
 
-variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem ωSum_comm {Y : Type*} [DecidableEq Y] [Countable Y] {f : X → Y → 𝒮} :
     ω∑ (x : X) (y : Y), f x y = ω∑ (y : Y) (x : X), f x y := le_antisymm ωSum_comm_le ωSum_comm_le
-
-
 
 open scoped Classical in
 theorem Function.Injective.ωSum_eq {α ι γ : Type*}
@@ -555,7 +590,7 @@ theorem Function.Injective.ωSum_eq {α ι γ : Type*}
     apply le_of_eq
     apply Finset.sum_bij_ne_zero fun x _ _ ↦ g x
     · simp_all [S']
-    · simp_all [S']
+    · simp_all only [Set.image_subset_iff, Set.preimage_range, Set.subset_univ, comp_apply, ne_eq]
       intro a₁ ha₁ ha₁' a₂ ha₂ ha₂' h
       exact hg h
     · simp_all [S']
@@ -577,7 +612,7 @@ theorem Function.Injective.ωSum_eq {α ι γ : Type*}
       intro a haS hfga
       suffices ∃ x, g x = a by obtain ⟨x, ⟨_⟩⟩ := this; use x
       have hs : a ∈ f.support := hfga
-      simp only [this, Set.mem_image, Function.comp_apply, ne_eq, S'] at hs
+      simp only [this, Set.mem_image] at hs
       obtain ⟨x, hx, hx'⟩ := hs
       use x
     · simp_all
@@ -615,7 +650,7 @@ theorem ωSum_eq_single {α ι : Type*}
   · rintro ⟨⟨x, _, _⟩, h₁⟩; grind
   · intro x'
     simp_all only [ne_eq, Function.mem_support, Set.mem_range, Subtype.exists, exists_prop,
-      Set.mem_singleton_iff, exists_and_left, existsAndEq, true_and]
+      Set.mem_singleton_iff, existsAndEq, true_and]
     grind
   · simp
 
