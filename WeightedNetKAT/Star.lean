@@ -25,34 +25,12 @@ instance instUnitStar {α : Type} [Star α] : Star (Matrix Unit Unit α) where
 
 end WeightedNetKAT
 
-def Listed.size {α : Type} [i : Listed α] : ℕ := i.list.length
-
-def Listed.encodeFin {α : Type} [DecidableEq α] [i : Listed α] : α → Fin i.size :=
-  fun a ↦ ⟨i.encode a, by simp [encode, size]⟩
-def Listed.decodeFin {α : Type} [DecidableEq α] [i : Listed α] : Fin i.size → α :=
-  fun a ↦ i.decode a |>.get (by obtain ⟨a, ha⟩ := a; grind [decode, size])
-
-@[simp]
-theorem Listed.decodeFin_encodeFin {α : Type} [DecidableEq α] [i : Listed α] (a) :
-    i.encodeFin (i.decodeFin a) = a := by
-  simp [encodeFin, decodeFin]
-  congr
-  have := Listed.decode_eq_some (α:=α) a.val (a:=((decode ↑a).get (by obtain ⟨a, ha⟩ := a; grind [decode, size])))
-  simp at this
-  assumption
-
-@[simp]
-theorem Listed.encodeFin_decodeFin {α : Type} [DecidableEq α] [i : Listed α] (a) :
-    i.decodeFin (i.encodeFin a) = a := by
-  grind [encodeFin, decodeFin, Listed.encode_decode]
-
 def Matrix.listedEquivNat {α A : Type} [DecidableEq A] [i : Listed A] :
     Matrix A A α ≃ Matrix (Fin i.size) (Fin i.size) α :=
   ⟨fun m ↦ m.submatrix Listed.decodeFin Listed.decodeFin,
    fun m ↦ m.submatrix Listed.encodeFin Listed.encodeFin,
    by intro m; ext i j; simp,
    by intro m; ext i j; simp⟩
-
 
 namespace Matrix.Star
 
