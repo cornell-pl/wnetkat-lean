@@ -439,7 +439,7 @@ example {α α₁ α₂ α₃ γ : Pk[F,N]} :
 -- a;γ ◇ γ;b;dup;c
 -- a;b;dup;γ ◇ γ;c
 
-omit [Encodable F] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+omit [Encodable F] [Encodable N] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 theorem G.concat_apply {L R : GS F N →c 𝒮} {xₙ : GS F N} :
       ((L ♢ R) : _ →c 𝒮) xₙ
     = ∑ i ∈ Finset.range (xₙ.2.1.length + 1), ∑ (γ : Pk[F,N]), L (xₙ.splitAtJoined i γ).1 * R (xₙ.splitAtJoined i γ).2 := by
