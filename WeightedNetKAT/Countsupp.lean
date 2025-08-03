@@ -128,7 +128,7 @@ instance : NonUnitalSemiring (X →c 𝒮) where
   mul_zero _ := by ext i; apply mul_zero
   mul_assoc _ _ _ := by ext i; apply mul_assoc
   nsmul_zero _ := by simp; rfl
-  nsmul_succ n c := by ext; simp; simp [DFunLike.coe]; simp [right_distrib]
+  nsmul_succ n c := by ext; simp; simp [right_distrib]
 
 instance : LE (X →c 𝒮) where
   le f g := ∀ x, f x ≤ g x
@@ -145,7 +145,7 @@ instance : OmegaCompletePartialOrder (X →c 𝒮) where
     simp⟩
   ωSup_le := by
     intro C f h x
-    simp only [DFunLike.coe, ωSup_le_iff]
+    simp only [coe_mk, ωSup_le_iff, Chain.map_coe, OrderHom.coe_mk, Function.comp_apply]
     exact fun i ↦ h i x
   le_ωSup := by
     intro C i X
@@ -215,7 +215,7 @@ omit [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem bind_mono_right {Y : Type} (f : X →c 𝒮) (g₁ g₂ : X → Y →c 𝒮) (h : g₁ ≤ g₂) :
     f.bind g₁ ≤ f.bind g₂ := by
   intro y
-  simp [bind, DFunLike.coe]
+  simp [bind]
   apply ωSum_mono fun n ↦ ?_
   gcongr
   exact h n y
@@ -224,7 +224,7 @@ omit [MulLeftMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem bind_mono_left {Y : Type} {f₁ f₂ : X →c 𝒮} (g : X → Y →c 𝒮) (h : f₁ ≤ f₂) :
     f₁.bind g ≤ f₂.bind g := by
   intro y
-  simp [bind, DFunLike.coe]
+  simp [bind]
   refine ωSum_le_of_finset fun S ↦ ?_
   classical
   let S' : Finset ↑f₂.support := S.filterMap (fun ⟨x, _⟩ ↦ if h' : f₂ x = 0 then none else some ⟨x, h'⟩) (by simp_all)
@@ -290,8 +290,6 @@ theorem bind_continuous_left {Y : Type} (g : X → Y →c 𝒮) :
     Function.comp_apply, ωSum_ωSup', coe_mk]
   congr with i
   simp [OrderHom.comp]
-  simp only [DFunLike.coe]
-  simp only [OrderHom.toFun_eq_coe]
   apply le_antisymm
   · refine ωSum_le_of_finset fun S ↦ ?_
     classical
@@ -307,7 +305,6 @@ theorem bind_continuous_left {Y : Type} (g : X → Y →c 𝒮) :
       intro x n h h' h''
       clear h'
       contrapose! h
-      simp_all only [DFunLike.coe]
       grind [zero_mul]
     · grind only [cases eager Subtype]
     · simp_all only [mem_support_iff, ne_eq, dite_not, Finset.mem_filterMap,
@@ -315,8 +312,6 @@ theorem bind_continuous_left {Y : Type} (g : X → Y →c 𝒮) :
       ωSup_eq_zero_iff, Chain.map_coe, OrderHom.coe_mk, Function.comp_apply, not_forall,
       exists_prop, forall_exists_index, and_imp, Subtype.forall, Subtype.mk.injEq, exists_and_right,
       exists_eq_right_right, not_false_eq_true, and_true, S']
-      simp only [DFunLike.coe]
-      simp_all only [OrderHom.toFun_eq_coe]
       rintro x hx x' n hn h h' ⟨_⟩ h''
       apply Exists.intro ⟨i, hx⟩ h
     · grind

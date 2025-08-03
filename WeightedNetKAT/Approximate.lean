@@ -182,7 +182,7 @@ theorem Pol.sem_n_approx [Fintype N] (p : Pol[F,N,𝒮]) : p.sem = ωSup ⟨p.se
     funext h
     simp only [sem, Pol.instHPow, iter_m_sem_eq_ωSup_sem_n ih]; clear ih
     simp [ωSum_ωSup']
-    simp [Chain.map, Function.comp_def, DFunLike.coe]
+    simp [Chain.map, Function.comp_def]
     simp [ωSum_nat_eq_ωSup]
     rw [OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup']
     intro i j hij n

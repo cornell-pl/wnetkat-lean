@@ -107,11 +107,10 @@ instance [CompleteLinearOrder α] : WeightedNetKAT.LawfulStar (Bottleneck α) wh
     rw [instStarBottleneckOfTop]
     apply le_antisymm
     · apply le_ωSup_of_le 1
-      simp only [DFunLike.coe]
-      simp only [Finset.sum_range_one]
+      simp only [Chain.mk_apply, Finset.sum_range_one]
       exact eq_top_iff.mp rfl
     · apply ωSup_le _ _ fun i ↦ ?_
-      simp only [DFunLike.coe]
+      simp only [-Chain.mk_apply]
       exact OrderTop.le_top (∑ x ∈ Finset.range i, m ^ x)
 
 -- instance [LinearOrder α] [OrderBot α] [OrderTop α] : WeightedMonotonePreSemiring (Bottleneck α) where

@@ -24,7 +24,7 @@ abbrev η {ι : Type} {α : Type} [DecidableEq ι] [Zero α] [One α] (i : ι): 
 
 @[simp] theorem η_apply {ι : Type} {α : Type} [DecidableEq ι] [Zero α] [One α] {x y : ι} :
     η x y = if x = y then (1 : α) else 0 := by
-  simp [DFunLike.coe, Pi.single, Function.update]; grind
+  simp [Pi.single, Function.update]; grind
 
 -- @[simp] theorem η_subtype_apply {x y : H[F,N]} : η x y = if x = y then (1 : 𝒮) else 0 := by rfl
 
@@ -292,6 +292,7 @@ theorem IsLfp_unique {α : Type} [OmegaCompletePartialOrder α] {f : α → α} 
 
 variable [OmegaContinuousNonUnitalSemiring 𝒮]
 
+attribute [-simp] Function.iterate_succ in
 theorem Pol.Φ_ωSup_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (Φ_ωSup p) := by
   constructor
   · simp only [Φ_ωSup]
@@ -299,21 +300,20 @@ theorem Pol.Φ_ωSup_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (Φ_ωSup p) := by
     · rw [Φ_continuous p |>.map_ωSup]
       apply ωSup_le _ _ fun i ↦ ?_
       apply le_ωSup_of_le (i + 1)
-      simp only [DFunLike.coe, Chain.map, Φ_chain, OrderHom.mk_comp_mk, OrderHom.toFun_eq_coe,
-        Function.comp_apply, Function.iterate_succ', le_refl]
+      simp only [Chain.map, Φ_chain, OrderHom.mk_comp_mk, Chain.mk_apply, Function.comp_apply,
+        Function.iterate_succ', le_refl]
     · apply ωSup_le
       intro i
-      simp only [DFunLike.coe]
       rcases i with _ | i
-      · simp [Φ_chain, DFunLike.coe]
-      · simp only [Φ_chain, Function.iterate_succ', Function.comp_apply]
-        apply Φ_mono _ (le_ωSup_of_le i (by simp [DFunLike.coe]))
+      · simp only [Φ_chain, Chain.mk_apply, Function.iterate_zero, id_eq, zero_le'']
+      · simp only [Φ_chain, Chain.mk_apply, Function.iterate_succ', Function.comp_apply]
+        apply Φ_mono _ (le_ωSup_of_le i (by simp only [Chain.mk_apply, le_refl]))
   · intro x hx
     refine ωSup_le _ _ fun i ↦ ?_
     induction i with
-    | zero => simp [Φ_chain, DFunLike.coe]
+    | zero => simp [Φ_chain]
     | succ i ih =>
-      simp only [DFunLike.coe, Φ_chain, Function.iterate_succ', Function.comp_apply]
+      simp only [Φ_chain, Chain.mk_apply, Function.iterate_succ', Function.comp_apply]
       rw [← hx]
       apply Φ_mono p ih
 
@@ -328,27 +328,20 @@ theorem Pol.iter_sem_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (wnk_pol {~p*}.sem
       nth_rw 2 [ωSum_nat_eq_succ]
       simp [Pol.sem, Pred.sem]
     ext
-
-    simp [Countsupp.bind]
-    simp [DFunLike.coe]
-    simp [← ωSum_mul_left]
+    simp [Countsupp.bind, ← ωSum_mul_left]
     rw [ωSum_comm]
   · intro f hf h
-    simp [sem]
-    simp [ωSum_nat_eq_ωSup]
+    simp [sem, ωSum_nat_eq_ωSup]
     intro n
-    -- apply WeightedSum_nat_le (𝒮:=H[F,N] →c 𝒮) (f:=(fun n ↦ (p.iter n).sem h))
-    -- intro n
     induction n generalizing h with
-    | zero => simp [DFunLike.coe]
+    | zero => simp only [Finset.range_zero, Finset.sum_empty, zero_le'']
     | succ n ih =>
       rw [add_comm]
-      simp [sem, Pred.sem, Finset.sum_range_add, DFunLike.coe]
+      simp only [Finset.sum_range_add, Finset.range_one, Finset.sum_singleton, iter, sem, Pred.sem]
       rw [← hf]
       simp only [Φ]
       gcongr
-      simp [add_comm]
-      simp [sem]
+      simp [add_comm, sem]
       calc
         ∑ i ∈ Finset.range n, (p.sem h).bind (p.iter i).sem
           = (p.sem h).bind (∑ i ∈ Finset.range n, (p.iter i).sem) := by
@@ -360,7 +353,7 @@ theorem Pol.iter_sem_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (wnk_pol {~p*}.sem
           apply Countsupp.bind_mono_right
           intro h₁
           convert ih h₁
-          simp [DFunLike.coe]
+          simp only [Finset.sum_apply]
 
 theorem Pol.iter_sem_eq_lfp (p : Pol[F,N,𝒮]) : wnk_pol {~p*}.sem = Φ_ωSup p :=
   IsLfp_unique p.iter_sem_isLfp p.Φ_ωSup_isLfp

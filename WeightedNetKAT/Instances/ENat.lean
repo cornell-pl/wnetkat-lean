@@ -40,7 +40,7 @@ instance : WeightedNetKAT.LawfulStar ℕ∞ where
     · rw [ωSum_nat_eq_succ, h₀]
       simp
     · rename_i h
-      simp [ωSum_nat_eq_ωSup, ωSup, DFunLike.coe]
+      simp [ωSum_nat_eq_ωSup, ωSup]
       refine (ENat.eq_top_iff_forall_ge.mpr fun m ↦ le_iSup_of_le m ?_).symm
       induction m with
       | zero => simp

@@ -3,15 +3,16 @@ import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Algebra.Order.GroupWithZero.Canonical
 import Mathlib.Algebra.Order.Pi
+import Mathlib.Data.Countable.Basic
 import Mathlib.Data.Nat.Lattice
-import Mathlib.Data.Set.Notation
 import Mathlib.Logic.Encodable.Basic
 import Mathlib.Order.OmegaCompletePartialOrder
-import Mathlib.Data.Countable.Basic
-
--- TODO: min imports
 
 open OmegaCompletePartialOrder
+
+@[simp]
+theorem Chain.mk_apply {β : Type} [Preorder β] (f : ℕ → β) (hf : Monotone f) (a : ℕ) :
+    Chain.instFunLikeNat.coe ({toFun := f, monotone' := hf} : OrderHom ℕ β) a = f a := rfl
 
 @[simp]
 theorem OmegaCompletePartialOrder.ωSup_const {α : Type} [OmegaCompletePartialOrder α] (x : α) :
@@ -24,10 +25,10 @@ theorem OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup {α : Type} [OmegaComplet
       ωSup ⟨fun i ↦ ωSup ⟨fun j ↦ f i j, (f i).mono⟩, fun _ _ hij ↦ ωSup_le _ _ fun k ↦ le_ωSup_of_le k (f.mono hij k)⟩
     = ωSup ⟨fun i ↦ f i i, fun i j hij ↦ le_trans (f.mono hij i) ((f j).mono hij)⟩ := by
   apply le_antisymm
-  · simp only [DFunLike.coe, ωSup_le_iff]
+  · simp only [ωSup_le_iff, Chain.mk_apply]
     intro i j
     apply le_ωSup_of_le (i ⊔ j)
-    simp only [DFunLike.coe]
+    simp only [Chain.mk_apply]
     have hi : i ≤ i ⊔ j := by omega
     have hj : j ≤ i ⊔ j := by omega
     exact OrderHom.apply_mono (f.mono hi) hj
@@ -188,13 +189,13 @@ notation3 "ω∑ "(...)", "r:67:(scoped f => ωSum f) => r
 
 @[simp, grind]
 theorem ωSum_zero : ω∑ (_ : X), (0 : 𝒮) = 0 := by
-  simp [ωSum, DFunLike.coe]; grind
+  simp [ωSum]; grind
 
 @[simp]
 theorem ωSum_eq_zero_iff {f : X → 𝒮} : ω∑ (i : X), f i = 0 ↔ ∀ (x : X), f x = 0 := by
   letI e : Encodable X := Encodable.ofCountable X
   constructor
-  · simp [ωSum, DFunLike.coe]
+  · simp [ωSum]
     intro h x
     specialize h (Encodable.encode x + 1) (Encodable.encode x)
     simp_all
@@ -205,7 +206,7 @@ theorem ωSum_mono {f g : X → 𝒮} (h : f ≤ g) : ω∑ n, f n ≤ ω∑ n, 
   refine ωSup_le_ωSup_of_le ?_
   intro i
   use i
-  simp [DFunLike.coe]
+  simp only [Chain.mk_apply]
   refine Finset.sum_le_sum ?_
   intro j hj
   split
@@ -217,7 +218,7 @@ theorem ωSum_le_of_finset
     ω∑ x : X, f x ≤ a := by
   letI e : Encodable X := Encodable.ofCountable X
   apply ωSup_le _ _ fun i ↦ ?_
-  simp [DFunLike.coe]
+  simp only [Chain.mk_apply]
   apply le_trans _ (h <| (Finset.range i).filterMap e.decode₂ (by simp_all [e.decode₂_eq_some]))
   apply le_of_eq
   symm
@@ -235,7 +236,7 @@ theorem le_ωSum_of_finset
     ∑ x ∈ S, f x ≤ ω∑ x : X, f x := by
   letI e : Encodable X := Encodable.ofCountable X
   apply le_ωSup_of_le (S.sup e.encode + 1)
-  simp [DFunLike.coe]
+  simp only [Chain.mk_apply]
   rw [Finset.sum_bij_ne_zero (s:=S) (t:=S.map ⟨e.encode, e.encode_injective⟩) (fun x _ _ ↦ e.encode x) (g:=fun x ↦ match Encodable.decode₂ X x with
     | some x => f x
     | x => 0)]
@@ -286,12 +287,11 @@ theorem ωSum_nat_eq_ωSup
   let e₁ : Encodable ℕ := Nat.encodable
   apply le_antisymm
   · apply ωSup_le _ _ fun i ↦ ?_
-    simp [DFunLike.coe]
+    simp only [Chain.mk_apply]
     let t := (Finset.range i).filterMap e₀.decode₂ (by intro; simp_all)
     rw [Finset.sum_bij_ne_zero (s:=Finset.range i) (t:=t) (g:=f) (fun x _ h ↦ (e₀.decode₂ _ x).get (by split at h <;> simp_all; subst_eqs; simp))]
-    ·
-      apply le_ωSup_of_le (t.sup id + 1)
-      simp [DFunLike.coe]
+    · apply le_ωSup_of_le (t.sup id + 1)
+      simp only [Chain.mk_apply]
       apply Finset.sum_mono_set_of_nonneg
       · simp
       · intro a ha
@@ -329,7 +329,7 @@ theorem ωSum_nat_eq_ωSup
         simp_all
         grind
       · grind
-  · simp [DFunLike.coe]; exact fun i ↦ le_ωSum_of_finset (Finset.range i)
+  · simp [le_ωSum_of_finset]
 
 end ωSum
 
@@ -364,7 +364,6 @@ theorem ωSum_ωSup (C : Chain (X → 𝒮)) :
   simp only [ωSum]
   apply le_antisymm
   · refine ωSup_le_iff.mpr fun i ↦ ?_
-    simp only [DFunLike.coe]
     simp
     have :
       (∑ x ∈ Finset.range i,
@@ -420,8 +419,7 @@ theorem ωSum_ωSup (C : Chain (X → 𝒮)) :
           rw [ωSup_add_ωSup]
           apply ωSup_le_ωSup_of_le
           intro k; use k
-          simp only [DFunLike.coe]
-          simp [Chain.map]
+          simp [Chain.map, OrderHom.comp]
         apply le_trans _ this; clear this
         gcongr
     apply le_trans this; clear this
@@ -429,11 +427,10 @@ theorem ωSum_ωSup (C : Chain (X → 𝒮)) :
     intro j
     apply le_ωSup_of_le j
     apply le_ωSup_of_le i
-    simp only [DFunLike.coe]
-    simp
+    rfl
   · refine ωSup_le _ _ fun i ↦ ωSup_le _ _ fun j ↦ ?_
     apply le_ωSup_of_le j
-    simp only [DFunLike.coe]
+    simp
     gcongr
     split
     · apply le_ωSup_of_le i
@@ -467,13 +464,11 @@ theorem ωSum_nat_eq_succ
   apply le_antisymm
   · apply ωSup_le _ _ fun i ↦ ?_
     rcases i with _ | i
-    · simp [DFunLike.coe]
+    · simp
     · apply le_ωSup_of_le i
-      simp only [DFunLike.coe]
-      rw [Finset.sum_range_succ', add_comm]
+      simp [Finset.sum_range_succ', add_comm]
   · apply ωSup_le _ _ fun i ↦ le_ωSup_of_le (i + 1) ?_
-    simp only [DFunLike.coe]
-    rw [Finset.sum_range_succ', add_comm]
+    simp [Finset.sum_range_succ', add_comm]
 
 attribute [local simp] Encodable.decode₂_eq_some in
 theorem ωSum_add {f g : X → 𝒮} :
@@ -639,7 +634,7 @@ theorem ωSum_prod' {α β γ : Type}
 --   apply le_antisymm
 --   · simp
 --     intro i
---     simp [DFunLike.coe]
+--     simp?
 --     let S : Finset X := (Finset.range i).filterMap e.decode₂ (by simp [Encodable.decode₂_eq_some, eq_comm]; grind)
 --     rw [← Finset.sum_bij_ne_zero (s:=S) (f:=f) (fun x _ _ ↦ e.encode x)]
 --     · refine Summable.sum_le_tsum S ?_ ?_
@@ -659,7 +654,7 @@ theorem ωSum_prod' {α β γ : Type}
 --     intro S
 --     let S' := S.map ⟨e.encode, Encodable.encode_injective⟩
 --     apply le_ωSup_of_le ((S'.sup id) + 1)
---     simp [DFunLike.coe]
+--     simp?
 --     have : S ⊆ (Finset.range ((S'.sup id) + 1)).filterMap e.decode₂ (by simp [Encodable.decode₂_eq_some, eq_comm]; grind) := by
 --       intro x hx
 --       simp

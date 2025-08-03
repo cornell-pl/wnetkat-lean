@@ -996,7 +996,7 @@ theorem 𝒪_heart_fp₀ (p₁ : RPol[F,N,𝒮]) : IsLeast {f | fp₀ p₁ f} (�
     symm at hg
     simp [𝒪_heart, LawfulStar.star_eq_sum]
     rw [ωSum_nat_eq_ωSup]
-    simp only [ωSup_le_iff, DFunLike.coe]
+    simp only [ωSup_le_iff, Chain.mk_apply]
     intro i
     induction i with
     | zero => simp
@@ -1022,7 +1022,7 @@ theorem M_fp₀ (p₁ : RPol[F,N,𝒮]) : IsLeast {f | fp₀ p₁ f} (M' p₁ []
     symm at hg
     simp [LawfulStar.star_eq_sum]
     rw [ωSum_nat_eq_ωSup]
-    simp only [ωSup_le_iff, DFunLike.coe]
+    simp only [ωSup_le_iff, Chain.mk_apply]
     intro i
     induction i with
     | zero => simp
@@ -1049,7 +1049,7 @@ theorem Q_fp₀ (p₁ : RPol[F,N,𝒮]) : IsLeast {f | fp₀ p₁ f} (Q p₁ [])
     symm at hg
     simp [LawfulStar.star_eq_sum]
     rw [ωSum_nat_eq_ωSup]
-    simp only [ωSup_le_iff, DFunLike.coe]
+    simp only [ωSup_le_iff, Chain.mk_apply]
     intro i
     induction i with
     | zero => simp
@@ -1087,11 +1087,9 @@ theorem fp₀_M' (p₁ : RPol[F,N,𝒮]) : IsLeast {f | fp₀ p₁ f} (M' p₁.I
     nth_rw 1 [M'.iter_eq]
     simp
   · simp [fp₀]
-    intro g hg
+    intro g hg α β
     simp at hg; symm at hg
-    intro α β
     simp [M', G, ωSum_nat_eq_ωSup]
-    simp only [DFunLike.coe]
     intro i
     induction i generalizing α with
     | zero =>
@@ -1099,27 +1097,17 @@ theorem fp₀_M' (p₁ : RPol[F,N,𝒮]) : IsLeast {f | fp₀ p₁ f} (M' p₁.I
       · rfl
       · simp
     | succ i ih =>
+      rw [Finset.sum_range_succ', ← hg]
+      simp only [RPol.iter, Matrix.add_apply]
       rw [add_comm]
-      simp [Finset.sum_range_add]
-      have : ∀ {X Y} [Zero Y] (c : Countsupp X Y) (x :X), c.toFun x = c x := by intros; rfl
-      simp [this]
-      rw [← hg]
-      simp
       gcongr
-      · simp only [G, G.ofPk, GS.mk, Matrix.one_apply]
-        simp only [Countsupp.coe_mk]
-        apply le_of_eq
-        split_ifs <;> grind
-      · simp [add_comm]
-        simp [G]
-        simp [G.concat_apply, GS.splitAtJoined, Matrix.mul_apply]
+      · simp [G, Matrix.one_apply, GS.mk]; split_ifs <;> simp_all; grind
+      · simp [G, G.concat_apply, GS.splitAtJoined, Matrix.mul_apply]
         rw [Finset.sum_comm]
-        gcongr with α' hα'
         simp [← Finset.mul_sum]
-        gcongr
+        gcongr with γ hγ
         · rfl
-        · apply le_trans _ (ih α')
-          simp [this]
+        · apply ih
 omit [Star 𝒮] [LawfulStar 𝒲[Pk[F,N], Pk[F,N], 𝒮]] in
 theorem fp₁_M' (p₁ : RPol[F,N,𝒮]) (xₙ) (hxₙ : xₙ ≠ []) : IsLeast {f | fp₁ p₁ xₙ f} (M' p₁.Iter xₙ) := by
   constructor
@@ -1130,9 +1118,6 @@ theorem fp₁_M' (p₁ : RPol[F,N,𝒮]) (xₙ) (hxₙ : xₙ ≠ []) : IsLeast 
     simp only [fp₁, Set.mem_setOf_eq] at hg; symm at hg
     intro α β
     simp [M', G, ωSum_nat_eq_ωSup]
-    have : ∀ {X Y} [Zero Y] (c : Countsupp X Y) (x :X), c.toFun x = c x := by intros; rfl
-    simp only [DFunLike.coe]
-    simp [this]
     intro i
     induction i generalizing α with
     | zero => simp
@@ -1189,7 +1174,7 @@ theorem fp₀_Q (p₁ : RPol[F,N,𝒮]) : IsLeast {f | fp₀ p₁ f} (Q p₁.Ite
     rw [← box_eq_M'_of_empty] at hg
     simp [LawfulStar.star_eq_sum]
     rw [ωSum_nat_eq_ωSup]
-    simp only [ωSup_le_iff, DFunLike.coe]
+    simp only [ωSup_le_iff, Chain.mk_apply]
     intro i
     induction i with
     | zero => simp
@@ -1419,7 +1404,6 @@ theorem fp₁_M'_is_fp'' (p₁ : RPol 𝒮) (xₙ : List Pk[F,N]) (hxₙ : xₙ 
     rw [ωSum_nat_eq_ωSup]
     simp
     intro i
-    simp only [DFunLike.coe]
     induction i with
     | zero => simp
     | succ i ih' =>
@@ -1548,7 +1532,6 @@ theorem fp₁_Q_is_fp'' (p₁ : RPol 𝒮) (h : Q p₁ = M' p₁) (xₙ : List P
     rw [ωSum_nat_eq_ωSup]
     simp
     intro i
-    simp only [DFunLike.coe]
     induction i with
     | zero => simp
     | succ i ih' =>

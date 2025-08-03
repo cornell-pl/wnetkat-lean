@@ -54,14 +54,13 @@ theorem add_star {a b : α} :
     (a + b)^* = (a^* * b)^* * a^* := by
   simp [LawfulStar.star_eq_sum]
   simp [← ωSum_mul_left, ← ωSum_mul_right]
-  simp [ωSum_nat_eq_ωSup, sum_ωSup', ← ωSup_pow, ωSup_mul, sum_ωSup', DFunLike.coe, sum_ωSup']
+  simp [ωSum_nat_eq_ωSup, sum_ωSup', ← ωSup_pow, ωSup_mul, sum_ωSup', sum_ωSup']
   rw [ωSup_ωSup_eq_ωSup', ωSup_ωSup_eq_ωSup']
   · apply le_antisymm
     · simp
       intro n
-      simp [DFunLike.coe]
       apply le_ωSup_of_le n
-      · simp [DFunLike.coe]
+      · simp
         gcongr with j hj
         induction n generalizing j with
         | zero => simp_all
@@ -85,9 +84,8 @@ theorem add_star {a b : α} :
       · sorry
     · simp
       intro n
-      simp [DFunLike.coe]
       apply le_ωSup_of_le n
-      simp [DFunLike.coe]
+      simp
       sorry
   · intro i j hij n
     simp
