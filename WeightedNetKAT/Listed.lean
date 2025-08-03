@@ -92,6 +92,12 @@ theorem encodeFin_decodeFin {α : Type} [DecidableEq α] [i : Listed α] (a) :
     i.decodeFin (i.encodeFin a) = a := by
   grind [encodeFin, decodeFin, encode_decode]
 
+def equivFin {α : Type} [DecidableEq α] [Listed α] : α ≃ Fin (Listed.size α) := ⟨
+  encodeFin,
+  decodeFin,
+  by intro; simp,
+  by intro; simp⟩
+
 def fintype [DecidableEq α] : Fintype α := {
   elems := (listOf α).toFinset
   complete := by simp [listOf, complete]

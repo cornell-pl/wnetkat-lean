@@ -1,9 +1,10 @@
-import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
-import WeightedNetKAT.Listed
-import Mathlib.Data.Matrix.Mul
-import Mathlib.Data.Matrix.Basis
 import Mathlib.Algebra.Group.Action.Opposite
+import Mathlib.Data.Matrix.Basis
 import Mathlib.Data.Matrix.Block
+import Mathlib.Data.Matrix.Mul
+import WeightedNetKAT.Listed
+import WeightedNetKAT.MatrixExt
+import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
 
 namespace WeightedNetKAT
 
