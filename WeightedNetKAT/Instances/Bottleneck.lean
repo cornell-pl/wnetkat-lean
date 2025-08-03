@@ -1,6 +1,7 @@
+import Mathlib.Data.ENat.Basic
+import Mathlib.Data.Nat.Cast.Order.Ring
 import WeightedNetKAT.Computation
-import Mathlib.Data.ENat.Lattice
-import WeightedNetKAT.WNKA
+import WeightedNetKAT.Star
 
 open OmegaCompletePartialOrder
 

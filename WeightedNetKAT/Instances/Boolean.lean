@@ -1,5 +1,6 @@
-import WeightedNetKAT.Computation
 import Mathlib.Data.Fintype.Order
+import WeightedNetKAT.Computation
+import WeightedNetKAT.Star
 
 open OmegaCompletePartialOrder
 
@@ -64,31 +65,32 @@ instance : OmegaContinuousNonUnitalSemiring BoolRing where
     intro b
     refine ωScottContinuous.of_monotone_map_ωSup ⟨add_right_mono, ?_⟩
     intro C
-    simp [Add.add]
-    rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp]
-    · rfl
-    · unfold Function.comp; simp
+    rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp_def]
+    rfl
   ωScottContinuous_add_left := by
     intro b
     refine ωScottContinuous.of_monotone_map_ωSup ⟨add_left_mono, ?_⟩
     intro C
-    simp [Add.add]
-    rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp]
-    · rfl
-    · unfold Function.comp; simp
+    rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp_def]
+    rfl
   ωScottContinuous_mul_left := by
     intro b
     refine ωScottContinuous.of_monotone_map_ωSup ⟨mul_left_mono, ?_⟩
     intro C
-    simp [Add.add]
-    rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp]
-    · unfold Function.comp; simp
-    · rfl
+    rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp_def]
+    rfl
   ωScottContinuous_mul_right := by
     intro b
     refine ωScottContinuous.of_monotone_map_ωSup ⟨mul_right_mono, ?_⟩
     intro C
-    simp [Add.add]
-    rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp]
-    · unfold Function.comp; simp
-    · rfl
+    rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp_def]
+    rfl
+
+instance : WeightedNetKAT.Star BoolRing where
+  star _ := true
+
+instance : WeightedNetKAT.LawfulStar BoolRing where
+  star_eq_sum m := by
+    simp only [WeightedNetKAT.Star.star, HPow.hPow, Pow.pow, Monoid.npow, Semiring.npow]
+    rw [ωSum_nat_eq_succ]
+    simp

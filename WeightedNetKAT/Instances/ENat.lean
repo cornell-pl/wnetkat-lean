@@ -1,6 +1,6 @@
-import WeightedNetKAT.Computation
 import Mathlib.Data.ENat.Lattice
-import WeightedNetKAT.WNKA
+import WeightedNetKAT.Computation
+import WeightedNetKAT.Star
 
 open OmegaCompletePartialOrder
 
@@ -35,6 +35,17 @@ instance : WeightedNetKAT.Star ℕ∞ where
 instance : WeightedNetKAT.LawfulStar ℕ∞ where
   star_eq_sum n := by
     simp [WeightedNetKAT.Star.star]
+    have h₀ : (some 0 : Option ℕ) = (0 : ℕ∞) := by rfl
     split
-    · sorry
-    · sorry
+    · rw [ωSum_nat_eq_succ, h₀]
+      simp
+    · rename_i h
+      simp [ωSum_nat_eq_ωSup, ωSup, DFunLike.coe]
+      refine (ENat.eq_top_iff_forall_ge.mpr fun m ↦ le_iSup_of_le m ?_).symm
+      induction m with
+      | zero => simp
+      | succ m ih =>
+        simp [Finset.sum_range_succ', pow_succ, ← Finset.sum_mul]
+        gcongr
+        apply le_trans (ENat.self_le_mul_right m h)
+        gcongr

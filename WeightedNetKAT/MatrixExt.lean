@@ -175,14 +175,14 @@ instance {N : Type} [DecidableEq N] [Fintype N] : OmegaContinuousNonUnitalSemiri
     refine ωScottContinuous.of_monotone_map_ωSup ⟨mul_left_mono, fun c ↦ ?_⟩
     ext i j
     have : ∀ x, ωSup c x j = ωSup (c.map ⟨fun n ↦ n x j, fun ⦃_ _⦄ a ↦ a x j⟩) := fun _ ↦ rfl
-    simp [mul_apply, this, ωScottContinuous_mul_left _ |>.map_ωSup, sum_ωSup']
-    congr
+    simp [mul_apply, this, mul_ωSup, sum_ωSup']
+    rfl
   ωScottContinuous_mul_right m := by
     refine ωScottContinuous.of_monotone_map_ωSup ⟨mul_right_mono, fun c ↦ ?_⟩
     ext i j
     have : ∀ x, ωSup c i x = ωSup (c.map ⟨fun n ↦ n i x, fun ⦃_ _⦄ a ↦ a i x⟩) := fun _ ↦ rfl
-    simp [mul_apply, this, ωScottContinuous_mul_right _ |>.map_ωSup, sum_ωSup']
-    congr
+    simp [mul_apply, this, ωSup_mul, sum_ωSup']
+    rfl
 
 end
 
