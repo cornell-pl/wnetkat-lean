@@ -177,7 +177,7 @@ noncomputable def Pol.sem (p : Pol[F,N,𝒮]) : H[F,N] → H[F,N] →c 𝒮 := m
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
-variable {M : Type} [Semiring M] [OmegaCompletePartialOrder M] [OrderBot M] [MulLeftMono M] [MulRightMono M] [IsPositiveOrderedAddMonoid M] in
+variable {M : Type} [Semiring M] [OmegaCompletePartialOrder M] [OrderBot M] [IsPositiveOrderedAddMonoid M] in
 open OmegaCompletePartialOrder in
 noncomputable def Pol.map (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) : Pol[F,N,M] := match p with
   | .Filter t => .Filter t
@@ -187,26 +187,52 @@ noncomputable def Pol.map (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) : Pol[F,N,M] :=
   | wnk_pol {~w ⨀ ~p}=> wnk_pol {~(f w) ⨀ ~(p.map f)}
   | wnk_pol {~p ⨁ ~q} => wnk_pol {~(p.map f) ⨁ ~(q.map f)}
   | wnk_pol {~p*} => wnk_pol {~(p.map f)*}
-variable {M : Type} [Semiring M] [OmegaCompletePartialOrder M] [OrderBot M] [MulLeftMono M] [MulRightMono M] [IsPositiveOrderedAddMonoid M] in
+variable {M : Type} [Semiring M] [OmegaCompletePartialOrder M] [OrderBot M] [IsPositiveOrderedAddMonoid M] in
 open OmegaCompletePartialOrder in
-noncomputable def Pol.map_preserve (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) (h h') :
-    (p.map f).sem h h' = f (p.sem h h') := by
-  induction p with
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+theorem map_ωSum {ι : Type} [Countable ι] (g : 𝒮 →+* M) (hg : ωScottContinuous g) (f : ι → 𝒮) :
+    g (ω∑ i, f i) = ω∑ i, g (f i) := by
+  simp only [ωSum]
+  rw [hg.map_ωSup]
+  simp only [Chain.map, OrderHom.mk_comp_mk, Function.comp_def, map_sum]
+  grind [map_zero]
+variable {M : Type} [Semiring M] [OmegaCompletePartialOrder M] [OrderBot M] [IsPositiveOrderedAddMonoid M] in
+open OmegaCompletePartialOrder in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+theorem Pol.map_sem (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) (hf : ωScottContinuous f) (h h') :
+    f (p.sem h h') = (p.map f).sem h h' := by
+  induction p generalizing h h' with
   | Filter =>
-    simp [map, sem, Pred.sem_eq_test]
+    simp only [map, sem, Pred.sem_eq_test]
     split_ifs
-    · simp
-    · simp
+    · simp only [η_apply, MonoidWithZeroHom.map_ite_one_zero]
+    · simp only [Countsupp.coe_zero, Pi.zero_apply, map_zero]
   | Mod => simp only [map, sem]; split; simp
   | Dup => simp only [map, sem]; split; simp
   | Seq p q =>
-    simp only [map, sem, Countsupp.bind_apply]
-    sorry
+    simp only [map, sem, Countsupp.bind_apply, map_ωSum f hf, map_mul]
+    symm
+    apply ωSum_eq_ωSum_of_ne_one_bij (fun ⟨⟨a, _⟩, h⟩ ↦ ⟨a, by contrapose! h; simp_all⟩)
+    · intro; grind
+    · intro; simp only [Set.mem_range, Subtype.exists]
+      grind [Countsupp.mem_support_iff, map_zero, Function.mem_support]
+    · grind
   | Add p q ihp ihq => simp only [map, sem, Countsupp.add_apply, ihp, ihq, map_add]
   | Weight w p ih => simp only [map, sem, Countsupp.hMul_apply_left, ih, map_mul]
   | Iter p ih =>
     simp only [map, sem, instHPow, Countsupp.ωSum_apply]
-    sorry
+    suffices ∀ x, (((p.map f).iter x).sem h) h' = f ((p.iter x).sem h h') by
+      simp only [this]; apply map_ωSum f hf
+    intro x
+    induction x generalizing h h' with
+    | zero => simp [sem, Pred.sem]
+    | succ x ih' =>
+      simp [sem, ih, ih', map_ωSum f hf]
+      apply ωSum_eq_ωSum_of_ne_one_bij (fun ⟨⟨a, _⟩, h⟩ ↦ ⟨a, by contrapose! h; simp_all⟩)
+      · intro; grind
+      · intro; simp only [Set.mem_range, Subtype.exists]
+        grind [Countsupp.mem_support_iff, map_zero, Function.mem_support]
+      · grind
 
 example {t u : Pred[F,N]} :
     wnk_pol { ~t ∨ ~u }.sem (𝒮:=𝒮) = wnk_pol { @filter ~t ⨁ (¬~t; @filter ~u) }.sem := by
