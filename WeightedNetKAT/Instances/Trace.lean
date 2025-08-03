@@ -50,25 +50,25 @@ instance : MulRightMono (RegularExpression α) where
   elim := sorry
 
 instance : OmegaContinuousNonUnitalSemiring (RegularExpression α) where
-  ωSup_add_left := by
+  ωScottContinuous_add_left := by
     sorry
     -- intro x
     -- refine ωScottContinuous.of_monotone_map_ωSup ⟨add_left_mono, ?_⟩
     -- intro c
     -- exact ENat.add_iSup ⇑c
-  ωSup_add_right := by
+  ωScottContinuous_add_right := by
     sorry
     -- intro x
     -- refine ωScottContinuous.of_monotone_map_ωSup ⟨add_right_mono, ?_⟩
     -- intro c
     -- exact ENat.iSup_add ⇑c
-  ωSup_mul_left := by
+  ωScottContinuous_mul_left := by
     sorry
     -- intro x
     -- refine ωScottContinuous.of_monotone_map_ωSup ⟨mul_left_mono, ?_⟩
     -- intro c
     -- exact ENat.mul_iSup x ⇑c
-  ωSup_mul_right := by
+  ωScottContinuous_mul_right := by
     sorry
     -- intro x
     -- refine ωScottContinuous.of_monotone_map_ωSup ⟨mul_right_mono, ?_⟩

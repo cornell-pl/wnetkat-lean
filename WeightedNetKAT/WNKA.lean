@@ -1679,7 +1679,7 @@ theorem fp₁_Q_is_fp'' (p₁ : RPol 𝒮) (h : Q p₁ = M' p₁) (xₙ : List P
         rw [one_mul_coe_unique_left]
         simp [List.getLast?_cons]
         rw [← List.cons_append, xδ_as_sum]
-        simp [mul_add, Matrix.mul_add, Matrix.add_mul]
+        simp [Matrix.mul_add, Matrix.add_mul]
         nth_rw 2 [Finset.sum_range_succ]
         simp [left_distrib]
         nth_rw 4 [add_comm]

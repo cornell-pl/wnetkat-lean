@@ -172,27 +172,17 @@ theorem Pol.sem_n_approx [Fintype N] (p : Pol[F,N,𝒮]) : p.sem = ωSup ⟨p.se
     ext h h'
     simp
     rw [ih]
-    simp [ωSup_mul_left _ |>.map_ωSup, Chain.map]
-    unfold Function.comp; simp only [sem_n, Countsupp.hMul_apply_left]
+    simp [mul_ωSup, Chain.map, Function.comp_def]
   | Add p₁ p₂ ih₁ ih₂ =>
     funext h
     simp only [sem, ih₁, ih₂]
-    simp [ωSup_add_left _ |>.map_ωSup, ωSup_add_right _ |>.map_ωSup]
-    simp [Chain.map]
-    unfold Function.comp; simp only [sem_n]
-    rw [OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup']
-    intro i j hij n
-    simp only
-    gcongr
-    apply p₂.sem_n_mono hij
+    simp [ωSup_add_ωSup]
+    simp [Chain.map, Function.comp_def]
   | Iter p ih =>
     funext h
     simp only [sem, Pol.instHPow, iter_m_sem_eq_ωSup_sem_n ih]; clear ih
     simp [ωSum_ωSup']
-    simp [Chain.map]
-    simp [DFunLike.coe]
-    unfold Function.comp
-    simp
+    simp [Chain.map, Function.comp_def, DFunLike.coe]
     simp [ωSum_nat_eq_ωSup]
     rw [OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup']
     intro i j hij n

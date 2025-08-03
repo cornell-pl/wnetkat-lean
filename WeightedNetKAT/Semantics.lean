@@ -259,7 +259,7 @@ theorem Φ_continuous [OmegaContinuousNonUnitalSemiring 𝒮] (p : Pol[F,N,𝒮]
   intro C
   ext h
   unfold Φ
-  simp [(p.sem h).bind_continuous_right.map_ωSup, ωSup_add_left _ |>.map_ωSup]
+  simp [(p.sem h).bind_continuous_right.map_ωSup, add_ωSup]
   congr! 1
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [Fintype F] [DecidableEq F] [DecidableEq N] in

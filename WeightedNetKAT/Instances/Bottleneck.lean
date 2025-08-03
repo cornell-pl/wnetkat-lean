@@ -67,7 +67,7 @@ instance [LinearOrder α] [OrderBot α] [OrderTop α] : MulRightMono (Bottleneck
 
 instance [CompleteLinearOrder α] : OmegaCompletePartialOrder (Bottleneck α) := inferInstanceAs (OmegaCompletePartialOrder α)
 instance [CompleteLinearOrder α] : OmegaContinuousNonUnitalSemiring (Bottleneck α) where
-  ωSup_add_left x := by
+  ωScottContinuous_add_left x := by
     sorry
     -- refine ωScottContinuous.of_monotone_map_ωSup ?_
     -- apply Exists.intro
@@ -93,9 +93,9 @@ instance [CompleteLinearOrder α] : OmegaContinuousNonUnitalSemiring (Bottleneck
     --       intro i
     --       apply le_trans _ h.le
     --       exact le_ωSup c i
-  ωSup_add_right := sorry
-  ωSup_mul_left := sorry
-  ωSup_mul_right := sorry
+  ωScottContinuous_add_right := sorry
+  ωScottContinuous_mul_left := sorry
+  ωScottContinuous_mul_right := sorry
 
 instance [Top α] : WeightedNetKAT.Star (Bottleneck α) where
   star _ := ⊤

@@ -339,34 +339,26 @@ theorem ωSup_apply {ι : Type} [Fintype ι] [DecidableEq M] (C : Chain (ι →�
 
 open OmegaContinuousNonUnitalSemiring in
 instance [Fintype ι] : OmegaContinuousNonUnitalSemiring (ι →₀ M) where
-  ωSup_add_left := by
+  ωScottContinuous_add_left := by
     refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨add_left_mono, fun C ↦ ?_⟩
     ext x
-    have ⟨_, h⟩ := ωScottContinuous_iff_monotone_map_ωSup.mp (ωSup_add_left (m x))
-    specialize h (C.map ⟨(· x), fun ⦃_ _ ⦄ a ↦ a x⟩)
-    simp only [coe_add, Pi.add_apply, ωSup_apply, h]; clear h
-    congr! 1
-  ωSup_add_right := by
+    simp only [coe_add, Pi.add_apply, ωSup_apply, add_ωSup]
+    congr
+  ωScottContinuous_add_right := by
     refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨add_right_mono, fun C ↦ ?_⟩
     ext x
-    have ⟨_, h⟩ := ωScottContinuous_iff_monotone_map_ωSup.mp (ωSup_add_right (m x))
-    specialize h (C.map ⟨(· x), fun ⦃_ _ ⦄ a ↦ a x⟩)
-    simp only [coe_add, Pi.add_apply, ωSup_apply, h]; clear h
-    congr! 1
-  ωSup_mul_left := by
+    simp only [coe_add, Pi.add_apply, ωSup_apply, ωSup_add]
+    congr
+  ωScottContinuous_mul_left := by
     refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨(mul_left_mono), fun C ↦ ?_⟩
     ext x
-    have ⟨_, h⟩ := ωScottContinuous_iff_monotone_map_ωSup.mp (ωSup_mul_left (m x))
-    specialize h (C.map ⟨(· x), fun ⦃_ _ ⦄ a ↦ a x⟩)
-    simp only [mul_apply, ωSup_apply, h]; clear h
-    congr! 1
-  ωSup_mul_right := by
+    simp only [mul_apply, ωSup_apply, mul_ωSup]
+    rfl
+  ωScottContinuous_mul_right := by
     refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨mul_right_mono, fun C ↦ ?_⟩
     ext x
-    have ⟨_, h⟩ := ωScottContinuous_iff_monotone_map_ωSup.mp (ωSup_mul_right (m x))
-    specialize h (C.map ⟨(· x), fun ⦃_ _ ⦄ a ↦ a x⟩)
-    simp only [mul_apply, ωSup_apply, h]; clear h
-    congr! 1
+    simp only [mul_apply, ωSup_apply, ωSup_mul]
+    rfl
 
 omit [MulLeftMono M] [MulRightMono M] [OmegaContinuousNonUnitalSemiring M] [DecidableEq ι] in
 @[simp]

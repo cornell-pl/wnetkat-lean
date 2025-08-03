@@ -29,32 +29,6 @@ variable [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α
 
 open OmegaCompletePartialOrder
 
-theorem ωSup_sum {α ι : Type} [DecidableEq ι] [NonUnitalSemiring α] [OmegaCompletePartialOrder α] [OrderBot α] [MulLeftMono α] [MulRightMono α] [IsPositiveOrderedAddMonoid α] [OmegaContinuousNonUnitalSemiring α]
-    (S : Finset ι) (f : ℕ → ι → α) (hf : Monotone f) :
-      ωSup ⟨fun n ↦ ∑ i ∈ S, f n i, fun _ _ hab ↦ Finset.sum_le_sum fun i _ ↦ hf hab i⟩
-    = ∑ i ∈ S, ωSup ⟨fun n ↦ f n i, fun _ _ hab ↦ hf hab i⟩ := by
-  induction S using Finset.induction with
-  | empty => simp
-  | insert i S hi ih =>
-    simp_all
-    rw [← ih]
-    rw [OmegaContinuousNonUnitalSemiring.ωSup_add_left _ |>.map_ωSup]
-    conv =>
-      right
-      arg 1
-      arg 2
-      arg 1
-      ext
-      rw [OmegaContinuousNonUnitalSemiring.ωSup_add_right _ |>.map_ωSup]
-    simp [Chain.map]
-    unfold Function.comp
-    simp
-    rw [ωSup_ωSup_eq_ωSup']
-    intro a b hab j
-    simp
-    gcongr
-    apply hf hab
-
 theorem ωSup_pow {α : Type} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α] [MulLeftMono α] [MulRightMono α] [IsPositiveOrderedAddMonoid α] [OmegaContinuousNonUnitalSemiring α]
     (f : ℕ → α) (hf : Monotone f) (i : ℕ) :
       ωSup ⟨fun n ↦ (f n)^i, fun a b hab ↦ by simp; gcongr; exact hf hab⟩
@@ -64,16 +38,7 @@ theorem ωSup_pow {α : Type} [Semiring α] [OmegaCompletePartialOrder α] [Orde
   | succ i ih =>
     simp [pow_succ]
     rw [← ih]
-    rw [OmegaContinuousNonUnitalSemiring.ωSup_mul_left _ |>.map_ωSup]
-    conv => right; arg 1; arg 2; arg 1; ext; rw [OmegaContinuousNonUnitalSemiring.ωSup_mul_right _ |>.map_ωSup]
-    simp [Chain.map]
-    unfold Function.comp
-    simp
-    rw [ωSup_ωSup_eq_ωSup']
-    intro a b hab j
-    simp only
-    gcongr
-    exact hf hab
+    simp [ωSup_mul_ωSup]
 
 theorem star_iter {a : α} :
     1 + a * a^* = a^* := by
@@ -89,24 +54,7 @@ theorem add_star {a b : α} :
     (a + b)^* = (a^* * b)^* * a^* := by
   simp [LawfulStar.star_eq_sum]
   simp [← ωSum_mul_left, ← ωSum_mul_right]
-  simp [ωSum_nat_eq_ωSup]
-  simp [← ωSup_sum]
-  simp [← ωSup_pow]
-  conv =>
-    right
-    arg 1; arg 1; ext; arg 1; arg 1; ext; arg 2; ext; arg 2; ext
-    rw [OmegaContinuousNonUnitalSemiring.ωSup_mul_right _ |>.map_ωSup]
-  simp [Chain.map]
-  unfold Function.comp
-  simp
-  conv =>
-    right
-    arg 1; arg 1; ext; arg 1; arg 1; ext; arg 2; ext
-    rw [← ωSup_sum _ _ (fun a b hab j ↦ by simp; gcongr; simp)]
-  conv =>
-    right
-    arg 1; arg 1; ext; arg 1; arg 1; ext
-    rw [← ωSup_sum _ _ (fun a b hab j ↦ by simp; gcongr; simp)]
+  simp [ωSum_nat_eq_ωSup, sum_ωSup', ← ωSup_pow, ωSup_mul, sum_ωSup', DFunLike.coe, sum_ωSup']
   rw [ωSup_ωSup_eq_ωSup', ωSup_ωSup_eq_ωSup']
   · apply le_antisymm
     · simp

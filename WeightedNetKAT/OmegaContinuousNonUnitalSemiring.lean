@@ -99,10 +99,49 @@ class OmegaContinuousNonUnitalSemiring (𝒮 : Type)
     [MulLeftMono 𝒮]
     [MulRightMono 𝒮]
     [IsPositiveOrderedAddMonoid 𝒮] where
-  ωSup_add_right : ∀ x : 𝒮, ωScottContinuous (· + x)
-  ωSup_add_left : ∀ x : 𝒮, ωScottContinuous (x + ·)
-  ωSup_mul_right : ∀ x : 𝒮, ωScottContinuous (· * x)
-  ωSup_mul_left : ∀ x : 𝒮, ωScottContinuous (x * ·)
+  ωScottContinuous_add_right : ∀ x : 𝒮, ωScottContinuous (· + x)
+  ωScottContinuous_add_left : ∀ x : 𝒮, ωScottContinuous (x + ·)
+  ωScottContinuous_mul_right : ∀ x : 𝒮, ωScottContinuous (· * x)
+  ωScottContinuous_mul_left : ∀ x : 𝒮, ωScottContinuous (x * ·)
+
+section
+
+variable {𝒮 : Type}
+  [NonUnitalSemiring 𝒮]
+  [OmegaCompletePartialOrder 𝒮]
+  [OrderBot 𝒮]
+  [MulLeftMono 𝒮]
+  [MulRightMono 𝒮]
+  [IsPositiveOrderedAddMonoid 𝒮]
+  [OmegaContinuousNonUnitalSemiring 𝒮]
+
+open OmegaContinuousNonUnitalSemiring
+
+theorem ωSup_add {f : ℕ →o 𝒮} (a : 𝒮) :
+    ωSup f + a = ωSup ⟨fun i ↦ f i + a, fun i j hij ↦ add_le_add (f.mono hij) (by rfl)⟩ :=
+  ωScottContinuous_add_right _ |>.map_ωSup _
+theorem add_ωSup {f : ℕ →o 𝒮} (a : 𝒮) :
+    a + ωSup f = ωSup ⟨fun i ↦ a + f i, fun i j hij ↦ add_le_add (by rfl) (f.mono hij)⟩ :=
+  ωScottContinuous_add_left _ |>.map_ωSup _
+theorem ωSup_mul {f : ℕ →o 𝒮} (a : 𝒮) :
+    ωSup f * a = ωSup ⟨fun i ↦ f i * a, fun i j hij ↦ mul_le_mul' (f.mono hij) (by rfl)⟩ :=
+  ωScottContinuous_mul_right _ |>.map_ωSup _
+theorem mul_ωSup {f : ℕ →o 𝒮} (a : 𝒮) :
+    a * ωSup f = ωSup ⟨fun i ↦ a * f i, fun i j hij ↦ mul_le_mul' (by rfl) (f.mono hij)⟩ :=
+  ωScottContinuous_mul_left _ |>.map_ωSup _
+
+theorem ωSup_add_ωSup {f g : ℕ →o 𝒮} :
+    ωSup f + ωSup g = ωSup ⟨fun i ↦ f i + g i, fun i j hij ↦ by simp only; gcongr⟩ := by
+  simp only [add_ωSup, ωSup_add]
+  rw [ωSup_ωSup_eq_ωSup']
+  intro _ _ _ _; simp only; gcongr
+theorem ωSup_mul_ωSup {f g : ℕ →o 𝒮} :
+    ωSup f * ωSup g = ωSup ⟨fun i ↦ f i * g i, fun i j hij ↦ by simp only; gcongr⟩ := by
+  simp only [mul_ωSup, ωSup_mul]
+  rw [ωSup_ωSup_eq_ωSup']
+  intro _ _ _ _; simp only; gcongr
+
+end
 
 -- TODO: this might be interesting to try at some point
 -- instance
@@ -132,6 +171,7 @@ theorem ωSup_eq_zero_iff (C : Chain 𝒮) : ωSup C = 0 ↔ ∀ i, C i = 0 := b
   · intro h
     exact le_antisymm (ωSup_le C 0 (by simp [h])) (zero_le'' (ωSup C))
 
+/-- Sum over countable `X` -/
 noncomputable def ωSum (f : X → 𝒮) : 𝒮 :=
   letI e : Encodable X := Encodable.ofCountable X
   ωSup ⟨fun n ↦ ∑ i ∈ Finset.range n, if let some x := e.decode₂ _ i then f x else 0,
@@ -315,29 +355,8 @@ theorem Finset.sum_ωScottContinuous [DecidableEq X] (S : Finset X) :
   | empty => simp; symm; simp
   | insert x S hx ih =>
     simp_all; clear ih
-    have := OmegaContinuousNonUnitalSemiring.ωSup_add_left (ωSup c x) |>.map_ωSup
-    simp at this
-    rw [this]; clear this
-    apply le_antisymm
-    · simp
-      intro i
-      rw [OmegaContinuousNonUnitalSemiring.ωSup_add_right _ |>.map_ωSup]
-      simp
-      intro j
-      apply le_ωSup_of_le (i ⊔ j)
-      simp
-      have hi : i ≤ i ⊔ j := by omega
-      have hj : j ≤ i ⊔ j := by omega
-      gcongr
-      · exact c.mono hj x
-      · apply c.mono hi
-    · simp
-      intro i
-      apply le_ωSup_of_le i
-      simp
-      gcongr
-      apply le_ωSup_of_le i
-      simp
+    rw [ωSup_add_ωSup]
+    congr
 
 theorem ωSum_ωSup (C : Chain (X → 𝒮)) :
     ω∑ n, ωSup C n = ωSup ⟨fun x ↦ ω∑ n, C x n, fun _ _ h ↦ ωSum_mono (C.mono h)⟩ := by
@@ -398,19 +417,11 @@ theorem ωSum_ωSup (C : Chain (X → 𝒮)) :
                   | some x => f x
                   | x => 0, fun a b h ↦ by simp; gcongr <;> split <;> simp [h _]⟩)) := by
           clear ih
-          rw [OmegaContinuousNonUnitalSemiring.ωSup_add_left _ |>.map_ωSup]
-          simp
-          intro j
-          rw [OmegaContinuousNonUnitalSemiring.ωSup_add_right _ |>.map_ωSup]
-          simp
-          intro k
-          have hj : j ≤ j ⊔ k := by omega
-          have hk : k ≤ j ⊔ k := by omega
-          apply le_ωSup_of_le (j ⊔ k)
-          simp
-          gcongr <;> split <;> try rfl
-          · apply C.mono hk
-          · apply C.mono hj
+          rw [ωSup_add_ωSup]
+          apply ωSup_le_ωSup_of_le
+          intro k; use k
+          simp only [DFunLike.coe]
+          simp [Chain.map]
         apply le_trans _ this; clear this
         gcongr
     apply le_trans this; clear this
@@ -440,17 +451,8 @@ theorem sum_ωSup [DecidableEq X] (S : Finset X) (C : Chain (X → 𝒮)) :
   | empty => simp
   | insert n S hn ih =>
     simp_all; clear ih
-    simp [OmegaContinuousNonUnitalSemiring.ωSup_add_left _ |>.map_ωSup, Chain.map]
-    unfold Function.comp
-    simp
-    simp [OmegaContinuousNonUnitalSemiring.ωSup_add_right _ |>.map_ωSup, Chain.map]
-    simp [OrderHom.comp]
-    rw [OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup']
-    · rfl
-    · intro a b hab m
-      simp
-      gcongr
-      apply C.mono hab
+    rw [ωSup_add_ωSup]
+    congr
 
 omit [Countable X] in
 theorem sum_ωSup' [DecidableEq X] (S : Finset X) (C : X → Chain 𝒮) :
@@ -460,100 +462,36 @@ theorem sum_ωSup' [DecidableEq X] (S : Finset X) (C : X → Chain 𝒮) :
 theorem ωSum_nat_eq_succ
     {f : ℕ → 𝒮} : ω∑ (x : ℕ), f x = f 0 + ω∑ (x : ℕ), f (x + 1) := by
   simp [ωSum_nat_eq_ωSup]
-  rw [OmegaContinuousNonUnitalSemiring.ωSup_add_left _ |>.map_ωSup]
-  simp [Chain.map]
+  rw [add_ωSup]
+  simp only [OrderHom.coe_mk]
   apply le_antisymm
   · apply ωSup_le _ _ fun i ↦ ?_
     rcases i with _ | i
     · simp [DFunLike.coe]
     · apply le_ωSup_of_le i
-      simp [DFunLike.coe]
-      rw [add_comm]
-      simp [Finset.sum_range_add]
-      simp [add_comm]
-  · apply ωSup_le _ _ fun i ↦ ?_
-    apply le_ωSup_of_le (1 + i)
-    simp [DFunLike.coe]
-    simp [Finset.sum_range_add]
-    simp [add_comm]
+      simp only [DFunLike.coe]
+      rw [Finset.sum_range_succ', add_comm]
+  · apply ωSup_le _ _ fun i ↦ le_ωSup_of_le (i + 1) ?_
+    simp only [DFunLike.coe]
+    rw [Finset.sum_range_succ', add_comm]
 
 attribute [local simp] Encodable.decode₂_eq_some in
 theorem ωSum_add {f g : X → 𝒮} :
     ω∑ (x : X), (f x + g x) = ω∑ (x : X), f x + ω∑ x, g x := by
-  apply le_antisymm
-  · refine ωSum_le_of_finset fun S ↦ ?_
-    simp [Finset.sum_add_distrib]
-    gcongr <;> exact le_ωSum_of_finset S
-  · nth_rw 2 [ωSum]
-    rw [OmegaContinuousNonUnitalSemiring.ωSup_add_left _ |>.map_ωSup]
-    simp only [ωSup_le_iff, Chain.map_coe, OrderHom.coe_mk, Function.comp_apply]
-    simp only [DFunLike.coe]
-    intro i
-    nth_rw 1 [ωSum]
-    rw [OmegaContinuousNonUnitalSemiring.ωSup_add_right _ |>.map_ωSup]
-    simp only [ωSup_le_iff, Chain.map_coe, OrderHom.coe_mk, Function.comp_apply]
-    simp only [DFunLike.coe]
-    intro j
-    letI e := Encodable.ofCountable X
-    apply le_trans _ (le_ωSum_of_finset (Finset.range (i ⊔ j) |>.filterMap (e.decode₂ _) (by intro; simp +contextual [e.decode₂_eq_some])))
-    simp [Finset.sum_add_distrib]
-    gcongr
-    · have :
-            ∑ x ∈ Finset.filterMap (Encodable.decode₂ X) (Finset.range j) (by simp +contextual [e.decode₂_eq_some]), f x
-          ≤ ∑ x ∈ Finset.filterMap (Encodable.decode₂ X) (Finset.range (max i j)) (by simp +contextual [e.decode₂_eq_some]), f x := by
-        apply Finset.sum_mono_set_of_nonneg
-        · simp
-        · intro; simp +contextual [e.decode₂_eq_some]
-      apply le_trans _ this
-      apply le_of_eq
-      symm
-      apply Finset.sum_bij_ne_zero (fun x _ _ ↦ e.encode x)
-      · simp_all
-      · simp_all
-      · simp_all
-        intro b hb
-        split
-        · simp_all
-          grind
-        · simp
-      · simp_all
-    · have :
-            ∑ x ∈ Finset.filterMap (Encodable.decode₂ X) (Finset.range i) (by simp +contextual [e.decode₂_eq_some]), g x
-          ≤ ∑ x ∈ Finset.filterMap (Encodable.decode₂ X) (Finset.range (max i j)) (by simp +contextual [e.decode₂_eq_some]), g x := by
-        apply Finset.sum_mono_set_of_nonneg
-        · simp
-        · intro; simp +contextual [e.decode₂_eq_some]
-      apply le_trans _ this
-      apply le_of_eq
-      symm
-      apply Finset.sum_bij_ne_zero (fun x _ _ ↦ e.encode x)
-      · simp_all
-      · simp_all
-      · simp_all
-        intro b hb
-        split
-        · simp_all
-          grind
-        · simp
-      · simp_all
+  simp [ωSum]
+  simp [ωSup_add_ωSup, ← Finset.sum_add_distrib]
+  congr! with n i hi
+  split <;> simp
 
 theorem ωSum_mul_left {f : X → 𝒮} {a : 𝒮} :
     ω∑ (x : X), a * f x = a * ω∑ (x : X), f x := by
-  simp [ωSum]
-  rw [OmegaContinuousNonUnitalSemiring.ωSup_mul_left a |>.map_ωSup]
-  congr with n
-  simp [Finset.mul_sum]
-  congr with m
-  split <;> simp
+  simp [ωSum, mul_ωSup, Finset.mul_sum]
+  congr!; split <;> simp
 
 theorem ωSum_mul_right {f : X → 𝒮} {a : 𝒮} :
     ω∑ (x : X), f x * a = (ω∑ (x : X), f x) * a := by
-  simp [ωSum]
-  rw [OmegaContinuousNonUnitalSemiring.ωSup_mul_right a |>.map_ωSup]
-  congr with n
-  simp [Finset.sum_mul]
-  congr with m
-  split <;> simp
+  simp [ωSum, ωSup_mul, Finset.sum_mul]
+  congr!; split <;> simp
 
 theorem ωSum_sum_comm {Y : Type} (S : Finset Y) {f : X → Y → 𝒮} :
     ω∑ (x : X), ∑ y ∈ S, f x y = ∑ y ∈ S, ω∑ (x : X), f x y := by

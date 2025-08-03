@@ -172,34 +172,26 @@ variable [OmegaContinuousNonUnitalSemiring 𝒮]
 
 open OmegaContinuousNonUnitalSemiring in
 instance {X : Type} : OmegaContinuousNonUnitalSemiring (X →c 𝒮) where
-  ωSup_add_left := by
+  ωScottContinuous_add_left := by
     refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨add_left_mono, fun C ↦ ?_⟩
     ext x
-    have ⟨_, h⟩ := ωScottContinuous_iff_monotone_map_ωSup.mp (ωSup_add_left (m x))
-    specialize h (C.map ⟨(· x), fun ⦃_ _ ⦄ a ↦ a x⟩)
-    simp only [add_apply, ωSup_apply, h]; clear h
-    congr! 1
-  ωSup_add_right := by
+    simp only [add_apply, ωSup_apply, add_ωSup]
+    rfl
+  ωScottContinuous_add_right := by
     refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨add_right_mono, fun C ↦ ?_⟩
     ext x
-    have ⟨_, h⟩ := ωScottContinuous_iff_monotone_map_ωSup.mp (ωSup_add_right (m x))
-    specialize h (C.map ⟨(· x), fun ⦃_ _ ⦄ a ↦ a x⟩)
-    simp only [add_apply, ωSup_apply, h]; clear h
-    congr! 1
-  ωSup_mul_left := by
+    simp only [add_apply, ωSup_apply, ωSup_add]
+    rfl
+  ωScottContinuous_mul_left := by
     refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨(mul_left_mono), fun C ↦ ?_⟩
     ext x
-    have ⟨_, h⟩ := ωScottContinuous_iff_monotone_map_ωSup.mp (ωSup_mul_left (m x))
-    specialize h (C.map ⟨(· x), fun ⦃_ _ ⦄ a ↦ a x⟩)
-    simp only [mul_apply, ωSup_apply, h]; clear h
-    congr! 1
-  ωSup_mul_right := by
+    simp only [mul_apply, ωSup_apply, mul_ωSup]
+    rfl
+  ωScottContinuous_mul_right := by
     refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨mul_right_mono, fun C ↦ ?_⟩
     ext x
-    have ⟨_, h⟩ := ωScottContinuous_iff_monotone_map_ωSup.mp (ωSup_mul_right (m x))
-    specialize h (C.map ⟨(· x), fun ⦃_ _ ⦄ a ↦ a x⟩)
-    simp only [mul_apply, ωSup_apply, h]; clear h
-    congr! 1
+    simp only [mul_apply, ωSup_apply, ωSup_mul]
+    rfl
 
 noncomputable def bind {Y : Type} (f : X →c 𝒮) (g : X → Y →c 𝒮) : Y →c 𝒮 :=
   ⟨fun y ↦ ω∑ x : f.support, f x * g x y, by
@@ -268,15 +260,7 @@ theorem bind_continuous_right {Y : Type} (f : X →c 𝒮) :
   refine ωScottContinuous.of_monotone_map_ωSup ⟨bind_mono_right f, ?_⟩
   intro C
   ext h
-  simp [bind]
-  simp [DFunLike.coe]
-  conv =>
-    left
-    arg 1
-    ext x
-    rw [OmegaContinuousNonUnitalSemiring.ωSup_mul_left _ |>.map_ωSup]
-  rw [ωSum_ωSup']
-  simp
+  simp only [bind, asdsad, ωSup_apply, mul_ωSup, ωSum_ωSup', coe_mk]
   congr
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
@@ -302,18 +286,10 @@ theorem bind_continuous_left {Y : Type} (g : X → Y →c 𝒮) :
   refine ωScottContinuous.of_monotone_map_ωSup ⟨fun f₁ f₂ ↦ bind_mono_left g, ?_⟩
   intro C
   ext h
-  simp [bind]
-  simp [DFunLike.coe]
-  conv =>
-    left
-    arg 1
-    ext x
-    rw [OmegaContinuousNonUnitalSemiring.ωSup_mul_right _ |>.map_ωSup]
-  rw [ωSum_ωSup']
-  simp [Chain.map]
+  simp only [bind, ωSup_apply, Chain.map, ωSup_mul, OrderHom.comp_coe, OrderHom.coe_mk,
+    Function.comp_apply, ωSum_ωSup', coe_mk]
   congr with i
   simp [OrderHom.comp]
-  unfold Function.comp
   simp only [DFunLike.coe]
   simp only [OrderHom.toFun_eq_coe]
   apply le_antisymm
@@ -342,10 +318,8 @@ theorem bind_continuous_left {Y : Type} (g : X → Y →c 𝒮) :
       simp only [DFunLike.coe]
       simp_all only [OrderHom.toFun_eq_coe]
       rintro x hx x' n hn h h' ⟨_⟩ h''
-      apply Exists.intro
-      · exact h
-      · use i
-    · simp
+      apply Exists.intro ⟨i, hx⟩ h
+    · grind
   · refine ωSum_le_of_finset fun S ↦ ?_
     classical
     let S' : Finset ((ωSup C).support) := (S.filterMap (fun ⟨x, hx⟩ ↦ if h : _ then some ⟨x, h⟩ else none) (by simp +contextual))
@@ -359,12 +333,11 @@ theorem bind_continuous_left {Y : Type} (g : X → Y →c 𝒮) :
       Subtype.exists, exists_and_right, exists_eq_right_right, Subtype.coe_eta, and_true,
       Subtype.forall, not_false_eq_true, true_and, S']
       intro x n h h'
-      clear h'
       use i
     · grind only [cases eager Subtype]
     · grind only [Finset.mem_filterMap, Option.some.injEq, mem_support_iff, Subtype.mk.injEq,
         ωSup_eq_zero_iff, cases eager Subtype, cases Or]
-    · simp
+    · grind
 
 end OmegaContinuousNonUnitalSemiring
 

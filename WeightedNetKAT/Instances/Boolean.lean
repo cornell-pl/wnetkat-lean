@@ -60,7 +60,7 @@ instance : IsPositiveOrderedAddMonoid BoolRing where
   add_le_add_right _ _ h m := Bool.or_le (Bool.le_trans h (Bool.left_le_or _ _)) (Bool.right_le_or _ m)
   bot_eq_zero := rfl
 instance : OmegaContinuousNonUnitalSemiring BoolRing where
-  ωSup_add_right := by
+  ωScottContinuous_add_right := by
     intro b
     refine ωScottContinuous.of_monotone_map_ωSup ⟨add_right_mono, ?_⟩
     intro C
@@ -68,7 +68,7 @@ instance : OmegaContinuousNonUnitalSemiring BoolRing where
     rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp]
     · rfl
     · unfold Function.comp; simp
-  ωSup_add_left := by
+  ωScottContinuous_add_left := by
     intro b
     refine ωScottContinuous.of_monotone_map_ωSup ⟨add_left_mono, ?_⟩
     intro C
@@ -76,7 +76,7 @@ instance : OmegaContinuousNonUnitalSemiring BoolRing where
     rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp]
     · rfl
     · unfold Function.comp; simp
-  ωSup_mul_left := by
+  ωScottContinuous_mul_left := by
     intro b
     refine ωScottContinuous.of_monotone_map_ωSup ⟨mul_left_mono, ?_⟩
     intro C
@@ -84,7 +84,7 @@ instance : OmegaContinuousNonUnitalSemiring BoolRing where
     rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp]
     · unfold Function.comp; simp
     · rfl
-  ωSup_mul_right := by
+  ωScottContinuous_mul_right := by
     intro b
     refine ωScottContinuous.of_monotone_map_ωSup ⟨mul_right_mono, ?_⟩
     intro C

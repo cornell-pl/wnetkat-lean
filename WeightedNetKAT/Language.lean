@@ -221,7 +221,7 @@ theorem GS.sem_eq (g : GS[F,N]) (h) :
       simp_all
       rw [ωSum_eq_single ⟨⟨x, x::h⟩, by simp [h10]⟩ (by simp_all)]
       simp_all
-  · simp [GS.toRPol, RPol.sem, h₀, ne_comm.mp h₀]
+  · simp [GS.toRPol, RPol.sem, ne_comm.mp h₀]
 
 @[simp]
 noncomputable def RPol.sem_G_theorem (p : RPol[F,N,𝒮]) : Prop :=
@@ -307,7 +307,7 @@ theorem RPol.sem_G.Seq {p₁ p₂} (ih₁ : p₁.sem_G_theorem) (ih₂ : p₂.se
   simp [← ωSum_prod' (α:=𝒮)]
   apply ωSum_eq_ωSum_of_ne_one_bij (fun ⟨⟨⟨a, ha⟩, ⟨b, hb⟩, ⟨c, hc⟩⟩, h⟩ ↦
     ⟨⟨(b.2.2, b.2.1.reverse ++ h₀.2), by
-      simp_all [G]
+      simp_all
       simp_all [G]
       simp_all [GS.sem_eq, GS.H]
       obtain ⟨b₀, b₁, b₂⟩ := b
@@ -330,7 +330,7 @@ theorem RPol.sem_G.Seq {p₁ p₂} (ih₁ : p₁.sem_G_theorem) (ih₂ : p₂.se
       Prod.mk.injEq, Subtype.mk.injEq, Subtype.exists, ite_eq_right_iff, Classical.not_imp,
       exists_and_left, exists_prop, Prod.exists, exists_eq_right_right, Countsupp.mem_support_iff]
     simp_all only [Countsupp.mem_support_iff, Countsupp.ωSum_apply, Countsupp.hMul_apply_left,
-      ne_eq, ωSum_eq_zero_iff, Subtype.forall, not_forall, Classical.not_imp]
+      ne_eq, ωSum_eq_zero_iff, Subtype.forall, not_forall]
     simp_all only [exists_prop]
     obtain ⟨a, ha, ha'⟩ := ha
     intro h
@@ -409,16 +409,16 @@ theorem RPol.sem_G.Weight {w} {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~w �
   · intro ⟨_, _⟩ ⟨_, _⟩
     simp_all
     exact fun a ↦ SetCoe.ext a
-  · intro ⟨s, h₀⟩; simp [GS.H]
+  · intro ⟨s, h₀⟩; simp
     obtain ⟨π, h⟩ := h
     simp_all [G]
     contrapose! h₀
-    simp_all [← mul_assoc, G]
+    simp_all [← mul_assoc]
     obtain ⟨_, _⟩ := h₀
     simp_all
   · simp [G]
     intro g h₀ h₁
-    simp_all [← mul_assoc, G]
+    simp_all [← mul_assoc]
 
 def GS.splitAtJoined (g : GS[F,N]) (n : ℕ) (γ : Pk[F,N]) : GS[F,N] × GS[F,N] :=
   let (g₀, g, gₙ)  := g
