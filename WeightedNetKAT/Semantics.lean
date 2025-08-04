@@ -93,52 +93,34 @@ omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [DecidableEq F] in
 theorem Pred.sem_eq_test (t : Pred[F,N]) :
     t.sem (𝒮:=𝒮) = fun (h : H[F,N]) ↦ if t.test h.1 then η h else 0 := by
   induction t with
-  | Bool b =>
-    if b = true then
-      simp_all [sem, Pred.sem, Pred.test]
-    else
-      simp_all [sem, Pred.sem, Pred.test]
+  | Bool b => cases b <;> grind [sem, Pred.sem, Pred.test]
   | Test =>
     ext h₀ h₁
     simp_all [sem, Pred.sem, Pred.test]
-    split_ifs
-    subst_eqs
-    · split
-      simp_all
-    · split
-      simp_all
+    split_ifs <;> subst_eqs <;> split <;> grind
   | Dis u v =>
     ext h₀ h₁
     simp_all [sem, Pred.sem, Pred.test]
     split_ifs
-    · simp_all
-    · simp_all
+    · simp_all only [Countsupp.coe_zero, Pi.zero_apply, true_or, reduceIte]
+      grind [zero_mul, ωSum_zero, add_zero]
+    · simp_all only [Countsupp.coe_zero, Pi.zero_apply]
+      grind [add_zero, zero_mul]
     · simp_all
       if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
       split_ifs
-      · rw [ωSum_eq_single ⟨h₀, by simp_all⟩]
-        · simp_all
-        · simp_all
-      · simp_all
-    · simp_all
+      · rw [ωSum_eq_single ⟨h₀, by simp_all⟩] <;> grind
+      · grind
+    · grind
   | Con =>
     ext h₀ h₁
-    simp_all [sem, Pred.sem, Pred.test]
+    simp_all only [sem, Countsupp.bind_apply, test]
     split_ifs
-    · simp_all
+    · simp only [η_apply, ite_mul, one_mul, zero_mul]
       if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
-      rw [ωSum_eq_single ⟨h₀, by simp_all⟩]
-      · simp
-      · simp_all
-    · simp_all
-  | Not =>
-    ext h₀ h₁
-    simp_all [sem, Pred.sem, Pred.test]
-    split_ifs
-    · simp_all
-    · simp_all
-    · simp_all
-    · simp_all
+      rw [ωSum_eq_single ⟨h₀, by simp_all⟩] <;> grind [reduceIte]
+    · simp_all only [Countsupp.coe_zero, Pi.zero_apply, zero_mul, ωSum_zero, false_and, reduceIte]
+  | Not => grind [sem, test]
 
 instance : Subst Pk[F,N] F N where
   subst pk f n := fun f' ↦ if f = f' then n else pk f'
@@ -206,7 +188,8 @@ theorem Pol.map_sem (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) (hf : ωScottContinuo
     simp only [map, sem, Pred.sem_eq_test]
     split_ifs
     · simp only [η_apply, MonoidWithZeroHom.map_ite_one_zero]
-    · simp only [Countsupp.coe_zero, Pi.zero_apply, map_zero]
+    · simp only [Countsupp.coe_zero, Pi.zero_apply]
+      grind [map_zero]
   | Mod => simp only [map, sem]; split; simp
   | Dup => simp only [map, sem]; split; simp
   | Seq p q =>
@@ -244,7 +227,7 @@ noncomputable def Φ (p : Pol[F,N,𝒮]) (d : H[F,N] → H[F,N] →c 𝒮) : H[F
 example {p : Pol[F,N,𝒮]} : Φ p (wnk_pol {~p*}.sem) = wnk_pol { skip ⨁ ~p; ~p* }.sem := by
   ext
   unfold Φ
-  simp [Pol.sem, Pred.sem]
+  grind [Pol.sem, Pred.sem]
 
 open OmegaCompletePartialOrder OmegaContinuousNonUnitalSemiring
 
