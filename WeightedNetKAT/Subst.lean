@@ -1,7 +1,7 @@
 import Mathlib.Data.Finset.Insert
 import Lean.PrettyPrinter.Delaborator.Basic
 
-class Subst (W Var E : Type) where
+class Subst (W Var : Type) (E : outParam Type) where
   /-- Written using `a[x ↦ e]`. Substitutes all `x` in `a` with `e`. -/
   subst : W → Var → E → W
 

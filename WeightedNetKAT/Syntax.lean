@@ -1,5 +1,6 @@
 import Mathlib.Data.Countable.Basic
 import Mathlib.Logic.Encodable.Pi
+import WeightedNetKAT.Listed
 
 namespace WeightedNetKAT
 
@@ -10,6 +11,9 @@ variable {N : Type} [Fintype N] [DecidableEq N]
 
 abbrev Pk (F N : Type) := F → N
 notation "Pk[" F "," N "]" => Pk F N
+
+-- omit [Fintype F] [Fintype N] [DecidableEq F] [DecidableEq N] in
+-- instance [Listed F] [Listed N] [Inhabited N] : Listed Pk[F,N] := Listed.pi F N
 
 instance {F : Type} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] : Repr Pk[F,N] where
   reprPrec x _ := s!"\{{List.range i.card |>.filterMap e.decode |>.map (fun k ↦ s!"{reprStr k}↦{reprStr (x k)}") |> ",".intercalate}}"
@@ -69,6 +73,8 @@ declare_syntax_cat' wnk_weight
 macro_rules|`(wnk_weight{~$t})=>`($t)
 declare_syntax_cat' wnk_pred
 declare_syntax_cat' wnk_pol
+syntax "wnk_pol[" term "," term "," term "]" ppHardSpace "{" cwnk_pol "}" : term
+macro_rules|`(wnk_pol[$F,$N,$𝒮] {$p}) => `((wnk_pol {$p} : Pol[$F,$N,$𝒮]))
 
 syntax term:max : cwnk_field
 macro_rules|`(wnk_field{$t:term})=>`($t)

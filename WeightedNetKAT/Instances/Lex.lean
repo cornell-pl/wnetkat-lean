@@ -1,6 +1,217 @@
 import WeightedNetKAT.Computation
+import WeightedNetKAT.Star
+import Mathlib.Algebra.Order.Kleene
+
+@[grind]
+structure LexicalSemiring (α β : Type) where
+  a : α
+  b : β
 
 variable {α β : Type}
+
+class LinearIdemSemiring (α : Type) extends IdemSemiring α, LinearOrder α
+
+namespace LexicalSemiring
+
+variable [LinearIdemSemiring α] [LinearIdemSemiring β] [DecidableEq α] [NoZeroDivisors α]
+
+instance : PartialOrder (LexicalSemiring α β) where
+  le := fun ⟨s, r⟩ ⟨s', r'⟩ ↦ s < s' ∨ (s = s' ∧ r ≤ r')
+  le_refl := by simp
+  le_trans := by grind [lt_iff_le_not_ge, le_trans]
+  le_antisymm := by grind [lt_iff_le_not_ge, le_antisymm]
+
+def add : LexicalSemiring α β → LexicalSemiring α β → LexicalSemiring α β := fun ⟨s, r⟩ ⟨s', r'⟩ ↦
+  if h₁ : s = s' then ⟨s, r + r'⟩ else
+  if h₂ : s ⊔ s' = s ∧ s ≠ s' then ⟨s, r⟩ else
+  if h₃ : s ⊔ s' = s' ∧ s' ≠ s then ⟨s', r'⟩ else
+  False.elim (by simp_all; contrapose! h₁; rw [eq_comm] at h₃; apply h₃; exact h₂.le)
+
+instance instAdd : Add (LexicalSemiring α β) := ⟨add⟩
+
+@[grind, simp] theorem add_simp {a b : LexicalSemiring α β} : a + b = add a b := by rfl
+
+def mul : LexicalSemiring α β → LexicalSemiring α β → LexicalSemiring α β := fun ⟨s, r⟩ ⟨s', r'⟩ ↦
+    if s = s' ∧ s' = 0 then ⟨0, 0⟩ else
+    if s = 0 ∧ s' ≠ 0 then ⟨0, r⟩ else
+    if s' = 0 ∧ s ≠ 0 then ⟨0, r'⟩ else
+    ⟨s * s', r * r'⟩
+
+instance instMul : Mul (LexicalSemiring α β) := ⟨mul⟩
+
+@[grind, simp] theorem mul_simp {a b : LexicalSemiring α β} : a * b = mul a b := by rfl
+
+instance : Zero (LexicalSemiring α β) := ⟨⟨0, 0⟩⟩
+instance : One (LexicalSemiring α β) := ⟨⟨1, 1⟩⟩
+
+omit [LinearIdemSemiring α] [LinearIdemSemiring β] [DecidableEq α] in
+@[simp]
+theorem ite_a {l r : LexicalSemiring α β} {p : Prop} [Decidable p] :
+    (if p then l else r).a = if p then l.a else r.a := by grind
+omit [LinearIdemSemiring α] [LinearIdemSemiring β] [DecidableEq α] in
+@[simp]
+theorem ite_b {l r : LexicalSemiring α β} {p : Prop} [Decidable p] :
+    (if p then l else r).b = if p then l.b else r.b := by grind
+omit [LinearIdemSemiring α] [LinearIdemSemiring β] [DecidableEq α] in
+@[simp]
+theorem dite_a {l r : LexicalSemiring α β} {p : Prop} [Decidable p] :
+    (if _ : p then l else r).a = if p then l.a else r.a := by grind
+omit [LinearIdemSemiring α] [LinearIdemSemiring β] [DecidableEq α] in
+@[simp]
+theorem dite_b {l r : LexicalSemiring α β} {p : Prop} [Decidable p] :
+    (if _ : p then l else r).b = if p then l.b else r.b := by grind
+
+omit [LinearIdemSemiring α] [LinearIdemSemiring β] [DecidableEq α] in
+theorem eq_iff {l r : LexicalSemiring α β} : l = r ↔ l.a = r.a ∧ l.b = r.b := by grind
+
+theorem no_nonzero_divisors {s₁ s₂ : α} : s₁ * s₂ = 0 ↔ s₁ = 0 ∨ s₂ = 0 := by
+  exact mul_eq_zero
+
+instance : LinearIdemSemiring Unit where
+  bot_le := fun a ↦ trivial
+instance : NoZeroDivisors Unit where
+  eq_zero_or_eq_zero_of_mul_eq_zero := by
+    simp
+
+example [Unique α] (hβ : (1 : β) ≠ 0) : (1 : LexicalSemiring α β) * 1 ≠ 1 := by
+  simp_all [mul, eq_iff, Subsingleton.eq_zero]
+  unfold b
+  simp [OfNat.ofNat, One.one]
+  exact (hβ ·.symm)
+
+instance : Semiring (LexicalSemiring α β) where
+  add_assoc := by
+    intro ⟨as, ar⟩ ⟨bs, br⟩ ⟨cs, cr⟩
+    simp only [add_simp]
+    grind [add_assoc, le_antisymm, le_trans, add, sup_eq_left, sup_eq_right]
+
+    -- intro ⟨as, ar⟩ ⟨bs, br⟩ ⟨cs, cr⟩
+    -- simp [HAdd.hAdd, Add.add]
+    -- simp [add]
+    -- if as_bs : as = bs then
+    --   if as = cs then
+    --     grind [add_assoc]
+    --   else
+    --     grind
+    -- else
+    --   have bs_as : ¬bs = as := by grind
+    --   simp [as_bs, bs_as]
+    --   if as_cs : as = cs then
+    --     subst_eqs
+    --     simp [as_bs, bs_as]
+    --     if as_bs' : as ≤ bs then
+    --       have bs_as' : ¬bs ≤ as := by rw [le_iff_lt_or_eq] at as_bs'; simp_all
+    --       simp [as_bs', bs_as']
+    --       grind
+    --     else
+    --       grind
+    --   else
+    --     if bs_cs : bs = cs then
+    --       subst_eqs
+    --       grind
+    --     else
+    --       have cs_bs : ¬cs = bs := by grind
+    --       have cs_as : ¬cs = as := by grind
+    --       simp [bs_cs, cs_bs]
+    --       if as_bs' : as ≤ bs then
+    --         have bs_as' : ¬bs ≤ as := by rw [le_iff_lt_or_eq] at as_bs'; simp_all
+    --         simp [as_bs', bs_as', bs_cs]
+    --         if bs_cs' : bs ≤ cs then
+    --           have cs_bs' : ¬cs ≤ bs := by rw [le_iff_lt_or_eq] at bs_cs'; simp_all
+    --           simp [bs_cs', cs_bs', cs_bs, as_cs, cs_as]
+    --           split_ifs
+    --           · simp [cs_as]
+    --             have := as_bs'.trans bs_cs'
+    --             grind [le_antisymm]
+    --           · simp
+    --           · grind
+    --         else
+    --           simp [bs_cs']
+    --           if bs_cs' : bs ≤ cs then
+    --             have cs_bs' : ¬cs ≤ bs := by rw [le_iff_lt_or_eq] at bs_cs'; simp_all
+    --             simp [cs_bs']
+    --             grind
+    --           else
+    --             grind
+    --       else
+    --         have bs_as' : bs ≤ as := by rw [le_iff_lt_or_eq] at as_bs'; simp_all
+    --         simp [bs_as', as_cs]
+    --         if bs_cs' : bs ≤ cs then
+    --           have cs_bs' : ¬cs ≤ bs := by rw [le_iff_lt_or_eq] at bs_cs'; simp_all
+    --           grind
+    --         else
+    --           have cs_bs' : cs ≤ bs := by rw [le_iff_lt_or_eq] at bs_cs'; simp_all
+    --           simp [cs_bs', as_bs, bs_as']
+    --           intro h
+    --           have : as ≤ cs := by simp_all [le_iff_lt_or_eq]
+    --           simp [this, cs_as]
+    --           grind [le_trans]
+
+
+
+
+
+  zero_add := by
+    intro ⟨as, ar⟩
+    simp_all only [add_simp, add, zero_add, zero_le, sup_of_le_right, ne_eq, not_false_eq_true,
+      and_true, and_self, ↓reduceDIte, dite_eq_ite, ite_eq_left_iff, ite_eq_right_iff, mk.injEq,
+      true_and]
+    grind
+  add_zero := by
+    intro ⟨as, ar⟩
+    simp_all only [add_simp, add, add_zero, zero_le, sup_of_le_left, ne_eq, not_false_eq_true,
+      and_self, ↓reduceDIte, dite_eq_ite, ite_eq_right_iff, implies_true]
+  nsmul := sorry
+  nsmul_zero := sorry
+  nsmul_succ := sorry
+  add_comm := by
+    intro ⟨as, ar⟩ ⟨bs, br⟩
+    simp_all only [add_simp, add, sup_eq_left, ne_eq, not_false_eq_true, and_true, sup_eq_right]
+    split_ifs <;> subst_eqs <;> try grind [add_comm, le_antisymm]cal
+
+  left_distrib := by
+    sorry
+    -- intro ⟨as, ar⟩ ⟨bs, br⟩ ⟨cs, cr⟩
+    -- apply eq_iff.mpr
+    -- simp_all only [add_simp, add, sup_eq_left, ne_eq, not_false_eq_true, and_true, sup_eq_right,
+    --   mul_dite, mul_simp, mul, ite_and, mul_zero, ite_not, ↓reduceIte, zero_mul, ite_self, ite_a,
+    --   ite_b]
+    -- sorry
+    -- if as = bs then
+    --   subst_eqs
+    --   simp +contextual
+    --   if as = cs then
+    --     subst_eqs
+    --     simp +contextual [left_distrib]
+    --     congr
+    --     -- grind
+    -- split_ifs
+
+  right_distrib := sorry
+  zero_mul := by
+    simp [eq_iff, mul]
+    split_ands <;> rfl
+  mul_zero := by
+    simp [eq_iff, mul]
+    split_ands <;> rfl
+  mul_assoc := by
+    intro ⟨as, ar⟩ ⟨bs, br⟩ ⟨cs, cr⟩
+    sorry
+    -- simp +contextual [mul, ite_and]
+  one_mul := by
+    intro ⟨as, ar⟩
+    simp_all [mul, ite_and, eq_comm]
+    if h : (0 : α) = 1 then
+      have : ∀ (x : α), x = 0 := eq_zero_of_zero_eq_one h
+      simp_all
+      sorry
+    else
+      simp_all
+      grind
+    -- split_ifs <;> subst_eqs <;> simp_all
+  mul_one := sorry
+
+end LexicalSemiring
 
 namespace WeightedChain
 

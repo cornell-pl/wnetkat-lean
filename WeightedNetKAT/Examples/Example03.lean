@@ -19,7 +19,8 @@ def l {𝒮 : Type} [OfNat 𝒮 2] : Pol[Fields,ℕ,𝒮] := wnk_pol {
 }
 
 /--
-info: {(({dst↦2,pt↦3,sw↦0}, [{dst↦2,pt↦0,sw↦0}]), 3), (({dst↦2,pt↦4,sw↦0}, [{dst↦2,pt↦0,sw↦0}]), 3)}
+info: {(([(dst, 2), (pt, 3), (sw, 0)], [[(dst, 2), (pt, 0), (sw, 0)]]), 3),
+ (([(dst, 2), (pt, 4), (sw, 0)], [[(dst, 2), (pt, 0), (sw, 0)]]), 3)}
 -/
 #guard_msgs in
 #wnk_eval[Bottleneck Secutiy₄, 2, ⟨pk[dst ↦ H₂], []⟩] {

@@ -163,9 +163,8 @@ def EENat := WithBot ENat
 instance (n : ℕ) : OfNat EENat n := ⟨some (some n)⟩
 
 instance : LinearOrder EENat := inferInstanceAs (LinearOrder (WithBot ENat))
--- TODO: this became noncomputable for some reason
--- instance : OrderBot EENat := inferInstanceAs (OrderBot (WithBot ENat))
--- instance : OrderTop EENat := inferInstanceAs (OrderTop (WithBot ENat))
+instance : OrderBot EENat := inferInstanceAs (OrderBot (WithBot ENat))
+instance : OrderTop EENat := inferInstanceAs (OrderTop (WithBot ENat))
 
 instance : Repr ℕ∞ where
   reprPrec p n := if p = ⊤ then "⊤" else reprPrec p.toNat n

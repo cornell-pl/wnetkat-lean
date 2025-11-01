@@ -13,9 +13,10 @@ deriving DecidableEq, Fintype
 open Fields
 
 instance : Listed Fields where
-  list := [dst, pt, sw]
-  nodup := by simp
+  array := #[dst, pt, sw]
+  nodup := by simp [Array.Nodup, Array.Pairwise]
   complete := by intro a; cases a <;> simp
+  encode | dst => 0 | pt => 1 | sw => 2
 
 instance : Encodable Fields where
   encode f := match f with | dst => 0 | pt => 1 | sw => 2
@@ -77,52 +78,63 @@ instance {X : Type} [Repr X] : Repr (Unit × X) where
 instance {X : Type} [Repr X] : Repr (X × Unit) where
   reprPrec x n := reprPrec x.1 n
 
-def Pk.all (F N : Type) [Fintype F] [DecidableEq F] [Fintype N] : Finset Pk[F,N] := Fintype.elems
-def Pk.pairs (F N : Type) [Fintype F] [DecidableEq F] [Fintype N] : Finset (Pk[F,N] × Pk[F,N]) := Fintype.elems
+-- def Pk.all (F N : Type) [Fintype F] [DecidableEq F] [Fintype N] : Finset Pk[F,N] := Fintype.elems
+-- def Pk.pairs (F N : Type) [Fintype F] [DecidableEq F] [Fintype N] : Finset (Pk[F,N] × Pk[F,N]) := Fintype.elems
 
-unsafe def RPol.eval {F N 𝒮 : Type}
+def RPol.eval {F N 𝒮 : Type}
     [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Listed F] [Listed N] [Inhabited N]
+    [Listed Pk[F,N]]
     [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
-    [DecidableEq 𝒮] [Star 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) : Std.Format :=
-  let n : WNKA F N 𝒮 (S p) := p.wnka
+    [DecidableEq 𝒮] [Star 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) : IO Std.Format := do
+  println! "computing wnka"
+  let n : EWNKA F N 𝒮 (S p) := p.ewnka
+  println! "accessing ι"
   let ι := n.ι
-  let δ : List (Pk[F,N] × Pk[F,N] × 𝒲[S p, S p, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, n.δ α β)) |>.filter (·.2.2 ≠ 0)
-  let 𝓁 : List (Pk[F,N] × Pk[F,N] × 𝒲[S p, 𝟙, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, n.𝒪 α β)) |>.filter (·.2.2 ≠ 0)
+  println! "accessing δ"
+  let δ : List (Pk[F,N] × Pk[F,N] × EMatrix (S p) (S p) 𝒮) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, n.δ.get α β)) -- |>.filter (·.2.2 ≠ 0)
+  println! "accessing 𝓁"
+  let 𝓁 : List (Pk[F,N] × Pk[F,N] × EMatrix (S p) (𝟙) 𝒮) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, n.𝒪.get α β)) -- |>.filter (·.2.2 ≠ 0)
+  println! "fin"
 
-  let q : Pk[F,N] → String := fun x ↦ reprStr <| Listed.list.map x
+  println! "start \{"
+  println! "  ι := {reprStr ι.data}"
+  println! "  𝓁 := {reprStr (𝓁.map (reprStr ·.2.2.data))}"
+  println! "  δ := {reprStr (δ.map (reprStr ·.2.2.data))}"
+  println! "} end"
 
-  f!"ι := {
-    Listed.listOf (S p) |>.filter (ι () · ≠ 0) |>.map (fun s ↦ s!"{reprStr s} = {reprStr (ι () s)}")
-  }\nδ := {
-    δ.map (fun (α, β, x) ↦
-      Listed.listOf (S p × S p) |>.filter (fun (s, s') ↦ x s s' ≠ 0) |>.map (fun (s, s') ↦ s!"{reprStr s} -> {reprStr s'} = {reprStr (x s s')} {q α};{q β}")
-    )
-  }\n𝓁 := {
-    𝓁.map (fun (α, β, x) ↦
-      Listed.listOf (S p) |>.filter (x · () ≠ 0) |>.map (fun s ↦ s!"{reprStr s} = {reprStr (x s ())} {q α};{q β}")
-    )
-  }"
+  let q : Pk[F,N] → String := fun x ↦ reprStr <| Listed.array.map x
+
+  let ιp := Listed.listOf (S p) |>.filter (ι.get () · ≠ 0) |>.map (fun s ↦ s!"{reprStr s} = {reprStr (ι.get () s)}")
+  println! "computed ιp"
+  let δp := δ.map (fun (α, β, x) ↦
+    Listed.listOf (S p × S p) |>.filter (fun (s, s') ↦ x.get s s' ≠ 0) |>.map (fun (s, s') ↦ s!"{reprStr s} -> {reprStr s'} = {reprStr (x.get s s')} {q α};{q β}")
+  )
+  println! "computed δp"
+  let 𝓁p := 𝓁.map (fun (α, β, x) ↦
+    Listed.listOf (S p) |>.filter (x.get · () ≠ 0) |>.map (fun s ↦ s!"{reprStr s} = {reprStr (x.get s ())} {q α};{q β}")
+  )
+  println! "computed 𝓁p"
+
+  return f!"ι := {ιp}\nδ := {δp}\n𝓁 := {𝓁p}"
 
   -- (ι, δ, 𝓁)
 
-unsafe def RPol.eval_string {F N 𝒮 : Type}
+def RPol.eval_string {F N 𝒮 : Type}
     [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Listed F] [Listed N] [Inhabited N]
+    [Listed Pk[F,N]]
     [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
     [DecidableEq 𝒮] [Star 𝒮] (p : RPol[F,N,𝒮]) (s : GS[F,N])
     :=
       p.wnka.sem s
 
-instance : Listed Unit where
-  list := [()]
-  complete := by simp
-  nodup := by simp
-
-instance myRepr {α A B : Type} [DecidableEq α] [Zero α] [Listed A] [Listed B] [Repr α] [Repr A] [Repr B] : Repr 𝒲[A, B, α] where
+instance myRepr {α A B : Type} [DecidableEq α] [Zero α] [DecidableEq A] [DecidableEq B]
+    [Listed A] [Listed B] [Repr α] [Repr A] [Repr B] : Repr 𝒲[A, B, α] where
   reprPrec m n :=
     reprPrec (Listed.listOf (A × B) |>.filter (fun (a, b) ↦ m a b ≠ 0) |>.map (fun (a, b) ↦ s!"{reprStr a},{reprStr b}↦{reprStr (m a b)}")) n
 
 instance {F N 𝒮 : Type}
     [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Listed F] [Listed N] [Inhabited N]
+    [Listed Pk[F,N]]
     [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
     [DecidableEq 𝒮] [Star 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) : Repr (WNKA F N 𝒮 (S p)) where
   reprPrec m n :=
@@ -130,7 +142,7 @@ instance {F N 𝒮 : Type}
     let δ : List (Pk[F,N] × Pk[F,N] × 𝒲[S p, S p, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, m.δ α β)) |>.filter (·.2.2 ≠ 0)
     let 𝓁 : List (Pk[F,N] × Pk[F,N] × 𝒲[S p, 𝟙, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, m.𝒪 α β)) |>.filter (·.2.2 ≠ 0)
 
-    let q : Pk[F,N] → String := fun x ↦ reprStr <| Listed.list.map x
+    let q : Pk[F,N] → String := fun x ↦ reprStr <| Listed.array.map x
 
     -- reprPrec (Listed.listOf (A × B) |>.map (fun (a, b) ↦ s!"≫{reprStr a},{reprStr b}↦{reprStr (m a b)}")) n
 

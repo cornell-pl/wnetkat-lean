@@ -51,18 +51,6 @@ def Pred.orDepth : Pred[F,N] → ℕ
 | wnk_pred {~t ∧ ~u} => t.orDepth ⊔ u.orDepth
 | wnk_pred {¬~t} => t.orDepth
 
-noncomputable def Pred.sem (p : Pred[F,N]) : H[F,N] → H[F,N] →c 𝒮 := match p with
-  | wnk_pred {false} => fun _ ↦ 0
-  | wnk_pred {true} => η
-  | wnk_pred {~f = ~n} => fun (π, h) ↦ if π f = n then η (π, h) else 0
-  | wnk_pred {~t ∨ ~u} => fun h ↦
-    -- ⟦t ⨁ ¬t; u⟧
-    t.sem h + (wnk_pred {¬~t}.sem h).bind u.sem
-  | wnk_pred {~t ∧ ~u} => fun h ↦ (t.sem h).bind u.sem
-  | wnk_pred {¬~t} => fun h ↦ if t.sem h = 0 then η h else 0
-termination_by (p.orDepth, sizeOf p)
-decreasing_by all_goals simp_all; omega
-
 def Pred.test (t : Pred[F,N]) (pk : Pk[F,N]) : Prop :=
   match t with
   | wnk_pred {false} => false
@@ -89,38 +77,8 @@ def Pred.test_decidable {t : Pred[F,N]} : DecidablePred t.test := fun pk ↦
     if h' : ¬t.test pk then .isTrue h' else .isFalse h'
 instance Pred.test_instDecidable {t : Pred[F,N]} : DecidablePred t.test := test_decidable
 
-omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [DecidableEq F] in
-theorem Pred.sem_eq_test (t : Pred[F,N]) :
-    t.sem (𝒮:=𝒮) = fun (h : H[F,N]) ↦ if t.test h.1 then η h else 0 := by
-  induction t with
-  | Bool b => cases b <;> grind [sem, Pred.sem, Pred.test]
-  | Test =>
-    ext h₀ h₁
-    simp_all [sem, Pred.sem, Pred.test]
-    split_ifs <;> subst_eqs <;> split <;> grind
-  | Dis u v =>
-    ext h₀ h₁
-    simp_all [sem, Pred.sem, Pred.test]
-    split_ifs
-    · simp_all only [Countsupp.coe_zero, Pi.zero_apply, true_or, reduceIte]
-      grind [zero_mul, ωSum_zero, add_zero]
-    · simp_all only [Countsupp.coe_zero, Pi.zero_apply]
-      grind [add_zero, zero_mul]
-    · simp_all
-      if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
-      split_ifs
-      · rw [ωSum_eq_single ⟨h₀, by simp_all⟩] <;> grind
-      · grind
-    · grind
-  | Con =>
-    ext h₀ h₁
-    simp_all only [sem, Countsupp.bind_apply, test]
-    split_ifs
-    · simp only [η_apply, ite_mul, one_mul, zero_mul]
-      if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
-      rw [ωSum_eq_single ⟨h₀, by simp_all⟩] <;> grind [reduceIte]
-    · simp_all only [Countsupp.coe_zero, Pi.zero_apply, zero_mul, ωSum_zero, false_and, reduceIte]
-  | Not => grind [sem, test]
+def Pred.sem (p : Pred[F,N]) (h : H[F,N]) : H[F,N] →c 𝒮 :=
+  if p.test h.1 then η h else 0
 
 instance : Subst Pk[F,N] F N where
   subst pk f n := fun f' ↦ if f = f' then n else pk f'
@@ -185,7 +143,7 @@ theorem Pol.map_sem (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) (hf : ωScottContinuo
     f (p.sem h h') = (p.map f).sem h h' := by
   induction p generalizing h h' with
   | Filter =>
-    simp only [map, sem, Pred.sem_eq_test]
+    simp only [map, sem, Pred.sem]
     split_ifs
     · simp only [η_apply, MonoidWithZeroHom.map_ite_one_zero]
     · simp only [Countsupp.coe_zero, Pi.zero_apply]
@@ -208,7 +166,7 @@ theorem Pol.map_sem (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) (hf : ωScottContinuo
       simp only [this]; apply map_ωSum f hf
     intro x
     induction x generalizing h h' with
-    | zero => simp [sem, Pred.sem]
+    | zero => simp [sem, Pred.sem]; split_ifs <;> simp
     | succ x ih' =>
       simp [sem, ih, ih', map_ωSum f hf]
       apply ωSum_eq_ωSum_of_ne_one_bij (fun ⟨⟨a, _⟩, h⟩ ↦ ⟨a, by contrapose! h; simp_all⟩)
@@ -219,7 +177,16 @@ theorem Pol.map_sem (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) (hf : ωScottContinuo
 
 example {t u : Pred[F,N]} :
     wnk_pol { ~t ∨ ~u }.sem (𝒮:=𝒮) = wnk_pol { @filter ~t ⨁ (¬~t; @filter ~u) }.sem := by
-  simp [Pol.sem, Pred.sem]
+  if h01 : (0 : 𝒮) = 1 then
+    ext; simp [eq_zero_of_zero_eq_one h01]
+  else
+    ext ⟨π₁, h₁⟩ ⟨π₂, h₂⟩
+    simp [Pol.sem, Pred.sem, Pred.test]
+    if h : t.test π₁ then
+      simp [h]
+    else
+      simp [h]
+      rw [ωSum_eq_single ⟨(π₁, h₁), by simp_all; grind⟩] <;> simp_all
 
 noncomputable def Φ (p : Pol[F,N,𝒮]) (d : H[F,N] → H[F,N] →c 𝒮) : H[F,N] → H[F,N] →c 𝒮 :=
   fun h ↦ η h + (p.sem h).bind d
@@ -227,7 +194,7 @@ noncomputable def Φ (p : Pol[F,N,𝒮]) (d : H[F,N] → H[F,N] →c 𝒮) : H[F
 example {p : Pol[F,N,𝒮]} : Φ p (wnk_pol {~p*}.sem) = wnk_pol { skip ⨁ ~p; ~p* }.sem := by
   ext
   unfold Φ
-  grind [Pol.sem, Pred.sem]
+  simp [Pol.sem, Pred.sem, Pred.test]
 
 open OmegaCompletePartialOrder OmegaContinuousNonUnitalSemiring
 
@@ -309,7 +276,7 @@ theorem Pol.iter_sem_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (wnk_pol {~p*}.sem
         = ω∑ (n : ℕ), (p.sem h).bind fun h ↦ (p.iter n).sem h by
       simp [this]; clear this
       nth_rw 2 [ωSum_nat_eq_succ]
-      simp [Pol.sem, Pred.sem]
+      simp [Pol.sem, Pred.sem, Pred.test]
     ext
     simp [Countsupp.bind, ← ωSum_mul_left]
     rw [ωSum_comm]
@@ -320,7 +287,7 @@ theorem Pol.iter_sem_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (wnk_pol {~p*}.sem
     | zero => simp only [Finset.range_zero, Finset.sum_empty, zero_le'']
     | succ n ih =>
       rw [add_comm]
-      simp only [Finset.sum_range_add, Finset.range_one, Finset.sum_singleton, iter, sem, Pred.sem]
+      simp only [Finset.sum_range_add, Finset.range_one, Finset.sum_singleton, iter, sem, Pred.sem, Pred.test, ↓reduceIte]
       rw [← hf]
       simp only [Φ]
       gcongr
@@ -346,6 +313,6 @@ example {p : Pol[F,N,𝒮]} : wnk_pol {~p*}.sem = wnk_pol { skip ⨁ ~p; ~p* }.s
   rw [← this]
   ext
   unfold Φ
-  simp [Pol.sem, Pred.sem]
+  simp [Pol.sem, Pred.sem, Pred.test]
 
 end WeightedNetKAT

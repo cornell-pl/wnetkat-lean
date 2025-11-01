@@ -11,17 +11,17 @@ import Mathlib.Order.OmegaCompletePartialOrder
 open OmegaCompletePartialOrder
 
 @[simp]
-theorem Chain.mk_apply {β : Type} [Preorder β] (f : ℕ → β) (hf : Monotone f) (a : ℕ) :
+theorem Chain.mk_apply {β : Type*} [Preorder β] (f : ℕ → β) (hf : Monotone f) (a : ℕ) :
     Chain.instFunLikeNat.coe ({toFun := f, monotone' := hf} : OrderHom ℕ β) a = f a := rfl
 
 @[simp]
-theorem OmegaCompletePartialOrder.ωSup_const {α : Type} [OmegaCompletePartialOrder α] (x : α) :
+theorem OmegaCompletePartialOrder.ωSup_const {α : Type*} [OmegaCompletePartialOrder α] (x : α) :
     ωSup ⟨fun _ ↦ x, by intro; simp⟩ = x := by
   apply le_antisymm
   · apply ωSup_le _ _ fun i ↦ ?_; rfl
   · apply le_ωSup_of_le 0; rfl
 
-theorem OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup {α : Type} [OmegaCompletePartialOrder α] (f : ℕ →o ℕ →o α) :
+theorem OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup {α : Type*} [OmegaCompletePartialOrder α] (f : ℕ →o ℕ →o α) :
       ωSup ⟨fun i ↦ ωSup ⟨fun j ↦ f i j, (f i).mono⟩, fun _ _ hij ↦ ωSup_le _ _ fun k ↦ le_ωSup_of_le k (f.mono hij k)⟩
     = ωSup ⟨fun i ↦ f i i, fun i j hij ↦ le_trans (f.mono hij i) ((f j).mono hij)⟩ := by
   apply le_antisymm
@@ -38,7 +38,7 @@ theorem OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup {α : Type} [OmegaComplet
     apply le_ωSup_of_le i
     rfl
 
-theorem OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup' {α : Type} [OmegaCompletePartialOrder α] (f : ℕ → ℕ → α) (hf : Monotone f) (hf' : ∀ i, Monotone (f i)) :
+theorem OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup' {α : Type*} [OmegaCompletePartialOrder α] (f : ℕ → ℕ → α) (hf : Monotone f) (hf' : ∀ i, Monotone (f i)) :
       ωSup ⟨fun i ↦ ωSup ⟨fun j ↦ f i j, hf' i⟩, fun _ _ hij ↦ ωSup_le _ _ fun k ↦ le_ωSup_of_le k (hf hij k)⟩
     = ωSup ⟨fun i ↦ f i i, fun i j hij ↦ le_trans (hf hij i) (hf' j hij)⟩ :=
   OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup ⟨fun i ↦ ⟨fun j ↦ f i j, hf' i⟩, hf⟩
@@ -65,22 +65,22 @@ theorem OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup' {α : Type} [OmegaComple
 --     use a
 --   · simp_all
 
-class IsPositiveOrderedAddMonoid (𝒮 : Type) [AddCommMonoid 𝒮] [PartialOrder 𝒮] [OrderBot 𝒮]
+class IsPositiveOrderedAddMonoid (𝒮 : Type*) [AddCommMonoid 𝒮] [PartialOrder 𝒮] [OrderBot 𝒮]
     extends IsOrderedAddMonoid 𝒮 where
   protected bot_eq_zero : (⊥ : 𝒮) = 0
 
 @[simp]
-theorem nonpos_iff_eq_zero' {α : Type} [AddCommMonoid α] [PartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] {a : α} :
+theorem nonpos_iff_eq_zero' {α : Type*} [AddCommMonoid α] [PartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] {a : α} :
     a ≤ 0 ↔ a = 0 := by
   rw [← IsPositiveOrderedAddMonoid.bot_eq_zero]
   simp
 
-@[simp] lemma zero_le'' {α : Type} [AddCommMonoid α] [PartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] (a : α) :
+@[simp] lemma zero_le'' {α : Type*} [AddCommMonoid α] [PartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] (a : α) :
     0 ≤ a := by
   rw [← IsPositiveOrderedAddMonoid.bot_eq_zero]
   simp
 
-instance (𝒮 : Type) [AddCommMonoid 𝒮] [PartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] : Subsingleton (AddUnits 𝒮) where
+instance (𝒮 : Type*) [AddCommMonoid 𝒮] [PartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] : Subsingleton (AddUnits 𝒮) where
   allEq := by
     intro ⟨a, a', ha₂, ha₃⟩ ⟨b, b', hb₂, hb₃⟩
     simp_all
@@ -93,7 +93,7 @@ instance (𝒮 : Type) [AddCommMonoid 𝒮] [PartialOrder 𝒮] [OrderBot 𝒮] 
     subst_eqs
     simp_all
 
-class OmegaContinuousNonUnitalSemiring (𝒮 : Type)
+class OmegaContinuousNonUnitalSemiring (𝒮 : Type*)
     [NonUnitalSemiring 𝒮]
     [OmegaCompletePartialOrder 𝒮]
     [OrderBot 𝒮]
@@ -107,7 +107,7 @@ class OmegaContinuousNonUnitalSemiring (𝒮 : Type)
 
 section
 
-variable {𝒮 : Type}
+variable {𝒮 : Type*}
   [NonUnitalSemiring 𝒮]
   [OmegaCompletePartialOrder 𝒮]
   [OrderBot 𝒮]
@@ -201,6 +201,7 @@ theorem ωSum_eq_zero_iff {f : X → 𝒮} : ω∑ (i : X), f i = 0 ↔ ∀ (x :
     simp_all
   · simp +contextual
 
+@[gcongr]
 theorem ωSum_mono {f g : X → 𝒮} (h : f ≤ g) : ω∑ n, f n ≤ ω∑ n, g n := by
   simp only [ωSum]
   refine ωSup_le_ωSup_of_le ?_

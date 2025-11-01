@@ -37,17 +37,16 @@ end
 
 namespace WeightedNetKAT
 
-/-- `At` is the set of complete tests. -/
-def At (F : Type) (N : Type) : Type := Pk[F,N]
+/-- `Pk?` is the set of complete tests. -/
+def Pk? (F : Type) (N : Type) : Type := Pk[F,N]
 
-/-- `Π` is the set of all complete assignments. -/
-def Pi (F : Type) (N : Type) : Type := Pk[F,N]
-@[inherit_doc] notation "Π" => WeightedNetKAT.Pi
+/-- `Pk!` is the set of all complete assignments. -/
+def Pk! (F : Type) (N : Type) : Type := Pk[F,N]
 
 /--
 The language of guarded strings.
 
-Isomorphically defined as `At ⬝ (Π ⬝ dup)* ⬝ Π`.
+Isomorphically defined as `Pk? ⬝ (Pk! ⬝ dup)* ⬝ Pk!`.
 -/
 def GS (F : Type) (N : Type) := Pk[F,N] × List Pk[F,N] × Pk[F,N]
 notation "GS[" f "," n "]" => GS (F:=f) (N:=n)

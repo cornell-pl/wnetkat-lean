@@ -101,10 +101,11 @@ namespace WeightedNetKAT
 
 attribute [local simp] Pred.sem Pred.compute in
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 theorem Pred.compute_eq_sem_n (p : Pred[F,N]) :
     p.sem (𝒮:=𝒮) = fun h ↦ (p.compute h).to𝒲 := by
   ext
-  rw [Pred.sem_eq_test]
+  rw [Pred.sem]
   simp
   split_ifs
   · split
@@ -134,7 +135,7 @@ theorem Pol.compute_eq_sem_n (p : Pol[F,N,𝒮]) (n : ℕ) : p.sem_n n = fun h �
     congr with x
     suffices (p.iter x).sem_n n = (fun h ↦ (p.iter x).compute n h |>.to𝒲) by simp [this]
     induction x with
-    | zero => ext; simp [Pred.sem, Pred.compute, η']; rfl
+    | zero => ext; simp [Pred.sem, Pred.compute, η', Pred.test]; rfl
     | succ x ihx => simp_all only [iter, sem_n, 𝒲.bind_of_𝒞, compute]
 
 end WeightedNetKAT

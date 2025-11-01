@@ -22,6 +22,9 @@ import Mathlib.Algebra.Group.Pointwise.Finset.Basic
 -- import Mathlib.Data.Finsupp.Pointwise
 -- import Mathlib.Data.Finsupp.Order
 import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
+import Mathlib.Algebra.Group.Finsupp
+import Mathlib.Algebra.BigOperators.Finsupp.Basic
+import Mathlib.Data.Finsupp.Order
 
 open OmegaCompletePartialOrder
 
@@ -97,29 +100,12 @@ variable [DecidableEq ι] [DecidableEq M]
 
 instance (priority:=high) instAdd' : Add (ι →₀ M) where add := zipWith' (· + ·) (add_zero 0)
 
-@[simp, norm_cast] lemma coe_add (f g : ι →₀ M) : ⇑(f + g) = f + g := rfl
+@[simp, norm_cast] lemma coe_add' (f g : ι →₀ M) : ⇑(f + g) = f + g := coe_add f g
 
-lemma add_apply (g₁ g₂ : ι →₀ M) (a : ι) : (g₁ + g₂) a = g₁ a + g₂ a := rfl
+instance instAddZeroClass' : AddZeroClass (ι →₀ M) :=
+  DFunLike.coe_injective.addZeroClass _ coe_zero coe_add'
 
-omit [DecidableEq ι] in
-lemma support_add [DecidableEq ι] : (g₁ + g₂).support ⊆ g₁.support ∪ g₂.support := support_zipWith'
-
-omit [DecidableEq ι] in
-lemma support_add_eq [DecidableEq ι] (h : Disjoint g₁.support g₂.support) :
-    (g₁ + g₂).support = g₁.support ∪ g₂.support :=
-  le_antisymm support_zipWith' fun a ha =>
-    (Finset.mem_union.1 ha).elim
-      (fun ha => by
-        have : a ∉ g₂.support := Disjoint.notMem_of_mem_left_finset h ha
-        simp only [mem_support_iff, not_not] at *; simpa only [add_apply, this, add_zero] )
-      fun ha => by
-      have : a ∉ g₁.support := Disjoint.notMem_of_mem_left_finset (id (Disjoint.symm h)) ha
-      simp only [mem_support_iff, not_not] at *; simpa only [add_apply, this, zero_add]
-
-instance instAddZeroClass : AddZeroClass (ι →₀ M) :=
-  fast_instance% DFunLike.coe_injective.addZeroClass _ coe_zero coe_add
-
-instance instIsLeftCancelAdd [IsLeftCancelAdd M] : IsLeftCancelAdd (ι →₀ M) where
+instance instIsLeftCancelAdd' [IsLeftCancelAdd M] : IsLeftCancelAdd (ι →₀ M) where
   add_left_cancel _ _ _ h := ext fun x => add_left_cancel <| DFunLike.congr_fun h x
 
 end AddZeroClass
@@ -241,13 +227,6 @@ instance {f : ι →₀ M} {p : ι → Prop} [DecidablePred p] : Decidable (∀ 
   else
     .isFalse (by simp [Finset.filter_eq_self] at h; simp; exact h)
 
-def decidableLE [DecidableLE M] : DecidableLE (ι →₀ M) :=
-  fun f g ↦
-    if h : ∀ x ∈ f.support, f x ≤ g x then
-      .isTrue (fun i ↦ by if f i = 0 then simp_all else simp_all)
-    else
-      .isFalse (fun h' ↦ by simp_all; obtain ⟨i, _, h⟩ := h; exact h (h' i))
-
 instance : PartialOrder (ι →₀ M) where
   le_refl _ _  := by simp
   le_antisymm f g hfg hgf := by ext i; apply le_antisymm (hfg i) (hgf i)
@@ -275,7 +254,7 @@ instance : AddCommMonoid (ι →₀ M) where
 
 omit [PartialOrder M] [OrderBot M] [MulLeftMono M] [MulRightMono M] [IsPositiveOrderedAddMonoid M] in
 @[simp]
-theorem sum_apply {Y : Type} [DecidableEq Y] {S : Finset ι} {f : ι → Y →₀ M} {a : Y} :
+theorem sum_apply''' {Y : Type} [DecidableEq Y] {S : Finset ι} {f : ι → Y →₀ M} {a : Y} :
     (∑ x ∈ S, f x) a = ∑ x ∈ S, f x a := by
   induction S using Finset.induction with
   | empty => simp
@@ -342,12 +321,12 @@ instance [Fintype ι] : OmegaContinuousNonUnitalSemiring (ι →₀ M) where
   ωScottContinuous_add_left := by
     refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨add_left_mono, fun C ↦ ?_⟩
     ext x
-    simp only [coe_add, Pi.add_apply, ωSup_apply, add_ωSup]
+    simp only [coe_add', Pi.add_apply, ωSup_apply, add_ωSup]
     congr
   ωScottContinuous_add_right := by
     refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨add_right_mono, fun C ↦ ?_⟩
     ext x
-    simp only [coe_add, Pi.add_apply, ωSup_apply, ωSup_add]
+    simp only [coe_add', Pi.add_apply, ωSup_apply, ωSup_add]
     congr
   ωScottContinuous_mul_left := by
     refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨(mul_left_mono), fun C ↦ ?_⟩

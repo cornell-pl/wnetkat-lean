@@ -14,3 +14,7 @@ scope = "leanprover-community"
 
 [[lean_lib]]
 name = "WeightedNetKAT"
+
+[[lean_exe]]
+name = "wnk"
+root = "WeightedNetKAT"
