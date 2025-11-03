@@ -13,7 +13,7 @@ variable {X : Type} {𝒮 : Type}
   [IsPositiveOrderedAddMonoid 𝒮]
   [OmegaContinuousNonUnitalSemiring 𝒮]
 
-variable {F : Type} [Fintype F] [DecidableEq F]
+variable {F : Type} [Listed F] [DecidableEq F]
 variable {N : Type} [DecidableEq N]
 
 @[simp]

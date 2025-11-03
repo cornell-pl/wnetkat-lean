@@ -36,7 +36,7 @@ variable {X : Type} {𝒮 : Type}
   [MulRightMono 𝒮]
   [IsPositiveOrderedAddMonoid 𝒮]
 
-variable {F : Type} [Fintype F] [DecidableEq F]
+variable {F : Type} [Fintype F] [DecidableEq F] [Listed F]
 variable {N : Type} [DecidableEq N]
 
 noncomputable instance : DecidableEq (X →c 𝒮) := Classical.typeDecidableEq _
@@ -81,7 +81,8 @@ def Pred.sem (p : Pred[F,N]) (h : H[F,N]) : H[F,N] →c 𝒮 :=
   if p.test h.1 then η h else 0
 
 instance : Subst Pk[F,N] F N where
-  subst pk f n := fun f' ↦ if f = f' then n else pk f'
+  -- TODO: we can optimize this
+  subst pk f n := .ofFn fun f' ↦ if f = f' then n else pk f'
 
 @[simp]
 def Pol.iter (p : Pol[F,N,X]) : ℕ → Pol[F,N,X]
@@ -98,7 +99,7 @@ def Pol.iterDepth : Pol[F,N,X] → ℕ
 | wnk_pol {~_ ⨀ ~q} => q.iterDepth
 | wnk_pol {~p *} => p.iterDepth + 1
 
-omit [Fintype F] [DecidableEq F] [DecidableEq N] in
+omit [Fintype F] [DecidableEq F] [DecidableEq N] [Listed F] in
 @[simp]
 theorem Pol.iterDepth_iter {p : Pol[F,N,X]} {n : ℕ} :
     (p.iter n).iterDepth = if n = 0 then 0 else p.iterDepth := by
@@ -138,7 +139,7 @@ theorem map_ωSum {ι : Type} [Countable ι] (g : 𝒮 →+* M) (hg : ωScottCon
   grind [map_zero]
 variable {M : Type} [Semiring M] [OmegaCompletePartialOrder M] [OrderBot M] [IsPositiveOrderedAddMonoid M] in
 open OmegaCompletePartialOrder in
-omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [Fintype F] in
 theorem Pol.map_sem (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) (hf : ωScottContinuous f) (h h') :
     f (p.sem h h') = (p.map f).sem h h' := by
   induction p generalizing h h' with
@@ -198,12 +199,13 @@ example {p : Pol[F,N,𝒮]} : Φ p (wnk_pol {~p*}.sem) = wnk_pol { skip ⨁ ~p; 
 
 open OmegaCompletePartialOrder OmegaContinuousNonUnitalSemiring
 
-omit [MulRightMono 𝒮] in
+omit [MulRightMono 𝒮] [Fintype F] in
 theorem Φ_mono (p : Pol[F,N,𝒮]) : Monotone (Φ p) := by
   intro a b hab h
   simp [Φ]
   gcongr
   exact Countsupp.bind_mono_right (p.sem h) _ _ hab
+omit [Fintype F] in
 theorem Φ_continuous [OmegaContinuousNonUnitalSemiring 𝒮] (p : Pol[F,N,𝒮]) : ωScottContinuous (Φ p) := by
   refine ωScottContinuous.of_monotone_map_ωSup ⟨Φ_mono p, ?_⟩
   intro C
@@ -243,6 +245,7 @@ theorem IsLfp_unique {α : Type} [OmegaCompletePartialOrder α] {f : α → α} 
 variable [OmegaContinuousNonUnitalSemiring 𝒮]
 
 attribute [-simp] Function.iterate_succ in
+omit [Fintype F] in
 theorem Pol.Φ_ωSup_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (Φ_ωSup p) := by
   constructor
   · simp only [Φ_ωSup]
@@ -267,6 +270,7 @@ theorem Pol.Φ_ωSup_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (Φ_ωSup p) := by
       rw [← hx]
       apply Φ_mono p ih
 
+omit [Fintype F] in
 theorem Pol.iter_sem_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (wnk_pol {~p*}.sem) := by
   constructor
   · ext h h'
@@ -305,6 +309,7 @@ theorem Pol.iter_sem_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (wnk_pol {~p*}.sem
           convert ih h₁
           simp only [Finset.sum_apply]
 
+omit [Fintype F] in
 theorem Pol.iter_sem_eq_lfp (p : Pol[F,N,𝒮]) : wnk_pol {~p*}.sem = Φ_ωSup p :=
   IsLfp_unique p.iter_sem_isLfp p.Φ_ωSup_isLfp
 

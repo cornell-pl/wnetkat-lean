@@ -1,7 +1,9 @@
 import WeightedNetKAT.Examples.Common
 import WeightedNetKAT.WNKA
+import WeightedNetKAT.rSafety
 import WeightedNetKAT.Instances.Language
 import WeightedNetKAT.Instances.ENat
+-- import WeightedNetKAT.Instances.Arctic
 
 namespace WeightedNetKAT
 
@@ -35,9 +37,9 @@ instance : Listed City where
   encode_prop := by rintro (_ | _) <;> simp
 
 def mod {𝒮} [Semiring 𝒮] (c : City) : RPol[Switch,City,𝒮] :=
-  .Mod fun _ ↦ c
+  .Mod (.fill c)
 def test {𝒮} [Semiring 𝒮] (c : City) : RPol[Switch,City,𝒮] :=
-  .Test fun _ ↦ c
+  .Test (.fill c)
 
 def p' {𝒮} [Semiring 𝒮] : City → RPol[Switch,City,𝒮]
 | SEA => wnk_rpol { 1 ⨀ ~(mod BAY) ⨁ 2 ⨀ ~(mod DEN) }
@@ -51,7 +53,6 @@ def p' {𝒮} [Semiring 𝒮] : City → RPol[Switch,City,𝒮]
 | LA  => wnk_rpol { 1 ⨀ ~(mod HOU) }
 | HOU => wnk_rpol { 1 ⨀ ~(mod ATL) }
 | ATL => wnk_rpol { 1 ⨀ ~(mod DC) }
--- | ATL => wnk_rpol { skip
 
 def p (𝒮) [Semiring 𝒮] : RPol[Switch,City,𝒮] := wnk_rpol {
   -- (~(test SEA) ; ~(p' SEA)) ⨁
@@ -59,11 +60,11 @@ def p (𝒮) [Semiring 𝒮] : RPol[Switch,City,𝒮] := wnk_rpol {
   -- (~(test NYC) ; ~(p' NYC)) ⨁
   -- (~(test BAY) ; ~(p' BAY)) ⨁
   -- (~(test DEN) ; ~(p' DEN)) ⨁
-  -- (~(test KAN) ; ~(p' KAN)) ⨁
-  -- (~(test IND) ; ~(p' IND)) ⨁
-  -- (~(test DC)  ; ~(p' DC))  ⨁
-  -- (~(test LA)  ; ~(p' LA))  ⨁
-  -- (~(test HOU) ; ~(p' HOU)) ⨁
+  (~(test KAN) ; ~(p' KAN)) ⨁
+  (~(test IND) ; ~(p' IND)) ⨁
+  (~(test DC)  ; ~(p' DC))  ⨁
+  (~(test LA)  ; ~(p' LA))  ⨁
+  (~(test HOU) ; ~(p' HOU)) ⨁
   (~(test ATL) ; ~(p' ATL))
 }
 
@@ -79,7 +80,7 @@ open WeightedNetKAT
 
 -- #wnka_eval[Switch, City, ℕ∞] { skip }
 
-instance : Listed Pk[Switch,City] := Listed.pi _ _
+-- instance : Listed Pk[Switch,City] := Listed.pi Switch City
 
 -- def test (α β : Type) [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β] [Listed α] [Listed β] [Inhabited β] [Repr α] [Repr β] : IO Unit := do
 --   println! "Start"
@@ -106,6 +107,14 @@ def main : IO Unit := do
   -- let res := wnk_rpol { ~(p ℕ∞) }.eval
   -- let n : ℕ := 12
   -- let res := unsafe unsafeIO (println! "star_fin({n})")
+  -- let xs : Array Pk[Switch,City] := Listed.pi_array (α:=Switch) (β:=City)
+  -- println! f!"Pk[Switch,City]: {reprStr xs}"
+  -- let := Listed.ofArray xs Listed.pi_array_nodup (fun _ ↦ Listed.mem_pi_array)
+  let pol := wnk_rpol { (~(p ℕ∞) ; dup)* }
+  -- let pol := wnk_rpol { (~(p Arctic) ; dup)* }
+  -- let res ← pol.eval
+  let n : EWNKA _ _ _ (S pol) := pol.ewnka
 
-  let res ← wnk_rpol { (~(p ℕ∞))* }.eval
-  println! f!"{res}"
+  let r := rSafety.Esem' n
+
+  println! f!"rSafety: {reprStr r}"

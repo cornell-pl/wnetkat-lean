@@ -16,9 +16,11 @@ variable {l m m' n n' : ℕ} {α : Type*}
 variable {X X' : NMatrix m n α}
 variable {Y Y' : NMatrix n l α}
 
+@[inline]
 def ofFn (f : Fin m → Fin n → α) : NMatrix m n α :=
   ⟨.ofFn fun i ↦ f i.divNat i.modNat⟩
 
+@[inline]
 def get (M : NMatrix m n α) (i : Fin m) (j : Fin n) : α :=
   M.data[i.val * n + j.val]'(by
     rcases i with ⟨i, hi⟩; rcases j with ⟨j, hj⟩
@@ -108,6 +110,9 @@ theorem ofFn_asMatrix {f : Fin m → Fin n → α} : (ofFn f).asMatrix = f := of
 @[simp, grind]
 theorem ofMatrix_get {f : Fin m → Fin n → α} : (NMatrix.ofMatrix f).get = f := ofFn_get
 
+def map {β : Type} (M : NMatrix m n α) (f : α → β) : NMatrix m n β :=
+  ⟨M.data.map f⟩
+
 instance [Zero α] [One α] : One (NMatrix n n α) := ⟨NMatrix.ofMatrix 1⟩
 instance [Zero α] : Zero (NMatrix n n α) := ⟨NMatrix.ofMatrix 0⟩
 
@@ -135,7 +140,7 @@ theorem asMatrix_mul [Mul α] [AddCommMonoid α] : (X * Y).asMatrix = X.asMatrix
 
 end NMatrix
 
-def EMatrix (m n α : Type) [instm : Listed m] [instn : Listed n] := NMatrix instm.size instn.size α
+def EMatrix (m n α : Type) [Listed m] [Listed n] := NMatrix (Listed.size m) (Listed.size n) α
 
 -- structure EMatrix (m n α : Type) [instm : Listed m] [instn : Listed n] where
 --   data : Vector α (instm.size * instn.size)
@@ -153,26 +158,36 @@ def get (M : EMatrix m n α) (i : m) (j : n) : α :=
   let j' := Listed.encodeFin j
   NMatrix.get M i' j'
 
-def ofFn (f : m → n → α) : EMatrix m n α :=
+def ofFn (f : Fin (Listed.size m) → (Fin (Listed.size n)) → α) : EMatrix m n α :=
+  NMatrix.ofFn fun i j ↦ f i j
+def ofFnSlow (f : m → n → α) : EMatrix m n α :=
   NMatrix.ofFn fun i j ↦ f (Listed.decodeFin i) (Listed.decodeFin j)
 
 @[simp, grind]
-theorem ofFn_get {f : m → n → α} : (ofFn f).get = f := by
+theorem ofFnSlow_get {f : m → n → α} : (ofFnSlow f).get = f := by
+  ext i j
+  simp [ofFnSlow, get]
+
+@[simp, grind]
+theorem get_ofFnSlow : ofFnSlow X.get = X := by
+  simp [ofFnSlow]
+  sorry
+
+@[simp, grind]
+theorem ofFn_get {f : Fin (Listed.size m) → Fin (Listed.size n) → α} : (ofFn f).get = fun i j ↦ f (Listed.encodeFin i) (Listed.encodeFin j) := by
   ext i j
   simp [ofFn, get]
 
 @[simp, grind]
-theorem get_ofFn : ofFn X.get = X := by
-  simp [ofFn]
-  sorry
+theorem get_ofFn : ofFn (NMatrix.get X) = X := by simp [ofFn]
 
 def asMatrix (M : EMatrix m n α) : Matrix m n α := M.get
-def ofMatrix (M : Matrix m n α) : EMatrix m n α := .ofFn M
+def ofMatrix (M : Matrix m n α) : EMatrix m n α := .ofFnSlow M
 
 @[simp, grind]
-theorem ofFn_asMatrix {f : m → n → α} : (ofFn f).asMatrix = f := ofFn_get
+theorem ofFnSlow_asMatrix {f : m → n → α} : (ofFnSlow f).asMatrix = f := ofFnSlow_get
 @[simp, grind]
-theorem ofMatrix_get {f : m → n → α} : (EMatrix.ofMatrix f).get = f := ofFn_get
+theorem ofMatrix_get {f : m → n → α} : (EMatrix.ofMatrix f).get = f := ofFnSlow_get
 
 @[simp, grind] theorem asMatrix_ofMatrix : EMatrix.ofMatrix X.asMatrix = X := by
   simp [ofMatrix, asMatrix]
@@ -181,9 +196,10 @@ theorem ofMatrix_get {f : m → n → α} : (EMatrix.ofMatrix f).get = f := ofFn
   simp [ofMatrix, asMatrix]
 
 def map {β: Type} (f : α → β) (M : EMatrix m n α) : EMatrix m n β :=
-  .ofFn fun i j ↦ f (M.get i j)
+  .ofFn fun i j ↦ f (NMatrix.get M i j)
 
 def asNMatrix (X : EMatrix m n α) : NMatrix (Listed.size m) (Listed.size n) α := X
+def asNMatrix₂ (X : EMatrix m n (EMatrix m' n' α)) : NMatrix (Listed.size m) (Listed.size n) (NMatrix (Listed.size m') (Listed.size n') α) := X
 
 theorem eq_of_asNMatrix (h : X.asNMatrix = X'.asNMatrix) : X = X' := h
 
@@ -194,8 +210,20 @@ theorem ext (h : ∀ i j, X.get i j = X'.get i j) : X = X' := by
   specialize h (Listed.decodeFin i) (Listed.decodeFin j)
   simp [get] at h
   exact h
+
+def asNatMatrix (X : EMatrix m n α) : Matrix (Fin (Listed.size m)) (Fin (Listed.size n)) α :=
+  NMatrix.get X
+def ofNatMatrix (X : Matrix (Fin (Listed.size m)) (Fin (Listed.size n)) α) : EMatrix m n α :=
+  NMatrix.ofFn X
+
 def asMatrix₂ (M : EMatrix m n (EMatrix m' n' α)) : Matrix m n (Matrix m' n' α) := fun i j i' j' ↦ (M.get i j).get i' j'
-def ofMatrix₂ (M : Matrix m n (Matrix m' n' α)) : EMatrix m n (EMatrix m' n' α) := (EMatrix.ofFn M).map .ofMatrix
+def ofMatrix₂ (M : Matrix m n (Matrix m' n' α)) : EMatrix m n (EMatrix m' n' α) := (EMatrix.ofFnSlow M).map .ofMatrix
+
+def asNatMatrix₂ (M : EMatrix m n (EMatrix m' n' α)) :
+    Matrix (Fin (Listed.size m)) (Fin (Listed.size n)) (Matrix (Fin (Listed.size m')) (Fin (Listed.size n')) α) :=
+  fun i j i' j' ↦ NMatrix.get (NMatrix.get M i j) i' j'
+def ofNatMatrix₂ (M : Matrix (Fin (Listed.size m)) (Fin (Listed.size n)) (Matrix (Fin (Listed.size m')) (Fin (Listed.size n')) α)) :
+    EMatrix m n (EMatrix m' n' α) := (NMatrix.ofFn M).map .ofNatMatrix
 
 -- @[simp, grind]
 -- theorem ofFn_asMatrix₂ {f : m → n → α} : (ofFn f).asMatrix₂ = f := ofFn_get
@@ -205,7 +233,7 @@ def ofMatrix₂ (M : Matrix m n (Matrix m' n' α)) : EMatrix m n (EMatrix m' n' 
 @[simp, grind] theorem asMatrix₂_ofMatrix₂ {X : EMatrix m n (EMatrix m' n' α)} : EMatrix.ofMatrix₂ X.asMatrix₂ = X := by
   simp [ofMatrix₂]
   ext i j i' j'
-  simp [map, asMatrix₂]
+  simp [map, asMatrix₂, ofFnSlow]
 omit [Listed m'] [Listed n'] in
 @[simp, grind] theorem ofMatrix₂_asMatrix₂ {M : Matrix m n (Matrix m' n' α)} :
     (EMatrix.ofMatrix M).asMatrix = M := by
@@ -216,9 +244,9 @@ theorem eq_ofMatrix (h : X.asMatrix = X'.asMatrix) : X = X' := by
   ext i j; exact congrFun₂ h i j
 
 instance [Add α] : Add (EMatrix m n α) where
-  add a b := .ofMatrix (a.asMatrix + b.asMatrix)
+  add a b := .ofNatMatrix (a.asNatMatrix + b.asNatMatrix)
 
-instance [Zero α] : Zero (EMatrix m n α) := ⟨EMatrix.ofMatrix 0⟩
+instance [Zero α] : Zero (EMatrix m n α) := ⟨EMatrix.ofNatMatrix 0⟩
 
 @[simp]
 theorem zero_get [Zero α] : (0 : EMatrix m n α).get = 0 := by
@@ -244,7 +272,8 @@ theorem add_get [Add α] : (X + X').get = X.get + X'.get := by
   unfold instAdd
   rw [HAdd.hAdd, instHAdd]
   simp
-  rfl
+  sorry
+  -- rfl
 
 @[simp] theorem asMatrix_add [Add α] : (X + X').asMatrix = X.asMatrix + X'.asMatrix := by simp [asMatrix]
 
@@ -259,15 +288,16 @@ instance [AddCommMonoid α] : AddCommMonoid (EMatrix m n α) where
 
 
 instance [Fintype m] [Mul α] [AddCommMonoid α] : HMul (EMatrix l m α) (EMatrix m n α) (EMatrix l n α) where
-  hMul a b := .ofMatrix (a.asMatrix * b.asMatrix)
+  hMul a b := .ofNatMatrix (a.asNatMatrix * b.asNatMatrix)
 
 @[simp]
 theorem mul_get [Fintype n] [Mul α] [AddCommMonoid α] : (X * Y).get = X.asMatrix * Y.asMatrix := by
   simp [HMul.hMul]
+  sorry
 
 theorem asMatrix_mul [Fintype n] [Mul α] [AddCommMonoid α] : (X * Y).asMatrix = X.asMatrix * Y.asMatrix := by simp [asMatrix]
 
-#eval! (EMatrix.ofFn (m:=Fin 2) (n:=Fin 2) (α:=ℕ × ℕ) fun i j ↦ (i, j)) + EMatrix.ofFn (m:=Fin 2) (n:=Fin 2) (α:=ℕ × ℕ) fun i j ↦ (i, j)
+#eval! (EMatrix.ofFnSlow (m:=Fin 2) (n:=Fin 2) (α:=ℕ × ℕ) fun i j ↦ (i, j)) + EMatrix.ofFnSlow (m:=Fin 2) (n:=Fin 2) (α:=ℕ × ℕ) fun i j ↦ (i, j)
 
 instance [Zero α] [One α] [DecidableEq n] : One (EMatrix n n α) := ⟨EMatrix.ofMatrix 1⟩
 
@@ -881,6 +911,12 @@ instance instListed {A : Type} [DecidableEq A] [Listed A] : WeightedNetKAT.Star 
     let m' := Matrix.listedEquivNat m
     let m'' := star_fin m'
     Matrix.listedEquivNat.symm m'' |>.concrete
+
+instance instListed' {n : ℕ} : WeightedNetKAT.Star (NMatrix n n α) where
+  star m :=
+    -- let m' := Matrix.listedEquivNat m
+    star_fin' m
+    -- Matrix.listedEquivNat.symm m'' |>.concrete
 
 variable {𝒮 : Type} [Semiring 𝒮] [WeightedNetKAT.Star 𝒮]
 variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]

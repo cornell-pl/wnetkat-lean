@@ -38,24 +38,20 @@ namespace WeightedNetKAT
 variable {𝒮 : Type} [Semiring 𝒮]
 variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
 
-variable [MulLeftMono 𝒮] [MulRightMono 𝒮]
-
-variable {F : Type} [Fintype F] [DecidableEq F]
-variable {N : Type} [Fintype N] [DecidableEq N]
+variable {F : Type} [DecidableEq F] [Listed F]
+variable {N : Type} [DecidableEq N]
 
 instance {X : Type} [Countable X] : One (X →c 𝒮) where
   one := ⟨1, SetCoe.countable _⟩
 
-omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[simp]
 theorem Countsupp.one_apply {X : Type} [Countable X] {x : X} : (1 : X →c 𝒮) x = 1 := by rfl
 
-omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 @[simp]
 theorem Countsupp.zero_bind {X : Type} [Countable X] [Encodable X] {g : X → X →c 𝒮} :
     ((0 : X →c 𝒮).bind g) = 0 := by ext x; simp
 
-omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 @[simp]
 theorem Countsupp.one_bind {X : Type} [Countable X] [Encodable X] {g : X → X →c 𝒮} :
     ((1 : X →c 𝒮).bind g) = ω∑ x, g x := by
@@ -80,7 +76,6 @@ noncomputable def RPol.sem (p : RPol[F,N,𝒮]) : H[F,N] → H[F,N] →c 𝒮 :=
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
-omit [DecidableEq F] [Fintype N] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 theorem RPol.seq_of_prefix {p : RPol[F,N,𝒮]} {h₀ h₁ : H[F,N]} (h : (p.sem h₀) h₁ ≠ 0) :
     h₀.2 <:+ h₁.2 := by
   induction p generalizing h₀ h₁ with
@@ -179,17 +174,15 @@ instance : HAdd RPol[F,N,𝒮] RPol[F,N,𝒮] RPol[F,N,𝒮] where
 instance : Add RPol[F,N,𝒮] where
   add p q := p.Add q
 
-omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [DecidableEq F] [Fintype N] in
 @[simp]
 theorem RPol.instAdd_sem (p q : RPol[F,N,𝒮]) : (p + q).sem = p.sem + q.sem := by
   ext; simp [sem]
 
-omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [DecidableEq F] [Fintype N] in
 @[simp]
 theorem RPol.instZero_sem : RPol.sem (F:=F) (N:=N) (𝒮:=𝒮) 0 = 0 := by
   unfold sem; rfl
 
-variable [Listed Pk[F,N]]
+variable [Listed N]
 
 def Pol.toRPol (p : Pol[F,N,𝒮]) : RPol[F,N,𝒮] := match p with
   -- ⨁ᶠ α ∈ At, [α ≤ t] ⨀ α
@@ -206,7 +199,6 @@ def Pol.toRPol (p : Pol[F,N,𝒮]) : RPol[F,N,𝒮] := match p with
   | wnk_pol {~p ⨁ ~q} => wnk_rpol {~p.toRPol ⨁ ~q.toRPol}
   | wnk_pol {~p*} => wnk_rpol {~p.toRPol*}
 
-omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 theorem Pol.filter_toRol_sem_eq_sum (t : Pred[F,N]) :
     (wnk_pol {@filter ~t}).toRPol.sem (𝒮:=𝒮) = ∑ α, if t.test α then wnk_rpol {@test ~α}.sem else 0 := by
   simp [toRPol]
@@ -226,14 +218,13 @@ theorem Pol.filter_toRol_sem_eq_sum (t : Pred[F,N]) :
   rw [List.toFinset_filterMap]
   · rw [Finset.sum_filterMap _ _ (by simp_all)]
     congr with p
-    · simp [← h]
+    · simp [← h, Listed.listOf]
     · rename_i h₀ h₁
       split <;> simp only [Pi.zero_apply, Countsupp.coe_zero]
   · refine List.Nodup.filterMap ?_ ?_
     · grind
     · simp [← h, Array.nodup_iff_toList_nodup]
 
-omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 theorem Pol.assign_toRol_sem_eq_sum (f : F) (v : N) :
     (wnk_pol {~f ← ~v}).toRPol.sem (𝒮:=𝒮) = ∑ α, wnk_rpol {@test ~α; @mod ~α[f ↦ v]}.sem := by
   simp [toRPol]
@@ -255,7 +246,6 @@ theorem Pol.assign_toRol_sem_eq_sum (f : F) (v : N) :
     simp [← h]
   · simp [← h, Array.nodup_iff_toList_nodup]
 
-omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 theorem Pol.toRol_sem_eq_sem (p : Pol[F,N,𝒮]) : p.toRPol.sem = p.sem := by
   induction p with
   | Filter t =>

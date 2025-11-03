@@ -10,7 +10,7 @@ variable {X : Type} {𝒮 : Type}
   [IsPositiveOrderedAddMonoid 𝒮]
   [DecidableEq 𝒮]
 
-variable {F : Type} [Fintype F] [DecidableEq F]
+variable {F : Type} [Listed F] [DecidableEq F]
 variable {N : Type} [DecidableEq N]
 
 namespace WeightedNetKAT
@@ -46,10 +46,10 @@ section
 
 variable {X : Type} {𝒮 : Type}
 variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [Semiring 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] [DecidableEq 𝒮]
-variable {F : Type} [Fintype F]
-variable {N : Type} [Fintype N] [DecidableEq N]
+variable {F : Type} [Listed F] [DecidableEq F]
+variable {N : Type} [Listed N] [DecidableEq N]
 
-def Finsupp.to𝒲 (m : H[F,N] →₀ 𝒮) : H[F,N] →c 𝒮 := ⟨m.toFun, Set.to_countable _⟩
+def Finsupp.to𝒲 (m : H[F,N] →₀ 𝒮) : H[F,N] →c 𝒮 := ⟨m.toFun, Set.Finite.countable m.finite_support⟩
 
 @[simp] def Finsupp.to𝒲_apply (m : H[F,N] →₀ 𝒮) (x : H[F,N]) : m.to𝒲 x = m x := rfl
 @[simp] def Finsupp.to𝒲_eq_zero (m : H[F,N] →₀ 𝒮) : m.to𝒲 = 0 ↔ m = 0 := by

@@ -46,7 +46,7 @@ macro_rules
 | `(#wnk_eval[$S, $n] { $p }) => `(#wnk_eval[$S, $n, ⟨0, []⟩] { $p })
 | `(#wnk_eval[$S, $n, $h] { $p }) => `(#eval! wnk_pol { $p }.compute (𝒮:=$S) $n $h |>.pretty)
 
-def S.repr {F N 𝒮 : Type} {p : RPol[F,N,𝒮]} (s : S p) : String :=
+def S.repr {F N 𝒮 : Type} [Listed F] {p : RPol[F,N,𝒮]} (s : S p) : String :=
   match p with
   | wnk_rpol { drop } => "♡"
   | wnk_rpol { skip } => "♡"
@@ -70,7 +70,7 @@ def S.repr {F N 𝒮 : Type} {p : RPol[F,N,𝒮]} (s : S p) : String :=
     | .inl s => let s' : S p₁ := s; s'.repr
     | .inr ⟨♡, _⟩ => "♡*"
 
-instance {F N 𝒮 : Type} {p : RPol[F,N,𝒮]} : Repr (S p) where
+instance {F N 𝒮 : Type} [Listed F] {p : RPol[F,N,𝒮]} : Repr (S p) where
   reprPrec s _ := s.repr
 
 instance {X : Type} [Repr X] : Repr (Unit × X) where
@@ -83,7 +83,6 @@ instance {X : Type} [Repr X] : Repr (X × Unit) where
 
 def RPol.eval {F N 𝒮 : Type}
     [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Listed F] [Listed N] [Inhabited N]
-    [Listed Pk[F,N]]
     [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
     [DecidableEq 𝒮] [Star 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) : IO Std.Format := do
   println! "computing wnka"
@@ -121,7 +120,6 @@ def RPol.eval {F N 𝒮 : Type}
 
 def RPol.eval_string {F N 𝒮 : Type}
     [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Listed F] [Listed N] [Inhabited N]
-    [Listed Pk[F,N]]
     [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
     [DecidableEq 𝒮] [Star 𝒮] (p : RPol[F,N,𝒮]) (s : GS[F,N])
     :=

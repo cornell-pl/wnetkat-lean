@@ -6,24 +6,48 @@ namespace WeightedNetKAT
 
 variable {𝒮 : Type}
 
-variable {F : Type} [Fintype F] [DecidableEq F]
+variable {F : Type} [Fintype F] [Listed F] [DecidableEq F]
 variable {N : Type} [Fintype N] [DecidableEq N]
 
-abbrev Pk (F N : Type) := F → N
+-- abbrev Pk (F N : Type) := F → N
+-- notation "Pk[" F "," N "]" => Pk F N
+
+structure Pk (F N : Type) [Listed F] where
+  data : Vector N (Listed.size (α:=F))
+deriving DecidableEq
 notation "Pk[" F "," N "]" => Pk F N
+
+instance : FunLike Pk[F,N] F N where
+  coe f i := f.data[Listed.encodeFin i]
+  coe_injective' := by
+    intro ⟨α⟩ ⟨β⟩ h
+    simp_all
+    ext i hi
+    replace h := congrFun h (Listed.decodeFin ⟨i, hi⟩)
+    simpa using h
+
+def Pk.fill (x : N) : Pk[F,N] := ⟨.ofFn fun _ ↦ x⟩
+def Pk.ofFn (f : F → N) : Pk[F,N] := ⟨.ofFn fun i ↦ f (Listed.decodeFin i)⟩
+
+instance Pk.listed [Listed N] : Listed Pk[F,N] :=
+  Listed.lift (α:=Vector N (Listed.size (α:=F))) ⟨(⟨·⟩), (·.data), by grind, by grind⟩
+instance Pk.fintype [Listed N] : Fintype Pk[F,N] := Listed.fintype
+
+instance Pk.ofNat {n : ℕ} [OfNat N n] : OfNat Pk[F,N] n where
+  ofNat := .fill (OfNat.ofNat n)
 
 -- omit [Fintype F] [Fintype N] [DecidableEq F] [DecidableEq N] in
 -- instance [Listed F] [Listed N] [Inhabited N] : Listed Pk[F,N] := Listed.pi F N
 
-instance {F : Type} [i : Fintype F] [e : Encodable F] [Repr F] [Repr N] : Repr Pk[F,N] where
+instance {F : Type} [i : Fintype F] [Listed F] [e : Encodable F] [Repr F] [Repr N] : Repr Pk[F,N] where
   reprPrec x _ := s!"\{{List.range i.card |>.filterMap e.decode |>.map (fun k ↦ s!"{reprStr k}↦{reprStr (x k)}") |> ",".intercalate}}"
 
-def H (F N : Type) := Pk[F,N] × List Pk[F,N]
+def H (F N : Type) [Listed F] := Pk[F,N] × List Pk[F,N]
 notation "H[" F "," N "]" => H F N
 
 instance : DecidableEq H[F,N] := inferInstanceAs (DecidableEq (_ × _))
-instance : Countable H[F,N] := inferInstanceAs (Countable (_ × _))
-instance [Encodable F] [Encodable N] : Encodable H[F,N] := inferInstanceAs (Encodable (_ × _))
+instance [Listed N] : Countable H[F,N] := inferInstanceAs (Countable (_ × _))
+-- instance [Encodable F] [Encodable N] : Encodable H[F,N] := inferInstanceAs (Encodable (_ × _))
 
 inductive Pred (F N : Type) where
   | Bool (b : Bool)

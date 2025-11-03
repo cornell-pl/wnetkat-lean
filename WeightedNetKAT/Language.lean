@@ -38,25 +38,24 @@ end
 namespace WeightedNetKAT
 
 /-- `Pk?` is the set of complete tests. -/
-def Pk? (F : Type) (N : Type) : Type := Pk[F,N]
+def Pk? (F : Type) (N : Type) [Listed F] : Type := Pk[F,N]
 
 /-- `Pk!` is the set of all complete assignments. -/
-def Pk! (F : Type) (N : Type) : Type := Pk[F,N]
+def Pk! (F : Type) (N : Type) [Listed F] : Type := Pk[F,N]
 
 /--
 The language of guarded strings.
 
 Isomorphically defined as `Pk? ⬝ (Pk! ⬝ dup)* ⬝ Pk!`.
 -/
-def GS (F : Type) (N : Type) := Pk[F,N] × List Pk[F,N] × Pk[F,N]
+def GS (F : Type) (N : Type) [Listed F] := Pk[F,N] × List Pk[F,N] × Pk[F,N]
 notation "GS[" f "," n "]" => GS (F:=f) (N:=n)
 
-instance {F N : Type} [Fintype F] [DecidableEq F] [DecidableEq N] : DecidableEq GS[F,N] := instDecidableEqProd
-instance {F N : Type} [Fintype F] [Fintype N] : Countable GS[F,N] := instCountableProd
-instance {F N : Type} [Fintype F] [Fintype N] [Encodable F] [Encodable N] : Encodable GS[F,N] := Encodable.Prod.encodable
+instance {F N : Type} [Listed F] [DecidableEq F] [DecidableEq N] : DecidableEq GS[F,N] := instDecidableEqProd
+instance {F N : Type} [Listed F] [Listed N] [DecidableEq N] : Countable GS[F,N] := instCountableProd
 
-variable {F : Type} [Fintype F] [DecidableEq F] [Encodable F]
-variable {N : Type} [Fintype N] [DecidableEq N] [Encodable N]
+variable {F : Type} [Listed F] [DecidableEq F]
+variable {N : Type} [Listed N] [DecidableEq N]
 
 def GS.mk (α : Pk[F,N]) (x : List Pk[F,N]) (β : Pk[F,N]) : GS[F,N] := ⟨α, x, β⟩
 
@@ -79,7 +78,9 @@ noncomputable instance : WeightedConcat (GS[F,N] →c 𝒮) (GS[F,N] →c 𝒮) 
     SetCoe.countable _,
   ⟩
 
-#check (GS.mk (fun _ ↦ 0) [] (fun _ ↦ 0)) ♢ (GS.mk (fun _ ↦ 0) [] (fun _ ↦ 0))
+/-- info: GS.mk 0 [] 0 ♢ GS.mk 0 [] 0 : ?m.18113 -/
+#guard_msgs in
+#check (GS.mk 0 [] 0) ♢ (GS.mk 0 [] 0)
 
 notation "gs[" α ";" β "]" => GS.mk α [] β
 notation "gs[" α ";" x ";" "dup" ";" β "]" => GS.mk α [x] β
@@ -97,12 +98,11 @@ def G.ofConst [DecidableEq GS[F,N]] (f : GS[F,N]) : GS[F,N] →c 𝒮 :=
   ⟨(if f = · then 1 else 0), SetCoe.countable _⟩
 
 open scoped Classical in
-omit [Encodable F] [Encodable N] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[simp]
 theorem G.ofPk_apply (f : Pk[F,N] → GS[F,N]) (x : GS[F,N]) :
     G.ofPk f x = if ∃ α, f α = x then (1 : 𝒮) else 0 := rfl
-omit [Encodable F] [Encodable N] in
-omit [DecidableEq N] [DecidableEq F] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
+omit [DecidableEq F] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[simp]
 theorem G.ofConst_apply [DecidableEq GS[F,N]] (f : GS[F,N]) (x : GS[F,N]) :
     G.ofConst f x = if f = x then (1 : 𝒮) else 0 := rfl
@@ -127,7 +127,7 @@ noncomputable def G (p : RPol[F,N,𝒮]) : GS[F,N] →c 𝒮 := match p with
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
 
-omit [Encodable F] [Encodable N] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 -- TODO: this proof is incredibly slow
 set_option maxHeartbeats 500000 in
 attribute [-simp] Function.iterate_succ in
@@ -164,7 +164,7 @@ theorem G.iter_succ (p₁ : RPol[F,N,𝒮]) (n : ℕ) :
     simp only [RPol.iter, G, Function.iterate_succ', Function.comp_apply]
     grind only [G, RPol.iter]
 
-omit [Encodable F] [Encodable N] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 attribute [-simp] Function.iterate_succ in
 theorem G.iter (p₁ : RPol[F,N,𝒮]) (n : ℕ) :
     G (p₁.iter n) = (G p₁ ♢ ·)^[n] (G wnk_rpol {skip}) := by
@@ -195,7 +195,7 @@ example (a b c d : Pk[F,N]) :
 
 noncomputable def GS.sem (g : GS[F,N]) : H[F,N] → H[F,N] →c 𝒮 :=
   g.toRPol.sem
-omit [DecidableEq F] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+omit [Listed N] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 theorem GS.sem_eq (g : GS[F,N]) (h) :
     g.sem (𝒮:=𝒮) h = if g.1 = h.1 then η (g.H.1, g.H.2 ++ h.2) else 0 := by
   if h10 : (1 : 𝒮) = 0 then ext; simp [eq_zero_of_zero_eq_one h10.symm] else
@@ -220,14 +220,13 @@ theorem GS.sem_eq (g : GS[F,N]) (h) :
       simp_all
       rw [ωSum_eq_single ⟨⟨x, x::h⟩, by simp [h10]⟩ (by simp_all)]
       simp_all
-  · simp [GS.toRPol, RPol.sem, ne_comm.mp h₀]
+  · ext; simp [GS.toRPol, RPol.sem, ne_comm.mp h₀]
 
 @[simp]
 noncomputable def RPol.sem_G_theorem (p : RPol[F,N,𝒮]) : Prop :=
   p.sem = fun h ↦ ω∑ x : (G p).support, G p x * x.val.sem (𝒮:=𝒮) h
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
-omit [Encodable F] [Encodable N] in
 theorem RPol.sem_G.Drop : wnk_rpol {drop}.sem_G_theorem (F:=F) (N:=N) (𝒮:=𝒮) := by
   ext h; simp [sem, G]
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
@@ -367,7 +366,6 @@ theorem RPol.sem_G.Seq {p₁ p₂} (ih₁ : p₁.sem_G_theorem) (ih₂ : p₂.se
     · simp_all
       grind
     · simp_all only [Countsupp.coe_zero, Pi.zero_apply, mul_zero, not_true_eq_false]
-omit [Encodable F] [Encodable N] in
 variable [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem RPol.sem_G.Add {p₁ p₂} (ih₁ : p₁.sem_G_theorem) (ih₂ : p₂.sem_G_theorem) : wnk_rpol {~p₁ ⨁ ~p₂}.sem_G_theorem (F:=F) (N:=N) (𝒮:=𝒮) := by
   simp [sem]
@@ -397,7 +395,6 @@ theorem RPol.sem_G.Add {p₁ p₂} (ih₁ : p₁.sem_G_theorem) (ih₂ : p₂.se
       rcases h₀
       simp_all
     · simp
-omit [Encodable F] [Encodable N] in
 variable [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem RPol.sem_G.Weight {w} {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~w ⨀ ~p₁}.sem_G_theorem (F:=F) (N:=N) (𝒮:=𝒮) := by
   simp only [sem_G_theorem] at ih
@@ -438,7 +435,7 @@ example {α α₁ α₂ α₃ γ : Pk[F,N]} :
 -- a;γ ◇ γ;b;dup;c
 -- a;b;dup;γ ◇ γ;c
 
-omit [Encodable F] [Encodable N] [MulLeftMono 𝒮] [MulRightMono 𝒮] in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 theorem G.concat_apply {L R : GS F N →c 𝒮} {xₙ : GS F N} :
       ((L ♢ R) : _ →c 𝒮) xₙ
     = ∑ i ∈ Finset.range (xₙ.2.1.length + 1), ∑ (γ : Pk[F,N]), L (xₙ.splitAtJoined i γ).1 * R (xₙ.splitAtJoined i γ).2 := by
