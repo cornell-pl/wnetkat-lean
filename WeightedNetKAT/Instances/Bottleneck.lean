@@ -169,8 +169,8 @@ instance : OrderTop EENat := inferInstanceAs (OrderTop (WithBot ENat))
 instance : Repr ℕ∞ where
   reprPrec p n := if p = ⊤ then "⊤" else reprPrec p.toNat n
 -- TODO: this became noncomputable for some reason
--- instance : Repr EENat where
---   reprPrec p n := if p = ⊤ then "⊤" else if p = ⊥ then "⊥" else reprPrec p.get!.toNat n
+instance : Repr EENat where
+  reprPrec p n := if p = ⊤ then "⊤" else if p = ⊥ then "⊥" else reprPrec p.get!.toNat n
 
 #eval! (wnk_pol { ~1 ⨀ ~0 ← 3 } : Pol[Fin 3, ℕ, Bottleneck Secutiy₄]).compute 10 (0, []) (.ofFn fun x ↦ if x = 0 then 3 else 0, [])
 #eval! (wnk_pol { ~1 ⨀ ~0 ← 3 } : Pol[Fin 3, ℕ, Bottleneck ENat]).compute 10 (0, []) (.ofFn fun x ↦ if x = 0 then 3 else 0, [])

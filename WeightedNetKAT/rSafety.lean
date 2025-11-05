@@ -33,8 +33,8 @@ abbrev Q' (F N Q : Type) [Listed F] := (Q × Pk[F,N]) ⊕ Q'₀
 
 def I : 𝒲[𝟙, Q' F N Q, 𝒮] := η₂ () (.inr .qι)
 def Δ (β : Pk[F,N]) : 𝒲[Q' F N Q, Q' F N Q, 𝒮]
-  | .inl (q, α), .inl (q', β) => 𝒜.δ α β q q'
-  | .inr .qι, .inl (q, _β) => 𝒜.ι () q
+  | .inl (q, α), .inl (q', β') => if β = β' then 𝒜.δ α β q q' else 0
+  | .inr .qι, .inl (q, β') => if β = β' then 𝒜.ι () q else 0
   | .inl (q, α), .inr .q𝒪 => 𝒜.𝒪 α β q ()
 
   | (.inr .q𝒪), (.inr .q𝒪) => 0
@@ -42,7 +42,7 @@ def Δ (β : Pk[F,N]) : 𝒲[Q' F N Q, Q' F N Q, 𝒮]
   | (.inr .q𝒪), (.inl _) => 0
   | (.inr .qι), (.inr .q𝒪) => 0
   | (.inr .qι), (.inr .qι) => 0
-  | (.inl (Prod.mk _ _)), (.inr .qι) => 0
+  | (.inl _), (.inr .qι) => 0
 def Λ : 𝒲[Q' F N Q, 𝟙, 𝒮] := η₂ (.inr .q𝒪) ()
 
 def Δ_star : List Pk[F,N] → 𝒲[Q' F N Q, Q' F N Q, 𝒮]
@@ -61,8 +61,8 @@ def sem' :=
 def EI : E𝒲[𝟙, Q' F N Q, 𝒮] := Eη₂ () (.inr .qι)
 def EΔ (β : Pk[F,N]) : E𝒲[Q' F N Q, Q' F N Q, 𝒮] :=
   .ofFnSlow fun q q' ↦ match q, q' with
-    | .inl (q, α), .inl (q', β) => (ℰ.δ.get α β).get q q'
-    | .inr .qι, .inl (q, _β) => ℰ.ι.get () q
+    | .inl (q, α), .inl (q', β') => if β = β' then (ℰ.δ.get α β).get q q' else 0
+    | .inr .qι, .inl (q, β') => if β = β' then ℰ.ι.get () q else 0
     | .inl (q, α), .inr .q𝒪 => (ℰ.𝒪.get α β).get q ()
 
     | (.inr .q𝒪), (.inr .q𝒪) => 0

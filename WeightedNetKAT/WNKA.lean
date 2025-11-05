@@ -123,14 +123,34 @@ notation "ι[" a "," b"]" => S.ι a b
 def S.Eι {X Y : Type} [Listed X] [Listed Y] : (EMatrix 𝟙 X 𝒮) → (EMatrix 𝟙 Y 𝒮) → (EMatrix 𝟙 (X ⊕ Y) 𝒮) :=
   fun m₁ m₂ ↦ .ofFnSlow (fun () x ↦ x.elim (m₁.get () ·) (m₂.get () ·))
 notation "Eι[" a "," b"]" => S.Eι a b
+
+omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
+@[simp]
+theorem S.Eι_eq_ι {X Y : Type} [Listed X] [Listed Y] {m₁ : EMatrix 𝟙 X 𝒮} {m₂ : EMatrix 𝟙 Y 𝒮} {i} {j} :
+    (Eι m₁ m₂).get i j = ι m₁.asMatrix m₂.asMatrix i j := by
+  simp [Eι, ι]
+  rfl
+
 def S.𝒪 {X Y : Type} : (Matrix X 𝟙 𝒮) → (Matrix Y 𝟙 𝒮) → (Matrix (X ⊕ Y) 𝟙 𝒮) :=
   fun m₁ m₂ ↦ fun x () ↦ x.elim (m₁ · ()) (m₂ · ())
 notation "𝒪[" a "," b"]" => S.𝒪 a b
 def S.E𝒪_lambda {X Y : Type} [Listed X] [Listed Y] : (EMatrix X 𝟙 𝒮) → (EMatrix Y 𝟙 𝒮) → (EMatrix (X ⊕ Y) 𝟙 𝒮) :=
   fun m₁ m₂ ↦ .ofFnSlow fun x () ↦ x.elim (m₁.get · ()) (m₂.get · ())
 notation "E𝒪_lambda[" a "," b"]" => S.E𝒪_lambda a b
+
+omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
+@[simp]
+theorem S.E𝒪_lambda_eq_𝒪 {X Y : Type} [Listed X] [Listed Y] {m₁ : EMatrix X 𝟙 𝒮} {m₂ : EMatrix Y 𝟙 𝒮} {i} {j} :
+    (E𝒪_lambda m₁ m₂).get i j = 𝒪 m₁.asMatrix m₂.asMatrix i j := by
+  simp [E𝒪_lambda, 𝒪]
+  rfl
+
+section delta
+
+variable {X Y Z W : Type}
+
 attribute [grind] Prod.map Function.Injective in
-def S.δ {X Y Z W : Type} :
+def S.δ :
     (Matrix X Y 𝒮) →
     (Matrix X W 𝒮) →
     (Matrix Z Y 𝒮) →
@@ -141,18 +161,16 @@ def S.δ {X Y Z W : Type} :
       xz.elim (fun x ↦ yw.elim (mxy x ·) (mxw x ·))
               (fun z ↦ yw.elim (mzy z ·) (mzw z ·)))
 
+variable [Listed X] [Listed Y] [Listed Z] [Listed W]
+
 notation "δ[" "[" a "," b "]" "," "[" c "," d "]" "]" => S.δ a b c d
 attribute [grind] Prod.map Function.Injective in
-def S.Eδ_delta {X Y Z W : Type} [Listed X] [Listed Y] [Listed Z] [Listed W] :
+def S.Eδ_delta :
     (EMatrix X Y 𝒮) →
     (EMatrix X W 𝒮) →
     (EMatrix Z Y 𝒮) →
     (EMatrix Z W 𝒮) →
     (EMatrix (X ⊕ Z) (Y ⊕ W) 𝒮) :=
-  -- fun mxy mxw mzy mzw ↦
-  --   .ofFnSlow (fun xz yw ↦
-  --     xz.elim (fun x ↦ yw.elim (mxy.get x ·) (mxw.get x ·))
-  --             (fun z ↦ yw.elim (mzy.get z ·) (mzw.get z ·)))
   fun mxy mxw mzy mzw ↦
     .ofFnSlow (fun xz yw ↦
       xz.elim (fun x ↦ yw.elim (mxy.get x ·) (mxw.get x ·))
@@ -160,10 +178,32 @@ def S.Eδ_delta {X Y Z W : Type} [Listed X] [Listed Y] [Listed Z] [Listed W] :
 
 notation "Eδ_delta[" "[" a "," b "]" "," "[" c "," d "]" "]" => S.Eδ_delta a b c d
 
+omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
+@[simp]
+theorem S.Eδ_delta_eq_δ
+    (mxy : EMatrix X Y 𝒮)
+    (mxw : EMatrix X W 𝒮)
+    (mzy : EMatrix Z Y 𝒮)
+    (mzw : EMatrix Z W 𝒮)
+    {i} {j} :
+    (Eδ_delta mxy mxw mzy mzw).get i j = δ mxy.asMatrix mxw.asMatrix mzy.asMatrix mzw.asMatrix i j := by
+  simp [Eδ_delta, δ]
+  rfl
+
+end delta
+
 instance : Fintype (S.I {♡}) := ⟨{⟨♡, by simp⟩}, by intro ⟨_, _⟩; simp; congr⟩
 instance : Unique (S.I {♡}) where
   default := ⟨♡, by simp⟩
   uniq := by simp
+instance S.listed_I_heart : Listed (S.I {♡}) where
+  array := #[⟨♡, by simp⟩]
+  nodup := by simp
+  complete := by simp
+  encode _ := 0
+  encode_prop := by simp
+  encode_len := by simp
+instance : Listed (@Set.Elem StateSpace {♡}) := S.listed_I_heart
 
 instance S.fintype (p : RPol[F,N,𝒮]) : Fintype (S p) :=
   match p with
@@ -177,7 +217,6 @@ instance S.fintype (p : RPol[F,N,𝒮]) : Fintype (S p) :=
 instance S.instFintype {p : RPol[F,N,𝒮]} : Fintype (S p) := S.fintype p
 instance S.Finite {p : RPol[F,N,𝒮]} : Finite (S p) := Finite.of_fintype (S p)
 
-instance : Listed (S.I {♡}) := Listed.ofArray #[⟨♡, by simp⟩] (by simp) (by simp)
 instance S.listed (p : RPol[F,N,𝒮]) : Listed (S p) :=
   match p with
   | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} =>
@@ -397,19 +436,300 @@ def E𝒪_heart (p₁ : RPol[F,N,𝒮]) : EMatrix Pk[F,N] Pk[F,N] 𝒮 :=
   let Y : N𝒲[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮] := X^*
   Y
 
+@[simp]
+theorem NMatrix.map_get {m n : ℕ} {𝒮 𝒮' : Type} {f : NMatrix m n 𝒮} {g : 𝒮 → 𝒮'} {i j} :
+    (f.map g).get i j = g (f.get i j) := by
+  simp [NMatrix.map, NMatrix.get]
+@[simp]
+theorem NMatrix.ofFn_map {m n : ℕ} {𝒮 𝒮' : Type} {f : Fin m → Fin n → 𝒮} {g : 𝒮 → 𝒮'} :
+    (NMatrix.ofFn f).map g = NMatrix.ofFn (fun i j ↦ g (f i j)) := by
+  ext
+  simp
+@[simp]
+theorem EMatrix.ofFn_get {m n 𝒮 : Type} [Listed m] [Listed n] {f : Fin (Listed.size m) → Fin (Listed.size n) → 𝒮} :
+    (EMatrix.ofFn f).get = fun i j ↦ f (Listed.encodeFin i) (Listed.encodeFin j) := by
+  ext; simp
+@[simp]
+theorem EMatrix.ofFnSlow_get {m n 𝒮 : Type} [Listed m] [Listed n] {f : m → n → 𝒮} :
+    (EMatrix.ofFnSlow f).get = f := by
+  ext; simp
+@[simp]
+theorem EMatrix.ofFnSlow_NMatrix_get {m n 𝒮 : Type} [Listed m] [Listed n] {f : m → n → 𝒮} :
+    NMatrix.get (EMatrix.ofFnSlow f) = fun i j ↦ f (Listed.decodeFin i) (Listed.decodeFin j) := by
+  ext; simp [EMatrix.ofFnSlow]
+@[simp]
+theorem EMatrix.ofFn_NMatrix_get {m n 𝒮 : Type} [Listed m] [Listed n] {f : Fin (Listed.size m) → Fin (Listed.size n) → 𝒮} :
+    NMatrix.get (EMatrix.ofFn f) = f := by
+  ext; simp [EMatrix.ofFn]
+@[simp]
+theorem EMatrix.ofFn_asMatrix {m n 𝒮 : Type} [Listed m] [Listed n] {f : Fin (Listed.size m) → Fin (Listed.size n) → 𝒮} :
+    (EMatrix.ofFn f).asMatrix = fun i j ↦ f (Listed.encodeFin i) (Listed.encodeFin j) := by
+  ext; simp [EMatrix.asMatrix]
+@[simp]
+theorem NMatrix.ofFn_EMatrix_get {m n 𝒮 : Type} [Listed m] [Listed n] {f : Fin (Listed.size m) → Fin (Listed.size n) → 𝒮} :
+    EMatrix.get (NMatrix.ofFn f) = fun i j ↦ f (Listed.encodeFin i) (Listed.encodeFin j) := by
+  ext; simp [EMatrix.get]
+@[simp]
+theorem EMatrix.map_get {m n 𝒮 𝒮' : Type} [Listed m] [Listed n] {f : EMatrix m n 𝒮} {g : 𝒮 → 𝒮'} {i j} :
+    (f.map g).get i j = g (f.get i j) := by
+  simp [EMatrix.map, EMatrix.get]
+@[simp]
+theorem EMatrix.asMatrix₂_apply {m m' n n' 𝒮 : Type} [Listed m] [Listed m'] [Listed n] [Listed n']
+    {m : EMatrix m n (EMatrix m' n' 𝒮)} {i} {j} {x} {y} :
+    m.asMatrix₂ i j x y = (m.get i j).get x y := rfl
+@[simp]
+theorem EMatrix.ofNatMatrix_asMatrix {m n 𝒮 : Type} [Listed m] [Listed n]
+    {m : 𝒲[Fin (Listed.size m), Fin (Listed.size n), 𝒮]} {i j} :
+    (EMatrix.ofNatMatrix m).asMatrix i j = m (Listed.encodeFin i) (Listed.encodeFin j) := by
+  simp [EMatrix.ofNatMatrix, EMatrix.asMatrix]
+
+@[simp]
+theorem EMatrix.ofNatMatrix_get {m n 𝒮 : Type} [Listed m] [Listed n]
+    {m : 𝒲[Fin (Listed.size m), Fin (Listed.size n), 𝒮]} {i j} :
+    (EMatrix.ofNatMatrix m).get i j = m (Listed.encodeFin i) (Listed.encodeFin j) := by
+  simp [EMatrix.ofNatMatrix]
+@[simp]
+theorem EMatrix.ofNatMatrix₂_get {m m' n n' 𝒮 : Type} [Listed m] [Listed n] [Listed m'] [Listed n']
+    {m : 𝒲[Fin (Listed.size m), Fin (Listed.size n), 𝒲[Fin (Listed.size m'), Fin (Listed.size n'), 𝒮]]} {i j} :
+    (EMatrix.ofNatMatrix₂ m).get i j = EMatrix.ofNatMatrix (m (Listed.encodeFin i) (Listed.encodeFin j)) := by
+  ext
+  simp
+  simp [EMatrix.ofNatMatrix₂, EMatrix.ofNatMatrix]
+@[simp]
+theorem EMatrix.asNatMatrix_get {m n 𝒮 : Type} [Listed m] [Listed n]
+    {m : E𝒲[m, n, 𝒮]} {i j} :
+    (EMatrix.asNatMatrix m) i j = m.get (Listed.decodeFin i) (Listed.decodeFin j) := by
+  simp [EMatrix.asNatMatrix, EMatrix.get]
+@[simp]
+theorem EMatrix.asNatMatrix₂_get {m m' n n' 𝒮 : Type} [Listed m] [Listed n] [Listed m'] [Listed n']
+    {m : E𝒲[m, n, E𝒲[m', n', 𝒮]]} {i j} :
+    (EMatrix.asNatMatrix₂ m) i j = EMatrix.asNatMatrix (m.get (Listed.decodeFin i) (Listed.decodeFin j)) := by
+  ext
+  simp [EMatrix.asNatMatrix₂, EMatrix.get]
+
+@[simp]
+theorem EMatrix.ofMatrix_get {m n 𝒮 : Type} [Listed m] [Listed n]
+    {m : 𝒲[m, n, 𝒮]} {i j} :
+    (EMatrix.ofMatrix m).get i j = m i j := by
+  simp [EMatrix.ofMatrix]
+@[simp]
+theorem EMatrix.ofMatrix₂_get {m m' n n' 𝒮 : Type} [Listed m] [Listed n] [Listed m'] [Listed n']
+    {m : 𝒲[m, n, 𝒲[m', n', 𝒮]]} {i j} :
+    (EMatrix.ofMatrix₂ m).get i j = EMatrix.ofMatrix (m i j) := by
+  ext
+  simp
+  simp [EMatrix.ofMatrix₂, EMatrix.ofMatrix, EMatrix.map]
+@[simp]
+theorem EMatrix.ofMatrix₂_asMatrix₂ {m m' n n' 𝒮 : Type} [Listed m] [Listed n] [Listed m'] [Listed n']
+    {m : 𝒲[m, n, 𝒲[m', n', 𝒮]]} :
+    (EMatrix.ofMatrix₂ m).asMatrix₂ = m := by
+  ext; simp
+@[simp]
+theorem EMatrix.toMatrix₂_ofMatrix₂ {m m' n n' 𝒮 : Type} [Listed m] [Listed n] [Listed m'] [Listed n']
+    {m : E𝒲[m, n, E𝒲[m', n', 𝒮]]} :
+    EMatrix.ofMatrix₂ (EMatrix.asMatrix₂ m) = m := by
+  ext; simp
+@[simp]
+theorem EMatrix.NMatrix_get {m n 𝒮 : Type} [Listed m] [Listed n]
+    {m : E𝒲[m, n, 𝒮]} {i j} :
+    NMatrix.get m i j = m.get (Listed.decodeFin i) (Listed.decodeFin j) := by
+  simp [EMatrix.get]
+
+@[simp]
+theorem EMatrix.ofNatMatrix_add {m n 𝒮 : Type} [Listed m] [Listed n] [Add 𝒮]
+    (a b : 𝒲[Fin (Listed.size m), Fin (Listed.size n), 𝒮]) :
+    EMatrix.ofNatMatrix (a + b) = EMatrix.ofNatMatrix a + EMatrix.ofNatMatrix b := by
+  ext; simp
+
+@[simp]
+theorem EMatrix.ofNatMatrix_sum {m n 𝒮 : Type} [Listed m] [Listed n] [AddCommMonoid 𝒮] {ι : Type} {S : Finset ι} [DecidableEq ι]
+    (f : ι → 𝒲[Fin (Listed.size m), Fin (Listed.size n), 𝒮]) :
+    EMatrix.ofNatMatrix (∑ i ∈ S, f i) = ∑ i ∈ S, EMatrix.ofNatMatrix (f i) := by
+  induction S using Finset.induction with
+  | empty => simp; rfl
+  | insert x S h ih => simp_all
+
+@[simp]
+theorem EMatrix.asMatrix_sum {m n 𝒮 : Type} [Listed m] [Listed n] [AddCommMonoid 𝒮] {ι : Type} {S : Finset ι} [DecidableEq ι]
+    (f : ι → E𝒲[m, n, 𝒮]) :
+    EMatrix.asMatrix (∑ i ∈ S, f i) = ∑ i ∈ S, EMatrix.asMatrix (f i) := by
+  induction S using Finset.induction with
+  | empty => simp
+  | insert x S h ih => simp_all
+
+@[simp]
+theorem EMatrix.ofNatMatrix_mul {m n k 𝒮 : Type} [Listed m] [Listed n] [Listed k] [Fintype n] [AddCommMonoid 𝒮] [Mul 𝒮]
+    (a : 𝒲[Fin (Listed.size m), Fin (Listed.size n), 𝒮]) (b : 𝒲[Fin (Listed.size n), Fin (Listed.size k), 𝒮]) :
+    EMatrix.ofNatMatrix (a * b) = EMatrix.ofNatMatrix a * EMatrix.ofNatMatrix b := by
+  ext; simp [EMatrix.ofNatMatrix]
+  sorry
+
+@[simp]
+theorem EMatrix.asMatrix_mul {m n k 𝒮 : Type} [Listed m] [Listed n] [Listed k] [Fintype n] [AddCommMonoid 𝒮] [Mul 𝒮]
+    (a : E𝒲[m, n, 𝒮]) (b : E𝒲[n, k, 𝒮]) :
+    EMatrix.asMatrix (a * b) = EMatrix.asMatrix a * EMatrix.asMatrix b := by
+  ext; simp [EMatrix.asMatrix]
+
+theorem sjsjsjs {m n 𝒮 : Type} [Listed m] [Listed n] (m : 𝒲[Fin (Listed.size m), Fin (Listed.size n), 𝒮]) {i j} :
+    m i j = (EMatrix.ofNatMatrix m).get (Listed.decodeFin i) (Listed.decodeFin j) := by
+  simp
+
+
+-- @[simp]
+-- theorem EMatrix.ofMatrix_asNatMatrix {m n 𝒮 : Type} [Listed m] [Listed n]
+--     {m : 𝒲[m, n, 𝒮]} :
+--     (EMatrix.ofMatrix m).asNatMatrix = fun i j ↦ m (Listed.decodeFin i) (Listed.decodeFin j) := by
+--   ext; simp [EMatrix.ofMatrix]
+
+@[simp]
+theorem Listed.encode_eq_iff {α : Type} [Listed α] {a b : α} :
+    Listed.encode a = Listed.encode b ↔ a = b := Function.Injective.eq_iff Listed.encode_inj
+@[simp]
+theorem Listed.encodeFin_eq_iff {α : Type} [Listed α] {a b : α} :
+    Listed.encodeFin a = Listed.encodeFin b ↔ a = b := by simp [Listed.encodeFin]
+@[simp]
+theorem Listed.encodeFin_eq_encode_iff {α : Type} [Listed α] {a b : α} :
+    (Listed.encodeFin a).val = Listed.encode b ↔ a = b := by simp [Listed.encodeFin]
+@[simp]
+theorem Listed.encode_eq_encodeFin_iff {α : Type} [Listed α] {a b : α} :
+    Listed.encode a = (Listed.encodeFin b).val ↔ a = b := by simp [Listed.encodeFin]
+-- @[simp]
+-- theorem Listed.encode_unique {α : Type} [Listed α] [Unique α] {a : α} :
+--     Listed.encode a = 0 := by
+--   sorry
+-- @[simp]
+-- theorem Listed.encode_subsingleton {α : Type} [Listed α] [Subsingleton α] {a : α} :
+--     Listed.encode a = 0 := by sorry
+@[simp]
+theorem Listed.encode_unit :
+    Listed.encode () = 0 := rfl
+@[simp]
+theorem Listed.encodeFin_unit :
+    Listed.encodeFin () = 0 := rfl
+@[simp]
+theorem Listed.size_unit :
+    Listed.size Unit = 1 := by
+  simp [← Listed.size_prop, Listed.array]
+
+@[simp]
+theorem Listed.sum_fin
+    {α : Type} [Listed α] [Fintype α]
+    {𝒮 : Type} [AddCommMonoid 𝒮]
+    {f : Fin (Listed.size α) → 𝒮}
+    :
+    ∑ (i : Fin (Listed.size α)), f i = ∑ (i : α), f (Listed.encodeFin i) :=
+  (Function.Bijective.sum_comp Listed.encodeFin_bijective f).symm
+
+omit [Fintype F] [DecidableEq F] [Listed N] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] [DecidableEq N] in
+@[simp]
+theorem Eι_lambda_eq_ι {p : RPol[F,N,𝒮]} : Eι p = EMatrix.ofMatrix (ι p) := by
+  classical
+  induction p
+  next =>
+    ext i j
+    simp [ι, Eι, η₂, Listed.encode]
+    rcases j with j | j
+    · simp
+    · rename_i h; simp at h
+  next =>
+    ext i j
+    simp [ι, Eι, η₂, Listed.encode]
+    rcases j with j | j
+    · simp
+    · rename_i h; simp at h
+  next =>
+    ext i j
+    simp [ι, Eι, η₂, Listed.encode]
+    rcases j with j | j
+    · simp
+    · rename_i h; simp at h
+  next =>
+    ext i j
+    simp [ι, Eι, η₂, Listed.encode]
+    rcases j with j | j
+    · simp
+    · rename_i h; simp at h
+  next =>
+    ext i j
+    simp [ι, Eι, η₂]
+  next p q ihp ihq =>
+    ext i j
+    simp [ι, Eι]
+    rw [S.Eι_eq_ι]
+    simp [ihp]
+  next p ih =>
+    ext i j
+    simp [ι, Eι, ih, HSMul.hSMul]
+    rfl
+  next p q ihp ihq =>
+    ext i j
+    simp [ι, Eι, ihp, ihq, S.Eι, S.ι]
+  next p ih =>
+    ext i j
+    simp [ι, Eι, S.Eι, S.ι]
+
+omit [Fintype F] [OmegaCompletePartialOrder 𝒮] in
+@[simp]
+theorem E𝒪_lambda_eq_𝒪 {p : RPol[F,N,𝒮]} : E𝒪_lambda p = EMatrix.ofMatrix₂ (𝒪 p) := by
+  classical
+  induction p
+  next =>
+    ext
+    simp [𝒪, E𝒪_lambda]
+  next =>
+    ext
+    simp [𝒪, E𝒪_lambda]
+    split_ifs <;> simp
+  next =>
+    ext
+    simp [𝒪, E𝒪_lambda]
+    split_ifs <;> simp
+  next =>
+    ext
+    simp [𝒪, E𝒪_lambda]
+    split_ifs <;> simp
+  next =>
+    ext
+    simp [𝒪, E𝒪_lambda]
+    split_ifs <;> simp
+    simp [η₂]
+  next p q ihp ihq =>
+    ext α β i j
+    simp [𝒪, E𝒪_lambda]
+    rw [S.E𝒪_lambda_eq_𝒪]
+    simp [S.𝒪]
+    simp_all
+    rcases i with i | _
+    · simp
+      congr!
+      · ext; simp
+      · ext; simp
+      · ext; simp
+    · simp
+  next p ih =>
+    ext
+    simp [𝒪, E𝒪_lambda, ih]
+  next p q ihp ihq =>
+    ext
+    simp [𝒪, E𝒪_lambda, ihp, ihq]
+    rw [S.E𝒪_lambda_eq_𝒪]
+    simp [S.𝒪]
+  next p ih =>
+    ext α β i j
+    simp [𝒪, E𝒪_lambda, ih]
+    rw [S.E𝒪_lambda_eq_𝒪]
+    simp [S.𝒪]
+    rcases i with _ | _
+    · simp
+      sorry
+    · simp
+      sorry
+
 def 𝒪_aux (p : RPol[F,N,𝒮]) : Matrix Pk[F,N] Pk[F,N] (Matrix (S p) 𝟙 𝒮) := E𝒪_lambda p |>.asMatrix₂
 
 @[csimp] theorem 𝒪_csimp : @𝒪 = @𝒪_aux := by
-  ext F _ _ N _ 𝒮 _ _ _ p α β i j
-  -- induction p
-  -- next =>
-  --   simp [𝒪, 𝒪_aux, E𝒪_lambda]
-  --   sorry
-  -- next =>
-  --   simp [𝒪, 𝒪_aux, E𝒪_lambda]
-
-  unfold 𝒪 𝒪_aux
-  sorry
+  funext p x _ _ _ _ _ _ _ p
+  simp [𝒪_aux, E𝒪_lambda_eq_𝒪]
 
 def δ (p : RPol[F,N,𝒮]) : 𝒲[Pk[F,N],Pk[F,N],𝒲[S p,S p,𝒮]] := fun α β ↦
   match p with

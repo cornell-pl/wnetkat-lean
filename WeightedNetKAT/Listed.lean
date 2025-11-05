@@ -276,6 +276,20 @@ def equivFin {α : Type} [Listed α] : α ≃ Fin (Listed.size α) := ⟨
   by intro; simp,
   by intro; simp⟩
 
+def decodeFin_inj : Function.Injective (Listed.decodeFin (α:=α)) := by
+  intro a b h
+  have := congrArg encodeFin h
+  grind
+
+def encodeFin_bijective : Function.Bijective (encodeFin (α:=α)) := by
+  constructor
+  · intro a b h; simp [encodeFin] at h; exact encode_inj h
+  · intro i; use decodeFin i; simp
+def decodeFin_bijective : Function.Bijective (decodeFin (α:=α)) := by
+  constructor
+  · intro a b h; exact decodeFin_inj h
+  · intro i; use encodeFin i; simp
+
 def fintype [DecidableEq α] : Fintype α := {
   elems := (listOf α).toFinset
   complete := by simp [listOf, complete]
