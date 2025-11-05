@@ -106,6 +106,24 @@ theorem coe_unique_left_mul {A A' B C α : Type} [Unique A] [Unique A'] [Decidab
     coe_unique_left (A:=A) (A':=A') (B:=C) (α:=α) (f * g) = coe_unique_left f * g  := by
   ext a c
   simp [Matrix.mul_apply]
+@[simp]
+theorem coe_unique_left_Add {A A' B α : Type} [Unique A] [Unique A'] [DecidableEq A] [Fintype A] [DecidableEq B] [Fintype B]
+    [Add α]
+    (f : Matrix A B α) (g : Matrix A B α) :
+    coe_unique_left (A:=A) (A':=A') (B:=B) (α:=α) (f + g) = coe_unique_left f + coe_unique_left g  := by
+  ext a c
+  simp
+@[simp]
+theorem coe_unique_left_sum {A A' B ι α : Type} [Unique A] [Unique A'] [DecidableEq A] [Fintype A] [DecidableEq B] [Fintype B] [Fintype ι] [DecidableEq ι]
+    [AddCommMonoid α] [Mul α]
+    {S : Finset ι}
+    (f : ι → Matrix A B α) :
+    (∑ i ∈ S, f i).coe_unique_left (A':=A') = ∑ i ∈ S, (f i).coe_unique_left := by
+  induction S using Finset.induction with
+  | empty => simp; rfl
+  | insert x S hx ih => simp_all
+
+
 
 section
 

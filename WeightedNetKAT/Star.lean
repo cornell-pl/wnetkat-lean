@@ -773,9 +773,10 @@ def star_fin_old {n : ℕ} (m : Matrix (Fin n) (Fin n) α) : Matrix (Fin n) (Fin
   res
 
 def star_fin {n : ℕ} (m : Matrix (Fin n) (Fin n) α) : Matrix (Fin n) (Fin n) α :=
-  letI : Inhabited α := ⟨0⟩
-  -- timeitit f!"old[{n}]" (do return star_fin_old m)
-  timeitit f!"new[{n}]" (do return star_fin' (.ofMatrix m) |>.asMatrix)
+  star_fin' (.ofMatrix m) |>.asMatrix
+  -- letI : Inhabited α := ⟨0⟩
+  -- -- timeitit f!"old[{n}]" (do return star_fin_old m)
+  -- timeitit f!"new[{n}]" (do return star_fin' (.ofMatrix m) |>.asMatrix)
 
 instance instStar
     {α : Type} [Semiring α] [WeightedNetKAT.Star α]
