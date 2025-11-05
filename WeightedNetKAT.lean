@@ -236,8 +236,8 @@ def main : IO Unit := do
   -- let pol := wnk_rpol { (~p₁ ; dup)* }
   -- let pol := wnk_rpol { (~(p Arctic) ; dup)* }
   -- let res ← pol.eval
-  let n : EWNKA _ _ _ (S pol) := pol.ewnka
+  let n : WNKA _ _ _ (S pol) := pol.wnka
 
-  let r := rSafety.Esem' n
+  let r := rSafety.sem' n
 
   println! f!"rSafety: {reprStr r}"

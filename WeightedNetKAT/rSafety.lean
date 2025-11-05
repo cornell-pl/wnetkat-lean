@@ -89,6 +89,37 @@ def EM_star : E𝒲[Q' F N Q, Q' F N Q, 𝒮] :=
 def Esem' :=
     ((EI : E𝒲[𝟙, Q' F N Q, 𝒮]) * EM_star ℰ * (EΛ : E𝒲[Q' F N Q, 𝟙, 𝒮]) : E𝒲[_, _, 𝒮]).get () ()
 
+omit [Fintype F] [Fintype Q] [Star 𝒮] in
+@[simp]
+theorem EI_eq_I : EI (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) = EMatrix.ofMatrix I := by
+  ext; simp [EI, I, η₂]
+omit [Fintype F] [Fintype Q] [Star 𝒮] in
+@[simp]
+theorem EΔ_eq_Δ {β} : EΔ (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) ℰ β = EMatrix.ofMatrix (Δ ℰ.toWNKA β) := by
+  ext; simp [EΔ, Δ]
+  split <;> try simp_all [EMatrix.get_eq_asMatrix]
+omit [Fintype F] [Fintype Q] [Star 𝒮] in
+@[simp]
+theorem EΛ_eq_Λ : EΛ (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) = EMatrix.ofMatrix Λ := by
+  ext; simp [EΛ, Λ, η₂]
+
+omit [Fintype F] in
+@[simp]
+theorem Esem'_eq_sem' : Esem' ℰ = sem' ℰ.toWNKA := by
+  simp [Esem', sem', EM_star, EM, M_star]
+  congr! 2
+  simp [Star.star, Matrix.listedEquivNat, Matrix.Star.star_fin]
+  ext
+  simp [EMatrix.asMatrix, NMatrix.asMatrix]
+  congr
+  ext
+  simp [M]
+  simp [EMatrix.get_eq_asMatrix]
+
+def sem'_fast := Esem' 𝒜.toEWNKA
+
+@[csimp] theorem sem'_csimp : @sem' = @sem'_fast := by ext; simp [sem'_fast]
+
 end rSafety
 
 end WeightedNetKAT

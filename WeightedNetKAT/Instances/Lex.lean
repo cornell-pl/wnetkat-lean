@@ -167,7 +167,7 @@ instance : Semiring (LexicalSemiring α β) where
   add_comm := by
     intro ⟨as, ar⟩ ⟨bs, br⟩
     simp_all only [add_simp, add, sup_eq_left, ne_eq, not_false_eq_true, and_true, sup_eq_right]
-    split_ifs <;> subst_eqs <;> try grind [add_comm, le_antisymm]cal
+    split_ifs <;> subst_eqs <;> try grind [add_comm, le_antisymm]
 
   left_distrib := by
     sorry
