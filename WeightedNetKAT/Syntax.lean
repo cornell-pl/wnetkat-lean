@@ -39,8 +39,8 @@ instance Pk.ofNat {n : ℕ} [OfNat N n] : OfNat Pk[F,N] n where
 -- omit [Fintype F] [Fintype N] [DecidableEq F] [DecidableEq N] in
 -- instance [Listed F] [Listed N] [Inhabited N] : Listed Pk[F,N] := Listed.pi F N
 
-instance {F : Type} [i : Fintype F] [Listed F] [e : Encodable F] [Repr F] [Repr N] : Repr Pk[F,N] where
-  reprPrec x _ := s!"\{{List.range i.card |>.filterMap e.decode |>.map (fun k ↦ s!"{reprStr k}↦{reprStr (x k)}") |> ",".intercalate}}"
+instance {F : Type} [Listed F] [Repr F] [Repr N] : Repr Pk[F,N] where
+  reprPrec x _ := s!"\{{Listed.listOf _ |>.map (fun k ↦ s!"{reprStr k}↦{reprStr (x k)}") |> ",".intercalate}}"
 
 def H (F N : Type) [Listed F] := Pk[F,N] × List Pk[F,N]
 notation "H[" F "," N "]" => H F N

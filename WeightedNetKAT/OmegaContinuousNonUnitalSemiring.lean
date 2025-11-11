@@ -43,7 +43,7 @@ theorem OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup' {α : Type*} [OmegaCompl
     = ωSup ⟨fun i ↦ f i i, fun i j hij ↦ le_trans (hf hij i) (hf' j hij)⟩ :=
   OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup ⟨fun i ↦ ⟨fun j ↦ f i j, hf' i⟩, hf⟩
 
--- theorem Finset.sum_le_sum_of_inj {α β 𝒮 : Type} [NonUnitalSemiring 𝒮] [PartialOrder 𝒮] [IsOrderedAddMonoid 𝒮]
+-- theorem Finset.sum_le_sum_of_inj {α β 𝒮 : Type*} [NonUnitalSemiring 𝒮] [PartialOrder 𝒮] [IsOrderedAddMonoid 𝒮]
 --     {f : α → 𝒮} {g : β → 𝒮} (e : (a : α) → f a ≠ 0 → β) (he : ∀ Function.Injective e)
 --     (h₀ : ∀ (x : β), 0 ≤ g x)
 --     {A : Finset α} {B : Finset β}
@@ -146,20 +146,20 @@ end
 
 -- TODO: this might be interesting to try at some point
 -- instance
---     {𝒮 : Type}
+--     {𝒮 : Type*}
 --     [NonUnitalSemiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮]
 --     [IsPositiveOrderedAddMonoid 𝒮] : ExistsAddOfLE 𝒮 where
 --   exists_add_of_le := sorry
 
 section ωSum
 
-variable {𝒮 : Type}
+variable {𝒮 : Type*}
   [AddCommMonoid 𝒮]
   [OmegaCompletePartialOrder 𝒮]
   [OrderBot 𝒮]
   [IsPositiveOrderedAddMonoid 𝒮]
 
-variable {X : Type} [Countable X]
+variable {X : Type*} [Countable X]
 
 instance : IsPositiveOrderedAddMonoid (X → 𝒮) where
   bot_eq_zero := by ext; simp [IsPositiveOrderedAddMonoid.bot_eq_zero]
@@ -249,7 +249,7 @@ theorem le_ωSum_of_finset
       exact Finset.le_sup hxs
   all_goals simp +contextual
 
-theorem ωSum_finset {I : Type} [DecidableEq I] [Countable I] (S : Finset I) (f : I → 𝒮) :
+theorem ωSum_finset {I : Type*} [DecidableEq I] [Countable I] (S : Finset I) (f : I → 𝒮) :
     ω∑ x : S, f x = ∑ x ∈ S, f x := by
   apply le_antisymm
   · apply ωSum_le_of_finset fun S₀ ↦ ?_
@@ -261,7 +261,7 @@ theorem ωSum_finset {I : Type} [DecidableEq I] [Countable I] (S : Finset I) (f 
   · apply le_trans _ (le_ωSum_of_finset S.attach)
     rw [Finset.sum_attach]
 
-theorem ωSum_fintype {I : Type} [DecidableEq I] [Countable I] [Fintype I] (f : I → 𝒮) :
+theorem ωSum_fintype {I : Type*} [DecidableEq I] [Countable I] [Fintype I] (f : I → 𝒮) :
     ω∑ x, f x = ∑ x, f x :=
   le_antisymm
     (ωSum_le_of_finset fun _ ↦ Finset.sum_le_univ_sum_of_nonneg fun x ↦ zero_le'' (f x))
@@ -273,7 +273,7 @@ theorem asdsad {c : Chain (X → 𝒮)} {x} : ωSup c x = ωSup (c.map ⟨(· x)
   rfl
 
 @[simp]
-theorem ωSum_apply {Y : Type} {f : X → Y → 𝒮} {y : Y} :
+theorem ωSum_apply {Y : Type*} {f : X → Y → 𝒮} {y : Y} :
     (ω∑ (x : X), f x) y = ω∑ (x : X), f x y := by
   simp [ωSum, Chain.map]
   congr with n
@@ -336,7 +336,7 @@ end ωSum
 
 section ωSum
 
-variable {𝒮 : Type}
+variable {𝒮 : Type*}
   [NonUnitalSemiring 𝒮]
   [OmegaCompletePartialOrder 𝒮]
   [OrderBot 𝒮]
@@ -345,7 +345,7 @@ variable {𝒮 : Type}
   [MulRightMono 𝒮]
   [OmegaContinuousNonUnitalSemiring 𝒮]
 
-variable {X : Type} [Countable X]
+variable {X : Type*} [Countable X]
 
 omit [Countable X] in
 theorem Finset.sum_ωScottContinuous [DecidableEq X] (S : Finset X) :
@@ -489,7 +489,7 @@ theorem ωSum_mul_right {f : X → 𝒮} {a : 𝒮} :
   simp [ωSum, ωSup_mul, Finset.sum_mul]
   congr!; split <;> simp
 
-theorem ωSum_sum_comm {Y : Type} (S : Finset Y) {f : X → Y → 𝒮} :
+theorem ωSum_sum_comm {Y : Type*} (S : Finset Y) {f : X → Y → 𝒮} :
     ω∑ (x : X), ∑ y ∈ S, f x y = ∑ y ∈ S, ω∑ (x : X), f x y := by
   classical
   induction S using Finset.induction with
@@ -497,18 +497,18 @@ theorem ωSum_sum_comm {Y : Type} (S : Finset Y) {f : X → Y → 𝒮} :
   | insert y S hy ih =>
     simp_all [ωSum_add]
 
-theorem ωSum_comm_le {Y : Type} [Countable Y] {f : X → Y → 𝒮} :
+theorem ωSum_comm_le {Y : Type*} [Countable Y] {f : X → Y → 𝒮} :
     ω∑ (x : X) (y : Y), f x y ≤ ω∑ (y : Y) (x : X), f x y := by
   apply ωSum_le_of_finset fun S ↦ ?_
   simp [← ωSum_sum_comm]
   apply ωSum_mono fun n ↦ ?_
   exact le_ωSum_of_finset S
 
-theorem ωSum_comm {Y : Type} [DecidableEq Y] [Countable Y] {f : X → Y → 𝒮} :
+theorem ωSum_comm {Y : Type*} [DecidableEq Y] [Countable Y] {f : X → Y → 𝒮} :
     ω∑ (x : X) (y : Y), f x y = ω∑ (y : Y) (x : X), f x y := le_antisymm ωSum_comm_le ωSum_comm_le
 
 open scoped Classical in
-theorem Function.Injective.ωSum_eq {α ι γ : Type}
+theorem Function.Injective.ωSum_eq {α ι γ : Type*}
     [NonUnitalSemiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α]
     [Countable ι] [Countable γ]
     {g : γ → ι} (hg : Injective g) {f : ι → α}
@@ -551,21 +551,21 @@ theorem Function.Injective.ωSum_eq {α ι γ : Type}
       use x
     · simp_all
 
-theorem ωSum_subtype_eq_of_supp_subset {α ι : Type}
+theorem ωSum_subtype_eq_of_supp_subset {α ι : Type*}
     [NonUnitalSemiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α]
     [Countable ι]
     {f : ι → α} {s : Set ι} (hs : f.support ⊆ s) :
     ω∑ x : s, f x = ω∑ x, f x :=
   Subtype.val_injective.ωSum_eq <| by simpa
 
-theorem ωSum_substype_supp {α ι : Type}
+theorem ωSum_substype_supp {α ι : Type*}
     [NonUnitalSemiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α]
     [Countable ι]
     (f : ι → α) :
     ω∑ x : f.support, f x = ω∑ x, f x :=
   ωSum_subtype_eq_of_supp_subset Set.Subset.rfl
 
-theorem ωSum_eq_ωSum_of_ne_one_bij {α ι γ : Type}
+theorem ωSum_eq_ωSum_of_ne_one_bij {α ι γ : Type*}
     [NonUnitalSemiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α]
     [Countable ι] [Countable γ]
     {f : ι → α} {g : γ → α} (i : g.support → ι) (hi : Function.Injective i)
@@ -573,7 +573,7 @@ theorem ωSum_eq_ωSum_of_ne_one_bij {α ι γ : Type}
   rw [← ωSum_substype_supp g, ← hi.ωSum_eq hf]
   simp only [hfg]
 
-theorem ωSum_eq_single {α ι : Type}
+theorem ωSum_eq_single {α ι : Type*}
     [NonUnitalSemiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α]
     [Countable ι]
     {f : ι → α}  (x : ι) (hf : ∀ (x' : ι), x' ≠ x → f x' = 0) : ω∑ x, f x = f x := by
@@ -588,7 +588,7 @@ theorem ωSum_eq_single {α ι : Type}
     grind
   · simp
 
-theorem ωSum_prod {α β γ : Type}
+theorem ωSum_prod {α β γ : Type*}
     [NonUnitalSemiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α]
     [MulLeftMono α] [MulRightMono α]
     [OmegaContinuousNonUnitalSemiring α]
@@ -613,7 +613,7 @@ theorem ωSum_prod {α β γ : Type}
     apply le_trans _ (le_ωSum_of_finset (S ×ˢ S'))
     rw [Finset.sum_comm, Finset.sum_product]
 
-theorem ωSum_prod' {α β γ : Type}
+theorem ωSum_prod' {α β γ : Type*}
     [NonUnitalSemiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α]
     [MulLeftMono α] [MulRightMono α]
     [OmegaContinuousNonUnitalSemiring α]
@@ -621,7 +621,7 @@ theorem ωSum_prod' {α β γ : Type}
     {f : β → γ → α} :
     ω∑ (p : β × γ), f p.fst p.snd = ω∑ (b : β) (c : γ), f b c := ωSum_prod
 
--- theorem its_summable {X : Type} [Countable X] [TopologicalSpace 𝒮] [OrderClosedTopology 𝒮] (f : X → 𝒮) : Summable f := by
+-- theorem its_summable {X : Type*} [Countable X] [TopologicalSpace 𝒮] [OrderClosedTopology 𝒮] (f : X → 𝒮) : Summable f := by
 --   exists ωSum f
 --   simp [ωSum]
 --   apply?
@@ -629,7 +629,7 @@ theorem ωSum_prod' {α β γ : Type}
 --   sorry
 
 
--- theorem ωSum_eq_tsum {X : Type} [Countable X] [TopologicalSpace 𝒮] [OrderClosedTopology 𝒮] (f : X → 𝒮) : ωSum f = ∑' x, f x := by
+-- theorem ωSum_eq_tsum {X : Type*} [Countable X] [TopologicalSpace 𝒮] [OrderClosedTopology 𝒮] (f : X → 𝒮) : ωSum f = ∑' x, f x := by
 --   letI e : Encodable X := Encodable.ofCountable X
 --   simp [ωSum]
 --   apply le_antisymm

@@ -1,6 +1,7 @@
 import WeightedNetKAT.Examples.Common
 import WeightedNetKAT.WNKA
 import WeightedNetKAT.rSafety
+import WeightedNetKAT.rReachability
 import WeightedNetKAT.Instances.Language
 import WeightedNetKAT.Instances.ENat
 import WeightedNetKAT.Instances.Arctic
@@ -214,6 +215,9 @@ open WeightedNetKAT
 --   let c : Array Pk[α,β] := Listed.array
 --   println! "c {c.map reprStr}"
 
+example {Q : Type} [Repr Q] : Repr (rReachability.Run (F:=Switch) (N:=City) (Q:=Q)) := inferInstance
+
+
 def main : IO Unit := do
   -- test Switch City
 
@@ -238,6 +242,8 @@ def main : IO Unit := do
   -- let res ← pol.eval
   let n : WNKA _ _ _ (S pol) := pol.wnka
 
-  let r := rSafety.sem' n
+  -- let r := rSafety.sem' n
+  -- println! f!"rSafety: {reprStr r}"
 
-  println! f!"rSafety: {reprStr r}"
+  let ρ := rReachability.all n
+  println! f!"rReachability: {reprStr ρ}"

@@ -72,6 +72,10 @@ def RPol.unexpandTest : Unexpander
   `(wnk_rpol { @test $x:cwnk_pk })
 | _ => throw ()
 
+@[app_unexpander RPol.Skip]
+def RPol.unexpandSkip : Unexpander
+| _ => `(wnk_rpol { skip })
+
 @[app_unexpander RPol.Dup]
 def RPol.unexpandDup : Unexpander
 | _ => `(wnk_rpol { dup })

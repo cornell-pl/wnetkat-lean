@@ -78,10 +78,6 @@ noncomputable instance : WeightedConcat (GS[F,N] →c 𝒮) (GS[F,N] →c 𝒮) 
     SetCoe.countable _,
   ⟩
 
-/-- info: GS.mk 0 [] 0 ♢ GS.mk 0 [] 0 : ?m.18113 -/
-#guard_msgs in
-#check (GS.mk 0 [] 0) ♢ (GS.mk 0 [] 0)
-
 notation "gs[" α ";" β "]" => GS.mk α [] β
 notation "gs[" α ";" x ";" "dup" ";" β "]" => GS.mk α [x] β
 notation "gs[" α ";" x ";" "dup" ";" y ";" "dup" ";" β "]" => GS.mk α [x, y] β
@@ -126,6 +122,17 @@ noncomputable def G (p : RPol[F,N,𝒮]) : GS[F,N] →c 𝒮 := match p with
   | wnk_rpol { ~p₁* } => ω∑ n : ℕ, G (p₁ ^ n)
 termination_by (p.iterDepth, sizeOf p)
 decreasing_by all_goals simp_all; (try split_ifs) <;> omega
+syntax "G⟦" cwnk_rpol "⟧" : term
+macro_rules | `(G⟦$p⟧) => `(G wnk_rpol { $p })
+open Lean Elab PrettyPrinter Delaborator Meta Command Term in
+@[app_unexpander G]
+def G.unexpander : Unexpander
+| `($_ $y) => do
+  let y ← match y with
+    | `(wnk_rpol{$y}) => pure y
+    | y => `(cwnk_rpol|~$y)
+  `(G⟦$y⟧)
+| _ => throw ()
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 -- TODO: this proof is incredibly slow

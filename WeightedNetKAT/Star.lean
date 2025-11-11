@@ -12,9 +12,10 @@ structure NMatrix (m n : ℕ) (α : Type*) where
 
 namespace NMatrix
 
-variable {l m m' n n' : ℕ} {α : Type*}
+variable {l k m m' n n' : ℕ} {α : Type*}
 variable {X X' : NMatrix m n α}
 variable {Y Y' : NMatrix n l α}
+variable {Z Z' : NMatrix l k α}
 
 @[inline]
 def ofFn (f : Fin m → Fin n → α) : NMatrix m n α :=
@@ -72,18 +73,19 @@ theorem get_ofFn : ofFn X.get = X := by
   · simp [Nat.mod_eq_of_lt, hj, this]
   · omega
 
-def toBlocks₁₁ (M : NMatrix (m + m') (n + n') α) : NMatrix m n α :=
-  .ofFn fun i j ↦ M.get ⟨i, by omega⟩ ⟨j, by omega⟩
-def toBlocks₁₂ (M : NMatrix (m + m') (n + n') α) : NMatrix m n' α :=
-  .ofFn fun i j ↦ M.get ⟨i, by omega⟩ ⟨n + j, by omega⟩
-def toBlocks₂₁ (M : NMatrix (m + m') (n + n') α) : NMatrix m' n α :=
-  .ofFn fun i j ↦ M.get ⟨m + i, by omega⟩ ⟨j, by omega⟩
-def toBlocks₂₂ (M : NMatrix (m + m') (n + n') α) : NMatrix m' n' α :=
-  .ofFn fun i j ↦ M.get ⟨m + i, by omega⟩ ⟨n + j, by omega⟩
+def asMatrix (M : NMatrix m n α) : Matrix (Fin m) (Fin n) α := M.get
+def ofMatrix (M : Matrix (Fin m) (Fin n) α) : NMatrix m n α := .ofFn M
 
-def fromBlocks
-    (m₁₁ : NMatrix m n α) (m₁₂ : NMatrix m n' α) (m₂₁ : NMatrix m' n α) (m₂₂ : NMatrix m' n' α) :
-    NMatrix (m + m') (n + n') α :=
+theorem asMatrix_eq_get : X.asMatrix = X.get := rfl
+
+theorem eq_of_asMatrix (h : X.asMatrix = X'.asMatrix) : X = X' := by
+  ext i j; exact congrFun₂ h i j
+
+section
+
+variable (m₁₁ : NMatrix m n α) (m₁₂ : NMatrix m n' α) (m₂₁ : NMatrix m' n α) (m₂₂ : NMatrix m' n' α)
+
+def fromBlocks : NMatrix (m + m') (n + n') α :=
   .ofFn fun i j ↦
     if _ : i < m then
       if _ : j < n then
@@ -96,8 +98,63 @@ def fromBlocks
       else
         m₂₂.get ⟨i - m, by omega⟩ ⟨j - n, by omega⟩
 
-def asMatrix (M : NMatrix m n α) : Matrix (Fin m) (Fin n) α := M.get
-def ofMatrix (M : Matrix (Fin m) (Fin n) α) : NMatrix m n α := .ofFn M
+notation "fromBlocks[" a ", " b ", " c ", " d "]" => fromBlocks a b c d
+
+variable (M : NMatrix (m + m') (n + n') α)
+
+def toBlocks₁₁ : NMatrix m n α :=
+  .ofFn fun i j ↦ M.get ⟨i, by omega⟩ ⟨j, by omega⟩
+def toBlocks₁₂ : NMatrix m n' α :=
+  .ofFn fun i j ↦ M.get ⟨i, by omega⟩ ⟨n + j, by omega⟩
+def toBlocks₂₁ : NMatrix m' n α :=
+  .ofFn fun i j ↦ M.get ⟨m + i, by omega⟩ ⟨j, by omega⟩
+def toBlocks₂₂ : NMatrix m' n' α :=
+  .ofFn fun i j ↦ M.get ⟨m + i, by omega⟩ ⟨n + j, by omega⟩
+
+@[simp]
+theorem toBlocks₁₁_get {i j} : M.toBlocks₁₁.get i j = M.get ⟨i, by omega⟩ ⟨j, by omega⟩ := by
+  simp [toBlocks₁₁]
+@[simp]
+theorem toBlocks₁₂_get {i j} : M.toBlocks₁₂.get i j = M.get ⟨i, by omega⟩ ⟨n + j, by omega⟩ := by
+  simp [toBlocks₁₂]
+@[simp]
+theorem toBlocks₂₁_get {i j} : M.toBlocks₂₁.get i j = M.get ⟨m + i, by omega⟩ ⟨j, by omega⟩ := by
+  simp [toBlocks₂₁]
+@[simp]
+theorem toBlocks₂₂_get {i j} : M.toBlocks₂₂.get i j = M.get ⟨m + i, by omega⟩ ⟨n + j, by omega⟩ := by
+  simp [toBlocks₂₂]
+
+@[simp]
+theorem fromBlocks_toBlocks₁₁ : fromBlocks[m₁₁, m₁₂, m₂₁, m₂₂].toBlocks₁₁ = m₁₁ := by
+  simp [fromBlocks, toBlocks₁₁]
+@[simp]
+theorem fromBlocks_toBlocks₁₂ : fromBlocks[m₁₁, m₁₂, m₂₁, m₂₂].toBlocks₁₂ = m₁₂ := by
+  simp [fromBlocks, toBlocks₁₂]
+@[simp]
+theorem fromBlocks_toBlocks₂₁ : fromBlocks[m₁₁, m₁₂, m₂₁, m₂₂].toBlocks₂₁ = m₂₁ := by
+  simp [fromBlocks, toBlocks₂₁]
+@[simp]
+theorem fromBlocks_toBlocks₂₂ : fromBlocks[m₁₁, m₁₂, m₂₁, m₂₂].toBlocks₂₂ = m₂₂ := by
+  simp [fromBlocks, toBlocks₂₂]
+
+@[simp]
+theorem fromBlocks_get {i j} :
+      fromBlocks[m₁₁, m₁₂, m₂₁, m₂₂].get i j
+    = if hi : i < m then
+        if hj : j < n then m₁₁.get ⟨i, by omega⟩ ⟨j, by omega⟩ else m₁₂.get ⟨i, by omega⟩ ⟨j - n, by omega⟩
+      else
+        if hj : j < n then m₂₁.get ⟨i - m, by omega⟩ ⟨j, by omega⟩ else m₂₂.get ⟨i - m, by omega⟩ ⟨j -n, by omega⟩ := by
+  grind [fromBlocks]
+
+@[simp]
+theorem toBlocks_fromBlocks : fromBlocks M.toBlocks₁₁ M.toBlocks₁₂ M.toBlocks₂₁ M.toBlocks₂₂ = M := by
+  ext; simp; split_ifs <;> congr <;> omega
+
+end
+
+def fill (a : α) : NMatrix m n α := .ofFn fun _ _ ↦ a
+
+@[simp] def fill_get {a : α} {i : Fin m} {j : Fin n} : (fill a).get i j = a := by simp [fill]
 
 @[simp, grind] theorem asMatrix_ofMatrix : NMatrix.ofMatrix X.asMatrix = X := by
   simp [ofMatrix, asMatrix]
@@ -110,16 +167,29 @@ theorem ofFn_asMatrix {f : Fin m → Fin n → α} : (ofFn f).asMatrix = f := of
 @[simp, grind]
 theorem ofMatrix_get {f : Fin m → Fin n → α} : (NMatrix.ofMatrix f).get = f := ofFn_get
 
-def map {β : Type} (M : NMatrix m n α) (f : α → β) : NMatrix m n β :=
+def map {β : Type*} (M : NMatrix m n α) (f : α → β) : NMatrix m n β :=
   ⟨M.data.map f⟩
 
+@[simp, grind]
+theorem map_get {β : Type*} (M : NMatrix m n α) (f : α → β) {i j} :
+    (M.map f).get i j = f (M.get i j) := by
+  simp [map, get]
+
 instance [Zero α] [One α] : One (NMatrix n n α) := ⟨NMatrix.ofMatrix 1⟩
-instance [Zero α] : Zero (NMatrix n n α) := ⟨NMatrix.ofMatrix 0⟩
+instance [Zero α] : Zero (NMatrix m n α) := ⟨NMatrix.ofMatrix 0⟩
+
+@[simp, grind]
+theorem zero_get [Zero α] {i j} : (0 : NMatrix m n α).get i j = 0 := by
+  simp [OfNat.ofNat, Zero.zero]
+@[simp, grind]
+theorem one_get [Zero α] [One α] {i j} : (1 : NMatrix n n α).get i j = if i = j then 1 else 0 := by
+  simp [OfNat.ofNat, One.one, Matrix.diagonal_apply]
 
 instance [Add α] : Add (NMatrix m n α) where
   add a b := .ofMatrix (a.asMatrix + b.asMatrix)
 instance [Mul α] [AddCommMonoid α] : HMul (NMatrix l m α) (NMatrix m n α) (NMatrix l n α) where
   hMul a b := .ofMatrix (a.asMatrix * b.asMatrix)
+@[simp] instance [Mul α] [AddCommMonoid α] : Mul (NMatrix n n α) := ⟨HMul.hMul⟩
 
 @[simp]
 theorem add_get [Add α] : (X + X').get = X.get + X'.get := by
@@ -136,7 +206,239 @@ theorem mul_get [Mul α] [AddCommMonoid α] : (X * Y).get = X.asMatrix * Y.asMat
 
 theorem asMatrix_mul [Mul α] [AddCommMonoid α] : (X * Y).asMatrix = X.asMatrix * Y.asMatrix := by simp [asMatrix]
 
+theorem mul_assoc [NonUnitalSemiring α] : X * Y * Z = X * (Y * Z) := by
+  ext; simp [asMatrix_mul, Matrix.mul_assoc]
+
+theorem add_assoc [AddSemigroup α] {X'' : NMatrix m n α} : X + X' + X'' = X + (X' + X'') := by
+  ext; simp [_root_.add_assoc]
+
+theorem add_comm [AddCommMonoid α] : X + X' = X' + X := by
+  ext; simp [_root_.add_comm]
+
+theorem add_mul [Semiring α] : (X + X') * Y = X * Y + X' * Y := by
+  ext; simp only [mul_get, asMatrix_eq_get, add_get, Matrix.mul_apply, Pi.add_apply, right_distrib,
+    Finset.sum_add_distrib]
+theorem mul_add [Semiring α] : X * (Y + Y') = X * Y + X * Y' := by
+  ext; simp only [mul_get, asMatrix_eq_get, add_get, Matrix.mul_apply, Pi.add_apply, left_distrib,
+    Finset.sum_add_distrib]
+
+@[simp]
+theorem one_mul [Semiring α] : (1 : NMatrix m m α) * X = X := by
+  ext; simp only [mul_get, asMatrix_eq_get, Matrix.mul_apply, one_get, ite_mul, _root_.one_mul,
+    zero_mul, Finset.sum_ite_eq, Finset.mem_univ, ↓reduceIte]
+@[simp]
+theorem mul_one [Semiring α] : X * (1 : NMatrix n n α) = X := by
+  ext; simp only [mul_get, asMatrix_eq_get, Matrix.mul_apply, one_get, mul_ite, _root_.mul_one,
+    mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte]
+@[simp]
+theorem zero_mul [NonUnitalSemiring α] : (0 : NMatrix l m α) * X = 0 := by
+  ext; simp only [mul_get, asMatrix_eq_get, Matrix.mul_apply, zero_get, MulZeroClass.zero_mul,
+    Finset.sum_const_zero]
+@[simp]
+theorem mul_zero [NonUnitalSemiring α] : X * (0 : NMatrix n l α) = 0 := by
+  ext; simp only [mul_get, asMatrix_eq_get, Matrix.mul_apply, zero_get, MulZeroClass.mul_zero,
+    Finset.sum_const_zero]
+
+@[simp]
+theorem zero_add [NonUnitalSemiring α] : 0 + X = X := by
+  ext; simp only [add_get, Pi.add_apply, zero_get, _root_.zero_add]
+@[simp]
+theorem add_zero [NonUnitalSemiring α] : X + 0 = X := by
+  ext; simp only [add_get, Pi.add_apply, zero_get, _root_.add_zero]
+
+
 #eval! (NMatrix.ofFn (m:=2) (n:=2) (α:=ℕ × ℕ) fun i j ↦ (i, j)) + NMatrix.ofFn (m:=2) (n:=2) (α:=ℕ × ℕ) fun i j ↦ (i, j)
+
+instance {α : Type*} [Semiring α] : Semiring (NMatrix n n α) where
+  add_assoc A B C := by ext; simp [add_assoc]
+  zero_add A := by ext; simp
+  add_zero A := by ext; simp
+  nsmul n A := A.map (n * ·)
+  nsmul_succ n A := by ext; simp [right_distrib]
+  nsmul_zero A := by ext; simp
+  add_comm A B := by ext; simp [add_comm]
+  left_distrib A B C := by ext; simp [left_distrib, mul_get, asMatrix_eq_get]
+  right_distrib A B C := by ext; simp [right_distrib, mul_get, asMatrix_eq_get]
+  zero_mul A := by ext; simp only [instMulOfAddCommMonoid, zero_mul, zero_get]
+  mul_zero A := by ext; simp only [instMulOfAddCommMonoid, mul_zero, zero_get]
+  mul_assoc A B C := by ext; simp [mul_assoc]
+  one_mul A := by ext; simp only [instMulOfAddCommMonoid, one_mul]
+  mul_one A := by ext; simp only [instMulOfAddCommMonoid, mul_one]
+
+section
+
+variable {α : Type*}
+
+variable [OmegaCompletePartialOrder α]
+
+open OmegaCompletePartialOrder
+
+instance : PartialOrder (NMatrix m n α) where
+  le a b := a.asMatrix ≤ b.asMatrix
+  le_refl a := le_refl a.asMatrix
+  le_trans a b c hab hbc := le_trans hab hbc
+  le_antisymm a b hab hba := NMatrix.ext_iff.mpr fun i ↦ congrFun (congrFun (le_antisymm hab hba) i)
+instance : OmegaCompletePartialOrder (NMatrix m n α) where
+  ωSup c := ωSup (c.map ⟨(·.asMatrix), fun _ _ a ↦ a⟩) |> .ofMatrix
+  le_ωSup c i := by
+    have := le_ωSup (c.map ⟨(·.asMatrix), fun _ _ a ↦ a⟩) i
+    apply le_trans this
+    simp only [ofMatrix_asMatrix, le_refl]
+  ωSup_le c m i := by
+    have := ωSup_le (c.map ⟨(·.asMatrix), fun _ _ a ↦ a⟩) m.asMatrix i
+    apply le_trans _ this
+    simp only [ofMatrix_asMatrix, le_refl]
+
+variable [OrderBot α]
+
+instance : OrderBot (NMatrix m n α) where
+  bot := .ofMatrix ⊥
+  bot_le x := by
+    have := OrderBot.bot_le x.asMatrix
+    apply le_trans _ this
+    simp only [ofMatrix_asMatrix, le_refl]
+
+variable [Semiring α] [IsPositiveOrderedAddMonoid α]
+
+instance : IsPositiveOrderedAddMonoid (NMatrix n n α) where
+  bot_eq_zero := by
+    have := IsPositiveOrderedAddMonoid.bot_eq_zero (𝒮:=Matrix (Fin n) (Fin n) α)
+    exact congrArg NMatrix.ofMatrix this
+  add_le_add_left := by
+    intro a b h c
+    have := IsOrderedAddMonoid.add_le_add_left a.asMatrix b.asMatrix h c.asMatrix
+    have : NMatrix.ofMatrix (c.asMatrix + a.asMatrix) ≤ NMatrix.ofMatrix (c.asMatrix + b.asMatrix) := by intro i j; simp; exact this i j
+    exact this
+  add_le_add_right := by
+    intro a b h c
+    have := IsOrderedAddMonoid.add_le_add_right a.asMatrix b.asMatrix h c.asMatrix
+    have : NMatrix.ofMatrix (a.asMatrix + c.asMatrix) ≤ NMatrix.ofMatrix (b.asMatrix + c.asMatrix) := by intro i j; simp; exact this i j
+    exact this
+
+variable [MulLeftMono α]
+instance : MulLeftMono (NMatrix n n α) where
+  elim a b c h := by
+    simp_all
+    have h' : b.asMatrix ≤ c.asMatrix := h
+    have h'' : a.asMatrix * b.asMatrix ≤ a.asMatrix * c.asMatrix := by apply mul_le_mul_left' h'
+    have h'' : NMatrix.ofMatrix (a.asMatrix * b.asMatrix) ≤ NMatrix.ofMatrix (a.asMatrix * c.asMatrix) := by intro i j; simp [h'' i j]
+    exact h''
+
+end
+section
+
+variable {l m n o p q : ℕ}
+
+variable (A : NMatrix n l α) (B : NMatrix n m α) (C : NMatrix o l α) (D : NMatrix o m α)
+variable (A' : NMatrix l p α) (B' : NMatrix l q α) (C' : NMatrix m p α) (D' : NMatrix m q α)
+
+theorem fromBlocks_mul [NonUnitalSemiring α] :
+      fromBlocks A B C D * fromBlocks A' B' C' D'
+    = fromBlocks (A * A' + B * C') (A * B' + B * D') (C * A' + D * C') (C * B' + D * D') := by
+  apply eq_of_asMatrix
+  simp [asMatrix_mul]
+  have := Matrix.fromBlocks_multiply A.asMatrix B.asMatrix C.asMatrix D.asMatrix A'.asMatrix B'.asMatrix C'.asMatrix D'.asMatrix
+  ext ⟨i, hi₀⟩ ⟨j, hj₀⟩
+  by_cases hi : i < n <;> by_cases hj : j < p
+  · let i' : Fin n ⊕ Fin o := .inl ⟨i, by omega⟩
+    let j' : Fin p ⊕ Fin q := .inl ⟨j, by omega⟩
+    replace this := congrFun₂ this i' j'
+    simp [i', j'] at this
+    convert this <;> clear this
+    · simp [Matrix.mul_apply, asMatrix_eq_get, hi, hj]
+      simp [Finset.sum_fin_eq_sum_range, Finset.sum_range_add]
+      congr! 2
+      grind [Finset.mem_range]
+    · simp [Matrix.mul_apply, asMatrix_eq_get, hi, hj]
+  · let i' : Fin n ⊕ Fin o := .inl ⟨i, by omega⟩
+    let j' : Fin p ⊕ Fin q := .inr ⟨j - p, by omega⟩
+    replace this := congrFun₂ this i' j'
+    simp [i', j'] at this
+    convert this <;> clear this
+    · simp [Matrix.mul_apply, asMatrix_eq_get, hi, hj]
+      simp [Finset.sum_fin_eq_sum_range, Finset.sum_range_add]
+      congr! 2
+      grind [Finset.mem_range]
+    · simp [Matrix.mul_apply, asMatrix_eq_get, hi, hj]
+  · let i' : Fin n ⊕ Fin o := .inr ⟨i - n, by omega⟩
+    let j' : Fin p ⊕ Fin q := .inl ⟨j, by omega⟩
+    replace this := congrFun₂ this i' j'
+    simp [i', j'] at this
+    convert this <;> clear this
+    · simp [Matrix.mul_apply, asMatrix_eq_get, hi, hj]
+      simp [Finset.sum_fin_eq_sum_range, Finset.sum_range_add]
+      congr! 2
+      grind [Finset.mem_range]
+    · simp [Matrix.mul_apply, asMatrix_eq_get, hi, hj]
+  · let i' : Fin n ⊕ Fin o := .inr ⟨i - n, by omega⟩
+    let j' : Fin p ⊕ Fin q := .inr ⟨j - p, by omega⟩
+    replace this := congrFun₂ this i' j'
+    simp [i', j'] at this
+    convert this <;> clear this
+    · simp [Matrix.mul_apply, asMatrix_eq_get, hi, hj]
+      simp [Finset.sum_fin_eq_sum_range, Finset.sum_range_add]
+      congr! 2
+      grind [Finset.mem_range]
+    · simp [Matrix.mul_apply, asMatrix_eq_get, hi, hj]
+
+end
+
+section
+
+variable {l m n o p q : ℕ}
+
+variable (A : NMatrix n l α) (B : NMatrix n m α) (C : NMatrix o l α) (D : NMatrix o m α)
+variable (A' : NMatrix n l α) (B' : NMatrix n m α) (C' : NMatrix o l α) (D' : NMatrix o m α)
+
+theorem fromBlocks_add [Add α] :
+      fromBlocks[A, B, C, D] + fromBlocks[A', B', C', D']
+    = fromBlocks[A + A', B + B', C + C', D + D'] := by
+  ext; simp; grind
+
+theorem fromBlocks_eq_one [Semiring α] :
+      fromBlocks[(1 : NMatrix n n α), (0 : NMatrix n m α), (0 : NMatrix m n α), (1 : NMatrix m m α)]
+    = 1 := by
+  ext ⟨i, hi⟩ ⟨j, hj⟩
+  grind [fromBlocks_get, one_get, zero_get]
+
+@[simp]
+theorem fromBlocks_le_iff [OmegaCompletePartialOrder α] :
+    fromBlocks[A, B, C, D] ≤ fromBlocks[A', B', C', D'] ↔ (A ≤ A' ∧ B ≤ B' ∧ C ≤ C' ∧ D ≤ D') := by
+  constructor
+  · intro h
+    split_ands
+    · intro ⟨i, hi⟩ ⟨j, hj⟩
+      replace h := h ⟨i, by omega⟩ ⟨j, by omega⟩
+      simp [asMatrix_eq_get, hi, hj] at h
+      exact h
+    · intro ⟨i, hi⟩ ⟨j, hj⟩
+      replace h := h ⟨i, by omega⟩ ⟨j + l, by omega⟩
+      simp [asMatrix_eq_get, hi] at h
+      exact h
+    · intro ⟨i, hi⟩ ⟨j, hj⟩
+      replace h := h ⟨i + n, by omega⟩ ⟨j, by omega⟩
+      simp [asMatrix_eq_get, hj] at h
+      exact h
+    · intro ⟨i, hi⟩ ⟨j, hj⟩
+      replace h := h ⟨i + n, by omega⟩ ⟨j + l, by omega⟩
+      simp [asMatrix_eq_get] at h
+      exact h
+  · intro ⟨_, _, _, _⟩
+    intro ⟨i, hi⟩ ⟨j, hj⟩
+    simp [asMatrix_eq_get]
+    split_ifs <;> apply_assumption
+
+theorem fromBlocks_le [OmegaCompletePartialOrder α]
+    (hA : A ≤ A')
+    (hB : B ≤ B')
+    (hC : C ≤ C')
+    (hD : D ≤ D') :
+    fromBlocks[A, B, C, D] ≤ fromBlocks[A', B', C', D'] := by
+  intro ⟨i, hi⟩ ⟨j, hj⟩
+  simp [asMatrix_eq_get]
+  split_ifs <;> apply_assumption
+
+end
 
 end NMatrix
 
@@ -336,6 +638,38 @@ postfix:max "^*" => WeightedNetKAT.Star.star
 class LawfulStar (α : Type)
     [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [Star α] where
   star_eq_sum : ∀ m : α, m^* = ω∑ n : ℕ, m^n
+class StarIter (α : Type) [One α] [Mul α] [Add α] [Star α] where
+  star_iter : ∀ m : α, 1 + m * m^* = m^*
+
+open OmegaCompletePartialOrder
+
+def lawfulStarOf {α : Type} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [Star α] [MulLeftMono α]
+    (h : ∀ m : α, m^* = 1 + m * m^*)
+    (h' : ∀ (a c : α), 1 + c * a ≤ c → a^* ≤ c) :
+    ∀ m : α, m^* = ω∑ n : ℕ, m^n := by
+  intro m
+  simp [ωSum_nat_eq_ωSup]
+  apply le_antisymm
+  · -- apply h'
+    clear h'
+    -- apply le_ωSup
+
+
+
+    sorry
+  · simp
+    intro i
+    induction i with
+    | zero => simp
+    | succ i ih =>
+      simp [Finset.sum_range_succ', pow_succ', ← Finset.mul_sum]
+      rw [h, add_comm]
+      gcongr
+
+def lawfulStarOf' {α : Type} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [Star α] [MulLeftMono α]
+    (h : ∀ m : α, m^* = 1 + m * m^*)
+    (h' : ∀ (a c : α), 1 + c * a ≤ c → a^* ≤ c) :
+    LawfulStar α := ⟨lawfulStarOf h h'⟩
 
 instance instUnitStar {α : Type} [Star α] : Star (Matrix Unit Unit α) where
   star m := fun α β ↦ (m α β)^*
@@ -344,8 +678,6 @@ instance instUnitStar {α : Type} [Star α] : Star (Matrix Unit Unit α) where
 
 variable {α : Type} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [Star α] [LawfulStar α]
 variable [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α]
-
-open OmegaCompletePartialOrder
 
 theorem ωSup_pow {α : Type} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α] [MulLeftMono α] [MulRightMono α] [IsPositiveOrderedAddMonoid α] [OmegaContinuousNonUnitalSemiring α]
     (f : ℕ → α) (hf : Monotone f) (i : ℕ) :
@@ -372,6 +704,8 @@ theorem star_iter {a : α} :
   simp [LawfulStar.star_eq_sum]
   nth_rw 2 [ωSum_nat_eq_succ]
   simp [pow_succ', ωSum_mul_left]
+
+instance : StarIter α where star_iter _ := star_iter
 
 /-- **(A.11)**  -/
 theorem star_iter' {a : α} :
@@ -688,95 +1022,165 @@ def conice {n : ℕ} (m : Matrix (Fin n ⊕ 𝟙) (Fin n ⊕ 𝟙) α) : Matrix 
     let r' := if hr : r = n then .inr () else .inl ⟨r, by omega⟩
     m l' r'
 
+instance {m n : ℕ} : HMul α (NMatrix m n α) (NMatrix m n α) where
+    hMul s M := M.map (fun x ↦ s * x)
+instance {m n : ℕ} : HMul (NMatrix m n α) α (NMatrix m n α) where
+    hMul M s := M.map (fun x ↦ x * s)
+
+instance : WeightedNetKAT.Star (NMatrix 1 1 α) where
+  star a := .fill (a.get 0 0)^*
+
+instance {α : Type} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] : StarIter (NMatrix 1 1 α) where
+  star_iter m := by
+    simp [instStarNMatrixOfNatNat]
+    nth_rw 2 [← StarIter.star_iter]
+    ext ⟨_ | i, hi⟩ ⟨_ | j, hj⟩ <;> try omega
+    simp [NMatrix.fill, Matrix.mul_apply, NMatrix.asMatrix_eq_get]
+
 def star_fin' {n : ℕ} (m : NMatrix n n α) : NMatrix n n α :=
-  let res : NMatrix n n α :=
-    match n with
-    | 0 => .ofFn fun a b ↦ False.elim (by have := a.isLt; omega)
-    | n'+1 =>
-      let m' := m
-      let a : NMatrix n' n' α := m'.toBlocks₁₁
-      let b := m'.toBlocks₁₂
-      let c := m'.toBlocks₂₁
-      let d := m'.toBlocks₂₂
+  match n with
+  | 0 => .ofFn fun a b ↦ False.elim (by have := a.isLt; omega)
+  | n'+1 =>
+    let m' := m
+    let a : NMatrix n' n' α := m'.toBlocks₁₁
+    let b := m'.toBlocks₁₂
+    let c := m'.toBlocks₂₁
+    let d := m'.toBlocks₂₂
 
-      let η₁ := star_fin' a
-      let η₂ := c * η₁
-      let η₂' := η₁ * b
-      let η₃ := η₂ * b
+    let η₁ := star_fin' a
+    let η₂ := c * η₁
+    let η₂' := η₁ * b
+    let η₃ := η₂ * b
 
-      let δ : NMatrix 1 1 α := .ofFn fun _ _ ↦ ((d + η₃).get 0 0)^*
-      let γ := δ * η₂
-      let β := η₂' * δ
-      let α := η₁ + β * η₂
+    let δ : NMatrix 1 1 α := (d + η₃)^*
+    let γ := δ * η₂
+    let β := η₂' * δ
+    let α := η₁ + β * η₂
 
-      let m'' := NMatrix.fromBlocks α β γ δ
+    NMatrix.fromBlocks α β γ δ
 
-      m''
+theorem star_fin'_iter {α : Type} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] {n : ℕ} (M : NMatrix n n α) :
+    1 + M * star_fin' M = star_fin' M := by
+  induction n with
+  | zero => ext ⟨_, _⟩; omega
+  | succ n ih =>
+    let a : NMatrix n n α := M.toBlocks₁₁
+    let b := M.toBlocks₁₂
+    let c := M.toBlocks₂₁
+    let d := M.toBlocks₂₂
 
-  -- printprint f!"star_fin({n})" res
-  res
+    set a' := star_fin' a
+    have ha' : star_fin' a = a' := rfl
+    replace ih : 1 + a * a' = a' := ih _
 
-def star_fin_old {n : ℕ} (m : Matrix (Fin n) (Fin n) α) : Matrix (Fin n) (Fin n) α :=
-  let res : Matrix (Fin n) (Fin n) α :=
-    match n with
-    | 0 => fun a b ↦ False.elim (by have := a.isLt; omega)
-    | 1 =>
-      let x := (m 0 0)^*
-      fun _ _ ↦ x
-    | 2 =>
-      let m' := nice m
+    wlog h : M = NMatrix.fromBlocks a b c d generalizing a b c d
+    · absurd h; simp [a, b, c, d]
+    · simp [h] at *
+      rw [star_fin']
+      simp only [NMatrix.fromBlocks_toBlocks₁₁, NMatrix.fromBlocks_toBlocks₁₂,
+        NMatrix.fromBlocks_toBlocks₂₂, NMatrix.fromBlocks_toBlocks₂₁]
+      simp only [ha']
+      set δ' := (d + c * a' * b)^*
+      simp [← NMatrix.mul_assoc]
+      set γ' := δ' * c * a'
+      have : a' * b * δ' * c * a' = a' * b * γ' := by simp [γ', NMatrix.mul_assoc]
+      simp [this]; clear this
+      set β' := a' * b * δ'
+      set α' := a' + a' * b * γ'
 
-      let i₁ := .inl 0
-      let i₂ := .inr ()
+      simp [NMatrix.fromBlocks_mul]
+      rw [← NMatrix.fromBlocks_eq_one (α:=α) (n:=n) (m:=1)]
+      simp [NMatrix.fromBlocks_add]
+      have hδ : 1 + (d + c * a' * b) * δ' = δ' := by simp [δ']; exact StarIter.star_iter (d + c * a' * b)
 
-      let a := m' i₁ i₁
-      let b := m' i₁ i₂
-      let c := m' i₂ i₁
-      let d := m' i₂ i₂
+      congr! 1
+      · grind only [NMatrix.add_mul, add_assoc, NMatrix.one_mul, add_comm, NMatrix.mul_assoc,
+        left_distrib]
+      · grind only [NMatrix.add_mul, NMatrix.add_comm, NMatrix.one_mul, NMatrix.mul_assoc]
+      · simp [γ']
+        nth_rw 2 [← ih]
+        simp [α', γ', NMatrix.mul_add, ← NMatrix.mul_assoc]
+        nth_rw 3 [← hδ]
+        simp [NMatrix.add_mul]
+        nth_rw 1 [← ih]
+        simp [NMatrix.mul_add, ← NMatrix.mul_assoc, NMatrix.add_assoc]
+        congr! 1
+        nth_rw 4 [← ih]
+        simp [NMatrix.mul_add, ← NMatrix.mul_assoc]
+        nth_rw 3 [← ih]
+        simp only [NMatrix.mul_add, NMatrix.mul_one]
+        grind only [NMatrix.add_mul, NMatrix.add_comm, NMatrix.one_mul, NMatrix.mul_assoc,
+          NMatrix.add_assoc]
+      · grind only [NMatrix.add_mul, NMatrix.add_comm, NMatrix.mul_assoc, ← NMatrix.add_assoc]
 
-      let η₁ := a^*
-      let η₂ := c * η₁
-      let η₂' := η₁ * b
-      let η₃ := η₂ * b
+open OmegaCompletePartialOrder
 
-      let δ := (d + η₃)^*
-      let γ := δ * η₂
-      let β := η₂' * δ
-      let α := η₁ + β * η₂
+-- theorem star_fin'_eq_sum {α : Type} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
+--     [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α] [StarIter α] [MulLeftMono α]
+--     {n : ℕ} (a : NMatrix n n α) :
+--     star_fin' a = ω∑ i, a^i := by
+--   apply le_antisymm
+--   · simp [ωSum_nat_eq_ωSup]
 
-      let m'' := Matrix.fromBlocks α β γ δ
+--     sorry
+--   · simp [ωSum_nat_eq_ωSup]
+--     intro i
+--     sorry
 
-      conice m'' |>.concrete
-    | n'+1 =>
-      let m' := nice m
-      let a : Matrix (Fin n') (Fin n') α := m'.toBlocks₁₁
-      let b := m'.toBlocks₁₂
-      let c := m'.toBlocks₂₁
-      let d := m'.toBlocks₂₂
+theorem star_fin'_least {α : Type} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
+    [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α] [StarIter α] [MulLeftMono α]
+    {n : ℕ} (M N : NMatrix n n α) (h : 1 + N * M ≤ N) :
+    star_fin' M ≤ N := by
+  induction n with
+  | zero => sorry
+  | succ n ih =>
+    let a : NMatrix n n α := M.toBlocks₁₁
+    let b := M.toBlocks₁₂
+    let c := M.toBlocks₂₁
+    let d := M.toBlocks₂₂
 
-      let η₁ := star_fin_old a
-      let η₂ := c * η₁ |>.concrete
-      let η₂' := η₁ * b |>.concrete
-      let η₃ := η₂ * b |>.concrete
+    let x : NMatrix n n α := N.toBlocks₁₁
+    let y := N.toBlocks₁₂
+    let z := N.toBlocks₂₁
+    let w := N.toBlocks₂₂
 
-      let δ := (d + η₃)^* |>.concrete
-      let γ := δ * η₂ |>.concrete
-      let β := η₂' * δ |>.concrete
-      let α := η₁ + β * η₂ |>.concrete
+    set a' := star_fin' a
+    have ha'₀ : star_fin' a = a' := rfl
+    have ha' : 1 + a * a' = a' := star_fin'_iter a
+    have ha'' : 1 + a' * a = a' := sorry
 
-      let m'' := Matrix.fromBlocks α β γ δ
+    replace ih := ih a
+    simp [ha'₀] at ih
 
-      -- conice m''
-      conice m'' |>.concrete
+    -- replace ih : 1 + a * a' = a' := ih _
 
-  -- printprint f!"star_fin({n})" res
-  res
+    wlog hM : M = NMatrix.fromBlocks a b c d generalizing a b c d
+    · absurd hM; simp [a, b, c, d]
+    · wlog hN : N = NMatrix.fromBlocks x y z w generalizing x y z w
+      · absurd hN; simp [x, y, z, w]
+      · simp [hN, hM] at *
+        rw [star_fin']
+        simp [ha'₀]
+        rw [← NMatrix.fromBlocks_eq_one] at h
+        simp [NMatrix.fromBlocks_mul, NMatrix.fromBlocks_add, ← NMatrix.add_assoc] at h
+        obtain ⟨h₁, h₂, h₃, h₄⟩ := h
+        split_ands
+        · apply le_trans _ h₁
+          nth_rw 1 [← ha'']
+          simp [NMatrix.add_assoc]
+
+          sorry
+        · sorry
+        · sorry
+        · sorry
+  -- rw [← star_fin'_iter]
+  -- apply le_trans _ h
+  -- gcongr
+  -- simp
+  -- sorry
 
 def star_fin {n : ℕ} (m : Matrix (Fin n) (Fin n) α) : Matrix (Fin n) (Fin n) α :=
   star_fin' (.ofMatrix m) |>.asMatrix
-  -- letI : Inhabited α := ⟨0⟩
-  -- -- timeitit f!"old[{n}]" (do return star_fin_old m)
-  -- timeitit f!"new[{n}]" (do return star_fin' (.ofMatrix m) |>.asMatrix)
 
 instance instStar
     {α : Type} [Semiring α] [WeightedNetKAT.Star α]
@@ -785,8 +1189,6 @@ instance instStar
     [MulLeftMono α]
     [MulRightMono α]
     [OmegaContinuousNonUnitalSemiring α]
-    -- [∀ n', MulLeftMono (Matrix (Fin n') (Fin n') α)]
-    -- [∀ n', MulRightMono (Matrix (Fin n') (Fin n') α)]
     {n : ℕ} :
     WeightedNetKAT.Star (Matrix (Fin n) (Fin n) α) where
   star := star_fin
@@ -802,7 +1204,16 @@ def star_fin_lawful'
     -- [∀ n', MulRightMono (Matrix (Fin n') (Fin n') α)]
     {n : ℕ} :
     LawfulStar (Matrix (Fin n) (Fin n) α) := by
-  sorry
+  induction n with
+  | zero => constructor; intro m; ext ⟨_, hi⟩; omega
+  | succ n ih =>
+    apply lawfulStarOf'
+    · intro m
+      simp [instStar]
+      simp [star_fin, star_fin']
+      sorry
+    · sorry
+  -- sorry
   -- induction n with
   -- | zero => constructor; intro m; ext ⟨_, hi⟩; omega
   -- | succ n ih =>
