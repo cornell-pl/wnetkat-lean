@@ -30,7 +30,7 @@ variable (ℰ : EWNKA F N 𝒮 Q)
 variable [Star 𝒮]
 
 abbrev Run := List (Q × (Pk[F,N] × Pk[F,N]) × Q) × ((Pk[F,N] × Pk[F,N]) × Q)
-notation "Run["F","N","Q"]" => Run (F:=F) (N:=N) (Q:=Q)
+notation "Run["f","n","q"]" => Run (F:=f) (N:=n) (Q:=q)
 
 /--
 error: failed to synthesize
@@ -71,9 +71,15 @@ def Run.countQ (run : Run[F,N,Q]) : ℕ := run.2.2::run.1.map (fun (q, _, _) ↦
 def extendCycleFree' (cur : Run[F,N,Q]) (h : cur.isCycleFree) : Array Run[F,N,Q] :=
   match cur with
   | ⟨[], (α, β), q⟩ =>
-    Listed.arrayOf (Q × (Pk[F,N] × Pk[F,N]) × Q) |>.filterMap fun (q₀, (α', β'), q₁) ↦
-      if 𝒜.δ α' β' q₀ q₁ ≠ 0 ∧ 𝒜.δ α β q₁ q ≠ 0 then
-        let r' : Run[F,N,Q] := ⟨[(q₀, (α', β'), q₁)], (α, β), q⟩
+    -- Listed.arrayOf (Q × (Pk[F,N] × Pk[F,N]) × Q) |>.filterMap fun (q₀, (α', β'), q₁) ↦
+    --   if 𝒜.δ α' β' q₀ q₁ ≠ 0 ∧ 𝒜.δ α β q₁ q ≠ 0 then
+    --     let r' : Run[F,N,Q] := ⟨[(q₀, (α', β'), q₁)], (α, β), q⟩
+    --     if r'.isCycleFree then some r' else none
+    --   else
+    --     none
+    Listed.arrayOf (Q × Pk[F,N]) |>.filterMap fun (q₀, α') ↦
+      if 𝒜.δ α' α q₀ q ≠ 0 then
+        let r' : Run[F,N,Q] := ⟨[(q₀, (α', α), q)], (α, β), q⟩
         if r'.isCycleFree then some r' else none
       else
         none
@@ -126,7 +132,7 @@ def Run.weight : Run[F,N,Q] → 𝒮
   | ⟨(q, (α, β), q')::ρ, ρ'⟩ => 𝒜.δ α β q q' * weight ⟨ρ, ρ'⟩
 
 def δ_star (q q' : Q) (gs : GS[F,N]) : 𝒮 :=
-  runsOf 𝒜 q q' gs |>.map (Run.weight 𝒜) |>.sum
+  runsOf 𝒜 q q' gs |>.map (·.weight 𝒜) |>.sum
 
 def all : Array (Run[F,N,Q] × 𝒮) := Listed.array.flatMap (cycleFreeRunsOf 𝒜) |>.map (fun x ↦ (x, x.weight 𝒜))
 

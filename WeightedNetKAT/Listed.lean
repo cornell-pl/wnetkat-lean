@@ -1,29 +1,30 @@
-import Mathlib.Data.Fintype.Defs
-import Mathlib.Data.Finset.Dedup
-import Mathlib.Data.List.ProdSigma
-import Mathlib.Data.List.FinRange
-import Mathlib.Data.Vector.Basic
+import Mathlib.Algebra.BigOperators.Group.Finset.Defs
+import Mathlib.Algebra.GroupWithZero.Basic
+import Mathlib.Algebra.GroupWithZero.Nat
+import Mathlib.Algebra.Order.Group.Nat
 import Mathlib.Data.Countable.Defs
+import Mathlib.Data.Nat.Lattice
+import Mathlib.Data.Vector.Basic
 
-def printprint {α β : Type} [ToString β] (msg : β) (a : α) : α :=
-  (unsafe unsafeIO (do
-    println! msg
-    let stdout ← IO.getStdout
-    stdout.flush
-    return a
-  )).toOption.getD a
+-- def printprint {α β : Type*} [ToString β] (msg : β) (a : α) : α :=
+--   (unsafe unsafeIO (do
+--     println! msg
+--     let stdout ← IO.getStdout
+--     stdout.flush
+--     return a
+--   )).toOption.getD a
 
-def timeitit {α β : Type} [Inhabited α] [ToString β] (msg : β) (a : IO α) : α :=
-  (unsafe unsafeIO (do
-    let a ← timeit (toString msg) a
-    let stderr ← IO.getStderr
-    stderr.flush
-    return a
-  )).toOption.get!
+-- def timeitit {α β : Type*} [Inhabited α] [ToString β] (msg : β) (a : IO α) : α :=
+--   (unsafe unsafeIO (do
+--     let a ← timeit (toString msg) a
+--     let stderr ← IO.getStderr
+--     stderr.flush
+--     return a
+--   )).toOption.get!
 
-@[simp]
-theorem printprint_id {α β : Type} [ToString β] (msg : β) (a : α) : printprint msg a = a := by
-  sorry
+-- @[simp]
+-- theorem printprint_id {α β : Type*} [ToString β] (msg : β) (a : α) : printprint msg a = a := by
+--   sorry
 
 namespace List
 
@@ -163,7 +164,7 @@ theorem nodup_map_iff_inj_on {f : α → β} {l : Array α} (d : l.Nodup) :
 
 end Array
 
-class Listed (α : Type) where
+class Listed (α : Type*) where
   array : Array α
   nodup : array.Nodup
   size : ℕ := array.size
@@ -175,7 +176,7 @@ class Listed (α : Type) where
 
 namespace Listed
 
-def ofArray {α : Type} [DecidableEq α]
+def ofArray {α : Type*} [DecidableEq α]
     (array : Array α) (nodup : array.Nodup) (complete : ∀ a, a ∈ array) : Listed α where
   array
   nodup
@@ -189,7 +190,7 @@ instance : Listed Unit where
   complete := by simp
   encode _ := 0
 
-variable {α β : Type}
+variable {α β : Type*}
 variable [Listed α] [Listed β]
 
 def encode_inj : Function.Injective (Listed.encode (α:=α)) := by
@@ -197,7 +198,7 @@ def encode_inj : Function.Injective (Listed.encode (α:=α)) := by
 
 instance : Countable α := ⟨⟨Listed.encode, Listed.encode_inj⟩⟩
 
-def lift [Listed α] {γ : Type} (f : α ≃ γ) : Listed γ where
+def lift [Listed α] {γ : Type*} (f : α ≃ γ) : Listed γ where
   array := array.map f
   size := array.size
   size_prop := by simp; rfl
@@ -217,8 +218,8 @@ def lift [Listed α] {γ : Type} (f : α ≃ γ) : Listed γ where
 
 attribute [simp] Listed.nodup
 
-def arrayOf (α : Type) [Listed α] : Array α := Listed.array
-def listOf (α : Type) [Listed α] : List α := Listed.array.toList
+def arrayOf (α : Type*) [Listed α] : Array α := Listed.array
+def listOf (α : Type*) [Listed α] : List α := Listed.array.toList
 
 @[simp, grind] theorem mem_arrayOf (a : α) : a ∈ arrayOf α := complete a
 @[simp, grind] theorem mem_listOf (a : α) : a ∈ listOf α := by simp [listOf]
@@ -255,22 +256,22 @@ theorem decode_get_encode (n : ℕ) (h : (decode (α:=α) n).isSome) :
   have := List.Nodup.getElem_inj_iff (nodup (α:=α)) (i:=n) (j:=encode array[n]) (hi:=h) (hj:=by simp [encode_len])
   grind
 
-def encodeFin {α : Type} [i : Listed α] : α → Fin i.size :=
+def encodeFin {α : Type*} [i : Listed α] : α → Fin i.size :=
   fun a ↦ ⟨i.encode a, by simp [encode_len, ← size_prop]⟩
-def decodeFin {α : Type} [i : Listed α] : Fin i.size → α :=
+def decodeFin {α : Type*} [i : Listed α] : Fin i.size → α :=
   fun a ↦ i.decode a |>.get (by obtain ⟨a, ha⟩ := a; grind [decode, size_prop])
 
 @[simp, grind]
-theorem decodeFin_encodeFin {α : Type} [i : Listed α] (a) :
+theorem decodeFin_encodeFin {α : Type*} [i : Listed α] (a) :
     i.encodeFin (i.decodeFin a) = a := by
   simp [encodeFin, decodeFin]
 
 @[simp]
-theorem encodeFin_decodeFin {α : Type} [i : Listed α] (a) :
+theorem encodeFin_decodeFin {α : Type*} [i : Listed α] (a) :
     i.decodeFin (i.encodeFin a) = a := by
   grind [encodeFin, decodeFin, encode_decode]
 
-def equivFin {α : Type} [Listed α] : α ≃ Fin (Listed.size α) := ⟨
+def equivFin {α : Type*} [Listed α] : α ≃ Fin (Listed.size α) := ⟨
   encodeFin,
   decodeFin,
   by intro; simp,
@@ -431,7 +432,7 @@ def cool_bijection.invFun' (n m : ℕ)
     have : NeZero (n^m) := ⟨h⟩
     v.mapIdx (fun p x ↦ (n^p * x) % n^m) |>.sum % n ^ m
 
-theorem Vector.toArray_sum {α : Type} {n} [Add α] [Zero α] (v : Vector α n) :
+theorem Vector.toArray_sum {α : Type*} {n} [Add α] [Zero α] (v : Vector α n) :
     v.toArray.sum = v.sum := rfl
 theorem Array.sum_fin_val {m} [NeZero m] (v : Array (Fin m)) :
     v.sum.val = (v.map (·.val)).sum % m := by
@@ -442,19 +443,19 @@ theorem Array.sum_fin_val {m} [NeZero m] (v : Array (Fin m)) :
   | cons x v ih =>
     simp_all [Fin.val_add]
 @[simp]
-theorem Array.mapIdx_map {α β γ : Type} (f : ℕ → α → β) (g : β → γ) (xs : Array α) :
+theorem Array.mapIdx_map {α β γ : Type*} (f : ℕ → α → β) (g : β → γ) (xs : Array α) :
     (xs.mapIdx f).map g = xs.mapIdx (fun i x ↦ g (f i x)) := by
   ext <;> simp
 @[simp]
-theorem Array.map_mapIdx {α β γ : Type} (f : ℕ → β → γ) (g : α → β) (xs : Array α) :
+theorem Array.map_mapIdx {α β γ : Type*} (f : ℕ → β → γ) (g : α → β) (xs : Array α) :
     (xs.map g).mapIdx f = xs.mapIdx (fun i x ↦ f i (g x)) := by
   ext <;> simp
 @[simp]
-theorem Array.ofFn_mapIdx {n} {α β : Type} (f : Fin n → α) (g : ℕ → α → β) :
+theorem Array.ofFn_mapIdx {n} {α β : Type*} (f : Fin n → α) (g : ℕ → α → β) :
     (Array.ofFn f).mapIdx g = Array.ofFn (fun i ↦ g i (f i)) := by
   ext <;> simp
 @[simp]
-theorem Array.ofFn_map {n} {α β : Type} (f : Fin n → α) (g : α → β) :
+theorem Array.ofFn_map {n} {α β : Type*} (f : Fin n → α) (g : α → β) :
     (Array.ofFn f).map g = Array.ofFn (fun i ↦ g (f i)) := by
   ext <;> simp
 
@@ -555,7 +556,7 @@ def listVector [DecidableEq α] (n : ℕ) : {inst : Listed (List.Vector α n) //
       size := Listed.size α ^ (n + 1)
       size_prop := by
         simp [L, Array.size_product, arrayOf, size_prop, pow_succ]
-        congr
+        left
         exact (listVector n).prop
       nodup := by
         simp [L]
@@ -640,7 +641,7 @@ def arrayVector_aux [DecidableEq α] (all : Array α) (all_nodup : all.Nodup) (a
       encode_prop a := by
         have := Array.findIdx_getElem (p:=(· = a)) (xs:=L) (w:=?_)
         simp at this; exact this
-    }, sorry⟩
+    }, by simp⟩
 
 def arrayVector [DecidableEq α] (n : ℕ) : Listed (Vector α n) :=
   arrayVector_aux array nodup mem_list size_prop n |>.val
@@ -705,6 +706,7 @@ def arrayVector' [DecidableEq α] (n : ℕ) : Listed (Vector α n) where
   encode_len := sorry
   encode_prop := sorry
 
+-- TODO: make the more efficient version sound
 -- instance [DecidableEq α] (n : ℕ) : Listed (Vector α n) := Listed.arrayVector n
 instance [DecidableEq α] (n : ℕ) : Listed (Vector α n) := Listed.arrayVector' n
 
@@ -713,14 +715,14 @@ def pi_array [Inhabited β] [DecidableEq α] [DecidableEq β] : Array (α → β
     arrayOf (Vector β (size α)) |>.map (fun m a ↦ m[encode a]'(by simp [← size_prop, encode_len]))
 
 theorem mem_pi_array  [Inhabited β] [DecidableEq α] [DecidableEq β] {f : α → β} : f ∈ pi_array := by
-  simp only [pi_array, printprint_id]
+  simp only [pi_array]
   apply Array.mem_map.mpr
   use Vector.ofFn (fun ⟨i, hi⟩ ↦ f <| (decode i).get (by simpa [decode, listOf, size_prop]))
   grind [List.Vector.getElem_def, List.Vector.toList_ofFn]
 
 theorem pi_array_nodup  [Inhabited β] [DecidableEq α] [DecidableEq β] :
     (pi_array (α:=α) (β:=β)).Nodup := by
-  simp only [pi_array, printprint_id]
+  simp only [pi_array]
   refine (Array.nodup_map_iff_inj_on (by simp [arrayOf])).mpr ?_
   intro x hx y hy h
   refine Vector.ext fun i hi ↦ ?_
@@ -728,7 +730,7 @@ theorem pi_array_nodup  [Inhabited β] [DecidableEq α] [DecidableEq β] :
   replace := congrFun h ((decode i).get this)
   simpa only [decode_get_encode]
 
-def pi (α β : Type) [Listed α] [Listed β] [Inhabited β] [DecidableEq α] [DecidableEq β] : Listed (α → β) :=
+def pi (α β : Type*) [Listed α] [Listed β] [Inhabited β] [DecidableEq α] [DecidableEq β] : Listed (α → β) :=
   let array := pi_array
   {
     array
@@ -767,5 +769,37 @@ info: [[(Listed.T.a, 0), (Listed.T.b, 0), (Listed.T.c, 0), (Listed.T.d, 0)],
 -/
 #guard_msgs in
 #eval! letI := pi T (Fin 2); listOf (T → Fin 2)
+
+@[simp]
+theorem encode_eq_iff {α : Type*} [Listed α] {a b : α} :
+    encode a = encode b ↔ a = b := Function.Injective.eq_iff encode_inj
+@[simp]
+theorem encodeFin_eq_iff {α : Type*} [Listed α] {a b : α} :
+    encodeFin a = encodeFin b ↔ a = b := by simp [encodeFin]
+@[simp]
+theorem encodeFin_eq_encode_iff {α : Type*} [Listed α] {a b : α} :
+    (encodeFin a).val = encode b ↔ a = b := by simp [encodeFin]
+@[simp]
+theorem encode_eq_encodeFin_iff {α : Type*} [Listed α] {a b : α} :
+    encode a = (encodeFin b).val ↔ a = b := by simp [encodeFin]
+@[simp]
+theorem encode_unit :
+    encode () = 0 := rfl
+@[simp]
+theorem encodeFin_unit :
+    encodeFin () = 0 := rfl
+@[simp]
+theorem size_unit :
+    size Unit = 1 := by
+  simp [← size_prop, array]
+
+@[simp]
+theorem sum_fin
+    {α : Type*} [Listed α] [Fintype α]
+    {𝒮 : Type*} [AddCommMonoid 𝒮]
+    {f : Fin (size α) → 𝒮}
+    :
+    ∑ (i : Fin (size α)), f i = ∑ (i : α), f (encodeFin i) :=
+  (Function.Bijective.sum_comp encodeFin_bijective f).symm
 
 end Listed

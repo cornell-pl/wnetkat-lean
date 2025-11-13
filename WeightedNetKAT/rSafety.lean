@@ -3,6 +3,8 @@ import WeightedNetKAT.WNKA
 open OmegaCompletePartialOrder
 open scoped RightActions
 
+open scoped WeightingNotation
+
 namespace WeightedNetKAT
 
 variable {F : Type} [Fintype F] [Listed F] [DecidableEq F]
@@ -61,9 +63,9 @@ def sem' :=
 def EI : E𝒲[𝟙, Q' F N Q, 𝒮] := Eη₂ () (.inr .qι)
 def EΔ (β : Pk[F,N]) : E𝒲[Q' F N Q, Q' F N Q, 𝒮] :=
   .ofFnSlow fun q q' ↦ match q, q' with
-    | .inl (q, α), .inl (q', β') => if β = β' then (ℰ.δ.get α β).get q q' else 0
-    | .inr .qι, .inl (q, β') => if β = β' then ℰ.ι.get () q else 0
-    | .inl (q, α), .inr .q𝒪 => (ℰ.𝒪.get α β).get q ()
+    | .inl (q, α), .inl (q', β') => if β = β' then ℰ.δ α β q q' else 0
+    | .inr .qι, .inl (q, β') => if β = β' then ℰ.ι () q else 0
+    | .inl (q, α), .inr .q𝒪 => ℰ.𝒪 α β q ()
 
     | (.inr .q𝒪), (.inr .q𝒪) => 0
     | (.inr .q𝒪), (.inr .qι) => 0
@@ -78,7 +80,7 @@ def EΔ_star : List Pk[F,N] → E𝒲[Q' F N Q, Q' F N Q, 𝒮]
   | α::x => EΔ ℰ α * EΔ_star x
 
 def Esem : List Pk[F,N] → 𝒮 := fun x ↦
-    ((EI : E𝒲[𝟙, Q' F N Q, 𝒮]) * EΔ_star ℰ x * (EΛ : E𝒲[Q' F N Q, 𝟙, 𝒮]) : E𝒲[_, _, 𝒮]).get () ()
+    ((EI : E𝒲[𝟙, Q' F N Q, 𝒮]) * EΔ_star ℰ x * (EΛ : E𝒲[Q' F N Q, 𝟙, 𝒮]) : E𝒲[_, _, 𝒮]) () ()
 
 def EM : E𝒲[Q' F N Q, Q' F N Q, 𝒮] := ∑ (α : Pk[F,N]), EΔ ℰ α
 
@@ -87,7 +89,7 @@ def EM_star : E𝒲[Q' F N Q, Q' F N Q, 𝒮] :=
   R
 
 def Esem' :=
-    ((EI : E𝒲[𝟙, Q' F N Q, 𝒮]) * EM_star ℰ * (EΛ : E𝒲[Q' F N Q, 𝟙, 𝒮]) : E𝒲[_, _, 𝒮]).get () ()
+    ((EI : E𝒲[𝟙, Q' F N Q, 𝒮]) * EM_star ℰ * (EΛ : E𝒲[Q' F N Q, 𝟙, 𝒮]) : E𝒲[_, _, 𝒮]) () ()
 
 omit [Fintype F] [Fintype Q] [Star 𝒮] in
 @[simp]
@@ -97,7 +99,6 @@ omit [Fintype F] [Fintype Q] [Star 𝒮] in
 @[simp]
 theorem EΔ_eq_Δ {β} : EΔ (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) ℰ β = EMatrix.ofMatrix (Δ ℰ.toWNKA β) := by
   ext; simp [EΔ, Δ]
-  split <;> try simp_all [EMatrix.get_eq_asMatrix]
 omit [Fintype F] [Fintype Q] [Star 𝒮] in
 @[simp]
 theorem EΛ_eq_Λ : EΛ (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) = EMatrix.ofMatrix Λ := by
@@ -106,19 +107,31 @@ theorem EΛ_eq_Λ : EΛ (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) = EMatrix.ofMatrix Λ 
 omit [Fintype F] in
 @[simp]
 theorem Esem'_eq_sem' : Esem' ℰ = sem' ℰ.toWNKA := by
-  simp [Esem', sem', EM_star, EM, M_star]
-  congr! 2
-  simp [Star.star, Matrix.listedEquivNat, Matrix.Star.star_fin]
+  suffices EMatrix.asMatrix (EM ℰ).asNMatrix^* = (M ℰ.toWNKA)^* by
+    simp [Esem', sem', EM_star, M_star, this]
+  ext i j
+  simp [Star.star, EM, M]
+  congr!
   ext
-  simp [EMatrix.asMatrix, NMatrix.asMatrix]
-  congr
-  ext
-  simp [M]
-  simp [EMatrix.get_eq_asMatrix]
+  simp [EMatrix.asNMatrix, Matrix.sum_apply]
 
 def sem'_fast := Esem' 𝒜.toEWNKA
 
 @[csimp] theorem sem'_csimp : @sem' = @sem'_fast := by ext; simp [sem'_fast]
+
+variable [DecidableEq 𝒮]
+
+def extraction_len (n : ℕ) (r : 𝒮) : Option GS[F,N] :=
+  let x := Listed.arrayOf (Pk[F,N] × Vector Pk[F,N] n × Pk[F,N])
+  let y : Array (GS[F,N]) := x.map fun (α, xs, β) ↦ GS.mk α xs.toList β
+  y.find? (ℰ.toWNKA.sem · = r)
+
+partial def extraction_go [Inhabited F] [Inhabited N] (n : ℕ) (r : 𝒮) : GS[F,N] :=
+  match extraction_len ℰ n r with
+  | some ρ => ρ
+  | none => extraction_go (n + 1) r
+
+def extraction [Inhabited F] [Inhabited N] (r : 𝒮) : GS[F,N] := extraction_go ℰ 0 r
 
 end rSafety
 

@@ -14,7 +14,7 @@ variable {N : Type} [Fintype N] [DecidableEq N]
 
 structure Pk (F N : Type) [Listed F] where
   data : Vector N (Listed.size (α:=F))
-deriving DecidableEq
+deriving DecidableEq, Inhabited
 notation "Pk[" F "," N "]" => Pk F N
 
 instance : FunLike Pk[F,N] F N where

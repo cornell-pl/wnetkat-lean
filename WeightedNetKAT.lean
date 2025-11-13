@@ -65,7 +65,7 @@ def latency : City → City → Option Arctic
 
   | IND, ATL => ms 3
 
-  | DC, NYC => ms 1
+  -- | DC, NYC => ms 1
 
   | LA, HOU => ms 6
 
@@ -217,6 +217,39 @@ open WeightedNetKAT
 
 example {Q : Type} [Repr Q] : Repr (rReachability.Run (F:=Switch) (N:=City) (Q:=Q)) := inferInstance
 
+-- /-- info: 'WeightedNetKAT.RPol.wnka' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+-- #guard_msgs in
+-- #print axioms RPol.wnka
+-- /--
+-- info: 'WeightedNetKAT.the_complete_theorem' depends on axioms: [propext, Classical.choice, Quot.sound]
+-- -/
+-- #guard_msgs in
+-- #print axioms the_complete_theorem
+-- /--
+-- info: 'WeightedNetKAT.rSafety.sem'' depends on axioms: [propext, Classical.choice, Quot.sound]
+-- -/
+-- #guard_msgs in
+-- #print axioms rSafety.sem'
+
+instance : Std.ToFormat Pk[Switch,City] where
+  format x :=
+    match x .sw with
+    | .SEA => "SEA"
+    | .CHI => "CHI"
+    | .NYC => "NYC"
+    | .BAY => "BAY"
+    | .DEN => "DEN"
+    | .KAN => "KAN"
+    | .IND => "IND"
+    | .DC => "DC"
+    | .LA => "LA"
+    | .HOU => "HOU"
+    | .ATL => "ATL"
+instance (priority := 1000000) {Q} [Std.ToFormat Q] : Repr Run[Switch,City,Q] where
+  reprPrec := fun (ρ, (α, β), n) _ ↦ f!"⟨{ρ.reverse.map fun ⟨q₀, (α', β'), q₁⟩ ↦ (q₀, (β', α'), q₁)}, ({α}, {β}), {n}⟩"
+
+instance {𝒮} {p : RPol[Switch,City,𝒮]} : Std.ToFormat (S p) where
+  format x := reprStr x
 
 def main : IO Unit := do
   -- test Switch City
@@ -236,14 +269,24 @@ def main : IO Unit := do
   -- let xs : Array Pk[Switch,City] := Listed.pi_array (α:=Switch) (β:=City)
   -- println! f!"Pk[Switch,City]: {reprStr xs}"
   -- let := Listed.ofArray xs Listed.pi_array_nodup (fun _ ↦ Listed.mem_pi_array)
-  let pol := wnk_rpol { ~p₁ }
+  -- let pol := wnk_rpol { ~p₁ }
   -- let pol := wnk_rpol { (~p₁ ; dup)* }
   -- let pol := wnk_rpol { (~(p Arctic) ; dup)* }
+  let pol := wnk_rpol { (~p_latency ; dup)* }
   -- let res ← pol.eval
   let n : WNKA _ _ _ (S pol) := pol.wnka
 
-  -- let r := rSafety.sem' n
-  -- println! f!"rSafety: {reprStr r}"
+  println! " ∘ WNKA has been built!"
 
-  let ρ := rReachability.all n
-  println! f!"rReachability: {reprStr ρ}"
+  let v := rSafety.sem' n
+  println! f!" ∘ rSafety: {reprStr v}"
+
+  if v < ⊤ then
+    println! " ∘ extracting witness..."
+    let ρ := rSafety.extraction n.toEWNKA v
+    println! f!" ∘ rSafety(witness): {reprStr (ρ.pks.map fun π ↦ π Switch.sw)}"
+  else
+    println! " ∘ rSafety is ⊤!"
+
+  let ρ := rReachability.all n |>.filter fun (a, b) ↦ b ≠ Arctic.arc 0
+  println! f!" ∘ rReachability: {(ρ.map fun (a, b) ↦ ((instReprRunSwitchCityOfToFormat.reprPrec a 0), reprStr b))}"

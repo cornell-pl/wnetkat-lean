@@ -4,6 +4,8 @@ import WeightedNetKAT.WNKA
 import WeightedNetKAT.Instances.Boolean
 import WeightedNetKAT.Instances.Bottleneck
 
+open WeightingNotation
+
 namespace WeightedNetKAT
 
 inductive Fields where
