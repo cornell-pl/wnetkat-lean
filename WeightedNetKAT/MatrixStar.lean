@@ -1,4 +1,6 @@
-import WeightedNetKAT.ComputableSemiring
+import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
+import WeightedNetKAT.Star
+import WeightedNetKAT.MatrixExt
 
 namespace Matrix.Star
 
@@ -13,7 +15,7 @@ scoped notation "𝟙" => Unit
 instance : WeightedNetKAT.Star (Matrix 𝟙 𝟙 α) where
   star m := (m () ())^*
 instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α] [LawfulStar α] :
-    WeightedNetKAT.LawfulStar (Matrix 𝟙 𝟙 α) where
+    LawfulStar (Matrix 𝟙 𝟙 α) where
   star_eq_sum m := by
     have := LawfulStar.star_eq_sum (m () ())
     ext ⟨⟩ ⟨⟩
@@ -143,9 +145,64 @@ theorem star_fin'_iter {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [Star
           NMatrix.add_assoc]
       · grind only [NMatrix.add_mul, NMatrix.add_comm, NMatrix.mul_assoc, ← NMatrix.add_assoc]
 
+-- theorem star_fin'_iter' {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] {n : ℕ} (M : NMatrix n n α) :
+--     1 + M^* * M = M^* := by
+--   induction n with
+--   | zero => ext ⟨_, _⟩; omega
+--   | succ n ih =>
+--     let a : NMatrix n n α := M.toBlocks₁₁
+--     let b := M.toBlocks₁₂
+--     let c := M.toBlocks₂₁
+--     let d := M.toBlocks₂₂
+
+--     set a' := star_fin' a
+--     have ha' : star_fin' a = a' := rfl
+--     replace ih : 1 + a' * a = a' := ih _
+
+--     wlog h : M = NMatrix.fromBlocks a b c d generalizing a b c d
+--     · absurd h; simp [a, b, c, d]
+--     · simp [h] at *
+--       simp [WeightedNetKAT.Star.star]
+--       rw [star_fin']
+--       simp only [NMatrix.fromBlocks_toBlocks₁₁, NMatrix.fromBlocks_toBlocks₁₂,
+--         NMatrix.fromBlocks_toBlocks₂₂, NMatrix.fromBlocks_toBlocks₂₁]
+--       simp only [ha']
+--       set δ' := (d + c * a' * b)^*
+--       simp [← NMatrix.mul_assoc]
+--       set γ' := δ' * c * a'
+--       have : a' * b * δ' * c * a' = a' * b * γ' := by simp [γ', NMatrix.mul_assoc]
+--       simp [this]; clear this
+--       set β' := a' * b * δ'
+--       set α' := a' + a' * b * γ'
+
+--       simp [NMatrix.fromBlocks_mul]
+--       rw [← NMatrix.fromBlocks_eq_one (α:=α) (n:=n) (m:=1)]
+--       simp [NMatrix.fromBlocks_add]
+--       have hδ : 1 + δ' * (d + c * a' * b) = δ' := by simp [δ']; exact StarIter.star_iter' (d + c * a' * b)
+
+--       congr! 1
+--       · grind? [NMatrix.add_mul, Matrix.mul_add, NMatrix.mul_one, add_assoc, NMatrix.one_mul, add_comm, NMatrix.mul_assoc,
+--         left_distrib, right_distrib]
+--       · grind only [NMatrix.add_mul, NMatrix.add_comm, NMatrix.one_mul, NMatrix.mul_assoc]
+--       · simp [γ']
+--         nth_rw 2 [← ih]
+--         simp [α', γ', NMatrix.mul_add, ← NMatrix.mul_assoc]
+--         nth_rw 3 [← hδ]
+--         simp [NMatrix.add_mul]
+--         nth_rw 1 [← ih]
+--         simp [NMatrix.mul_add, ← NMatrix.mul_assoc, NMatrix.add_assoc]
+--         congr! 1
+--         nth_rw 4 [← ih]
+--         simp [NMatrix.mul_add, ← NMatrix.mul_assoc]
+--         nth_rw 3 [← ih]
+--         simp only [NMatrix.mul_add, NMatrix.mul_one]
+--         grind only [NMatrix.add_mul, NMatrix.add_comm, NMatrix.one_mul, NMatrix.mul_assoc,
+--           NMatrix.add_assoc]
+--       · grind only [NMatrix.add_mul, NMatrix.add_comm, NMatrix.mul_assoc, ← NMatrix.add_assoc]
+
 -- TODO: we need this
--- instance {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] [ComputableSemiring α] {n : ℕ} :
---     ComputableSemiring (NMatrix n n α) where
+-- instance {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] [LawfulStar α] {n : ℕ} :
+--     LawfulStar (NMatrix n n α) where
 --   unique_star X A B h := by
 --     apply uniqueStarMatrix h
     -- induction n with
@@ -166,21 +223,32 @@ theorem star_fin'_iter {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [Star
 
 section
 
-variable {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] [ComputableSemiring α]
-variable [∀ n, ComputableSemiring (NMatrix n n α)]
+@[simp]
+theorem NMatrix.ofMatrix_pow {α : Type*} [Semiring α] {n : ℕ} {M : Matrix (Fin n) (Fin n) α} {i : ℕ} : (NMatrix.ofMatrix M) ^ i = NMatrix.ofMatrix (M^i) := by
+  ext x y
+  simp
+  induction i generalizing x y with
+  | zero => simp; rfl
+  | succ i ih => simp_all [pow_succ, Matrix.mul_apply]
 
-instance {n : Type*} [Listed n] : ComputableSemiring (EMatrix n n α) :=
-  inferInstanceAs (ComputableSemiring (NMatrix _ _ _))
-instance {n : Type*} [Listed n] [Fintype n] [DecidableEq n] : ComputableSemiring (Matrix n n α) where
-  unique_star X A B h := by
-    have := ComputableSemiring.unique_star (EMatrix.ofMatrix X) (EMatrix.ofMatrix A) (EMatrix.ofMatrix B) ?_
-    · ext i j
-      have := congrFun₂ (congrArg DFunLike.coe this) i j
-      simp at this
-      exact this
-    · ext i j
-      simp
-      exact congrFun₂ h i j
+@[simp]
+theorem EMatrix.ofMatrix_pow {α n : Type*} [Semiring α] [Listed n] [Fintype n] [DecidableEq n] {M : Matrix n n α} {i : ℕ} : (EMatrix.ofMatrix M) ^ i = EMatrix.ofMatrix (M^i) := by
+  ext x y
+  simp
+  induction i generalizing x y with
+  | zero => simp; simp [OfNat.ofNat, One.one, NMatrix.ofMatrix, Matrix.diagonal_apply]
+  | succ i ih => simp_all [pow_succ, Matrix.mul_apply]
+
+variable {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [LawfulStar α]
+variable [∀ n, LawfulStar (NMatrix n n α)]
+
+instance {n : Type*} [Listed n] : LawfulStar (EMatrix n n α) :=
+  inferInstanceAs (LawfulStar (NMatrix _ _ _))
+instance {n : Type*} [Listed n] [Fintype n] [DecidableEq n] : LawfulStar (Matrix n n α) where
+  star_eq_sum X := by
+    ext i j
+    have := congrFun₂ (congrArg DFunLike.coe (LawfulStar.star_eq_sum (EMatrix.ofMatrix X))) i j
+    simpa
 
 end
 
@@ -195,7 +263,7 @@ theorem ωSup_apply  : ∀ (c : Chain (NMatrix n n α)) x y, ωSup c x y = ωSup
 
 variable [Semiring α] [OrderBot α]
     [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α] [StarIter α] [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α]
-    [ComputableSemiring α]
+    [LawfulStar α]
 
 instance : MulRightMono (NMatrix n n α) where
   elim x y z h := by
@@ -206,7 +274,7 @@ instance : MulRightMono (NMatrix n n α) where
     exact h i k
 instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
     [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α] [StarIter α] [MulLeftMono α] [MulRightMono α]
-    [OmegaContinuousNonUnitalSemiring α] [ComputableSemiring α] {n : ℕ} :
+    [OmegaContinuousNonUnitalSemiring α] [LawfulStar α] {n : ℕ} :
     OmegaContinuousNonUnitalSemiring (NMatrix n n α) where
   ωScottContinuous_add_right x := by
     refine ωScottContinuous.of_monotone_map_ωSup ?_
@@ -247,66 +315,24 @@ instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
 
 end
 
-theorem star_fin'_eq_sum {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
-    [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α] [StarIter α] [MulLeftMono α] [MulRightMono α]
-    [OmegaContinuousNonUnitalSemiring α] [ComputableSemiring α] {n : ℕ} [ComputableSemiring (NMatrix n n α)]
-    (M : NMatrix n n α) : star_fin' M = ω∑ i, M^i := by
-  have := star_fin'_iter M
-  rw [add_comm] at this
-  have := ComputableSemiring.unique_star (ω∑ (i : ℕ), M ^ i) M 1
-  simp at this
-  symm
-  apply this
-  simp [← _root_.ωSum_mul_left]
-  nth_rw 2 [ωSum_nat_eq_succ]
-  simp [ωSum_nat_eq_ωSup]
-  simp [ωSup_add, add_ωSup]
-  congr! 3 with i
-  rw [add_comm]
-  congr
-  simp [pow_succ']
-
-instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
-    [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α] [StarIter α] [MulLeftMono α] [MulRightMono α]
-    [OmegaContinuousNonUnitalSemiring α] [ComputableSemiring α] {n : ℕ} [ComputableSemiring (NMatrix n n α)] :
-    LawfulStar (NMatrix n n α) where star_eq_sum := star_fin'_eq_sum
-
 instance {n α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
-    [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α] [StarIter α] [MulLeftMono α] [MulRightMono α]
-    [OmegaContinuousNonUnitalSemiring α] [ComputableSemiring α] [Listed n]
-    [ComputableSemiring (NMatrix (Listed.size n) (Listed.size n) α)] :
+    [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α] [Listed n]
+    [LawfulStar (NMatrix (Listed.size n) (Listed.size n) α)] :
     LawfulStar (EMatrix n n α) := inferInstanceAs (LawfulStar (NMatrix _ _ α))
 
-@[simp]
-theorem NMatrix.ofMatrix_pow {α : Type*} [Semiring α] {n : ℕ} {M : Matrix (Fin n) (Fin n) α} {i : ℕ} : (NMatrix.ofMatrix M) ^ i = NMatrix.ofMatrix (M^i) := by
-  ext x y
-  simp
-  induction i generalizing x y with
-  | zero => simp; rfl
-  | succ i ih => simp_all [pow_succ, Matrix.mul_apply]
-
-@[simp]
-theorem EMatrix.ofMatrix_pow {α n : Type*} [Semiring α] [Listed n] [Fintype n] [DecidableEq n] {M : Matrix n n α} {i : ℕ} : (EMatrix.ofMatrix M) ^ i = EMatrix.ofMatrix (M^i) := by
-  ext x y
-  simp
-  induction i generalizing x y with
-  | zero => simp; simp [OfNat.ofNat, One.one, NMatrix.ofMatrix, Matrix.diagonal_apply]
-  | succ i ih => simp_all [pow_succ, Matrix.mul_apply]
-
 instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
-    [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α] [StarIter α] [MulLeftMono α] [MulRightMono α]
-    [OmegaContinuousNonUnitalSemiring α] [ComputableSemiring α] {n : ℕ} [ComputableSemiring (NMatrix n n α)] :
+    [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α]
+    {n : ℕ} [LawfulStar (NMatrix n n α)] :
     LawfulStar (Matrix (Fin n) (Fin n) α) where
   star_eq_sum m := by
-    convert congrArg NMatrix.asMatrix (LawfulStar.star_eq_sum (NMatrix.ofMatrix m)); ext; simp
+    convert congrArg NMatrix.asMatrix (LawfulStar.star_eq_sum (.ofMatrix m)); ext; simp
 
 instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
-    [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α] [StarIter α] [MulLeftMono α] [MulRightMono α]
-    [OmegaContinuousNonUnitalSemiring α] [ComputableSemiring α] {X : Type*} [Listed X] [DecidableEq X] [Fintype X]
-    [ComputableSemiring (NMatrix (Listed.size X) (Listed.size X) α)] :
-    WeightedNetKAT.LawfulStar (Matrix X X α) where
+    [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α]
+    {n : Type*} [Listed n] [DecidableEq n] [Fintype n]
+    [LawfulStar (NMatrix (Listed.size n) (Listed.size n) α)] :
+    LawfulStar (Matrix n n α) where
   star_eq_sum m := by
-    convert congrArg EMatrix.asMatrix (WeightedNetKAT.LawfulStar.star_eq_sum (EMatrix.ofMatrix m))
-    ext; simp
+    convert congrArg EMatrix.asMatrix (LawfulStar.star_eq_sum (.ofMatrix m)); ext; simp
 
 end Matrix.Star
