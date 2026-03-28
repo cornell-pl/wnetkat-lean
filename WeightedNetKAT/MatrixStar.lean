@@ -278,7 +278,7 @@ instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
     OmegaContinuousNonUnitalSemiring (NMatrix n n α) where
   ωScottContinuous_add_right x := by
     refine ωScottContinuous.of_monotone_map_ωSup ?_
-    exists fun a b h ↦ add_le_add_right h x
+    exists fun a b h ↦ add_le_add_left h x
     intro c
     ext i j
     have : ∀ (c : Chain (NMatrix n n α)) x y, ωSup c x y = ωSup (c.map ⟨fun n ↦ n x y, fun ⦃_ _⦄ a ↦ a x y⟩) := fun c x y ↦ by
@@ -288,7 +288,7 @@ instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
     simp
   ωScottContinuous_add_left x := by
     refine ωScottContinuous.of_monotone_map_ωSup ?_
-    exists fun a b h ↦ add_le_add_left h x
+    exists fun a b h ↦ add_le_add_right h x
     intro c
     ext i j
     have : ∀ (c : Chain (NMatrix n n α)) x y, ωSup c x y = ωSup (c.map ⟨fun n ↦ n x y, fun ⦃_ _⦄ a ↦ a x y⟩) := fun c x y ↦ by

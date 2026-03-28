@@ -84,8 +84,6 @@ instance (𝒮 : Type*) [AddCommMonoid 𝒮] [PartialOrder 𝒮] [OrderBot 𝒮]
   allEq := by
     intro ⟨a, a', ha₂, ha₃⟩ ⟨b, b', hb₂, hb₃⟩
     simp_all
-    rw [add_comm] at ha₃ hb₃
-    simp_all
     have := add_left_mono (α:=𝒮) (a:=a) (by simp : 0 ≤ a')
     simp [ha₃] at this
     have := add_left_mono (α:=𝒮) (a:=b) (by simp : 0 ≤ b')
@@ -331,6 +329,17 @@ theorem ωSum_nat_eq_ωSup
         grind
       · grind
   · simp [le_ωSum_of_finset]
+
+attribute [local simp] Encodable.decode₂_eq_some in
+theorem ωSum_nat_eq_ωSup_succ
+    {f : ℕ → 𝒮} : ω∑ (x : ℕ), f x = ωSup ⟨fun n ↦ ∑ x ∈ Finset.range (n + 1), f x, fun i j h ↦ by apply Finset.sum_mono_set_of_nonneg <;> simp [h]⟩ := by
+  rw [ωSum_nat_eq_ωSup]
+  apply le_antisymm
+  · simp
+    rintro (_ | i)
+    · simp
+    · apply le_ωSup_of_le i; simp
+  · simp; intro i; apply le_ωSup_of_le (i + 1); simp
 
 end ωSum
 

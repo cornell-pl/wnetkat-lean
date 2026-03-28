@@ -54,7 +54,7 @@ variable [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α
 
 theorem ωSup_pow {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α] [MulLeftMono α] [MulRightMono α] [IsPositiveOrderedAddMonoid α] [OmegaContinuousNonUnitalSemiring α]
     (f : ℕ → α) (hf : Monotone f) (i : ℕ) :
-      ωSup ⟨fun n ↦ (f n)^i, fun a b hab ↦ by simp; gcongr; exact hf hab⟩
+      ωSup ⟨fun n ↦ (f n)^i, fun a b hab ↦ by simp; gcongr; simp; exact hf hab⟩
     = ωSup ⟨fun n ↦ f n, hf⟩ ^ i := by
   induction i with
   | zero => simp

@@ -59,14 +59,14 @@ variable {N : Type} [Listed N] [DecidableEq N]
 
 def GS.mk (α : Pk[F,N]) (x : List Pk[F,N]) (β : Pk[F,N]) : GS[F,N] := ⟨α, x, β⟩
 
-class WeightedConcat (α : Type) (β : outParam Type := Option α) where
+class WeightedConcat (α : Type) (β : outParam Type) where
   /-- Weighted concatination -/
   concat : α → α → β
 
 @[inherit_doc]
 infixl:50 " ♢ " => WeightedConcat.concat
 
-instance : WeightedConcat GS[F,N] where
+instance : WeightedConcat GS[F,N] (Option GS[F,N]) where
   concat | ⟨α, x, β⟩, ⟨γ, y, ξ⟩ => if β = γ then some ⟨α, x ++ y, ξ⟩ else none
 
 variable {𝒮 : Type} [Semiring 𝒮]
@@ -155,11 +155,10 @@ theorem G.iter_succ (p₁ : RPol[F,N,𝒮]) (n : ℕ) :
             ↓reduceIte]
           grind
         · grind only [= List.append_assoc, Countsupp.coe_mk, Countsupp.mem_support_iff,
-          ite_eq_right_iff, =_ List.append_assoc, Subtype.mk.injEq, → List.eq_nil_of_append_eq_nil,
+          =_ List.append_assoc, Subtype.mk.injEq, → List.eq_nil_of_append_eq_nil,
           cases eager Subtype]
-      · grind only [Countsupp.coe_mk, List.append_nil, Countsupp.mem_support_iff, ite_eq_right_iff,
-          Subtype.mk.injEq, → List.eq_nil_of_append_eq_nil, ωSum_zero, cases eager Subtype, cases
-          Or]
+      · grind only [Countsupp.coe_mk, List.append_nil, Countsupp.mem_support_iff, Subtype.mk.injEq,
+          → List.eq_nil_of_append_eq_nil, ωSum_zero, cases eager Subtype, cases Or]
     else
       simp at hgs
       simp only [RPol.iter, G, WeightedConcat.concat, ofPk, GS.mk, Countsupp.coe_mk, mul_ite,

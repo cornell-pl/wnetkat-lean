@@ -173,22 +173,22 @@ variable [OmegaContinuousNonUnitalSemiring 𝒮]
 open OmegaContinuousNonUnitalSemiring in
 instance {X : Type} : OmegaContinuousNonUnitalSemiring (X →c 𝒮) where
   ωScottContinuous_add_left := by
-    refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨add_left_mono, fun C ↦ ?_⟩
+    refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨add_right_mono, fun C ↦ ?_⟩
     ext x
     simp only [add_apply, ωSup_apply, add_ωSup]
     rfl
   ωScottContinuous_add_right := by
-    refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨add_right_mono, fun C ↦ ?_⟩
+    refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨add_left_mono, fun C ↦ ?_⟩
     ext x
     simp only [add_apply, ωSup_apply, ωSup_add]
     rfl
   ωScottContinuous_mul_left := by
-    refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨(mul_left_mono), fun C ↦ ?_⟩
+    refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨(mul_right_mono), fun C ↦ ?_⟩
     ext x
     simp only [mul_apply, ωSup_apply, mul_ωSup]
     rfl
   ωScottContinuous_mul_right := by
-    refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨mul_right_mono, fun C ↦ ?_⟩
+    refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨mul_left_mono, fun C ↦ ?_⟩
     ext x
     simp only [mul_apply, ωSup_apply, ωSup_mul]
     rfl
@@ -276,7 +276,7 @@ omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring �
 theorem ωSum_apply [Countable X] {Y : Type} {f : X → Y →c 𝒮} {y : Y} :
     (ω∑ (x : X), f x) y = ω∑ (x : X), f x y := by
   simp [ωSum, Chain.map]
-  congr with n
+  congr! with n
   simp
   congr with x
   split <;> simp_all

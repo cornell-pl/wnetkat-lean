@@ -221,6 +221,7 @@ theorem Pol.filter_toRol_sem_eq_sum (t : Pred[F,N]) :
     · simp [← h, Listed.listOf]
     · rename_i h₀ h₁
       split <;> simp only [Pi.zero_apply, Countsupp.coe_zero]
+  · grind
   · refine List.Nodup.filterMap ?_ ?_
     · grind
     · simp [← h, Array.nodup_iff_toList_nodup]

@@ -2,18 +2,6 @@ import Mathlib.Data.Matrix.Block
 import Mathlib.Tactic.Ring.RingNF
 import WeightedNetKAT.MatrixExt
 
--- TODO: move this somewhere else
-namespace OmegaCompletePartialOrder
-
-@[ext]
-def Chain.ext {α : Type*} [OmegaCompletePartialOrder α] {C₁ C₂ : Chain α} (h : ∀ i, C₁ i = C₂ i) :
-    C₁ = C₂ := by
-  obtain ⟨C₁⟩ := C₁; obtain ⟨C₂⟩ := C₂
-  congr;
-  exact (Set.eqOn_univ C₁ C₂).mp fun ⦃x⦄ a ↦ h x
-
-end OmegaCompletePartialOrder
-
 structure NMatrix (m n : ℕ) (α : Type*) where
   data : Vector α (m * n)
 
@@ -230,8 +218,8 @@ instance [AddCommMonoid α] : AddCommMonoid (NMatrix m n α) where
   add_comm X Y := by ext; simp [add_comm]
   zero_add X := by ext; simp
   add_zero X := by ext; simp
-  nsmul n X := .ofMatrix (n * X.asMatrix)
-  nsmul_zero X := by ext; simp; apply AddMonoid.nsmul_zero
+  nsmul a X := .ofMatrix (AddMonoid.nsmul a X.asMatrix : Matrix (Fin m) (Fin n) α)
+  nsmul_zero X := by ext; simp
   nsmul_succ X Y := by ext; simp; apply AddMonoid.nsmul_succ
 
 @[simp] theorem asMatrix_add [Add α] : (X + X').asMatrix = X.asMatrix + X'.asMatrix := by ext; simp
@@ -335,12 +323,12 @@ instance [AddCommMonoid α] [IsPositiveOrderedAddMonoid α] : IsPositiveOrderedA
   add_le_add_left := by
     intro a b h c
     have := IsOrderedAddMonoid.add_le_add_left a.asMatrix b.asMatrix h c.asMatrix
-    have : NMatrix.ofMatrix (c.asMatrix + a.asMatrix) ≤ NMatrix.ofMatrix (c.asMatrix + b.asMatrix) := by intro i j; simp; exact this i j
+    have : NMatrix.ofMatrix (a.asMatrix + c.asMatrix) ≤ NMatrix.ofMatrix (b.asMatrix + c.asMatrix) := by intro i j; simp; exact this i j
     exact this
   add_le_add_right := by
     intro a b h c
     have := IsOrderedAddMonoid.add_le_add_right a.asMatrix b.asMatrix h c.asMatrix
-    have : NMatrix.ofMatrix (a.asMatrix + c.asMatrix) ≤ NMatrix.ofMatrix (b.asMatrix + c.asMatrix) := by intro i j; simp; exact this i j
+    have : NMatrix.ofMatrix (c.asMatrix + a.asMatrix) ≤ NMatrix.ofMatrix (c.asMatrix + b.asMatrix) := by intro i j; simp; exact this i j
     exact this
 
 variable [Semiring α] [IsPositiveOrderedAddMonoid α] [MulLeftMono α]

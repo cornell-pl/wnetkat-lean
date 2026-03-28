@@ -406,7 +406,6 @@ def cool_bijection.toFun (n m : ℕ)
     obtain ⟨i, hi⟩ := i
     obtain ⟨p, hp⟩ := p
     apply Nat.mod_lt
-    simp_all
     rcases n with _ | n
     · rw [Nat.zero_pow] at hi <;> omega
     · omega⟩
