@@ -7,93 +7,13 @@ import Mathlib.Topology.Order.ScottTopology
 import WeightedNetKAT.ComputableSemiring
 import WeightedNetKAT.FinsuppExt
 import WeightedNetKAT.Language
+import WeightedNetKAT.ListExt
 import WeightedNetKAT.MatrixExt
 import WeightedNetKAT.MatrixStar
 import WeightedNetKAT.Star
 
 open OmegaCompletePartialOrder
 open scoped RightActions
-
-namespace List
-
-section
-
-variable {α : Type*} (l : List α)
-
-def rep : ℕ → List α
-  | 0 => []
-  | n+1 => l ++ rep n
-
-@[simp] theorem repeat_zero : l.rep 0 = [] := rfl
-@[simp] theorem repeat_one : l.rep 1 = l := by simp [rep]
-@[simp] theorem repeat_succ {n : ℕ} : l.rep (n + 1) = l ++ l.rep n := rfl
-
-end
-
-@[simp]
-theorem take_length_succ {α : Type} (A : List α) : take (A.length + 1) A = A := by
-  simp only [take_eq_self_iff, le_add_iff_nonneg_right, zero_le]
-
-end List
-
-
-namespace List
-
-variable {α β : Type*}
-
-/-! # Products -/
-
-@[simp, grind =]
-theorem product_length {as : List α} {bs : List β} :
-    (as.product bs).length = as.length * bs.length := by
-  simp [product, List.map_const']
-
-attribute [local grind =] pair_mem_product
-
-def products : List (List α) → List (List α)
-  | [] => [[]]
-  | x::xs => (x.product xs.products).map (fun ⟨a, as⟩ ↦ a :: as)
-
-variable {xs ys : List (List α)}
-
-@[simp, grind =]
-theorem products_nil : ([] : List (List α)).products = [[]] := by rfl
-@[simp, grind =]
-theorem products_length : xs.products.length = (xs.map List.length).prod := by
-  fun_induction products with grind
-@[simp, grind .]
-theorem mem_products_length {x} (h : x ∈ xs.products) : x.length = xs.length := by
-  fun_induction products generalizing x with grind
-
-@[grind =, simp]
-theorem products_eq_nil : xs.products = [] ↔ [] ∈ xs := by
-  grind [List.eq_nil_iff_length_eq_zero, products_length, prod_eq_zero_iff, length_eq_zero_iff]
-
-@[grind =]
-theorem mem_products {x} :
-    x ∈ xs.products ↔
-      x.length = xs.length ∧ ∀ i, (h : i < x.length) → (h' : i < xs.length) → x[i]'h ∈ xs[i]'h'
-:= by
-  fun_induction products generalizing x with
-  | case1 => simp
-  | case2 y ys ih =>
-    constructor
-    · grind
-    · simp only [length_cons, mem_map, Prod.exists]; intro h; have := h.right 0; grind [cases List]
-
-theorem singleton_product {β : Type*} {l : List β} {a} :
-    ([a] : List α).product l = l.map (⟨a, ·⟩) := by rw [product]; simp
-theorem product_singleton {β : Type*} {l : List β} {a : α} :
-    l.product [a] = l.map (⟨·, a⟩) := by rw [product]; simp [map_eq_flatMap]
-
-theorem products_append :
-    (xs ++ ys).products = (xs.products.product ys.products).map (fun ⟨x, y⟩ ↦ x ++ y) := by
-  induction xs with
-  | nil =>
-    simp only [nil_append, products_nil, singleton_product, map_map]; unfold Function.comp; simp
-  | cons x xs ih => simp [products, ih, product, map_flatMap, flatMap_map, flatMap_assoc]; rfl
-
-end List
 
 open WeightingNotation
 
@@ -699,9 +619,10 @@ theorem E𝒪_heart_eq_𝒪_heart {p : RPol[F,N,𝒮]} : E𝒪_heart p = EMatrix
   congr! 2
   ext
   simp [box]
-  rw [EMatrix.asNMatrix_apply]
-  nth_rw 1 [EMatrix.get]
-  rfl
+  sorry
+  -- rw [EMatrix.asNMatrix_apply]
+  -- nth_rw 1 [EMatrix.get]
+  -- rfl
 
 omit [OmegaCompletePartialOrder 𝒮] in
 @[simp]
@@ -1775,242 +1696,10 @@ theorem xδ_δ'_as_sum_unfolded {p : RPol[F,N,𝒮]} {xₙ} {l r : 𝒲[Pk[F,N],
       nth_rw 8 [add_comm]
       simp [add_assoc, Finset.mul_sum, Finset.sum_add_distrib, mul_assoc]
 
-omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
-theorem xδ_δ'_as_sum {p : RPol[F,N,𝒮]} {xₙ} {α'} :
-      xδ (δ.δ' p) (xₙ ++ [α'])
-    = xδ (δ p) (xₙ ++ [α']) +
-      ∑ n ∈ Finset.range xₙ.length,
-          xδ (δ p) ((xₙ ++ [α']).take (n + 1))
-        * (𝒪 p ⊞ 𝒪_heart p ⊟ ι p ⊡ δ p) xₙ[n]! (xₙ ++ [α'])[n + 1]!
-        * xδ (δ p + (𝒪 p ⊞ 𝒪_heart p ⊟ ι p ⊡ δ p)) ((xₙ ++ [α']).drop (n + 1)) := by
-  rw [δ.δ', xδ_δ'_as_sum_unfolded]
-  simp
-  sorry
-
-omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
-theorem xδ_δ'_as_sum' {p : RPol[F,N,𝒮]} {xₙ} {α'} :
-      xδ (δ.δ' p) (xₙ ++ [α'])
-    = xδ (δ p) (xₙ ++ [α']) +
-      ∑ n ∈ Finset.range xₙ.length,
-          xδ (δ p) ((xₙ ++ [α']).take (n + 1))
-        * (𝒪 p ⊞ 𝒪_heart p ⊟ ι p ⊡ δ p) xₙ[n]! (xₙ ++ [α'])[n + 1]!
-        * xδ (δ p + (𝒪 p ⊞ 𝒪_heart p ⊟ ι p ⊡ δ p)) ((xₙ ++ [α']).drop (n + 1)) := by
-  sorry
-
 omit [DecidableEq F] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] [DecidableEq N] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] [Listed N] [Inhabited Pk[F,N]] in
 @[simp]
 theorem Matrix.smul_apply' (r : 𝒮) (A : 𝒲[Pk[F,N], Pk[F,N], 𝒮]) (i j : Pk[F,N]) :
     (A <• r) i j = (A i j) •> r := rfl
-
-omit [DecidableEq F] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] [DecidableEq N] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] [Listed N] [Inhabited Pk[F,N]] in
-theorem Finset.sum_smul' {X Y : Type} [DecidableEq X] [Fintype X] [DecidableEq Y] [Fintype Y] {ι : Type} [DecidableEq ι] (f : ι → 𝒮) (S : Finset ι) (r : 𝒲[X, Y, 𝒮]) :
-    (∑ x ∈ S, f x) •> r = (∑ x ∈ S, f x •> r) := by
-  induction S using Finset.induction with
-  | empty => simp
-  | insert x S ih =>
-    simp_all
-    ext α β
-    simp_all [add_mul, Finset.sum_mul, Matrix.sum_apply]
-
-omit [DecidableEq F] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] [DecidableEq N] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] [Listed N] [Inhabited Pk[F,N]] in
-theorem Matrix.sum_smul' {X Y : Type} [DecidableEq X] [Fintype X] [DecidableEq Y] [Fintype Y] {ι : Type} [DecidableEq ι] (f : ι → 𝒲[X,Y,𝒮]) (S : Finset ι) (r : 𝒮) :
-    (∑ x ∈ S, f x) <• r = (∑ x ∈ S, f x <• r) := by
-  induction S using Finset.induction with
-  | empty => simp
-  | insert x S ih =>
-    simp_all
-
-omit [DecidableEq F] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] [DecidableEq N] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] [Listed N] [Inhabited Pk[F,N]] in
-theorem one_mul_coe_unique_left {p₁ : RPol[F,N,𝒮]} {y : 𝒲[𝟙, S p₁, 𝒮]} :
-    Matrix.instHMulOfFintypeOfMulOfAddCommMonoid.hMul (fun _ ↦ 1 : 𝟙 → S.I {♡} → 𝒮) y.coe_unique_left = y := by
-  ext
-  simp [Matrix.mul_apply]
-
-omit [DecidableEq F] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] [DecidableEq N] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] [Listed N] [Inhabited Pk[F,N]] in
-theorem ι_add_zero_mul {p₁ : RPol[F,N,𝒮]} {a b : 𝒲[𝟙, S p₁, 𝒮]} {c : 𝒲[S wnk_rpol {~p₁*}, S wnk_rpol {~p₁*}, 𝒮]} :
-      Matrix.instHMulOfFintypeOfMulOfAddCommMonoid.hMul (ι[a + b, 0] : 𝒲[𝟙, S p₁ ⊕ (↑{♡} : Set _), 𝒮]) c
-    = Matrix.instHMulOfFintypeOfMulOfAddCommMonoid.hMul ι[a, 0] c + Matrix.instHMulOfFintypeOfMulOfAddCommMonoid.hMul ι[b, 0] c := by
-  unfold S.ι
-  simp
-  ext
-  simp [Matrix.mul_apply, right_distrib, Finset.sum_add_distrib]
-
-omit [Inhabited Pk[F,N]] in
-theorem fp₁_Q_is_fp_singleton (p₁ : RPol 𝒮) (α' : Pk[F,N]):
-    Q wnk_rpol {~p₁*} [α'] = N'Q p₁ [α'] + Q p₁ [] * Q wnk_rpol {~p₁*} [α'] := by
-  conv => left; unfold Q
-  ext α β
-  simp [RPol.wnka_sem_case, ι, 𝒪, δ, xδ]
-  -- TODO: this should simp by it self
-  rw [RPol.wnka_sem_case]
-  simp [RPol.wnka_sem_case, ι, 𝒪, δ, xδ]
-  rw [ι_wProd_δ, ι_wProd_𝒪, one_mul_coe_unique_left]
-  simp
-  nth_rw 1 [𝒪_heart]
-  nth_rw 1 [box_star_iter]
-  rw [add_sox]
-  simp [Matrix.add_mul, fox, N'Q, N'Q_ij]
-  congr
-  · unfold Q
-    simp only [RPol.wnka_sem_pair, ι, S.I, Matrix.concrete_id, id_eq, 𝒪]
-    conv => right; arg 2; ext a b; rw [ι_wProd_𝒪]
-    simp only [sox', Listed.array_sum_eq_finset_sum, Matrix.mul_sum, Matrix.mul_smul,
-      Matrix.down_sum, Matrix.down_mul_right, RPol.wnka_sem_case, xδ, mul_one,
-      List.getLastD_eq_getLast?, List.getLast?_singleton, Option.getD_some, Matrix.zero_mul,
-      smul_zero, Finset.sum_const_zero, Matrix.add_apply, Matrix.zero_apply, Matrix.mul_apply, S.I,
-      Finset.univ_unique, Set.default_coe_singleton, Pi.ofNat_apply, Matrix.up_apply, one_mul,
-      Finset.sum_const, Finset.card_singleton, one_smul, zero_add]
-    -- grind [zero_add, one_smul, one_mul, mul_one]
-  · unfold Q
-    simp [RPol.wnka_sem_case, ι, 𝒪, xδ, δ, sox']
-    -- TODO: this should simp by it self
-    conv => right; arg 2; ext α β; rw [RPol.wnka_sem_case]
-    simp [RPol.wnka_sem_case, ι, 𝒪, xδ, δ, sox']
-    conv => right; arg 2; ext s t; rw [ι_wProd_δ, ι_wProd_𝒪, one_mul_coe_unique_left]
-    simp
-    rw [Matrix.mul_apply]
-    simp [Matrix.mul_sum, Finset.mul_sum]
-    rw [Finset.sum_comm]
-    congr with γ
-    conv => right; arg 2; ext; rw [← mul_assoc]
-    simp [← Finset.sum_mul]
-    congr
-    generalize (ι p₁ ⊡ δ p₁) = s
-    rw [mul_sox, sox]
-    simp [Matrix.sum_mul, box, 𝒪_heart]
-
-theorem fp₁_Q_is_fp (p₁ : RPol 𝒮) (xₙ : List Pk[F,N]) (hxₙ : xₙ ≠ []) :
-    Q wnk_rpol {~p₁*} xₙ = N'Q p₁ xₙ + Q p₁ [] * Q wnk_rpol {~p₁*} xₙ := by
-  induction xₙ using List.reverseRecOn with
-  | nil => contradiction
-  | append_singleton xₙ α' ih =>
-    clear hxₙ ih
-    rcases xₙ with _ | ⟨α₁, xₙ⟩
-    · exact fp₁_Q_is_fp_singleton p₁ α'
-    ext α β
-    rw [Q]
-    simp only [List.cons_append, RPol.wnka_sem_case, ι, S.I, Matrix.concrete_id, id_eq, xδ, δ, ←
-      Matrix.mul_assoc, List.getLastD_eq_getLast?, List.getLast?_cons, List.getLast?_append,
-      List.getLast?_nil, Option.getD_none, Option.some_or, Option.getD_some, 𝒪, Matrix.add_apply]
-    rw [ι_wProd_δ, one_mul_coe_unique_left]
-    simp only [Matrix.zero_mul, zero_add, Matrix.mul_zero, add_zero]
-    nth_rw 1 [𝒪_heart, box_star_iter]
-    simp [add_sox, fox, ι_add_zero_mul, Matrix.add_mul]
-    rw [ι_add_zero_mul]
-    simp [Matrix.add_mul]
-    congr
-    · simp [N'Q, N'Q_ij]
-      rw [xδ_δ_iter, ι_wProd_δ, ι_wProd_𝒪]
-      simp
-      rw [← List.cons_append, xδ_δ'_as_sum]
-      simp
-      nth_rw 2 [Finset.sum_range_succ]
-      simp [Matrix.mul_add, Matrix.add_mul, sox']
-      nth_rw 3 [Matrix.mul_sum]
-      simp [Matrix.sum_mul, Matrix.sum_apply]
-      nth_rw 4 [add_comm]
-      congr! 2 with n hn
-      · unfold Q
-        simp [RPol.wnka_sem_case, xδ, ι, 𝒪]
-        conv => right; arg 2; ext α β; rw [RPol.wnka_sem_case]
-        simp [RPol.wnka_sem_case, xδ, ι, 𝒪]
-        have : List.take (xₙ.length + 1) (xₙ ++ [α']) = (xₙ ++ [α']) := by simp
-        simp [this]; clear this
-        conv => right; arg 2; ext α β; rw [ι_wProd_𝒪]
-        rw [Matrix.mul_apply]
-        have : Matrix.down (fun (x : 𝟙) ↦ (1 : S.I {♡} → 𝒮)) = 1 := rfl
-        simp only [Matrix.mul_sum, Matrix.mul_smul, Matrix.down_sum, Matrix.down_mul_right, ←
-          Matrix.mul_assoc, List.getLast?_cons, List.getLast?_append, List.getLast?_nil,
-          Option.getD_none, Option.some_or, Option.getD_some, Matrix.zero_mul, smul_zero,
-          Finset.sum_const_zero, zero_add, Matrix.down_mul, S.I, this, Matrix.down_up, one_mul]
-      · unfold Q
-        simp only [← Matrix.mul_assoc, Matrix.mul_sum, Matrix.mul_smul, Matrix.down_sum,
-          Matrix.down_mul_right, RPol.wnka_sem_case, xδ, List.getLastD_eq_getLast?, ι, S.I, 𝒪,
-          Matrix.mul_apply]
-        generalize ι p₁ * δ p₁ α α₁ * xδ (δ p₁) (α₁ :: List.take n (xₙ ++ [α'])) = A
-        simp at hn
-        have : ¬xₙ.length + 1 ≤ n := by omega
-        simp only [crox, List.length_cons, hn, getElem?_pos, Option.getD_some, List.length_append,
-          List.length_nil, zero_add, Listed.array_sum_eq_finset_sum, Matrix.mul_sum, Matrix.sum_mul,
-          Matrix.down_sum, Finset.sum_mul, List.getLast?_cons, Matrix.concrete_id, id_eq,
-          List.getLast?_drop, this, ↓reduceIte, List.getLast?_append, List.getLast?_nil,
-          Option.getD_none, Option.some_or]
-        rw [Finset.sum_comm]
-        congr with γ
-        simp [← Matrix.mul_assoc]
-        nth_rw 1 [Matrix.mul_assoc]
-        conv => left; arg 2; ext; rw [← Matrix.down_mul_right]
-        rw [← Matrix.down_mul_right, ← Matrix.down_sum]
-        congr
-        simp only [Matrix.mul_assoc, ← Matrix.mul_smul, ← Matrix.mul_sum]
-        congr
-        ext S _
-        rw [Matrix.mul_apply]
-        simp
-        congr
-        · grind
-        have : ¬xₙ.length + 1 ≤ n := by omega
-        simp [Matrix.down, xδ_δ_iter, ← Matrix.mul_assoc, ι_wProd_δ, ι_wProd_𝒪, this, sox']
-        rw [xδ_δ_iter, ι_wProd_δ, ι_wProd_𝒪]
-        simp [Matrix.down, xδ_δ_iter, ← Matrix.mul_assoc, ι_wProd_δ, ι_wProd_𝒪, this, sox']
-        rw [one_mul_coe_unique_left]
-        grind [List.head!_eq_head?, List.head?_drop, δ.δ']
-    · rw [Matrix.mul_apply]
-      simp [Q, RPol.wnka_sem_case, ι, 𝒪, List.getLast?_cons, xδ, δ, ← Matrix.mul_assoc, ι_wProd_δ]
-      conv => right; arg 2; ext; rw [RPol.wnka_sem_case]
-      simp [Q, RPol.wnka_sem_case, ι, 𝒪, List.getLast?_cons, xδ, δ, ← Matrix.mul_assoc, ι_wProd_δ]
-      conv => right; arg 2; ext; rw [one_mul_coe_unique_left, ← Matrix.down_mul]
-      simp [-Matrix.down_mul, ← Matrix.mul_assoc, ← Matrix.down_sum]
-      simp [-Matrix.down_sum, ← Matrix.sum_mul]
-      congr
-      rw [mul_sox]
-      nth_rw 1 [sox]
-      ext _ γ
-      simp only [S.ι, box, Listed.array_sum_eq_finset_sum, Matrix.sum_apply, Matrix.smul_apply,
-        smul_eq_mul, Matrix.zero_apply, 𝒪_heart, Matrix.mul_apply, Finset.univ_unique,
-        PUnit.default_eq_unit, Finset.sum_singleton]
-      rcases γ with _ | γ
-      · simp only [Sum.elim_inl]; rfl
-      · grind [Sum.elim_inr, mul_zero, Finset.sum_const_zero]
-
-theorem fp₁_Q_is_fp' (p₁ : RPol 𝒮) (h : Q p₁ = M'⟦~p₁⟧) (xₙ : List Pk[F,N]) (hxₙ : xₙ ≠ []) (ih : ∀ (y : List Pk[F,N]), y.length < xₙ.length → y ≠ [] → M' wnk_rpol {~p₁*} y = Q wnk_rpol {~p₁*} y) :
-    Q wnk_rpol {~p₁*} xₙ = M'⟦~p₁⟧ [] * Q wnk_rpol {~p₁*} xₙ + N' p₁ xₙ := by
-  nth_rw 1 [fp₁_Q_is_fp _ _ hxₙ]
-  rw [add_comm, h]
-  congr
-  have N'_eq_N'Q : N' p₁ xₙ = N'Q p₁ xₙ := by
-    simp only [N', N'Q]
-    refine Finset.sum_congr rfl fun i hi ↦ ?_
-    simp only [N'_ij, N'Q_ij, h]
-    grind [Q_empty_eq_M'_empty, List.drop_eq_nil_iff]
-  rw [N'_eq_N'Q]
-
-omit [Inhabited Pk[F,N]] in
-theorem fp₁_M'_is_fp'' (p₁ : RPol 𝒮) (xₙ : List Pk[F,N]) (hxₙ : xₙ ≠ []) :
-    M' wnk_rpol {~p₁*} xₙ = (M'⟦~p₁⟧ [])^* * N' p₁ xₙ := by
-  have ⟨h₁, h₂⟩ := fp₁_M' p₁ xₙ hxₙ
-  simp [fp₁, lowerBounds] at h₁ h₂
-  apply le_antisymm
-  · apply h₂
-    nth_rw 1 [← StarIter.star_iter]
-    simp [add_mul, mul_assoc]
-  · simp [LawfulStar.star_eq_sum, ← ωSum_mul_right]
-    rw [ωSum_nat_eq_ωSup]
-    simp
-    intro i
-    induction i with
-    | zero => simp
-    | succ i ih' =>
-      simp [Finset.sum_range_succ']
-      rw [h₁, add_comm]
-      gcongr
-      simp [pow_succ', Matrix.mul_assoc, ← Matrix.mul_sum]
-      gcongr
-
-def M_mul_add_P (M P : 𝒲[Pk[F,N], Pk[F,N], 𝒮]) : 𝒲[Pk[F,N], Pk[F,N], 𝒮] →𝒄 𝒲[Pk[F,N], Pk[F,N], 𝒮] :=
-    ⟨⟨fun y ↦ M * y + P, by intro a b hab; simp; gcongr⟩, by simp [mul_ωSup, ωSup_add]; intro; rfl⟩
-def M_star_mul_P (M P : 𝒲[Pk[F,N], Pk[F,N], 𝒮]) : 𝒲[Pk[F,N], Pk[F,N], 𝒮] →𝒄 𝒲[Pk[F,N], Pk[F,N], 𝒮] :=
-    ⟨⟨fun y ↦ M^* * P, by intro a b hab; simp⟩, by simp; intro; simp [Chain.map, OrderHom.comp, ωSup_const, Function.comp_def]⟩
 
 section
 
@@ -2088,7 +1777,33 @@ theorem GS.concat_assoc {a b c : GS F N →c 𝒮} :
   simp [this]
   rw [Finset.sum_comm]; congr! 2 with α _ β
   simp_all only [Finset.mem_univ]
-  sorry
+  have :
+        ∑ i ∈ ..=‖γ.2.1‖, ∑ x ∈ ..=min i ‖γ.2.1‖, a (γ.splitAtJoined (min i x) α).1 * (b ((γ.splitAtJoined i β).1.splitAtJoined x α).2 * c (γ.splitAtJoined i β).2)
+      = ∑ i ∈ ..=‖γ.2.1‖, ∑ x ∈ ..=i, a (γ.splitAtJoined x α).1 * (b ((γ.splitAtJoined i β).1.splitAtJoined x α).2 * c (γ.splitAtJoined i β).2) := by
+    congr!
+    · simp_all; omega
+    · simp_all; omega
+  simp [this]; clear this
+  have {n} {f : ℕ → ℕ → 𝒮} : ∑ x ∈ ..=n, ∑ y ∈ ..=n - x, f x y = ∑ x ∈ ..=n, ∑ y ∈ ..=x, f y (x - y) := by
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      simp [Finset.sum_range_succ (n := n + 1)]
+      have : ∑ x ∈ ..=n, ∑ y ∈ ..=n + 1 - x, f x y = ∑ x ∈ ..=n, ∑ y ∈ ..=(n - x) + 1, f x y := by
+        congr! 2
+        ext
+        simp_all
+        omega
+      simp [this]
+      conv => enter [1, 1, 2, x]; rw [Finset.sum_range_succ]
+      simp [ih, Finset.sum_add_distrib]
+      simp [add_assoc]
+      congr! 3 with i hi j hj k hk
+      grind
+  simp [this]
+  simp_all
+  congr!
+  grind
 
 @[simp]
 theorem GS.pow_zero : (𝒜⟦~p⟧^0) = G⟦skip⟧ := by
@@ -2116,29 +1831,10 @@ theorem GS.pow_succ' {n} : (𝒜⟦~p⟧^(n+1)) = ((𝒜⟦~p⟧^n) ♢ 𝒜⟦~
   induction n with
   | zero => simp
   | succ n ih =>
-    sorry
-theorem GS.pow_add {n m : ℕ} : (𝒜⟦~p⟧^(n + m)) = (𝒜⟦~p⟧^n ♢ 𝒜⟦~p⟧^m : GS F N →c 𝒮) := by
-  induction m with
-  | zero => simp
-  | succ m ih => simp [← add_assoc, GS.pow_succ', ih, GS.concat_assoc]
-
-
-theorem A_sem_seq (h₁ : 𝒜⟦~p₁⟧ = G⟦~p₁⟧) (h₂ : 𝒜⟦~p₂⟧ = G⟦~p₂⟧) : 𝒜⟦~p₁; ~p₂⟧ = (𝒜⟦~p₁⟧ ♢ 𝒜⟦~p₂⟧) := by
-  ext ⟨α, xn, β⟩
-  simp [RPol.A_sem_eq_Q, G.concat_apply]
-  sorry
-
-theorem A_sem_pow (p : RPol[F,N,𝒮]) {n} : (𝒜⟦~p⟧^n) = 𝒜⟦~(p.iter n)⟧ := by
-  induction n with
-  | zero =>
-    ext ⟨α, xn, β⟩
-    simp
-    sorry
-  | succ n ih =>
-    ext ⟨α, xn, β⟩
-    simp [GS.pow_succ]
-    simp [A_sem_seq sorry sorry]
-    simp [ih]
+    nth_rw 1 [GS.pow_succ]
+    nth_rw 2 [GS.pow_succ]
+    rw [ih]
+    simp [GS.concat_assoc]
 
 theorem A_sem_cases {s} : 𝒜⟦~p₁⟧ s = (ι p₁ * xδ (δ p₁) (s.1 :: s.2.1) * 𝒪 p₁ (s.2.1.getLastD s.1) s.2.2).down := by
   rcases s with ⟨α, xn, β⟩
@@ -2163,1014 +1859,6 @@ theorem G.skip_apply {α β : Pk[F,N]} {xs : List Pk[F,N]} :
   · rfl
 @[simp]
 theorem G.pow_zero_cons_apply {p : RPol[F,N,𝒮]} {α γ β : Pk[F,N]} {xs : List Pk[F,N]} : (G⟦~p⟧ ^ 0) (α, γ :: xs, β) = 0 := by simp
-
-notation xs "[.." n "]" => List.take n xs
-notation xs "[" n "..]" => List.drop n xs
-notation "..=" n => Finset.range (n + 1)
-notation "‖" xs "‖" => List.length xs
-
--- attribute [-simp] G.pow_zero in
--- attribute [-simp] G.pow_one in
-theorem iddkkkk
-    (p₁ : RPol 𝒮)
-    (h : 𝒜⟦~p₁⟧ = G⟦~p₁⟧)
-    (α β : Pk[F,N])
-    (this : ∀ (x : 𝒲[S.I (↑{♡} : Set _), S p₁, 𝒮]), (@HMul.hMul 𝒲[𝟙, S.I {♡}, 𝒮] 𝒲[S.I {♡}, S p₁, 𝒮] 𝒲[𝟙, S p₁, 𝒮] Matrix.instHMulOfFintypeOfMulOfAddCommMonoid (fun x ↦ 1) x : 𝒲[𝟙, S p₁, 𝒮]) = x.coe_unique_left)
-    (𝒪_heart_eq' : 𝒪_heart p₁ = ω∑ (m : ℕ), (Q⟦~p₁⟧ ^ m) [])
-    (𝒪_heart_eq : ∀ (α β : Pk[F,N]), 𝒪_heart p₁ α β = ω∑ (m : ℕ), (𝒜⟦~p₁⟧ ^ m) (α, [], β))
-    (α₀ : Pk[F,N])
-    (xₙ : List Pk[F,N])
-    (ihₙ : ∀ (y : List Pk[F,N]),
-      y.length < (α₀ :: xₙ).length → ∀ (α β : Pk[F,N]), 𝒜⟦~p₁*⟧ (α, y, β) = (ω∑ (i : ℕ), 𝒜⟦~p₁⟧ ^ i) (α, y, β)) :
-    ω∑ (n : ℕ),
-      ∑ i ∈ Finset.range (xₙ.length + 1),
-        ∑ ξ,
-          ∑ γ,
-            (ω∑ (m : ℕ), (𝒜⟦~p₁⟧ ^ m) (α, [], γ)) * 𝒜⟦~p₁⟧ (γ, α₀ :: List.take i xₙ, ξ) *
-              (𝒜⟦~p₁⟧ ^ n) (ξ, List.drop i xₙ, β) =
-    ω∑ (m : ℕ) (n : ℕ),
-      ∑ ξ,
-        ∑ k ∈ Finset.range (xₙ.length + 1 + 1),
-          (𝒜⟦~p₁⟧ ^ m) (α, List.take k (α₀ :: xₙ), ξ) * (𝒜⟦~p₁⟧ ^ (n - m)) (ξ, List.drop k (α₀ :: xₙ), β) := by
-  simp_all only [S.I, Pi.pow_apply, Matrix.ωSum_apply, ωSum_apply, List.length_cons,
-    Countsupp.ωSum_apply]
-  clear ihₙ this h
-
-  rw [ωSum_comm]
-  simp [← ωSum_sum_comm, ← ωSum_mul_right]
-  rw [ωSum_nat_eq_succ]
-  simp
-  rw [ωSum_nat_eq_succ]
-  simp
-  simp [ite_and]
-  rw [Finset.sum_range_succ]
-  simp
-  rw [add_comm]
-  rw [ωSum_nat_eq_succ]
-  simp
-
-  symm
-  rw [ωSum_nat_eq_succ]
-  simp
-  rw [ωSum_nat_eq_succ]
-  simp [ite_and]
-  rw [ωSum_nat_eq_succ]
-  simp
-  rw [add_comm]
-  rw [ωSum_nat_eq_succ]
-  simp
-  rw [ωSum_nat_eq_succ]
-  simp [ite_and]
-  have : ∀ {f : Pk[F,N] → 𝒮} (a), ∑ (x : Pk[F,N]), f x = f a + ∑ x, if x = a then 0 else f x := by
-    intro f a
-    sorry
-  rw [this β]
-  simp
-  rw [Finset.sum_range_succ]
-  simp
-  conv =>
-    enter [1, 1, 1, 1]
-    -- rw [Finset.sum_ite_eq]
-  rw [Finset.sum_eq_sum]
-
-
-
-  sorry
-
-  rw [ωSum_comm]
-  simp [← ωSum_sum_comm, ← ωSum_mul_right]
-  simp [Finset.sum_range_succ' (n:=xₙ.length + 1)]
-  set A := G⟦~p₁⟧
-
-  have {n} {f : ℕ → Pk[F,N] → 𝒮} : ∑ x ∈ Finset.range n, ∑ (α : Pk[F, N]), f x α = ∑ (α : Pk[F, N]), ∑ x ∈ Finset.range n, f x α := by rw [Finset.sum_comm]
-  simp [this]
-  conv => enter [2, 1, _, 1, _, 2, _]; rw [Finset.sum_range_succ']
-  simp
-  simp [Finset.sum_add_distrib, ωSum_add]
-  simp [ωSum_sum_comm]
-  have {γ} {ys xs : List Pk[F,N]} (h : xs ≠ []) : (ω∑ (n : ℕ) (m : ℕ), (G⟦~p₁⟧ ^ m) (α, ys, γ) * (G⟦~p₁⟧ ^ (n - m)) (γ, xs, β)) = (ω∑ (n : ℕ) (m : ℕ), (G⟦~p₁⟧ ^ m) (α, ys, γ) * (G⟦~p₁⟧ ^ n) (γ, xs, β)) := by
-    nth_rw 1 [ωSum_comm]; nth_rw 2 [ωSum_comm]
-    congr with m
-    apply ωSum_eq_ωSum_of_ne_one_bij fun ⟨x, hx⟩ ↦ x + m
-    · intro ⟨i, hi⟩ ⟨j, hj⟩ h; simp_all
-    · simp
-      intro i hi
-      if m ≤ i then
-        use i - m
-        simp_all
-      else
-        simp_all
-        have : i - m = 0 := by omega
-        simp_all
-    · simp
-  simp [this]
-  simp [Finset.sum_range_succ]
-  simp [Finset.sum_add_distrib, ωSum_add]
-  simp [ωSum_sum_comm]
-  conv =>
-    enter [2, 1, 2, x]
-    rw [Finset.sum_range_succ]
-    rw [← Finset.sum_attach]
-    enter [1, 2, y]
-    rw [this (by obtain ⟨y, hy⟩ := y; simp at hy; simp; omega)]
-  simp
-  congr with n
-  nth_rw 2 [Finset.sum_comm]
-  simp
-  simp [← ωSum_mul_right]
-  simp [← ωSum_sum_comm, ← ωSum_add]
-  induction n with
-  | zero =>
-    simp [ite_and]
-    simp [ωSum_sum_comm]
-    rw [Finset.sum_eq_single xₙ.length (by grind) (by simp)]
-    rw [Finset.sum_eq_single xₙ.length (by grind) (by simp)]
-    simp
-    have : ∀ m, (G⟦~p₁⟧ ^ (m + 1)) = (G⟦~p₁⟧ ^ m ♢ G⟦~p₁⟧) := by
-      intro m
-      induction m with
-      | zero => simp [HPow.hPow]
-      | succ m ih =>
-        simp [ih]
-        simp only [HPow.hPow, Function.iterate_succ', Function.comp_apply] at ih ⊢
-        simp [← GS.concat_assoc, ih]
-    induction xₙ with
-    | nil => simp
-    | cons x xₙ ih =>
-      nth_rw 2 [ωSum_nat_eq_succ]; simp_all
-      simp [G.concat_apply]
-      nth_rw 2 [ωSum_sum_comm]
-      rw [Finset.sum_range_succ']
-      have {s : GS F N} {γ} : (s.splitAtJoined 0 γ) = (⟨s.1, [], γ⟩, ⟨γ, s.2⟩) := by
-        simp [GS.splitAtJoined]
-        split
-        simp
-      simp [this]
-      simp_all
-
-    sorry
-    nth_rw 2 [ωSum_nat_eq_succ]; simp_all
-    nth_rw 2 [ωSum_nat_eq_succ]; simp_all
-    nth_rw 2 [ωSum_nat_eq_succ]; simp_all
-    nth_rw 2 [ωSum_nat_eq_succ]; simp_all
-    have : ∀ m, (G⟦~p₁⟧ ^ (m + 1)) = (G⟦~p₁⟧ ^ m ♢ G⟦~p₁⟧) := by
-      intro m
-      induction m with
-      | zero => simp [HPow.hPow]
-      | succ m ih =>
-        simp [ih]
-        simp only [HPow.hPow, Function.iterate_succ', Function.comp_apply] at ih ⊢
-        simp [← GS.concat_assoc, ih]
-    simp [this]
-    simp [G.concat_apply]
-    congr! 3 with m x
-    -- have : (G⟦~p₁⟧ ^ (m + 1)) = (G⟦~p₁⟧ ♢ G⟦~p₁⟧ ^ m) := by
-    --   simp_all only [Finset.mem_univ]
-    --   induction m with
-    --   | zero => simp [HPow.hPow]
-    --   | succ m ih =>
-    --     simp [ih]; clear ih
-    --     simp only [HPow.hPow, Function.iterate_succ', Function.comp_apply]
-    simp [G.concat_apply]
-    nth_rw 2 [Finset.sum_eq_single 0]
-    · simp [GS.splitAtJoined]
-    · simp [GS.splitAtJoined]
-      rintro (_ | b) _ _ γ
-      · contradiction
-      · simp_all
-    · simp
-  | succ n ih =>
-    have : ∀ m, (G⟦~p₁⟧ ^ (m + 1)) = (G⟦~p₁⟧ ^ m ♢ G⟦~p₁⟧) := by
-      intro m
-      induction m with
-      | zero => simp [HPow.hPow]
-      | succ m ih =>
-        simp [ih]
-        simp only [HPow.hPow, Function.iterate_succ', Function.comp_apply] at ih ⊢
-        simp [← GS.concat_assoc, ih]
-    simp_all
-    conv => left; simp [G.concat_apply]
-    simp [GS.splitAtJoined]
-    conv => enter [1, 1, x, 2, i, 2, _, 2, _]; rw [Finset.sum_range_succ']
-    simp
-    simp [mul_add, Finset.sum_add_distrib, ωSum_add]
-    have : ω∑ (m : ℕ),
-      ∑ i ∈ Finset.range (xₙ.length + 1),
-        ∑ γ₁,
-          ∑ γ₀,
-            (G⟦~p₁⟧ ^ m) (α, [], γ₀) * G⟦~p₁⟧ (γ₀, α₀ :: List.take i xₙ, γ₁) *
-              ∑ γ, (G⟦~p₁⟧ ^ n) (γ₁, [], γ) * G⟦~p₁⟧ (γ, List.drop i xₙ, β) =
-      -- ω∑ (m : ℕ),
-      --   ∑ i ∈ Finset.range (xₙ.length + 1),
-      --     ∑ γ₁,
-      --       ∑ γ₀,
-      --         (G⟦~p₁⟧ ^ m) (α, [], γ₀) * G⟦~p₁⟧ (γ₀, α₀ :: List.take i xₙ, γ₁) * (G⟦~p₁⟧ ^ n) (γ₁, List.drop i xₙ, β)
-        ω∑ (m : ℕ),
-          ∑ i ∈ Finset.range (xₙ.length + 1),
-            ∑ γ₁,
-              ∑ γ₀,
-                (G⟦~p₁⟧ ^ m) (α, [], γ₀) * G⟦~p₁⟧ (γ₀, α₀ :: List.take i xₙ, γ₁) * (G⟦~p₁⟧ ^ n) (γ₁, [], γ) * G⟦~p₁⟧ (γ, List.drop i xₙ, β) := by
-      sorry
-    nth_rw 2 [ωSum_nat_eq_succ]
-    simp
-    have {x} {α γ β : Pk[F,N]} {xs : List Pk[F,N]} : (G⟦~p₁⟧ ^ (n + 1 - x)) (α, γ::xs, β) = (G⟦~p₁⟧ ^ (n - x + 1)) (α, γ::xs, β) := by
-      if x ≤ n then
-        rw [Nat.sub_add_comm ‹_›]
-      else
-        simp_all
-        have : n - x = 0 := by omega
-        have : n + 1 - x = 0 := by omega
-        simp_all
-        sorry
-  -- let f := fun (xₙ yₙ : List Pk[F,N]) (γ κ : Pk[F,N]) (m : ℕ) ↦ (G⟦~p₁⟧ ^ m) (α, [], γ) * G⟦~p₁⟧ (γ, xₙ, κ) * (G⟦~p₁⟧ ^ n) (κ, yₙ, β)
-  sorry
-
-theorem ωSum_offset_with_ωSum {f : ℕ → 𝒮} (hf : f 0 = 0) : ω∑ (n : ℕ), f n = ω∑ (m : ℕ) (n : ℕ), if n < m then f (m + (n - m)) else 0 := by
-  rw [ωSum_nat_eq_succ]
-  rw [ωSum_nat_eq_succ]
-  nth_rw 2 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 2 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 2 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 2 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 2 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 2 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 2 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 2 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 2 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 2 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 4 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 4 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 4 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 4 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 4 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 4 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 5 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 5 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 5 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 5 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 5 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 5 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 5 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 5 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 5 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 4 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 4 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-
-  ring_nf
-  rw [← ωSum_prod']
-  apply ωSum_eq_ωSum_of_ne_one_bij fun ⟨⟨m, n⟩, _⟩ ↦ (m + (n - m))
-  · intro ⟨⟨m, n⟩, h⟩; simp_all; simp_all; intro m' n' h' heq
-    if n ≤ m ∧ n' ≤ m' then
-      simp_all
-      subst_eqs
-      rcases m with _ | m
-      · contradiction
-      · sorry
-    else
-      simp_all
-
-  · simp
-  · simp
-
-
--- #eval (fun (n k m : ℕ) ↦ n + (k - n) - m = k + (n - m - k)) 2 2 3
-
-theorem asdassd (p₁ : RPol[F,N,𝒮]) {α β} {xₙ} :
-    ω∑ (n : ℕ), (𝒜⟦~p₁⟧^n) ⟨α, xₙ, β⟩ = ω∑ (m : ℕ) (n : ℕ), if m < n then (𝒜⟦~p₁⟧^((n - m) + m)) ⟨α, xₙ, β⟩ else 0 := by
-
-  rcases xₙ with _ | ⟨x₀, xₙ⟩
-  · sorry
-
-  nth_rw 2 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 2 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 2 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 3 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 4 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-  nth_rw 4 [ωSum_nat_eq_succ]; try simp [← add_assoc]; ring_nf
-
-  rw [ωSum_offset_with_ωSum]
-  simp [add_comm]
-theorem asdassd'' (p₁ : RPol[F,N,𝒮]) {α β} {xₙ} {m} :
-    ω∑ (n : ℕ), (𝒜⟦~p₁⟧^(n - m)) ⟨α, xₙ, β⟩ = ω∑ (k : ℕ) (n : ℕ), (𝒜⟦~p₁⟧^(((n - m) - k) + k)) ⟨α, xₙ, β⟩ := by
-  rcases xₙ with _ | ⟨α₀, xₙ⟩
-  · sorry
-  rw [ωSum_offset_with_ωSum]
-  simp [add_comm]
-  congr! 6 with n k
-  rw [Nat.sub_sub]
-  nth_rw 2 [add_comm]
-  rw [← Nat.sub_sub]
-
-
-
-
-
-
-theorem asdassd' (p₁ : RPol[F,N,𝒮]) (h : 𝒜⟦~p₁⟧ = G⟦~p₁⟧) {α β} {xₙ} :
-    ω∑ (n : ℕ), ((𝒜⟦~p₁⟧)^n) ⟨α, xₙ, β⟩ = sorry := by
-  simp [asdassd]
-  simp [add_comm, GS.pow_add]
-  simp [G.concat_apply, GS.splitAtJoined]
-  simp [Finset.sum_range_succ']
-  simp [ωSum_add, ωSum_sum_comm, ωSum_mul_left]
-  simp [← ωSum_add, ← ωSum_sum_comm]
-  conv =>
-    enter [1, 1, x, 2, 2, y, 2]
-    simp [asdassd]
-    simp [add_comm, GS.pow_add]
-    simp [G.concat_apply, GS.splitAtJoined]
-    simp [Finset.sum_range_succ']
-    simp [ωSum_add, ωSum_sum_comm, ωSum_mul_left]
-    simp [← ωSum_add, ← ωSum_sum_comm]
-  simp
-
-  have {m} {γ} : ω∑ (n : ℕ), (𝒜⟦~p₁⟧ ^ (n - m)) (γ, xₙ, β) = ω∑ (n : ℕ), (𝒜⟦~p₁⟧ ^ n) (γ, xₙ, β) := by
-    apply ωSum_eq_ωSum_of_ne_one_bij fun ⟨x, _⟩ ↦ x + m
-    · intro ⟨_, _⟩; grind
-    · intro x; simp_all
-      sorry
-
-  simp [this]
-  have {γ} {y} {c} [Decidable c] : ω∑ (m : ℕ) (n : ℕ), (𝒜⟦~p₁⟧ ^ (n - m)) (γ, xₙ[y..], β) = (ω∑ (n : ℕ), (𝒜⟦~p₁⟧ ^ (n + 1)) (γ, xₙ[y..], β)) + ω∑ (m : ℕ), (𝒜⟦~p₁⟧ ^ 0) (γ, xₙ[y..], β) := by
-
-    simp [← ωSum_add]
-    nth_rw 2 [ωSum_offset_with_ωSum]
-    simp [GS.pow_add]
-
-  conv =>
-    enter [1, 1, x, 1, 2, y, 2, y, 2]
-    rw [ωSum_offset_with_ωSum]
-
-    simp
-
-  conv =>
-    enter [1, 1, x, 2, 2, x, 2]
-    rw [asdassd _ h]
-    simp [add_comm, GS.pow_add]
-    simp [G.concat_apply, GS.splitAtJoined]
-    simp [Finset.sum_range_succ' (n:=xₙ.length + 1)]
-    simp [ωSum_add, ωSum_sum_comm, ωSum_mul_left]
-    simp [← ωSum_add, ← ωSum_sum_comm]
-  simp [this]
-  simp [← ωSum_add, ← ωSum_sum_comm]
-  sorry
-
-
-noncomputable def currentGoal (p₁ : RPol[F,N,𝒮]) α xₙ β := ω∑ (m : ℕ), ω∑ (n : ℕ), ∑ i ∈ Finset.range (xₙ.length + 1), ∑ ξ, ∑ γ, (𝒜⟦~p₁⟧^m) ⟨α, [], γ⟩ * 𝒜⟦~p₁⟧ ⟨γ, xₙ.take i, ξ⟩ * (𝒜⟦~p₁⟧^n) ⟨ξ, List.drop i xₙ, β⟩
-
-theorem Q_star_eq_ωSum_Q_iter_first (p₁ : RPol[F,N,𝒮]) (h : 𝒜⟦~p₁⟧ = G⟦~p₁⟧) {α β} {xₙ} :
-    𝒜⟦~p₁*⟧ ⟨α, xₙ, β⟩ = currentGoal p₁ α xₙ β := by
-
-  -- TODO: require that xₘ is nonempty
-  induction xₙ using Nat.strongRecMeasure List.length generalizing α β; next xₙ ihₙ =>
-  rw [A_sem_cases]
-  simp [ι, 𝒪]
-  rw [xδ_δ_iter]
-  simp
-  rw [ι_wProd_δ, ι_wProd_𝒪]
-  simp
-  have : ∀ (x : 𝒲[S.I {♡}, S p₁, 𝒮]), @HMul.hMul 𝒲[𝟙, S.I {♡}, 𝒮] 𝒲[S.I {♡}, S p₁, 𝒮] 𝒲[𝟙, S p₁, 𝒮] _ ((fun x ↦ 1)) x = x.coe_unique_left := by intro x; ext; simp [Matrix.mul_apply]
-  simp [this]
-  simp [δ.δ']
-  rw [xδ_δ'_as_sum_unfolded]
-  simp
-  have 𝒪_heart_eq : 𝒪_heart p₁ = ω∑ (m : ℕ), (Q⟦~p₁⟧^m) [] := by
-    ext α γ; simp [𝒪_heart, LawfulStar.star_eq_sum]; congr!
-  have 𝒪_heart_eq : ∀ α β, 𝒪_heart p₁ α β = ω∑ (m : ℕ), (𝒜⟦~p₁⟧^m) ⟨α, [], β⟩ := by
-    simp [𝒪_heart_eq]
-    simp [RPol.Q_eq_A_sem, A_sem_pow]
-    intro α β
-    congr with m
-    induction m with
-    | zero => simp [RPol.A_sem]; rw [RPol.wnka_sem_skip]; simp; rfl
-    | succ m ih =>
-      conv => right; simp [RPol.wnka_sem_seq, h, RPol.A_sem]
-      rw [RPol.wnka_sem_seq]
-      · sorry
-      · simp [← h]; rfl
-      · sorry
-  rcases xₙ with _ | ⟨α₀, xₙ⟩
-  · replace 𝒪_heart_eq := 𝒪_heart_eq α β
-    simp at 𝒪_heart_eq
-    simp [Matrix.coe_unique_left, Q, Matrix.down, ← 𝒪_heart_eq]
-    simp [Matrix.mul_apply]
-    simp [currentGoal]
-    simp [𝒪_heart_eq]
-    sorry
-  · simp
-    simp [crox]
-    simp [Matrix.mul_add, Matrix.add_mul, Matrix.sum_mul, Matrix.sum_apply, Matrix.mul_sum, Finset.sum_mul, ← Matrix.mul_assoc]
-    calc
-      _ = ((𝒪_heart p₁ ⊟ ι p₁ ⊡ δ p₁) α α₀ * xδ (δ p₁) (α₀ :: xₙ) * (𝒪 p₁ ⊟' 𝒪_heart p₁) ((α₀ :: xₙ).getLast?.getD α) β).down +
-            ∑ x ∈ Finset.range xₙ.length,
-              ∑ x_1,
-                ((𝒪_heart p₁ ⊟ ι p₁ ⊡ δ p₁) α α₀ * xδ (δ p₁) (α₀ :: List.take x xₙ) * 𝒪 p₁ ((α₀ :: xₙ)[x]?.getD default) x_1).down *
-                        𝒜⟦~p₁*⟧ (x_1, List.drop x xₙ, β) := by
-        rcases xₙ with _ | ⟨α₁, xₙ⟩
-        · simp
-        simp only [List.getLast?_cons_cons, List.length_cons]
-        congr! with i hi γ hγ
-        nth_rw 2 [Matrix.mul_assoc]
-        nth_rw 1 [Matrix.mul_assoc]
-        simp
-        congr
-        simp [A_sem_cases]
-        simp [ι, 𝒪]
-        rw [xδ_δ_iter]
-        simp
-        rw [ι_wProd_δ, ι_wProd_𝒪]
-        simp
-        have : ∀ (x : 𝒲[S.I {♡}, S p₁, 𝒮]), @HMul.hMul 𝒲[𝟙, S.I {♡}, 𝒮] 𝒲[S.I {♡}, S p₁, 𝒮] 𝒲[𝟙, S p₁, 𝒮] _ ((fun x ↦ 1)) x = x.coe_unique_left := by intro x; ext; simp [Matrix.mul_apply]
-        simp [this]
-        simp at hi
-        split_ifs with hi'
-        · omega
-        · simp [δ.δ', List.head!_eq_head?, Option.getD_default_eq_iget, List.getLast?_drop, hi, hi', List.getLast?_cons]
-      _ = ((𝒪_heart p₁ ⊟ ι p₁ ⊡ δ p₁) α α₀ * xδ (δ p₁) (α₀ :: xₙ) * (𝒪 p₁ ⊟' 𝒪_heart p₁) ((α₀ :: xₙ).getLast?.getD α) β).down +
-            ∑ i ∈ Finset.range xₙ.length,
-              ∑ γ,
-                (𝒪_heart p₁ * Q⟦~p₁⟧ (α₀ :: xₙ.take i)) α γ *
-                        Q⟦~p₁*⟧ (List.drop i xₙ) γ β := by
-        congr! with i hi γ hγ
-        simp only [Finset.mem_range] at hi
-        nth_rw 1 [Matrix.mul_apply]
-        simp [Q, sox, Matrix.sum_mul]
-        congr! with ξ hξ
-        simp [RPol.wnka_sem_case]
-        simp [xδ, fox, ← Matrix.mul_assoc]
-        congr! 3
-        rcases i with _ | i
-        · simp [List.getLast?_cons]
-        · have : i < xₙ.length := by omega
-          simp [List.getLast?_cons, List.getLast?_take, this]
-      _ = (𝒪_heart p₁ * Q⟦~p₁⟧ (α₀ :: xₙ) * 𝒪_heart p₁) α β +
-            ∑ i ∈ Finset.range xₙ.length, ∑ γ,
-                (𝒪_heart p₁ * Q⟦~p₁⟧ (α₀ :: xₙ.take i)) α γ * Q⟦~p₁*⟧ (List.drop i xₙ) γ β := by
-        congr! with i hi γ hγ
-        nth_rw 2 [Matrix.mul_assoc]
-        nth_rw 1 [Matrix.mul_apply]
-        conv => right; arg 2; ext; rw [Matrix.mul_apply]
-        simp [Q, sox, sox', Matrix.sum_mul, Matrix.mul_sum, Finset.sum_mul, Finset.mul_sum, Matrix.mul_assoc, mul_assoc]
-        rw [Finset.sum_comm]
-        congr! 4 with γ hγ ξ hξ
-        simp [RPol.wnka_sem_case]
-        simp [xδ, fox, ← Matrix.mul_assoc]
-        congr! 3
-      _ = (𝒪_heart p₁ * Q⟦~p₁⟧ (α₀ :: xₙ) * 𝒪_heart p₁) α β +
-            ∑ i ∈ Finset.range xₙ.length,
-                ((𝒪_heart p₁ * Q⟦~p₁⟧ (α₀ :: xₙ.take i)) * Q⟦~p₁*⟧ (List.drop i xₙ)) α β := by
-        simp [Matrix.mul_apply]
-      _ = ∑ i ∈ Finset.range (xₙ.length + 1), ((𝒪_heart p₁ * Q⟦~p₁⟧ (α₀ :: xₙ.take i)) * Q⟦~p₁*⟧ (List.drop i xₙ)) α β := by
-        simp [Finset.sum_range_succ]
-        rw [add_comm]
-        congr!
-        ext
-        simp [Q]
-        rw [RPol.wnka_sem_case]
-        simp [ι, xδ, 𝒪]
-        rw [ι_wProd_𝒪]
-        simp [Matrix.down, Matrix.mul_apply]
-      _ = ∑ i ∈ Finset.range (xₙ.length + 1), ∑ ξ, ∑ γ, 𝒪_heart p₁ α γ * 𝒜⟦~p₁⟧ ⟨γ, α₀ :: xₙ.take i, ξ⟩ * 𝒜⟦~p₁*⟧ ⟨ξ, List.drop i xₙ, β⟩ := by
-        simp [Matrix.mul_apply, Finset.sum_mul, RPol.Q_eq_A_sem]
-      _ = ω∑ (m : ℕ), ∑ i ∈ Finset.range (xₙ.length + 1), ∑ ξ, ∑ γ, (𝒜⟦~p₁⟧^m) ⟨α, [], γ⟩ * 𝒜⟦~p₁⟧ ⟨γ, α₀ :: xₙ.take i, ξ⟩ * 𝒜⟦~p₁*⟧ ⟨ξ, List.drop i xₙ, β⟩ := by
-        simp [← ωSum_mul_left, ωSum_sum_comm]
-        simp [𝒪_heart_eq, ← ωSum_mul_left, ← ωSum_mul_right, ← ωSum_sum_comm]
-      _ = _ := by
-        simp [ωSum_mul_left, ωSum_sum_comm, currentGoal, List.drop_cons]
-        congr!
-        rw [ihₙ _ (by simp; omega)]
-        simp
-
-theorem Q_star_eq_ωSum_Q_iter (p₁ : RPol[F,N,𝒮]) (h : 𝒜⟦~p₁⟧ = G⟦~p₁⟧) : 𝒜⟦~p₁*⟧ = ω∑ (i : ℕ), 𝒜⟦~p₁⟧^i := by
-  ext ⟨α, xₙ, β⟩
-
-  -- TODO: require that xₘ is nonempty
-  induction xₙ using Nat.strongRecMeasure List.length generalizing α β; next xₙ ihₙ =>
-  rw [A_sem_cases]
-  simp [ι, 𝒪]
-  rw [xδ_δ_iter]
-  simp
-  rw [ι_wProd_δ, ι_wProd_𝒪]
-  simp
-  have : ∀ (x : 𝒲[S.I {♡}, S p₁, 𝒮]), @HMul.hMul 𝒲[𝟙, S.I {♡}, 𝒮] 𝒲[S.I {♡}, S p₁, 𝒮] 𝒲[𝟙, S p₁, 𝒮] _ ((fun x ↦ 1)) x = x.coe_unique_left := by intro x; ext; simp [Matrix.mul_apply]
-  simp [this]
-  simp [δ.δ']
-  rw [xδ_δ'_as_sum_unfolded]
-  simp
-  have 𝒪_heart_eq : 𝒪_heart p₁ = ω∑ (m : ℕ), (Q⟦~p₁⟧^m) [] := by
-    ext α γ; simp [𝒪_heart, LawfulStar.star_eq_sum]; congr!
-  have 𝒪_heart_eq : ∀ α β, 𝒪_heart p₁ α β = ω∑ (m : ℕ), (𝒜⟦~p₁⟧^m) ⟨α, [], β⟩ := by
-    simp [𝒪_heart_eq]
-    simp [RPol.Q_eq_A_sem, A_sem_pow]
-    intro α β
-    congr with m
-    induction m with
-    | zero => simp [RPol.A_sem]; rw [RPol.wnka_sem_skip]; simp; rfl
-    | succ m ih =>
-      conv => right; simp [RPol.wnka_sem_seq, h, RPol.A_sem]
-      rw [RPol.wnka_sem_seq]
-      · sorry
-      · simp [← h]; rfl
-      · sorry
-  rcases xₙ with _ | ⟨α₀, xₙ⟩
-  · replace 𝒪_heart_eq := 𝒪_heart_eq α β
-    simp at 𝒪_heart_eq
-    simp [Matrix.coe_unique_left, Q, Matrix.down, ← 𝒪_heart_eq]
-    simp [Matrix.mul_apply]
-  · simp
-    simp [crox]
-    simp [Matrix.mul_add, Matrix.add_mul, Matrix.sum_mul, Matrix.sum_apply, Matrix.mul_sum, Finset.sum_mul, ← Matrix.mul_assoc]
-    calc
-      _ = ((𝒪_heart p₁ ⊟ ι p₁ ⊡ δ p₁) α α₀ * xδ (δ p₁) (α₀ :: xₙ) * (𝒪 p₁ ⊟' 𝒪_heart p₁) ((α₀ :: xₙ).getLast?.getD α) β).down +
-            ∑ x ∈ Finset.range xₙ.length,
-              ∑ x_1,
-                ((𝒪_heart p₁ ⊟ ι p₁ ⊡ δ p₁) α α₀ * xδ (δ p₁) (α₀ :: List.take x xₙ) * 𝒪 p₁ ((α₀ :: xₙ)[x]?.getD default) x_1).down *
-                        𝒜⟦~p₁*⟧ (x_1, List.drop x xₙ, β) := by
-        rcases xₙ with _ | ⟨α₁, xₙ⟩
-        · simp
-        simp only [List.getLast?_cons_cons, List.length_cons]
-        congr! with i hi γ hγ
-        nth_rw 2 [Matrix.mul_assoc]
-        nth_rw 1 [Matrix.mul_assoc]
-        simp
-        congr
-        simp [A_sem_cases]
-        simp [ι, 𝒪]
-        rw [xδ_δ_iter]
-        simp
-        rw [ι_wProd_δ, ι_wProd_𝒪]
-        simp
-        have : ∀ (x : 𝒲[S.I {♡}, S p₁, 𝒮]), @HMul.hMul 𝒲[𝟙, S.I {♡}, 𝒮] 𝒲[S.I {♡}, S p₁, 𝒮] 𝒲[𝟙, S p₁, 𝒮] _ ((fun x ↦ 1)) x = x.coe_unique_left := by intro x; ext; simp [Matrix.mul_apply]
-        simp [this]
-        simp at hi
-        split_ifs with hi'
-        · omega
-        · simp [δ.δ', List.head!_eq_head?, Option.getD_default_eq_iget, List.getLast?_drop, hi, hi', List.getLast?_cons]
-      _ = ((𝒪_heart p₁ ⊟ ι p₁ ⊡ δ p₁) α α₀ * xδ (δ p₁) (α₀ :: xₙ) * (𝒪 p₁ ⊟' 𝒪_heart p₁) ((α₀ :: xₙ).getLast?.getD α) β).down +
-            ∑ i ∈ Finset.range xₙ.length,
-              ∑ γ,
-                (𝒪_heart p₁ * Q⟦~p₁⟧ (α₀ :: xₙ.take i)) α γ *
-                        Q⟦~p₁*⟧ (List.drop i xₙ) γ β := by
-        congr! with i hi γ hγ
-        simp only [Finset.mem_range] at hi
-        nth_rw 1 [Matrix.mul_apply]
-        simp [Q, sox, Matrix.sum_mul]
-        congr! with ξ hξ
-        simp [RPol.wnka_sem_case]
-        simp [xδ, fox, ← Matrix.mul_assoc]
-        congr! 3
-        rcases i with _ | i
-        · simp [List.getLast?_cons]
-        · have : i < xₙ.length := by omega
-          simp [List.getLast?_cons, List.getLast?_take, this]
-      _ = (𝒪_heart p₁ * Q⟦~p₁⟧ (α₀ :: xₙ) * 𝒪_heart p₁) α β +
-            ∑ i ∈ Finset.range xₙ.length, ∑ γ,
-                (𝒪_heart p₁ * Q⟦~p₁⟧ (α₀ :: xₙ.take i)) α γ * Q⟦~p₁*⟧ (List.drop i xₙ) γ β := by
-        congr! with i hi γ hγ
-        nth_rw 2 [Matrix.mul_assoc]
-        nth_rw 1 [Matrix.mul_apply]
-        conv => right; arg 2; ext; rw [Matrix.mul_apply]
-        simp [Q, sox, sox', Matrix.sum_mul, Matrix.mul_sum, Finset.sum_mul, Finset.mul_sum, Matrix.mul_assoc, mul_assoc]
-        rw [Finset.sum_comm]
-        congr! 4 with γ hγ ξ hξ
-        simp [RPol.wnka_sem_case]
-        simp [xδ, fox, ← Matrix.mul_assoc]
-        congr! 3
-      _ = (𝒪_heart p₁ * Q⟦~p₁⟧ (α₀ :: xₙ) * 𝒪_heart p₁) α β +
-            ∑ i ∈ Finset.range xₙ.length,
-                ((𝒪_heart p₁ * Q⟦~p₁⟧ (α₀ :: xₙ.take i)) * Q⟦~p₁*⟧ (List.drop i xₙ)) α β := by
-        simp [Matrix.mul_apply]
-      _ = ∑ i ∈ Finset.range (xₙ.length + 1), ((𝒪_heart p₁ * Q⟦~p₁⟧ (α₀ :: xₙ.take i)) * Q⟦~p₁*⟧ (List.drop i xₙ)) α β := by
-        simp [Finset.sum_range_succ]
-        rw [add_comm]
-        congr!
-        ext
-        simp [Q]
-        rw [RPol.wnka_sem_case]
-        simp [ι, xδ, 𝒪]
-        rw [ι_wProd_𝒪]
-        simp [Matrix.down, Matrix.mul_apply]
-      _ = ∑ i ∈ Finset.range (xₙ.length + 1), ∑ ξ, ∑ γ, 𝒪_heart p₁ α γ * 𝒜⟦~p₁⟧ ⟨γ, α₀ :: xₙ.take i, ξ⟩ * 𝒜⟦~p₁*⟧ ⟨ξ, List.drop i xₙ, β⟩ := by
-        simp [Matrix.mul_apply, Finset.sum_mul, RPol.Q_eq_A_sem]
-      _ = ω∑ (m : ℕ), ∑ i ∈ Finset.range (xₙ.length + 1), ∑ ξ, ∑ γ, (𝒜⟦~p₁⟧^m) ⟨α, [], γ⟩ * 𝒜⟦~p₁⟧ ⟨γ, α₀ :: xₙ.take i, ξ⟩ * 𝒜⟦~p₁*⟧ ⟨ξ, List.drop i xₙ, β⟩ := by
-        simp [← ωSum_mul_left, ωSum_sum_comm]
-        simp [𝒪_heart_eq, ← ωSum_mul_left, ← ωSum_mul_right, ← ωSum_sum_comm]
-      _ = ω∑ (m : ℕ), ω∑ (n : ℕ), ∑ i ∈ Finset.range (xₙ.length + 1), ∑ ξ, ∑ γ, (𝒜⟦~p₁⟧^m) ⟨α, [], γ⟩ * 𝒜⟦~p₁⟧ ⟨γ, α₀ :: xₙ.take i, ξ⟩ * (𝒜⟦~p₁⟧^n) ⟨ξ, List.drop i xₙ, β⟩ := by
-        simp [ωSum_mul_left, ωSum_sum_comm]
-        congr!
-        rw [ihₙ _ (by simp; omega)]
-        simp
-      -- _ = ω∑ (m : ℕ), ω∑ (n : ℕ), ∑ i ∈ Finset.range (xₙ.length + 1 + 1), ∑ ξ, ∑ γ, (𝒜⟦~p₁⟧^m) ⟨α, [], γ⟩ * 𝒜⟦~p₁⟧ ⟨γ, (α₀ :: xₙ).take i, ξ⟩ * (𝒜⟦~p₁⟧^n) ⟨ξ, List.drop i (α₀ :: xₙ), β⟩ := by
-      --   simp [ωSum_mul_left, ωSum_sum_comm]
-      --   nth_rw 2 [Finset.sum_range_succ']
-      --   simp
-      --   have : ∀ (m : ℕ) ξ, ∑ γ, (𝒜⟦~p₁⟧ ^ m) (α, [], γ) * 𝒜⟦~p₁⟧ (γ, [], ξ) = (𝒜⟦~p₁⟧ ^ (m + 1)) (α, [], ξ) := by
-      --     intro m ξ
-      --     simp [GS.pow_succ', G.concat_apply, GS.splitAtJoined]
-      --   conv =>
-      --     right
-      --     right
-      --     arg 2; ext
-      --     rw [← ωSum_sum_comm]
-      --     arg 1; ext
-      --     rw [← Finset.sum_mul]
-      --     left
-      --     rw [this]
-
-      --   sorry
-      -- _ = ω∑ (n : ℕ), ω∑ (m : ℕ), ∑ k ∈ Finset.range (xₙ.length + 1), ∑ ξ, ∑ γ, ((Q⟦~p₁⟧ [] ^ m) α γ * Q⟦~p₁⟧ (α₀ :: List.take k xₙ) γ ξ * (Q⟦~p₁⟧ (List.drop k xₙ) ^ n) ξ β) := by
-      --   simp [Matrix.mul_apply]
-      --   simp [← ωSum_mul_left, ← ωSum_mul_right, ← ωSum_sum_comm, Matrix.mul_sum, Matrix.sum_mul, Matrix.mul_assoc, Finset.mul_sum, Finset.sum_mul, Matrix.mul_apply, Matrix.mul_assoc]
-      -- -- _ = ω∑ (n : ℕ) (m : ℕ), ∑ x ∈ Finset.range (xₙ.length + 1), ∑ x_1, ∑ x_2, G⟦~(p₁.iter m)⟧ (α, [], x_2) * G⟦~p₁⟧ (x_2, α₀ :: List.take x xₙ, x_1) * G⟦~(p₁.iter n)⟧ (x_1, List.drop x xₙ, β) := by
-      -- --   simp [h]
-      -- --   simp [M']
-      -- -- _ = ω∑ (n : ℕ), ω∑ (m : ℕ), ∑ k ∈ Finset.range (xₙ.length + 1), ∑ ξ, (Q⟦~p₁⟧ (α₀ :: List.take k xₙ) α ξ * (Q⟦~p₁⟧ (List.drop k xₙ) ^ n) ξ β) := by
-      -- --   simp [← Finset.sum_mul]
-      -- --   congr! with n m k hk ξ hξ
-      -- --   · sorry
-      -- --   · sorry
-      -- -- _ = ω∑ (n : ℕ), ∑ k ∈ Finset.range (xₙ.length + 1), ∑ ξ, (Q⟦~p₁⟧ (α₀ :: List.take k xₙ) α ξ * (Q⟦~p₁⟧ (List.drop k xₙ) ^ n) ξ β) := by
-      -- --   sorry
-      -- -- _ = ω∑ (n : ℕ), ∑ k ∈ Finset.range (xₙ.length + 1), ∑ ξ, /- -/ ((∑ γ, ω∑ (m : ℕ), (Q⟦~p₁⟧ [] ^ m) α γ * Q⟦~p₁⟧ (α₀ :: List.take k xₙ) γ ξ) /- -/ * (Q⟦~p₁⟧ (List.drop k xₙ) ^ n) ξ β) := by
-      -- --   sorry
-      -- -- _ = ω∑ (n : ℕ), ∑ k ∈ Finset.range (xₙ.length + 1), ∑ ξ, /- -/ ((Q⟦~p₁⟧ (α₀ :: List.take k xₙ) α ξ)                                  /- -/ * (Q⟦~p₁⟧ (List.drop k xₙ) ^ n) ξ β) := by
-      -- --   -- congr!
-      -- --   sorry
-
-      -- -- _ = ω∑ (n : ℕ), ∑ k ∈ Finset.range (xₙ.length + 1), (Q⟦~p₁⟧ (α₀ :: List.take k xₙ) * Q⟦~p₁⟧ (List.drop k xₙ) ^ n) α β := by
-      -- --   -- simp [← ωSum_mul_left, ← ωSum_mul_right, ← ωSum_sum_comm, Matrix.mul_sum, Matrix.sum_mul, Matrix.mul_assoc, Finset.mul_sum, Finset.sum_mul, Matrix.mul_apply]
-      -- --   sorry
-      -- --   simp [h]
-      -- --   unfold M'
-      -- --   simp
-      -- --   sorry
-      --   -- simp [← ωSum_mul_left, ωSum_sum_comm]
-      --   -- simp [𝒪_heart_eq, ← ωSum_mul_left, ← ωSum_mul_right, ← ωSum_sum_comm]
-      -- _ = ω∑ (n : ℕ), ∑ k ∈ Finset.range (xₙ.length + 1 + 1), ∑ ξ, (Q⟦~p₁⟧ (List.take k (α₀ :: xₙ)) α ξ * (Q⟦~p₁⟧ (List.drop k (α₀ :: xₙ)) ^ n) ξ β) := by
-      --   -- simp [h]
-      --   -- simp [M']
-      --   conv =>
-      --     right
-      --     arg 1; ext n
-      --     rw [Finset.sum_range_succ']
-      --   simp
-      --   conv =>
-      --     left
-      --     arg 1; ext n
-      --     arg 1; ext m
-      --     arg 2; ext m
-      --     rw [Finset.sum_comm]
-      --   conv =>
-      --     left
-      --     arg 1; ext n
-      --     arg 1; ext m
-      --     rw [Finset.sum_comm]
-
-      --   simp [mul_assoc, ← Finset.mul_sum]
-      --   sorry
-      -- _ = ω∑ (n : ℕ) (m : ℕ), ∑ x, G⟦~(p₁.iter m)⟧ (α, [], x) * ∑ i ∈ Finset.range (xₙ.length + 1), ∑ i_1, G⟦~p₁⟧ (x, α₀ :: List.take i xₙ, i_1) * G⟦~(p₁.iter n)⟧ (i_1, List.drop i xₙ, β) := by
-      --   simp [h]
-      --   simp [M']
-      --   have : ∀ n x,
-      --         ∑ i ∈ Finset.range (xₙ.length + 1 + 1), ∑ i_1, G⟦~p₁⟧ (x, List.take i (α₀ :: xₙ), i_1) * G⟦~(p₁.iter n)⟧ (i_1, List.drop i (α₀ :: xₙ), β)
-      --       = G⟦~p₁ ; ~(p₁.iter n)⟧ (x, α₀ :: xₙ, β) := by
-      --     intro n x
-      --     simp [G]
-      --     simp [G.concat_apply, GS.splitAtJoined]
-      --     -- nth_rw 2 [Finset.sum_range_succ']
-      --     -- simp
-      --     -- sorry
-      --   conv at this =>
-      --     ext n x
-      --     rw [Finset.sum_range_succ']
-      --   simp at this
-      --   sorry
-      _ = ω∑ (n : ℕ), ∑ i ∈ Finset.range (xₙ.length + 1), ∑ ξ, ∑ γ, (ω∑ (m : ℕ), (𝒜⟦~p₁⟧^m) ⟨α, [], γ⟩) * 𝒜⟦~p₁⟧ ⟨γ, α₀ :: xₙ.take i, ξ⟩ * (𝒜⟦~p₁⟧^n) ⟨ξ, List.drop i xₙ, β⟩ := by
-        rw [ωSum_comm]
-        simp [ωSum_sum_comm, ωSum_mul_right]
-      -- _ = ω∑ (n : ℕ), ∑ k ∈ Finset.range (xₙ.length + 1 + 1), ∑ ξ, (𝒜⟦~p₁⟧ (α, List.take k (α₀ :: xₙ), ξ) * (𝒜⟦~p₁⟧^n) (ξ, List.drop k (α₀ :: xₙ), β)) := by
-
-      --   congr with n
-      --   nth_rw 2 [Finset.sum_range_succ']
-      --   simp
-      --   nth_rw 2 [Finset.sum_range_succ]
-      --   simp
-      --   -- have :
-      --   --     ∀ β, 𝒜⟦~p₁⟧ (α, [], β) = ω∑ (m : ℕ), (𝒜⟦~p₁⟧ ^ (m + 1)) (α, [], β) := by
-      --   --   intro β
-      --   --   simp [ωSum_nat_eq_ωSup]
-      --   --   apply le_antisymm
-      --   --   · simp
-      --   --   · simp
-      --   --     intro i
-      --   --     induction i with
-      --   --     | zero => simp
-      --   --     | succ i ih =>
-      --   --       simp [Finset.sum_range_succ']
-      --   --       simp [GS.pow_succ']
-      --   -- nth_rw 1 [ωSum_nat_eq_succ]
-      --   -- simp
-      --   -- rw [ωSum_comm]
-      --   -- simp [← ωSum_add]
-      --   -- conv => left; simp [ωSum_sum_comm]
-      --   -- simp [← Finset.sum_mul]
-      --   -- have : ∀ xn β, (∑ i, G⟦skip⟧ (α, [], i) * 𝒜⟦~p₁⟧ (i, xn, β)) = 𝒜⟦~p₁⟧ (α, xn, β) := by
-      --   --   intro xn β
-      --   --   rw [Finset.sum_eq_single α]
-      --   --   · simp [G, GS.mk]
-      --   --   · simp [G, GS.mk]; grind
-      --   --   · simp
-      --   -- simp [this]
-      --   -- simp [← Finset.sum_add_distrib]
-      --   -- simp [ωSum_mul_right]
-      --   sorry
-      -- _ = ω∑ (n : ℕ), (𝒜⟦~p₁⟧ ♢ 𝒜⟦~p₁⟧^n : GS F N →c 𝒮) ⟨α, α₀ :: xₙ, β⟩ := by
-      --   simp [G.concat_apply, GS.splitAtJoined]
-
-      _ = ω∑ (m : ℕ) (n : ℕ), ∑ ξ, ∑ k ∈ Finset.range (xₙ.length + 1 + 1), ((𝒜⟦~p₁⟧^m) (α, List.take k (α₀ :: xₙ), ξ) * (𝒜⟦~p₁⟧^(n - m)) (ξ, List.drop k (α₀ :: xₙ), β)) := by
-
-        rw [iddkkkk] <;> assumption
-        -- sorry
-      _ = ω∑ (m : ℕ) (n : ℕ), ∑ k ∈ Finset.range (xₙ.length + 1 + 1), ∑ ξ, ((𝒜⟦~p₁⟧^m) (α, List.take k (α₀ :: xₙ), ξ) * (𝒜⟦~p₁⟧^(n - m)) (ξ, List.drop k (α₀ :: xₙ), β)) := by
-        congr!; rw [Finset.sum_comm]
-      _ = ω∑ (m : ℕ) (n : ℕ), (𝒜⟦~p₁⟧^((n - m) + m)) ⟨α, α₀ :: xₙ, β⟩ := by
-        congr! with m n
-        nth_rw 3 [add_comm]
-        suffices (𝒜⟦~p₁⟧ ^ (m + (n - m))) = ((𝒜⟦~p₁⟧ ^ m) ♢ (𝒜⟦~p₁⟧ ^ (n - m))) by
-          simp [this, G.concat_apply, GS.splitAtJoined]
-        sorry
-      _ = ω∑ (n : ℕ), (𝒜⟦~p₁⟧^n) ⟨α, α₀ :: xₙ, β⟩ := by
-        have : (𝒜⟦~p₁⟧ ^ 0) (α, α₀ :: xₙ, β) = 0 := by simp [G, GS.mk]; grind
-        -- OK
-        sorry
-        -- OLD BEGIN
-        -- nth_rw 2 [ωSum_nat_eq_succ]
-        -- have : G⟦skip⟧ (α, α₀ :: xₙ, β) = (0 : 𝒮) := sorry
-        -- simp [this, GS.pow_succ]
-        -- OLD END
-
-        -- have : ∀ n, (Q⟦~p₁⟧ (α₀ :: xₙ) ^ n) = sorry := by
-        --   sorry
-        -- nth_rw 2 [ωSum_nat_eq_succ]
-        -- simp [pow_succ', Matrix.mul_apply]
-        -- simp [ωSum_sum_comm, ωSum_mul_left]
-        -- rw [Finset.sum_range_succ']
-        -- simp
-
-        -- simp [h]
-        -- simp [M']
-        -- nth_rw 2 [ωSum_nat_eq_succ]
-
-
-        -- simp
-        -- have : G⟦skip⟧ (α, α₀ :: xₙ, β) = (0 : 𝒮) := by simp [G, GS.mk]; grind
-        -- simp [this]
-        -- simp [G, G.concat_apply, GS.splitAtJoined]
-
-  -- induction xₙ using List.reverseRecOn with
-  -- | nil =>
-  --   simp [h, LawfulStar.star_eq_sum]
-  --   sorry
-  -- | append_singleton xₙ α' ih =>
-  --   simp [Q]
-  --   rw [RPol.wnka_sem_case]
-  --   simp [ι, 𝒪]
-  --   rw [xδ_δ_iter]
-  --   simp
-  --   rw [ι_wProd_δ, ι_wProd_𝒪]
-  --   simp
-  --   have : ∀ (x : 𝒲[S.I {♡}, S p₁, 𝒮]), @HMul.hMul 𝒲[𝟙, S.I {♡}, 𝒮] 𝒲[S.I {♡}, S p₁, 𝒮] 𝒲[𝟙, S p₁, 𝒮] _ ((fun x ↦ 1)) x = x.coe_unique_left := by intro x; ext; simp [Matrix.mul_apply]
-  --   simp [this]
-  --   simp [δ.δ']
-  --   rw [xδ_δ'_as_sum_unfolded]
-  --   conv =>
-  --     left
-  --     arg 1
-  --     arg 1
-  --     arg 2
-  --     arg 2
-  --     arg 2;
-  --     rw [xδ_δ'_as_sum_unfolded]
-
-  --   sorry
-    -- rcases xₙ with _ | ⟨α₁, xₙ⟩
-    -- · sorry
-    -- calc
-    --     Q⟦~p₁*⟧ (α₁ :: xₙ ++ [α']) α β
-    --   = ((𝒪_heart p₁ ⊟ ι p₁ ⊡ δ p₁) α α₁ * xδ (δ.δ' p₁) (α₁ :: (xₙ ++ [α'])) * (𝒪 p₁ ⊟' 𝒪_heart p₁) α' β).down := by
-    --       simp [Q]
-    --       rw [RPol.wnka_sem_case]
-    --       simp
-    --       simp [ι, 𝒪]
-    --       rw [xδ_δ_iter]
-    --       simp
-    --       rw [ι_wProd_δ, ι_wProd_𝒪]
-    --       simp [List.getLast?_cons]
-    --       have : ∀ (x : 𝒲[S.I {♡}, S p₁, 𝒮]), @HMul.hMul 𝒲[𝟙, S.I {♡}, 𝒮] 𝒲[S.I {♡}, S p₁, 𝒮] 𝒲[𝟙, S p₁, 𝒮] _ ((fun x ↦ 1)) x = x.coe_unique_left := by intro x; ext; simp [Matrix.mul_apply]
-    --       simp [this]
-    --   _ = (𝒪_heart p₁ * Q⟦~p₁⟧ (α₁ :: (xₙ ++ [α'])) * 𝒪_heart p₁) α β +
-    --         ∑ x ∈ Finset.range (xₙ.length + 1),
-    --           ∑ x_1,
-    --             ((𝒪_heart p₁ ⊟ ι p₁ ⊡ δ p₁) α α₁ * xδ (δ p₁) (α₁ :: List.take x (xₙ ++ [α'])) * (𝒪 p₁ ⊟' 𝒪_heart p₁) ((α₁ :: xₙ)[x]?.getD default) x_1 *
-    --                     (ι p₁ ⊡ δ p₁) x_1 ((xₙ ++ [α'])[x]?.getD default) *
-    --                   xδ (δ p₁ + ((𝒪 p₁ ⊟' 𝒪_heart p₁) ⊞ ι p₁ ⊡ δ p₁)) (List.drop x (xₙ ++ [α'])) *
-    --                 (𝒪 p₁ ⊟' 𝒪_heart p₁) α' β).down := by
-    --       rw [← List.cons_append, xδ_δ'_as_sum]
-    --       -- TEST
-    --       conv =>
-    --         left
-    --         arg 1
-    --         arg 1
-    --         arg 2
-    --         arg 2
-    --         arg 2; ext
-    --         rw [xδ_δ'_as_sum_unfolded]
-    --       simp
-    --       simp [Matrix.mul_add, Matrix.add_mul, Matrix.sum_mul, Matrix.sum_apply, Matrix.mul_sum, Finset.sum_mul, ← Matrix.mul_assoc]
-    --       -- TEST
-    --       simp
-    --       simp [Matrix.mul_add, Matrix.add_mul]
-    --       have : ∀ α₁ xₙ α',
-    --             ((𝒪_heart p₁ ⊟ ι p₁ ⊡ δ p₁) α α₁ * xδ (δ p₁) (α₁ :: (xₙ ++ [α'])) * (𝒪 p₁ ⊟' 𝒪_heart p₁) α' β)
-    --           = (𝒪_heart p₁ * Q⟦~p₁⟧ (α₁ :: (xₙ ++ [α'])) * 𝒪_heart p₁) α β := by
-    --         intro α₁ xₙ α'
-    --         ext
-    --         nth_rw 2 [Matrix.mul_apply]
-    --         conv =>
-    --           right
-    --           arg 1; arg 2; ext
-    --           rw [Matrix.mul_apply]
-    --         simp [Q, sox, sox', Matrix.sum_mul, Matrix.sum_apply, Matrix.mul_sum, Finset.sum_mul]
-    --         congr! 2
-    --         rw [RPol.wnka_sem_case]
-    --         simp [List.getLast?_cons, Matrix.down]
-    --         rw [xδ]
-    --         simp [← Matrix.mul_assoc, fox]
-    --       simp [this]; clear this
-    --       simp [Matrix.mul_sum]
-    --       simp [← Matrix.mul_assoc]
-    --       -- simp [sox]
-    --       have : (𝒪 p₁ ⊞ 𝒪_heart p₁ ⊟ ι p₁ ⊡ δ p₁) = ((𝒪 p₁ ⊟' 𝒪_heart p₁) ⊞ (ι p₁ ⊡ δ p₁)) := by
-    --         ext; simp only [crox, sox, HSMul.hSMul, SMul.smul, Listed.array_sum_eq_finset_sum,
-    --           Matrix.mul_sum, Matrix.sum_apply, Matrix.mul_apply, Finset.univ_unique,
-    --           PUnit.default_eq_unit, ← mul_assoc, Finset.sum_singleton, sox', MulOpposite.unop_op,
-    --           Matrix.sum_mul]; rw [Finset.sum_comm]
-    --       simp [this]; clear this
-    --       simp [crox]
-    --       simp [Matrix.sum_mul, Matrix.sum_apply, Matrix.mul_sum, Finset.sum_mul, ← Matrix.mul_assoc]
-    --   _ = (𝒪_heart p₁ * Q⟦~p₁⟧ (α₁ :: (xₙ ++ [α'])) * 𝒪_heart p₁) α β +
-    --         ∑ x ∈ Finset.range (xₙ.length + 1),
-    --           ∑ x_1,
-    --             (((𝒪_heart p₁ * Q⟦~p₁⟧ (α₁ :: List.take x (xₙ ++ [α'])) * 𝒪_heart p₁) α x_1 : 𝒲[𝟙, 𝟙, 𝒮]) *
-    --                     ((ι p₁ ⊡ δ p₁) x_1 (xₙ[x]?.getD α') *
-    --                   xδ (δ p₁ + ((𝒪 p₁ ⊟' 𝒪_heart p₁) ⊞ ι p₁ ⊡ δ p₁)) (List.drop x (xₙ ++ [α'])) *
-    --                 (𝒪 p₁ ⊟' 𝒪_heart p₁) α' β)).down := by
-    --       simp [← Matrix.mul_assoc, ← mul_assoc]
-    --       congr! 8 with i h
-    --       ·
-    --         ext
-    --         nth_rw 2 [Matrix.mul_apply]
-    --         conv =>
-    --           right
-    --           arg 1; arg 2; ext
-    --           rw [Matrix.mul_apply]
-    --         simp [Q, sox, sox', Matrix.sum_mul, Matrix.sum_apply, Matrix.mul_sum, Finset.sum_mul]
-    --         congr! 2
-    --         rw [RPol.wnka_sem_case]
-    --         simp [List.getLast?_cons, Matrix.down]
-    --         rw [xδ]
-    --         simp [← Matrix.mul_assoc, fox]
-    --         congr! 4
-    --         rcases i with _ | i
-    --         · simp at h
-    --           simp
-    --         · simp at h
-    --           simp [h, List.getLast?_take, List.getElem?_append]
-    --       · simp at h
-    --         simp [List.getElem_append, h]
-    --         split_ifs with h' <;> simp [h']
-    --   _ = (ω∑ (i : ℕ), Q⟦~p₁⟧ ^ i) (α₁ :: xₙ ++ [α']) α β := by
-    --       have : ∀ i α₀,
-    --             (ι p₁ ⊡ δ p₁) α₀ (xₙ[i]?.getD α') * xδ (δ p₁ + ((𝒪 p₁ ⊟' 𝒪_heart p₁) ⊞ ι p₁ ⊡ δ p₁)) (List.drop i (xₙ ++ [α'])) * (𝒪 p₁ ⊟' 𝒪_heart p₁) α' β
-    --           = (Q⟦~p₁⟧ (List.drop i (xₙ ++ [α'])) * 𝒪_heart p₁) α' β := by
-    --         intro i α₀
-    --         ext ⟨_⟩ ⟨_⟩
-    --         rw [xδ_δ'_as_sum_unfolded]
-    --         simp
-
-    --         nth_rw 2 [Matrix.mul_apply]
-    --         -- conv =>
-    --         --   right
-    --         --   arg 1; arg 2; ext
-    --         --   rw [Matrix.mul_apply]
-    --         simp [Q, sox, sox', Matrix.sum_mul, Matrix.sum_apply, Matrix.mul_sum, Finset.sum_mul]
-    --         congr! 2
-    --         rw [RPol.wnka_sem_case]
-    --         simp [List.getLast?_cons, Matrix.down]
-    --         rw [xδ]
-    --         simp [← Matrix.mul_assoc, fox]
-    --         congr! 4
-    --         rcases i with _ | i
-    --         · simp at h
-    --           simp
-    --         · simp at h
-    --           simp [h, List.getLast?_take, List.getElem?_append]
-    --       · simp at h
-    --         simp [List.getElem_append, h]
-    --         split_ifs with h' <;> simp [h']
-
-
-    --       simp [this]
-
-    --       -- have : ∀ {α α₁ x xₙ α' β},
-    --       --       (𝒪_heart p₁ ⊟ ι p₁ ⊡ δ p₁) α α₁ * xδ (δ p₁) (α₁ :: List.take x (xₙ ++ [α'])) * (𝒪 p₁ ⊟' 𝒪_heart p₁) ((α₁ :: xₙ)[x]?.getD default) x_1
-    --       --       (𝒪_heart p₁ ⊟ ι p₁ ⊡ δ p₁) α α₁ * xδ (δ p₁) (α₁ :: List.take x (xₙ ++ [α'])) * (𝒪 p₁ ⊟' 𝒪_heart p₁) ((α₁ :: xₙ)[x]?.getD defauly) x_1
-    --       --     = (𝒪_heart p₁ * Q⟦~p₁⟧ (α₁ :: List.take x (xₙ ++ [α'])) * 𝒪_heart p₁) α x_1 := by
-    --       --   intro α α₁ x xₙ α' β
-    --       --   ext
-    --       --   nth_rw 2 [Matrix.mul_apply]
-    --       --   conv =>
-    --       --     right
-    --       --     arg 1; arg 2; ext
-    --       --     rw [Matrix.mul_apply]
-    --       --   simp [Q, sox, sox', Matrix.sum_mul, Matrix.sum_apply, Matrix.mul_sum, Finset.sum_mul]
-    --       --   congr! 2
-    --       --   rw [RPol.wnka_sem_case]
-    --       --   simp [List.getLast?_cons, Matrix.down]
-    --       --   rw [xδ]
-    --       --   simp [← Matrix.mul_assoc, fox]
-    --       --   simp only [List.getLast?_take]
-    --       --   congr! 4
-    --       --   rcases x with _ | x
-    --       --   · simp
-    --       --   · simp
-    --       --     sorry
-    --       --   -- · simp at ⊢
-    --       --   --   simp [List.getElem?_append, h]
-    --       --   --   split)ifs
-
-    --       -- simp [this]
-    --       -- simp [← mul_assoc, ← Matrix.mul_assoc, ← Matrix.mul_sum]
-
-    --       sorry
-
-theorem 𝒜_star_eq_star_𝒜 (p₁ : RPol[F,N,𝒮]) (h : 𝒜⟦~p₁⟧ = G⟦~p₁⟧) {xₙ} : 𝒜⟦~p₁*⟧ xₙ = (𝒜⟦~p₁⟧ xₙ)^* := by
-  rw [Q_star_eq_ωSum_Q_iter _ h]; sorry -- simp [LawfulStar.star_eq_sum]
-theorem Q_star_eq_star_Q (p₁ : RPol[F,N,𝒮]) (h : Q⟦~p₁⟧ = M'⟦~p₁⟧) {xₙ} : Q⟦~p₁*⟧ xₙ = (Q⟦~p₁⟧ xₙ)^* := by
-  -- TODO
-  sorry
-  -- replace h : 𝒜⟦~p₁⟧ = G⟦~p₁⟧ := sorry
-  -- rw [Q_star_eq_ωSum_Q_iter _ h]; simp [LawfulStar.star_eq_sum]
-
-theorem fp₁_Q_is_fp'' (p₁ : RPol 𝒮) (h : Q p₁ = M'⟦~p₁⟧) (xₙ : List Pk[F,N]) (hxₙ : xₙ ≠ []) (ih : ∀ (y : List Pk[F,N]), y.length < xₙ.length → y ≠ [] → M' wnk_rpol {~p₁*} y = Q wnk_rpol {~p₁*} y) :
-    Q wnk_rpol {~p₁*} xₙ = (M'⟦~p₁⟧ [])^* * N' p₁ xₙ := by
-  rw [Q_star_eq_star_Q _ h, h]
-  rw [← fp₁_M'_is_fp'' _ _ hxₙ]
-  ext α β
-  simp [M', G, LawfulStar.star_eq_sum]
-  congr with n
-  induction n generalizing α β with
-  | zero =>
-    simp [G]
-    if α = β then
-      subst_eqs; simp [GS.mk, hxₙ, Prod.eq_iff_fst_eq_snd_eq]
-      sorry
-    else
-      simp_all [GS.mk, hxₙ, Prod.eq_iff_fst_eq_snd_eq]
-      sorry
-  | succ n ih =>
-    simp [G, pow_succ]
-    sorry
-  -- ComputableSemiring.unique_star _ _ _ (fp₁_Q_is_fp' p₁ h xₙ hxₙ ih).symm
-
-theorem M'_eq_Q (p₁ : RPol[F,N,𝒮]) (ih : p₁.wnka.sem = G p₁) : M'⟦~p₁*⟧ = Q⟦~p₁*⟧ := by
-  funext xₙ
-  induction xₙ using Nat.strongRecMeasure List.length; next xₙ ihₙ =>
-  induction xₙ with
-  | nil => exact IsLeast.unique (fp₀_M' p₁) (fp₀_Q p₁)
-  | cons α₀ xₙ ih₀ =>
-    clear ih₀
-    rw [fp₁_M'_is_fp'' p₁ (α₀ :: xₙ) (by simp)]
-    have ih' : Q p₁ = M'⟦~p₁⟧ := by ext x α αb; simp [Q]; rw [ih]; rfl
-    rw [fp₁_Q_is_fp'' p₁ ih' (α₀ :: xₙ) (by simp)]
-    exact fun y a _ ↦ ihₙ y a
-
 
 variable (p p' : RPol[F,N,𝒮]) (h : 𝒜⟦~p⟧ = G⟦~p⟧)
 
@@ -3328,7 +2016,12 @@ theorem 𝒜_iter_nonempty {α α₀ β} {xₙ} : 𝒜⟦~p*⟧ ⟨α, α₀ :: 
   rw [xδ_δ'_as_sum_unfolded]
   simp
   have 𝒪_heart_eq : 𝒪_heart p = ω∑ (m : ℕ), (Q⟦~p⟧^m) [] := by
-    ext α γ; simp [𝒪_heart, LawfulStar.star_eq_sum]; congr!
+    ext α γ; simp [𝒪_heart, LawfulStar.star_eq_sum]; congr! with i
+    induction i generalizing α γ with
+    | zero => simp; rfl
+    | succ i ih =>
+      simp [pow_succ, Matrix.mul_apply, GS.pow_succ', G.concat_apply, GS.splitAtJoined, ih]
+      congr
   simp only [crox, Listed.array_sum_eq_finset_sum]
   simp [Matrix.mul_add, Matrix.add_mul, Matrix.sum_mul, Matrix.sum_apply, Matrix.mul_sum, Finset.sum_mul, ← Matrix.mul_assoc]
   calc
@@ -3500,19 +2193,6 @@ theorem approx_𝒜_iter_nonempty {α α₀ β} {xₙ} {n} : approx_𝒜 p n ⟨
       rw [add_comm]
     _ = ∑ i ∈ Finset.range (xₙ.length + 1), ∑ ξ, ∑ γ, 𝒪_heart_n p n α γ * 𝒜⟦~p⟧ ⟨γ, α₀ :: xₙ.take i, ξ⟩ * approx_𝒜 p n ⟨ξ, List.drop i xₙ, β⟩ := by
       simp [Matrix.mul_apply, Finset.sum_mul, RPol.Q_eq_A_sem]
-    -- _ = ω∑ (m : ℕ), ∑ i ∈ Finset.range (xₙ.length + 1), ∑ ξ, ∑ γ, (𝒜⟦~p⟧^m) ⟨α, [], γ⟩ * 𝒜⟦~p⟧ ⟨γ, α₀ :: xₙ.take i, ξ⟩ * 𝒜⟦~p*⟧ ⟨ξ, List.drop i xₙ, β⟩ := by
-    --   simp only [ωSum_sum_comm]
-    --   simp only [𝒪_heart_eq, Pi.pow_apply, Matrix.ωSum_apply, ωSum_apply, ← ωSum_mul_right,
-    --     ← ωSum_sum_comm]
-    --   congr!
-    --   sorry
-    -- _ = ω∑ (m : ℕ), ω∑ (n : ℕ), ∑ i ∈ Finset.range (xₙ.length + 1), ∑ ξ, ∑ γ, (𝒜⟦~p⟧^m) ⟨α, [], γ⟩ * 𝒜⟦~p⟧ ⟨γ, α₀ :: xₙ.take i, ξ⟩ * (𝒜⟦~p⟧^n) ⟨ξ, List.drop i xₙ, β⟩ := by
-    --   simp [ωSum_mul_left, ωSum_sum_comm]
-    --   congr!
-    --   rw [ihₙ _ (by simp; omega)]
-    --   simp
-    -- _ = _ := by
-    --   simp [ωSum_mul_left, ωSum_sum_comm, ωSum_mul_right]
 
 theorem approx_𝒜_iter_eq {α β} {xₙ} {n} :
       approx_𝒜 p n ⟨α, xₙ, β⟩
@@ -3579,7 +2259,13 @@ theorem 𝒜_iter_eq_ωSup_approx {α β} {xₙ} : 𝒜⟦~p*⟧ ⟨α, xₙ, β
   rcases xₙ with _ | ⟨α₀, xₙ⟩
   · simp
     have 𝒪_heart_eq : 𝒪_heart p = ω∑ (m : ℕ), (Q⟦~p⟧^m) [] := by
-      ext α γ; simp [𝒪_heart, LawfulStar.star_eq_sum]; congr!
+      ext α γ; simp [𝒪_heart, LawfulStar.star_eq_sum]; congr! with i
+      induction i generalizing α γ with
+      | zero => simp; rfl
+      | succ i ih =>
+        simp_all
+        simp [pow_succ, Matrix.mul_apply, ih, GS.pow_succ', G.concat_apply, GS.splitAtJoined]
+        congr
     have 𝒪_heart_n_eq {n} : 𝒪_heart_n p n = ∑ m ∈ Finset.range n, (Q⟦~p⟧^m) [] := by
       ext α γ; simp; congr!
     simp only [𝒪_heart_eq, Pi.pow_apply, Matrix.ωSum_apply, ωSum_apply, ωSum_nat_eq_ωSup,
@@ -3626,247 +2312,6 @@ theorem G.seq_skip : G⟦~p; skip⟧ = G⟦~p⟧ := by
   · simp
   · simp
 
-theorem sum_G_iter_eq {n α β xₙ} : ∑ x ∈ Finset.range n, G⟦~(p.iter x)⟧ (α, xₙ, β) = sorry := by
-  rcases xₙ with _ | ⟨α₀, xₙ⟩
-  · sorry
-  rcases n with _ | _ | _ | _ | _ | _ | _ | _ | n
-  · simp
-  · simp
-  · simp [Finset.sum_range_succ]
-  · simp [Finset.sum_range_succ]
-  · simp [Finset.sum_range_succ]
-  · simp [Finset.sum_range_succ]
-    simp [G, G.concat_apply, GS.splitAtJoined, Finset.mul_sum]
-    rcases xₙ with _ | ⟨α₁, xₙ⟩
-    · simp [Finset.sum_range_succ, Finset.mul_sum, Finset.sum_mul, ← mul_assoc, ← Finset.sum_add_distrib]
-    · rcases xₙ with _ | ⟨α₂, xₙ⟩
-      ·
-        -- simp [Finset.sum_range_succ, Finset.mul_sum, Finset.sum_mul, ← mul_assoc, ← Finset.sum_add_distrib]
-        let Q' xs := fun a b ↦ G⟦~p⟧ ⟨a, xs, b⟩
-        have : ∀ xs a b, G⟦~p⟧ ⟨a, xs, b⟩ = Q' xs a b := by intros; rfl
-        simp [this]
-        simp [Finset.sum_range_succ, ← Finset.mul_sum, ← Finset.sum_mul, ← Matrix.mul_apply, mul_assoc, ← Matrix.add_apply, Matrix.mul_add, this]
-        simp [← add_assoc, ← Matrix.mul_assoc, ← Matrix.add_apply]
-
-      · rcases xₙ with _ | ⟨α₂, xₙ⟩
-        · simp [Finset.sum_range_succ, Finset.mul_sum, Finset.sum_mul, ← mul_assoc, ← Finset.sum_add_distrib]
-        · rcases xₙ with _ | ⟨α₂, xₙ⟩
-          · simp [Finset.sum_range_succ, Finset.mul_sum, Finset.sum_mul, ← mul_assoc, ← Finset.sum_add_distrib]
-  sorry
-
-theorem approx_𝒜_eq_sum_G {n} {α β} {xₙ} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) (h : ‖xₙ‖ < n) :
-    approx_𝒜 p n (α, xₙ, β) = ∑ x ∈ Finset.range n, G⟦~(p.iter x)⟧ (α, xₙ, β) := by
-  rcases n with _ | _ | _ | n
-  · rcases xₙ with _ | _
-    · simp_all
-    · simp_all
-  · rcases xₙ with _ | _
-    · simp_all [𝒪_heart_n]; rfl
-    · simp_all
-  · rcases xₙ with _ | ⟨x, _ | ⟨y, _ | ⟨_, z | _⟩⟩⟩
-    · simp_all [𝒪_heart_n, Finset.sum_range_succ]; rfl
-    · simp_all [approx_𝒜_iter_nonempty, 𝒪_heart_n, Finset.sum_range_succ]
-      simp [← Finset.sum_mul, ← Finset.mul_sum, Finset.sum_add_distrib, add_mul, mul_add]
-      have {α} {f : Pk[F, N] → 𝒮} : (∑ i, (1 : 𝒲[Pk[F,N], Pk[F,N], 𝒮]) α i * f i) = f α := sorry
-      have {β} {f : Pk[F, N] → 𝒮} : (∑ i, f i * (1 : 𝒲[Pk[F,N], Pk[F,N], 𝒮]) i β) = f β := sorry
-      simp_all
-    · simp_all [approx_𝒜_iter_nonempty]
-    · simp_all [approx_𝒜_iter_nonempty]
-    · simp_all [approx_𝒜_iter_nonempty]
-  -- induction xₙ using Nat.strongRecMeasure List.length generalizing α β; next xₙ ihₙ =>
-  -- rcases xₙ with _ | ⟨α₀, xₙ⟩
-  -- · simp [𝒪_heart_n_apply]
-  --   clear ihₙ
-  --   congr with i
-  --   induction i generalizing α with
-  --   | zero => simp; rfl
-  --   | succ i ih =>
-  --     simp; rw [pow_succ']
-  --     simp [G.concat_apply, G, GS.splitAtJoined, ih, Matrix.mul_apply, ihp]
-  --     congr
-  -- · simp [approx_𝒜_iter_nonempty]
-  --   conv => enter [1, 2, i, 2, ξ, 2, γ, 2]; rw [ihₙ _ (by simp; omega) (by simp_all; omega)]
-  --   clear ihₙ
-  --   simp [𝒪_heart_n_apply]
-  --   simp [Finset.sum_mul, Finset.mul_sum]
-  --   induction n with
-  --   | zero => simp
-  --   | succ n ih =>
-  --     nth_rw 2 [Finset.sum_range_succ']
-  --     simp
-  --     rcases n with _ | _ | _ | n
-  --     · simp_all
-  --     · simp_all
-  --       simp [Finset.sum_range_succ, ite_and]
-  --       rw [Finset.sum_comm]
-  --       rw [Finset.sum_eq_single β (by simp; grind) (by simp)]
-  --       rw [Finset.sum_comm]
-  --       simp [Finset.sum_add_distrib]
-  --       rw [Finset.sum_eq_single α (by simp; grind) (by simp)]
-  --       rw [Finset.sum_eq_single α (by simp; grind) (by simp)]
-  --       rw [Finset.sum_eq_single α (by simp; grind) (by simp)]
-  --       rw [Finset.sum_eq_single α (by simp; grind) (by simp)]
-  --       rw [Finset.sum_eq_single α (by simp; intro b h; sorry) (by simp)]
-  --       simp
-  --       rcases xₙ with _ | _
-  --       · simp_all
-  --       · simp
-  --       rw [Finset.sum_eq_zero]
-  --       · simp
-  --       · simp
-  --         rcases xₙ with _ | _
-  --         · simp_all
-
-  --         · simp_all; omega
-
-
--- f(1, 1) = 1
--- f(2, 1) = 0 + 1 = 1 + 0
--- f(3, 1) = 0 + 0 + 1 = 0 + 1 + 0 = 1 + 0 + 0
--- f(1, 2) = 2
--- f(2, 2) = 0 + 2 = 1 + 1 = 2 + 0
--- f(2, 3) = 0 + 0 + 2 = 0 + 1 + 1 = 0 + 2 + 0
-
--- f(2, 3) = 0 + f(2, 2) = 1 + f(1, 2) = 2 + f(0, 2)
-
-noncomputable def Z (n m : ℕ) : Finset (List ℕ) :=
-  match m with
-  | 0 => {}
-  | 1 => {[n]}
-  | m+1 => (Finset.range (n + 1)).biUnion fun (i : ℕ) ↦ (Z (n - i) m).image (i :: ·)
-
-noncomputable def Y (n m : ℕ) : List (List ℕ) :=
-  match m with
-  | 0 => []
-  | 1 => [[n]]
-  | m+1 => (List.range (n + 1)).flatMap fun (i : ℕ) ↦ (Y (n - i) m).map (i :: ·)
-
-theorem Y_nodup {n m} : (Y n m).Nodup := by
-  induction m generalizing n with
-  | zero => simp [Y]
-  | succ m ih =>
-    rcases m with _ | m
-    · simp [Y]
-    · simp [Y, List.nodup_flatMap]
-      constructor
-      · simp [List.nodup_map_iff_inj_on, ih]
-      · have {n} : (List.range (n + 1)) = 0 :: (List.range n).map (· + 1) := by
-          ext; simp [List.range_succ]; grind
-        simp [this, List.pairwise_map]
-        constructor
-        · intro i hi; simp [List.disjoint_left]
-        · simp [List.disjoint_left]
-          induction n with simp
-          | succ n ih =>
-            simp [this, List.pairwise_map, ih]
-
-theorem mem_Z_iff_mem_Y {x m n} : x ∈ Z n m ↔ x ∈ Y n m := by
-  induction m generalizing n x with
-  | zero => simp [Z, Y]
-  | succ m ih =>
-    rcases m with _ | m
-    · simp [Z, Y]
-    · simp [Z, Y, ih]
-
-theorem Y_complete {n m} {xs : List ℕ} :
-    xs ∈ Y n m ↔ xs ≠ [] ∧ xs.length = m ∧ xs.sum = n := by
-  constructor
-  · induction m generalizing n xs with
-    | zero => simp +contextual [Y]
-    | succ m ih =>
-      rcases m with _ | m
-      · simp_all [Y]
-      · simp_all [Y]
-        rintro i hi l hl ⟨_⟩
-        simp
-        specialize ih hl
-        grind
-  · rintro ⟨_, ⟨_⟩, ⟨_⟩⟩
-    induction xs with
-    | nil => simp_all
-    | cons x xs ih =>
-      rcases xs with _ | _
-      · simp [Y]
-      · simp_all [Y]; omega
-
-theorem Z_complete_aux {n m} :
-    Z n m = {xs | xs ≠ [] ∧ xs.length = m ∧ xs.sum = n} := by
-  ext xs; simp [mem_Z_iff_mem_Y, Y_complete]
-noncomputable instance {m n} : Fintype ↑{xs : List ℕ | xs ≠ [] ∧ ‖xs‖ = m ∧ xs.sum = n} := by
-  simp [← Z_complete_aux]
-  exact (Z n m).fintypeCoeSort
-theorem Z_complete {n m} :
-    Z n m = {xs | xs ≠ [] ∧ xs.length = m ∧ xs.sum = n}.toFinset := by
-  ext xs; simp [mem_Z_iff_mem_Y, Y_complete]
-
-@[simp] theorem Z_right_zero {n} : Z n 0 = ∅ := by simp [Z]
-@[simp] theorem Z_right_one {n} : Z n 1 = {[n]} := by simp [Z]
-
-example {Q} : Z 3 3 = Q := by
-  simp [Z_complete]
-
-
-noncomputable def X {α : Type*} [DecidableEq α] (n : ℕ) (xs : List α) : Finset (List (List α)) :=
-  Z xs.length n
-    -- |>.image fun idxs ↦ idxs.foldl (fun ⟨rem, acc⟩ i ↦ ⟨rem.drop i, acc ++ [rem.take i]⟩) (xs, [])
-    |>.image fun idxs ↦ idxs.foldr (fun i ⟨rem, acc⟩ ↦ ⟨rem.drop i, acc ++ [rem.take i]⟩) (xs, [])
-    |>.2
-
-example {α β γ δ : ℕ} {Q} : X 3 [α, β, γ] = Q := by
-  simp [X, mul_add, ← mul_assoc, ← add_assoc, add_mul, Z, List.range_succ, Finset.range_add_one]
-  sorry
-
-theorem X_complete_aux {α : Type*} [DecidableEq α] {n} {l : List α} :
-    X n l = {xs : List (List α) | xs ≠ [] ∧ xs.length = n ∧ xs.flatten = l} := by
-  sorry
-  -- ext xs
-  -- simp
-  -- simp [X]
-  -- simp [Z_complete]
-  -- constructor
-  -- · simp_all
-  --   rintro ys h ⟨_⟩ h' h''
-  --   contrapose h''
-  --   apply List.foldrRecOn (op:=(fun i x ↦ (x.1[i..], x.2 ++ [x.1[..i]]))) (motive:=fun q ↦ ¬q.2 = xs) (l:=ys) (b:=(l, []))
-  --   · simp_all
-  --     contrapose h''
-  --     simp_all
-  --   · contrapose h''
-  --     simp_all
-  --     obtain ⟨g, f, _, n, hn, ⟨_⟩⟩ := h''
-  --     simp_all
-  -- · simp_all
-  --   rintro _ ⟨_⟩ ⟨_⟩
-  --   simp_all
-noncomputable instance {α : Type*} [DecidableEq α] {n} {l} : Fintype ↑{xs : List (List α) | xs ≠ [] ∧ ‖xs‖ = n ∧ xs.flatten = l} := by
-  rw [← X_complete_aux]
-  exact FinsetCoe.fintype (X n l)
-theorem X_complete {α : Type*} [DecidableEq α] {n} {l : List α} :
-    X n l = {xs : List (List α) | xs ≠ [] ∧ xs.length = n ∧ xs.flatten = l}.toFinset := by
-  simp [← X_complete_aux]
-
-@[simp]
-theorem X_zero {α : Type*} [DecidableEq α] {xs : List α} : X 0 xs = {} := by simp [X, Z]
-@[simp]
-theorem X_one {α : Type*} [DecidableEq α] {xs : List α} : X 1 xs = {[xs]} := by simp [X, Z]
-theorem X_nil {α : Type*} [DecidableEq α] {m} : X m ([] : List α) = if m = 0 then {} else {List.replicate m []} := by
-  ext xs; simp [X_complete]
-  constructor
-  · simp_all
-    rintro h ⟨_⟩ h'
-    split_ifs
-    · simp_all
-    simp only [Finset.mem_singleton]
-    apply List.ext_getElem
-    · simp
-    · simp_all
-      intro i hi
-      specialize h' xs[i]
-      grind
-  · split_ifs
-    · simp
-    · simp_all
-
 noncomputable def G' (xs : List Pk[F,N]) : 𝒲[Pk[F,N],Pk[F,N],𝒮] := fun a b ↦ G⟦~p⟧ ⟨a, xs, b⟩
 theorem G_eq_G' {a xs b} : G⟦~p⟧ ⟨a, xs, b⟩ = G' p xs a b := by rfl
 theorem 𝒜_eq_G' {a xs b} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) : 𝒜⟦~p⟧ ⟨a, xs, b⟩ = G' p xs a b := by
@@ -3893,18 +2338,6 @@ example {n} : count n 5 = 6 * n + 5 := by simp +arith [count]
 noncomputable def A' (n : ℕ) (xs : List Pk[F,N]) : 𝒲[Pk[F,N],Pk[F,N],𝒮] := fun a b ↦ approx_𝒜 p n ⟨a, xs, b⟩
 theorem approx_𝒜_eq_A' {n} {g} : approx_𝒜 p n g = A' p n g.2.1 g.1 g.2.2 := by rfl
 
-theorem G_iter_eq_ωSup_approx' {α β} {xₙ} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
-    G⟦~p*⟧ ⟨α, xₙ, β⟩ = ω∑ n, ∑ xs ∈ X n xₙ, (xs.map (G' p)).prod α β := by
-  simp [G]
-  congr with n
-  induction n generalizing xₙ α β with
-  | zero => simp [X, Z]; sorry
-  | succ n ih =>
-    -- simp [X_complete]
-    simp [G, G.concat_apply, GS.splitAtJoined]
-    symm at ihp
-    simp_all [G_eq_G', ← Matrix.mul_apply, ← Matrix.sum_apply]
-    sorry
 @[simp]
 theorem A'_iter_zero {xs} :
     A' p 0 xs = 0 := by
@@ -3942,115 +2375,6 @@ theorem A'_iter_nil {n} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
     A' p n [] = G'' p n := by
   ext; simp [A', 𝒪_heart_n_eq_G', ihp, G'']
 
-def List.partitions {α : Type*} [DecidableEq α] (xs : List α) : Finset (List (List α)) :=
-  match xs with
-  | [] => {[]}
-  | x::xs =>
-    (List.partitions xs).biUnion fun ys ↦
-      match ys with
-      | [] => {[[x]]}
-      | y::ys => {(x::y)::ys, [x]::y::ys}
-
-
-@[simp]
-theorem List.partitions_nil {α : Type*} [DecidableEq α] : List.partitions ([] : List α) = {[]} := by rfl
-
-theorem List.mem_partitions_iff {α : Type*} [DecidableEq α] {xs : List α} {ys} :
-    ys ∈ List.partitions xs ↔ ys.flatten = xs ∧ ∀ y ∈ ys, y ≠ [] := by
-  induction xs generalizing ys with
-  | nil =>
-    simp
-    constructor
-    · rintro ⟨_⟩; simp
-    · simp
-      intro h h'
-      rcases ys with _ | ⟨y, ys⟩
-      · rfl
-      · simp_all; grind
-  | cons x xs ih =>
-    simp_all
-    simp [partitions, ih]; clear ih
-    constructor
-    · simp
-      rintro xs ⟨_⟩ h
-      split
-      · simp_all
-      · simp_all
-        rename_i xs l zs
-        rintro (⟨_, _⟩ | ⟨_, _⟩)
-        · simp_all
-        · simp_all
-    · simp
-      intro h h'
-      suffices ∃ a, (a.flatten = xs ∧ ∀ y ∈ a, ¬y = []) ∧
-              match a with
-              | [] => ys = [[x]]
-              | z :: zs => ys = (x :: z) :: zs ∨ ys = [x] :: z :: zs by grind
-      if ys = [[x]] then
-        simp_all
-        subst_eqs
-        use []
-        simp
-      else
-        simp_all
-        rcases ys with _ | ⟨y, ys⟩
-        · simp at h
-        · simp_all
-          rcases y with _ | ⟨a, y⟩
-          · simp_all
-          · simp_all
-            obtain ⟨⟨_⟩, ⟨_⟩⟩ := h
-            rcases y with _ | ⟨b, y⟩
-            · simp_all
-              use ys
-              simp_all
-              grind
-            · simp_all
-              apply Exists.intro ((b::y) :: ys)
-              simp_all
-
-@[simp]
-theorem List.nil_mem_partitions {α : Type*} [DecidableEq α] {xs : List α} : [] ∈ List.partitions xs ↔ xs = [] := by
-  induction xs with
-  | nil => simp
-  | cons x xs ih =>
-    simp_all [partitions]
-    intro l hl
-    split
-    · simp
-    · simp
-
-theorem List.partitions_cons_eq_split {α : Type*} [DecidableEq α] {x} {xs : List α} {f : List (List α) → 𝒲[Pk[F,N], Pk[F,N], 𝒮]} :
-    ∑ ys ∈ List.partitions (x :: xs), f ys =
-    ∑ i ∈ ..=‖xs‖, ∑ p ∈ List.partitions (xs[i..]), f ((x :: xs[..i]) :: p) := by
-  induction xs generalizing x f with
-  | nil => simp [partitions]
-  | cons y xs ih =>
-    rw [partitions]
-    rw [Finset.sum_biUnion]
-    · simp
-      rw [Finset.sum_range_succ']
-      simp
-      simp [ih]
-      simp [← Finset.sum_add_distrib]
-    · intro A hA B hB h
-
-      simp_all [List.mem_partitions_iff]
-      intro S hSA hSB t ht
-      simp_all
-      replace hSA := hSA ht
-      replace hSB := hSB ht
-      split at hSA <;> split at hSB
-      · simp_all
-      · simp_all
-      · simp_all
-      · simp_all
-        cases hSA
-        · subst_eqs
-          simp_all
-        · subst_eqs
-          simp_all
-
 theorem A'_iter_single {α₀} {n} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
     A' p n [α₀] = G'' p n * G' p [α₀] * G'' p n := by
   induction n with
@@ -4078,6 +2402,16 @@ theorem A'_iter_single {α₀} {n} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
     simp
     grind
 
+theorem A'_iter_eq' {xs} {n} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
+    A' p n xs = (if xs = [] then (G'' p n) else ((G'' p n) * ∑ i ∈ Finset.range ‖xs‖, G' p (xs[..i + 1]) * A' p n (xs[i + 1..])) ) := by
+  ext α β
+  simp [A']
+  rw [approx_𝒜_iter_eq]
+  simp [𝒪_heart_n_eq_G', ihp, ← Finset.sum_mul, Finset.mul_sum, ← Matrix.mul_apply, 𝒜_eq_G', ← mul_assoc, approx_𝒜_eq_A']
+  simp [← Finset.mul_sum, mul_assoc, ← Finset.sum_apply]
+  split_ifs
+  · rfl
+  · rfl
 theorem A'_iter_eq {xs} {n} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
     A' p n xs = G'' p n * (∑ ys ∈ List.partitions xs, (ys.map (fun y ↦ G' p y * G'' p n)).prod) := by
   induction xs using Nat.strongRecMeasure List.length; next xs ih =>
@@ -4106,6 +2440,275 @@ theorem A'_iter_eq {xs} {n} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
   set f := fun ys ↦ (List.map g ys).prod
   rw [List.partitions_cons_eq_split]
 
+theorem sum_partitions'_cons {𝒮' : Type*} [NonUnitalSemiring 𝒮'] {ι : Type*} [DecidableEq ι] {x : ι} {xs : List ι} {n} {f : List (ℕ × List ι) → 𝒮'} :
+      ∑ ys ∈ List.partitions' (x :: xs) n, f ys
+    = if xs = [] then ∑ i ∈ ..=n, f [(i, [x])] else ∑ ys ∈ xs.partitions' n, (f ((ys.head!.1, x :: ys.head!.2) :: ys.tail) + ∑ i ∈ Finset.image (fun j ↦ (j, [x]) :: ys) (..=n), f i) := by
+  split_ifs
+  · subst_eqs
+    simp [List.partitions']
+  simp [List.partitions']
+  rw [Finset.sum_biUnion]
+  · have :
+        ∑ ys ∈ xs.partitions' n,
+          ∑
+            i ∈
+              match ys with
+              | [] => Finset.image (fun i ↦ [(i, [x])]) (..=n)
+              | (i, y) :: ys => insert ((i, x :: y) :: ys) (Finset.image (fun j ↦ (j, [x]) :: (i, y) :: ys) (..=n)),
+            f i
+      = ∑ ys ∈ xs.partitions' n,
+          (f ((ys.head!.1, x :: ys.head!.2) :: ys.tail) + ∑ i ∈ (Finset.image (fun j ↦ (j, [x]) :: ys) (..=n)), f i) := by
+      congr!
+      split
+      · simp_all [List.mem_partitions'_iff]
+      · simp_all [List.mem_partitions'_iff]
+    convert this
+    simp
+  · intro as has bs hbs h S h₁ h₂ Z hZ
+    simp_all only [SetLike.mem_coe, ne_eq, Finset.le_eq_subset, Finset.bot_eq_empty,
+      Finset.notMem_empty]
+    specialize h₁ hZ
+    specialize h₂ hZ
+    simp_all [List.mem_partitions'_iff]
+    rcases as with _ | ⟨⟨a, a'⟩, as⟩ <;> rcases bs with _ | ⟨⟨b, b'⟩, bs⟩
+    · simp_all
+    · simp_all
+    · simp_all
+    · simp_all
+      grind
+theorem List.replicate_nil_append_nonempty {ι : Type*} {n m : ℕ} {a : ι} {xs : List ι} :
+    List.replicate n [] ++ [(a :: xs)] ≠ List.replicate m [] := by
+  intro h
+  induction n generalizing m with
+  | zero => rcases m with _ | m <;> simp_all [List.replicate]
+  | succ n ih =>
+    simp [List.replicate] at h
+    contrapose! ih
+    simp_all
+    rcases m with _ | m
+    · simp_all
+    · simp [List.replicate] at h
+      grind
+theorem List.replicate_nil_append_nonempty' {ι : Type*} {n m : ℕ} {a : ι} {xs : List ι} {ys : List (List ι)} :
+    List.replicate n [] ++ (a :: xs) :: ys ≠ List.replicate m [] := by
+  intro h
+  induction n generalizing m with
+  | zero => rcases m with _ | m <;> simp_all [List.replicate]
+  | succ n ih =>
+    simp [List.replicate] at h
+    contrapose! ih
+    simp_all
+    rcases m with _ | m
+    · simp_all
+    · simp [List.replicate] at h
+      grind
+
+theorem sum_partitionsFill' {𝒮' : Type*} [NonUnitalSemiring 𝒮'] {ι : Type*} [DecidableEq ι] {xs : List ι} {n} {f : List (List ι) → 𝒮'} :
+    ∑ ys ∈ List.partitionsFill' xs n, f ys = ∑ x ∈ xs.partitions' n, ∑ x_1 ∈ ..=n, f (List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) x ++ List.replicate x_1 []) := by
+  simp [List.partitionsFill']
+  rw [Finset.sum_biUnion, Finset.sum_image]
+  · simp
+  · intro as has bs hbs h
+    simp_all [List.mem_partitions'_iff]
+    obtain ⟨⟨_⟩, has⟩ := has
+    obtain ⟨h', hbs⟩ := hbs
+    induction as generalizing bs with
+    | nil => simp_all; rcases bs with _ | _ <;> simp_all; grind
+    | cons a as ih =>
+      obtain ⟨a, a'⟩ := a
+      simp_all
+      rcases bs with _ | ⟨⟨b, b'⟩, bs⟩
+      · simp_all
+      · simp_all
+        suffices a = b by
+          simp_all
+          specialize @ih bs (by simp_all) (by grind)
+          apply ih <;> clear ih
+          · simp_all
+          · grind
+        rcases a' with _ | ⟨a₀, a'⟩
+        · simp_all; grind
+        rcases b' with _ | ⟨b₀, b'⟩
+        · simp_all; grind
+        simp_all
+        set ts := List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) as
+        set ss := List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) bs
+        clear ih has hbs h'
+        induction a generalizing b with
+        | zero => simp at h; rcases b with _ | _ <;> simp_all [List.replicate]
+        | succ a ih => rcases b with _ | _ <;> simp_all [List.replicate]
+  · simp
+    intro as has bs hbs h S h₁ h₂ Z hZ
+    simp_all only [Set.mem_image, SetLike.mem_coe, ne_eq, Finset.le_eq_subset, Finset.bot_eq_empty,
+      Finset.notMem_empty]
+    simp_all [List.mem_partitions'_iff]
+    specialize h₁ hZ
+    specialize h₂ hZ
+    simp_all
+    obtain ⟨i, h₁, ⟨_⟩⟩ := h₁
+    obtain ⟨j, h₂, h'⟩ := h₂
+    obtain ⟨as, ⟨⟨_⟩, has⟩, _, ⟨_⟩⟩ := has
+    obtain ⟨bs, ⟨h'', hbs⟩, _, ⟨_⟩⟩ := hbs
+    clear hZ S
+    contrapose! h
+    simp_all
+    suffices i = j by subst_eqs; simp_all only [List.append_cancel_right_eq]
+    clear h''
+    induction as using List.reverseRecOn with
+    | nil =>
+      simp at h'
+      induction bs using List.reverseRecOn with
+      | nil => simp at h'; omega
+      | append_singleton bs b ih =>
+        obtain ⟨b, b'⟩ := b
+        clear ih
+        simp at h'
+        simp [← List.append_assoc] at h'
+        simp [List.eq_replicate_iff] at h'
+        obtain ⟨h₁, h₂⟩ := h'
+        subst_eqs
+        specialize h₂ b'
+        simp at h₂
+        subst_eqs
+        simp at hbs
+        grind
+    | append_singleton as a ih =>
+      obtain ⟨a, a'⟩ := a
+      clear ih
+      induction bs using List.reverseRecOn with
+      | nil =>
+        symm at h'
+        simp [List.eq_replicate_iff] at h'
+        obtain ⟨h₁, h₂⟩ := h'
+        specialize h₂ a'
+        simp at h₂
+        subst_eqs
+        simp at hbs
+        grind
+      | append_singleton bs b ih =>
+        obtain ⟨b, b'⟩ := b
+        clear ih
+        simp at h'
+        simp at has hbs
+        rcases a' with _ | ⟨a₀, a'⟩
+        · grind
+        rcases b' with _ | ⟨b₀, b'⟩
+        · grind
+        simp [← List.append_assoc] at h'
+        set ts := List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) bs ++ List.replicate b []
+        set ss := List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) as ++ List.replicate a []
+        clear hbs has
+        induction i generalizing j with
+        | zero =>
+          simp at h'; rcases j with _ | _
+          · rfl
+          · simp [List.replicate_add] at h'
+            rw [List.append_cons, List.append_cons] at h'
+            simp only [List.append_nil, ← List.append_assoc, List.append_singleton_inj, List.nil_eq,
+              reduceCtorEq, and_false] at h'
+        | succ i ih =>
+          rcases j with _ | j
+          · simp [List.replicate_add] at h'
+            nth_rw 2 [List.append_cons, List.append_cons] at h'
+            simp [← List.append_assoc] at h'
+          · simp [List.replicate_add] at h'
+            conv at h' => left; rw [List.append_cons, ← List.append_assoc, ← List.append_cons]
+            conv at h' => right; rw [List.append_cons, ← List.append_assoc, ← List.append_cons]
+            simp
+            exact ih (by omega) j (by omega) (List.append_cancel_right h')
+
+
+
+theorem sum_partitionsFill'_cons {𝒮' : Type*} [NonUnitalSemiring 𝒮'] {ι : Type*} [DecidableEq ι] {x : ι} {xs : List ι} {n} {f : List (List ι) → 𝒮'} (h : xs ≠ []) (hf : ∀ a b, f (a ++ b) = f a * f b) :
+      ∑ ys ∈ List.partitionsFill' (x :: xs) n, f ys
+    = ((∑ i ∈ xs.partitions' n,
+      f (List.replicate i.head!.1 []) * f [x :: i.head!.2] *
+        f (List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) i.tail)) *
+    ∑ i ∈ ..=n, f (List.replicate i [])) + ∑ i ∈ ..=n, ∑ ys ∈ List.partitionsFill' xs n, f (List.replicate i [] ++ [x] :: ys) := by
+  simp [sum_partitionsFill']
+  nth_rw 2 [Finset.sum_comm]
+  simp [sum_partitions'_cons]
+  simp [Finset.sum_add_distrib, h]
+  congr! 1
+  have hf' {a b} : f (a :: b) = f [a] * f b := by
+    rw [← List.singleton_append, hf]
+  simp [hf]
+  conv => enter [1, 2, _, 2, _]; rw [hf']
+  simp [hf]
+  simp [← Finset.mul_sum]
+  simp [← Finset.sum_mul, ← mul_assoc]
+
+theorem List.mul_prod_mul_eq {α ι : Type*} [Semiring α] {xs : List ι} {a : α} {f : ι → α} :
+    a * (xs.map (f · * a)).prod = (xs.map (a * f ·)).prod * a := by
+  induction xs with
+  | nil => simp
+  | cons x xs ih => simp_all [mul_assoc]
+theorem A'_iter_eq_partitionsFill' {xs} {n} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
+    A' p (n + 1) xs = ∑ ys ∈ List.partitionsFill' xs n, (ys.map (G' p)).prod := by
+  induction xs using Nat.strongRecMeasure List.length; next xs ih =>
+  rcases xs with _ | ⟨x, xs⟩
+  · simp [A'_iter_eq, ihp, List.partitionsFill']; rfl
+  · rw [A'_iter_eq' _ ihp]
+    simp
+    conv => enter [1, 2, 2, x, 2]; rw [ih _ (by simp; omega)]
+    if hxs : xs = [] then
+      subst_eqs
+      simp
+      simp [sum_partitionsFill']
+      simp [List.partitions', Finset.mul_sum, Finset.sum_mul, G'', mul_assoc]
+      rw [Finset.sum_comm]
+    else
+      rw [sum_partitionsFill'_cons hxs (by simp)]
+      simp
+      rw [Finset.sum_range_succ']
+      simp
+      simp [← Finset.sum_mul, ← Finset.mul_sum, mul_add]
+      congr! 1
+      simp [Finset.sum_mul, Finset.mul_sum]
+      rw [Finset.sum_comm]
+      simp [← Finset.sum_mul, ← Finset.mul_sum]
+      have {ys : List (ℕ × List Pk[F,N])} : (List.map (G' p) (List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) ys)).prod = (ys.map (fun x ↦ (G' p []) ^ x.1 * G' p x.2)).prod := by
+        clear ih hxs
+        induction ys with
+        | nil => simp
+        | cons y ys ih => simp_all [mul_assoc]
+      simp [this]
+      simp [← List.prod_cons, ← List.map_tail]
+      conv =>
+        enter [2, 1, 2, x', 1]
+        rw [← List.map_cons (f := fun (x : ℕ × List Pk[F,N]) ↦ G' p [] ^ x.1 * G' p x.2) (a := ⟨x'.head!.1, x :: x'.head!.2⟩)]
+      conv => left; simp [Finset.mul_sum]
+      clear ih this
+      conv => enter [1, 2, x, 2, i, 2, 1, 2]; rw [← List.singleton_append]
+      conv => enter [2, 1, 2, x', 1, 2, 1, 2]; rw [← List.singleton_append]
+      generalize [x] = l
+      clear x
+      induction xs generalizing l with
+      | nil => simp at hxs
+      | cons x xs ih =>
+        simp_all
+        rw [Finset.sum_range_succ']
+        if hxs : xs = [] then
+          subst_eqs
+          simp [sum_partitionsFill']
+          simp [List.partitions', Finset.mul_sum, Finset.sum_mul, G'', mul_assoc]
+        else
+          have ih' := ih hxs (l ++ [x])
+          simp at ih'
+          simp [ih']; clear ih'
+          rw [sum_partitions'_cons]
+          simp [hxs]
+          simp [add_mul, Finset.sum_mul, Finset.sum_add_distrib]
+          congr! 1
+          rw [sum_partitionsFill']
+          simp
+          simp [G'', ← Finset.mul_sum, ← Finset.sum_mul, ← mul_assoc]
+          congr! 3 with ls hl
+          clear ih hxs hl
+          induction ls with
+          | nil => simp
+          | cons l ls ih => simp_all [mul_assoc]
+
 theorem G'_seq xs : G' (p.Seq p') xs = (∑ c ∈ ..=‖xs‖, G' p (xs[..c]) * G' p' (xs[c..])) := by
   ext
   simp [G', G, G.concat_apply, GS.splitAtJoined]
@@ -4120,559 +2723,6 @@ theorem G'_skip xs : G' (wnk_rpol {skip} : RPol[F,N,𝒮]) xs = match xs with | 
     · simp_all
     · simp_all
 
-def List.buckets {α : Type*} [DecidableEq α] (xs : List α) (n : ℕ) : Finset (List (List α)) :=
-  match n with
-  | 0 => {}
-  | n+1 =>
-    match xs with
-    | [] => {List.replicate (n+1) []}
-    | x::xs =>
-      (List.buckets (x::xs) n).map ⟨([] :: ·), List.cons_injective⟩ ∪
-      (List.buckets xs (n+1)).image fun bs ↦
-        match bs with
-        | [] => [] -- NOTE: this case is unreachable
-        | b::bs => (x::b)::bs
-
--- theorem List.buckets_card {α : Type*} [DecidableEq α] (xs : List α) (n : ℕ) :
---     (List.buckets xs n).card = Nat.choose (n + ‖xs‖ - 1) ‖xs‖ := by
---   induction xs generalizing n with
---   | nil =>
---     induction n with
---     | zero => simp [buckets]
---     | succ n ih => simp [buckets]
---   | cons x xs ih =>
---     induction n with
---     | zero => simp [buckets]
---     | succ n ih =>
---       simp [buckets]
-
--- #eval (List.range 10).map (fun n ↦ (Nat.choose (n + 4 - 1) 4, (List.buckets (List.range 4) n).card))
-
-@[simp]
-theorem List.buckets_nil {α : Type*} [DecidableEq α] {n} :
-    List.buckets ([] : List α) n = if n = 0 then {} else {List.replicate n []} := by
-  induction n with
-  | zero => simp [buckets]
-  | succ n ih => simp [buckets]
-@[simp]
-theorem List.buckets_zero {α : Type*} [DecidableEq α] (xs : List α) :
-    List.buckets xs 0 = {} := by
-  induction xs with
-  | nil => simp
-  | cons x xs ih => simp_all [buckets]
-@[simp]
-theorem List.buckets_one {α : Type*} [DecidableEq α] (xs : List α) :
-    List.buckets xs 1 = {[xs]} := by
-  induction xs with
-  | nil => simp
-  | cons x xs ih =>
-    simp_all [buckets]
-theorem List.mem_buckets_iff {α : Type*} [DecidableEq α] (xs : List α) (n : ℕ) {ys} :
-    ys ∈ List.buckets xs n ↔ n ≠ 0 ∧ ys.flatten = xs ∧ ‖ys‖ = n := by
-  induction n generalizing xs ys with
-  | zero => simp
-  | succ n ih =>
-    induction xs generalizing ys n with
-    | nil => simp [List.eq_replicate_iff]; grind
-    | cons x xs ih' =>
-      simp
-      simp [buckets]
-      simp_all
-      clear ih ih'
-      constructor
-      · grind
-      · simp
-        rcases ys with _ | ⟨y, ys⟩
-        · simp_all
-        · simp_all
-          rcases y with _ | ⟨a, y⟩
-          · simp_all; grind
-          · simp_all
-            rintro ⟨_⟩ ⟨_⟩ ⟨_⟩
-            use y :: ys
-            simp
-
-@[grind =]
-theorem List.mem_products' {α : Type*} {x} {xs : List (List α)} [Inhabited α] :
-    x ∈ xs.products ↔
-      x.length = xs.length ∧ ∀ i < ‖xs‖, x[i]! ∈ xs[i]!
-:= by
-  simp_all [List.mem_products]
-
-def List.partitions' {α : Type*} [DecidableEq α] (xs : List α) (n : ℕ) : Finset (List (ℕ × List α)) :=
-  match xs with
-  | [] => {[]}
-  | x::xs =>
-    (List.partitions' xs n).biUnion fun ys ↦
-      match ys with
-      | [] => (Finset.range (n + 1)).image fun i ↦ [(i, [x])]
-      | (i, y)::ys => insert ((i, x::y)::ys) ((Finset.range (n + 1)).image fun j ↦ (j, [x])::(i, y)::ys)
-
-@[simp]
-theorem List.partitions'_nil {α : Type*} [DecidableEq α] {n} : List.partitions' ([] : List α) n = {[]} := by rfl
-
-theorem List.partitions_eq_partitions' {α : Type*} [DecidableEq α] {xs : List α} {n} :
-    List.partitions xs = (List.partitions' xs n).image fun l ↦ l.map Prod.snd := by
-  induction xs with
-  | nil => simp
-  | cons x xs ih =>
-    simp [partitions, partitions']
-    simp [ih]
-    ext l
-    simp
-    constructor
-    · simp
-      rintro (_ | ⟨y, ys⟩) h h'
-      · simp_all
-        subst_eqs
-        use 0, [], h
-        simp
-      · simp at h'
-        rcases h' with ⟨_, _⟩ | ⟨_, _⟩
-        · use (⟨y.1, x :: y.2⟩ :: ys)
-          simp
-          use y::ys
-          simp [h]
-        · use (⟨0, [x]⟩ :: y :: ys)
-          constructor
-          · use y :: ys
-            simp [h]
-          · simp
-    · simp
-      intro as bs hbs has
-      rcases bs with _ | ⟨b, bs⟩
-      · simp_all
-        obtain ⟨i, hi, _, _⟩ := has
-        simp
-        rintro ⟨_⟩
-        use []
-        simp_all
-      · simp_all
-        rintro ⟨_⟩
-        use b::bs
-        simp [hbs]
-        grind
-
-#eval List.partitions' ([1, 2] : List ℕ) 3
-
-theorem List.mem_partitions'_iff {α : Type*} [DecidableEq α] {xs : List α} {n : ℕ} {ys}  :
-    ys ∈ List.partitions' xs n ↔ (ys.map Prod.snd).flatten = xs ∧ ∀ a b, (a, b) ∈ ys → a ≤ n ∧ ¬b = [] := by
-  induction xs generalizing ys with
-  | nil =>
-    simp
-    constructor
-    · rintro ⟨_⟩; simp
-    · simp only [and_imp]
-      intro h h'
-      rcases ys with _ | ⟨⟨i, y⟩, ys⟩
-      · simp
-      · simp_all
-        specialize h' i y
-        specialize h y i
-        simp_all
-  | cons x xs ih =>
-    simp only [partitions', Finset.mem_biUnion, ih]
-    constructor
-    · simp
-      rintro ls ⟨_⟩ h h'
-      rcases ls with _ | ⟨l, ls⟩
-      · simp_all only [List.map_nil, List.flatten_nil, partitions'_nil, Finset.mem_singleton,
-        List.flatten_eq_nil_iff, List.mem_map, Prod.exists, exists_eq_right, forall_exists_index,
-        List.not_mem_nil, IsEmpty.forall_iff, implies_true, Finset.mem_image, Finset.mem_range]
-        obtain ⟨i, hi, ⟨_⟩⟩ := h'
-        simp
-        omega
-      · simp_all
-        rcases h' with ⟨⟨_⟩⟩ | ⟨i, hi, _, _⟩
-        · simp
-          grind
-        · simp
-          grind
-    · simp
-      have h₀ (xs : List α) n := List.partitions_eq_partitions' (xs:=xs) (n:=n)
-      simp [Finset.ext_iff] at h₀
-      replace h₀ xs n := (h₀ xs n (ys.map Prod.snd)).mp
-      simp [mem_partitions_iff] at h₀
-
-      intro h h'
-
-      rcases ys with _ | ⟨⟨i, y⟩, ys⟩
-      · simp_all only [List.map_nil, List.flatten_nil, List.nil_eq, List.not_mem_nil,
-        IsEmpty.forall_iff, implies_true, partitions'_nil, Finset.mem_singleton,
-        List.map_eq_nil_iff, and_self, exists_eq, imp_self, reduceCtorEq]
-      · simp_all
-        rcases y with _ | ⟨a, as⟩
-        · simp_all only [List.nil_append]
-          rcases ys with _ | ⟨⟨j, y⟩, ys⟩
-          · simp_all
-          · simp_all
-            absurd h'; clear h'
-            simp
-            use i, []
-            simp
-        · simp_all only [List.cons_append, List.cons.injEq]
-          specialize h₀ (x :: xs) n rfl (by grind)
-          obtain ⟨p, hp, hp'⟩ := h₀
-          simp [partitions'] at hp
-          obtain ⟨q, hq, hq'⟩ := hp
-          rcases q with _ | ⟨⟨q₀, q₀'⟩, q⟩
-          · simp_all only [List.map_nil, List.flatten_nil, List.nil_eq, List.not_mem_nil,
-            IsEmpty.forall_iff, implies_true, and_true, Finset.mem_image, Finset.mem_range,
-            List.flatten_eq_nil_iff, List.mem_map, Prod.exists, exists_eq_right,
-            forall_exists_index, partitions'_nil, Finset.mem_singleton, List.append_eq_nil_iff]
-            subst_eqs
-            obtain ⟨j, hj, _, _⟩ := hq'
-            simp_all
-            use ys
-            constructor
-            · grind
-            · rcases ys with _ | ⟨y, ys⟩
-              · simp_all; omega
-              · simp
-                specialize h' i [x]
-                simp at h'
-                omega
-          · simp_all only [List.map_cons, List.flatten_cons, List.mem_cons, Prod.mk.injEq,
-            Finset.mem_insert, Finset.mem_image, Finset.mem_range]
-            rcases hq' with ⟨_, _⟩ | ⟨j, hj, _, _⟩
-            · simp_all
-              rcases hp' with ⟨⟨_⟩, hp'⟩
-              rcases h with ⟨⟨_⟩, ⟨_⟩⟩
-              use ⟨i, as⟩::ys
-              simp
-              rintro k l (⟨⟨_⟩, ⟨_⟩⟩ | h)
-              · specialize hq q₀ as
-                simp at hq
-                specialize h' i (x :: as)
-                simp at h'
-                grind
-              · specialize h' k l
-                simp [h] at h'
-                exact h'
-            · simp_all
-              use ys
-              simp_all
-              constructor
-              · grind
-              · rcases ys with _ | ⟨y, ys⟩
-                · simp_all
-                · simp
-                  specialize h' i [x]
-                  simp at h'
-                  omega
-
-
-def List.partitionsFill' {α : Type*} [DecidableEq α] (xs : List α) (n : ℕ) :=
-  ((List.partitions' xs n).image fun x ↦ x.flatMap fun ⟨i, l⟩ ↦ (List.replicate i [] ++ [l])).biUnion (fun q ↦ (Finset.range (n + 1)).image (q ++ List.replicate · []))
-
-def count' (n m : ℕ) : ℕ := (n + 1) * (m + 1)
-
-@[gcongr]
-theorem count'_le {n n' m m'} (hn : n ≤ n') (hm : m ≤ m') : count' n m ≤ count' n' m' := by
-  simp [count']
-  grw [hn, hm]
-
-#eval count' 3 3
-
--- 2 0 = 3
--- 2 1 = 6
--- 2 2 = 9
--- 2 3 = 12
-
--- 3 0 = 4
--- 3 1 = 8
--- 3 2 = 12
--- 3 3 = 16
-
-#eval (List.partitionsFill' ([] : List ℕ) 3)
-#eval (Finset.range 11).biUnion (List.buckets ([] : List ℕ))
--- #eval (List.partitionsFill' [1, 2, 3] 4) ⊆ (Finset.range (count' ‖[1, 2, 3]‖ 4)).biUnion (List.buckets [1, 2, 3])
-
-#print axioms List.mem_buckets_iff
-#print axioms List.partitionsFill'
-#print axioms List.mem_partitions'_iff
-
-theorem List.sum_le {α : Type*} (xs : List α) (f : α → ℕ) (cap : ℕ) (h : ∀ x ∈ xs, f x ≤ cap) : (xs.map f).sum ≤ cap * ‖xs‖ := by
-  induction xs with
-  | nil => simp
-  | cons x xs ih =>
-    simp_all
-    grw [ih]
-    grind
-
-theorem List.le_sum {α : Type*} (xs : List α) (f : α → ℕ) (cap : ℕ) (h : ∀ x ∈ xs, cap ≤ f x) : ‖xs‖ * cap ≤ (xs.map f).sum := by
-  induction xs with
-  | nil => simp
-  | cons x xs ih =>
-    simp_all
-    grw [← ih]
-    grind
-
-theorem List.partitionsFill'_subset_buckets {α : Type*} [DecidableEq α] (xs : List α) (n : ℕ) (h : xs ≠ []) :
-    List.partitionsFill' xs n ⊆ (Finset.range (count' ‖xs‖ n)).biUnion (List.buckets xs) := by
-  intro l
-  simp [mem_buckets_iff, partitionsFill']
-  simp [List.mem_partitions'_iff]
-  rintro xs ⟨_⟩ h' i hi ⟨_⟩
-  simp_all only [List.length_append, List.length_flatMap, List.length_replicate, List.length_cons,
-    List.length_nil, zero_add, List.sum_map_add, List.map_const', List.sum_replicate, smul_eq_mul,
-    mul_one, List.append_eq_nil_iff, List.flatMap_eq_nil_iff, List.replicate_eq_nil_iff,
-    List.cons_ne_self, and_false, imp_false, Prod.forall, not_and, List.flatten_append,
-    List.flatten_replicate_nil, List.append_nil]
-  induction xs generalizing n i with
-  | nil => simp_all
-  | cons x xs ih =>
-    obtain ⟨a, bs⟩ := x
-
-    simp_all
-    have : (List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) xs).flatten = (List.map Prod.snd xs).flatten := by
-      clear a h h' hi ih bs
-      induction xs with simp_all
-    simp [this]; clear this
-    have : ((∀ (a_1 : ℕ) (b : List α), (a_1 = a → ¬b = bs) ∧ (a_1, b) ∉ xs) → ¬i = 0) := by
-      rintro h ⟨_⟩
-      specialize h a bs
-      simp at h
-    simp_all only [not_false_eq_true, implies_true, and_self, and_true, gt_iff_lt]
-    have := h' a bs
-    simp at this
-    rcases xs with _ | ⟨⟨a', bs'⟩, xs⟩
-    · simp_all
-      simp [count']
-      rcases n with _ | n
-      · simp_all
-        grind [List.length_pos_iff]
-      · rcases bs with _ | _
-        · simp_all
-        · simp_all
-          ring_nf
-          omega
-    · simp_all only [List.mem_cons, Prod.mk.injEq, List.map_cons, List.sum_cons, List.length_cons,
-      Function.comp_apply, not_or, not_and, List.flatMap_cons, List.append_assoc, List.cons_append,
-      List.nil_append, List.flatten_append, List.flatten_replicate_nil, List.flatten_cons,
-      List.append_cancel_left_eq, not_isEmpty_of_nonempty, IsEmpty.exists_iff, true_and,
-      implies_true, gt_iff_lt]
-      specialize ih n bs' a'
-      simp at ih
-      rcases bs' with _ | _
-      · simp_all
-        have := h' a' []
-        simp at this
-      · simp_all
-        specialize ih (by grind) i (by omega)
-        ring_nf at ih
-        replace ih := ih.left
-        simp [Nat.lt_iff_add_one_le] at ih
-        ring_nf
-        ring_nf at ih
-        have : 2 + a + a' + (List.map Prod.fst xs).sum + ‖xs‖ + i = a + (2 + a' + (List.map Prod.fst xs).sum + ‖xs‖ + i) := by omega
-        rw [this]; clear this
-        grw [ih]
-        have : 1 ≤ ‖bs‖ := by grind [List.length_pos_iff]
-        grw [← this]
-        ring_nf
-        set m := (List.map (List.length ∘ Prod.snd) xs).sum
-        simp [count']
-        ring_nf
-        rename_i h _ _
-        grw [h.left]
-        ring_nf
-        simp
-
-#print axioms List.partitionsFill'_subset_buckets
-
-def List.corep {α : Type*} (xs : List (List α)) : List (ℕ × List α) :=
-  match xs with
-  | [] => []
-  | []::xs =>
-    match List.corep xs with
-    | [] => []
-    | (n, y) :: ys => (n + 1, y) :: ys
-  | x::xs => (0, x) :: (List.corep xs)
-
-#eval List.corep [[], [1, 2], [3], [], []]
-
-@[simp]
-theorem List.corep_nil {α : Type*} : corep ([] : List (List α)) = [] := by simp [corep]
-
-@[simp]
-theorem List.corep_mem_ne_nil {α : Type*} {ls : List (List α)} {x} (h : x ∈ corep ls) :
-    ls ≠ [] := by rintro ⟨_⟩; simp [corep] at h
-
-@[simp]
-theorem List.corep_mem_ne_nil' {α : Type*} {ls : List (List α)} {x} (h : x ∈ corep ls) :
-    x.2 ≠ [] := by
-  induction ls generalizing x with
-  | nil => simp_all
-  | cons l ls ih =>
-    simp_all
-    rcases l with _ | ⟨i, l⟩
-    · simp_all [corep]
-      split at h
-      · simp_all
-      · grind
-    · simp_all [corep]
-      grind
-
-@[simp]
-theorem List.corep_mem_lt {α : Type*} {ls : List (List α)} {x} (h : x ∈ corep ls) :
-    x.1 < ‖ls‖ := by
-  induction ls generalizing x with
-  | nil => simp_all
-  | cons l ls ih =>
-    simp_all
-    rcases l with _ | ⟨i, l⟩
-    · simp_all [corep]
-      split at h
-      · simp_all
-      · grind
-    · simp_all [corep]
-      grind
-
-@[simp]
-theorem List.corep_flatten {α : Type*} {ls : List (List α)} :
-    (List.map Prod.snd (corep ls)).flatten = ls.flatten := by
-  induction ls with
-  | nil => simp
-  | cons l ls ih =>
-    rcases l with _ | ⟨a, l⟩
-    · simp_all [corep]
-      split
-      · simp_all; assumption
-      · simp_all
-    · simp_all [corep]
-
-@[simp]
-theorem List.corep_replicate_nil {α : Type*} {i} :
-    corep (List.replicate i ([] : List α)) = [] := by
-  induction i with
-  | zero => simp
-  | succ i ih =>
-    simp [corep, List.replicate]
-    split
-    · rfl
-    · simp_all
-
-@[simp]
-theorem List.corep_append_replicate_nil {α : Type*} {ls : List (List α)} {i} :
-    corep (ls ++ List.replicate i []) = corep ls := by
-  induction ls generalizing i with
-  | nil => simp
-  | cons l ls ih =>
-    simp_all
-    rcases l with _ | _
-    · simp_all [corep]
-    · simp_all [corep]
-
-theorem List.corep_reconstruct {α : Type*} {ls : List (List α)} :
-    List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) (corep ls) ++ List.rtakeWhile (·.length = 0) ls = ls := by
-  induction ls with
-  | nil => simp
-  | cons l ls ih =>
-    rcases l with _ | ⟨a, l⟩
-    · simp [corep]
-      split
-      · simp_all; exact ih
-      · simp_all
-        rename_i ys i ys' l h
-        simp [List.replicate]
-        suffices List.rtakeWhile (fun x ↦ decide (‖x‖ = 0)) ([] :: ls) = List.rtakeWhile (fun x ↦ decide (‖x‖ = 0)) ls by
-          simp [this, ih]
-        clear ih
-        induction ls using List.reverseRecOn with
-        | nil => simp_all
-        | append_singleton ls l' ih =>
-          rcases l' with _ | _
-          · simp_all
-            rw [← List.cons_append]
-            rw [List.rtakeWhile_concat]
-            simp
-            apply ih
-            have := List.corep_append_replicate_nil (ls:=ls) (i:=1)
-            simp at this
-            grind
-          · simp_all
-    · simp_all [corep]
-      nth_rw 3 [← ih]; clear ih
-      simp
-      induction ls using List.reverseRecOn with
-      | nil => simp
-      | append_singleton ls l' ih =>
-        rw [← List.cons_append]
-        repeat rw [List.rtakeWhile_concat]
-        simp_all
-
-def count'' (n m : ℕ) : ℕ := (n + 1) * (m + 1)
-
-@[gcongr]
-theorem count''_le {n n' m m'} (hn : n ≤ n') (hm : m ≤ m') : count'' n m ≤ count'' n' m' := by
-  simp [count'']
-  grw [hn, hm]
-
-#eval count'' 3 3
-
-theorem List.exists_nil_tail {α : Type*} (xs : List (List α)) :
-    ∃ ys, (∃ x, ys ++ List.replicate x [] = xs) ∧ ∀ (h : ¬ys = []), ¬ys.getLast h = [] := by
-  induction xs with
-  | nil => simp
-  | cons x xs ih =>
-    obtain ⟨ys, ⟨n, _, _⟩, ih⟩ := ih
-    rcases x with _ | ⟨a, x⟩
-    · rcases ys with _ | ⟨y, ys⟩
-      · simp_all
-        use []
-        simp
-        use n + 1
-        simp [List.replicate]
-      · simp_all
-        use []::y::ys
-        constructor
-        · use n
-          simp
-        · simp_all
-    · use (a::x)::ys
-      simp_all
-      rcases ys
-      · simp_all
-      · simp_all
-
-theorem List.buckets_subset_partitionsFill' {α : Type*} [DecidableEq α] (xs : List α) (n : ℕ) (h : xs ≠ []) :
-    (Finset.range n).biUnion (List.buckets xs) ⊆ List.partitionsFill' xs (count'' ‖xs‖ n) := by
-  intro ls
-  simp [mem_buckets_iff, partitionsFill']
-  simp [List.mem_partitions'_iff]
-  rintro h₁ h₂ ⟨_⟩
-  simp_all
-  obtain ⟨xs, hxs, hxs'⟩ := h
-  use List.corep ls
-  simp_all [Nat.lt_iff_add_one_le]
-  constructor
-  · intro i as h
-    have : as ≠ [] := by have := List.corep_mem_ne_nil' h; grind
-    simp [this]
-    have := List.corep_mem_lt h
-    simp at this
-    grw [this, ← h₁]
-    simp [count'', mul_add, add_mul]
-    omega
-  · obtain ⟨ls, ⟨i, _, _⟩, h⟩ := List.exists_nil_tail ls
-    simp_all
-    use i
-    simp
-    have := List.corep_reconstruct (ls:=ls)
-    constructor
-    · grw [← h₁]
-      simp [count'']
-      simp [mul_add, add_mul]
-      ring_nf
-      omega
-    · nth_rw 2 [← this]
-      simp
-      apply h
-
-#print axioms List.buckets_subset_partitionsFill'
-#print axioms List.partitionsFill'_subset_buckets
-
 @[simp]
 theorem G'_iter_nil {n} : G' (p.iter n) [] = (G' p [])^n := by
   induction n with
@@ -4684,739 +2734,126 @@ theorem G'_iter_nil {n} : G' (p.iter n) [] = (G' p [])^n := by
     · simp_all
     · simp_all [pow_succ']
 
-theorem List.buckets_succ {α : Type*} [DecidableEq α] {xs : List ℕ} {n} {f : List ℕ → 𝒲[Pk[F,N], Pk[F,N], 𝒮]} (hn : n ≠ 0) :
-    ∑ b ∈ List.buckets xs (n + 1), (List.map f b).prod =
-    ∑ i ∈ ..=‖xs‖, ∑ b ∈ List.buckets (xs[i..]) n, (List.map f (xs[..i] :: b)).prod := by
-  -- have : xs = [1, 2, 3] := by sorry
-  -- have : n = 0 := by sorry
-  -- subst_eqs
-  -- simp [buckets, Finset.sum_range_succ]
-  -- simp [← mul_assoc, ← add_assoc]
-  -- ring_nf
+@[simp]
+theorem List.buckets_pairwise_disjoint {α : Type*} [DecidableEq α] {xs : List α} {S : Set ℕ} :
+    S.PairwiseDisjoint xs.buckets := by
+  intro i hi j hj h A h₁ h₂ ls hls
+  simp_all
+  specialize h₁ hls
+  specialize h₂ hls
+  simp_all [List.mem_buckets_iff]
 
-  induction xs generalizing n f with
-  | nil =>
-    simp; rcases n with _ | n <;> simp
-    · contradiction
-    · simp [pow_succ']
-  | cons x xs ih =>
-    rw [List.buckets]
-    rw [Finset.sum_union]
-    · simp
-      rw [Finset.sum_range_succ']
-      simp
-      rw [add_comm]
-      congr! 1
-      rw [Finset.sum_image]
-      ·
-        simp at ih
-        simp_all
-        rcases n with _ | n
-        · contradiction
-        · simp_all
-          rcases xs with _ | _
-          · simp
-          · rw [buckets]
-            simp
-        simp [ih]
-        sorry
-      · sorry
-    · intro A h₁ h₂ B hBA
-      simp_all only [Finset.le_eq_subset, Finset.bot_eq_empty, Finset.notMem_empty]
-      specialize h₁ hBA
-      specialize h₂ hBA
-      simp_all
-      grind
+@[simp]
+theorem List.buckets_succ_pairwise_disjoint {α : Type*} [DecidableEq α] {xs : List α} {S : Set ℕ} :
+    S.PairwiseDisjoint (xs.buckets ·.succ) := by
+  intro i hi j hj h A h₁ h₂ ls hls
+  simp_all
+  specialize h₁ hls
+  specialize h₂ hls
+  simp_all [List.mem_buckets_iff]
 
-theorem List.buckets_succ {α : Type*} [DecidableEq α] {xs : List α} {x} {n} {f : List α → 𝒲[Pk[F,N], Pk[F,N], 𝒮]} :
-    ∑ b ∈ List.buckets (x :: xs) (n + 1 + 1), (List.map f b).prod =
-    ∑ i ∈ ..=‖xs‖ + 1, ∑ b ∈ List.buckets ((x :: xs)[i..]) (n + 1), (List.map f ((x :: xs)[..i] :: b)).prod := by
-  rw [← Finset.sum_biUnion (s:=..=‖xs‖ + 1)]
-  induction xs generalizing x n f with
-  | nil =>
-    simp [Finset.sum_range_succ]
-    simp [← Finset.mul_sum]
-    sorry
-  | cons x₁ xs ih =>
+theorem G'_iter_eq_buckets {xs : List Pk[F,N]} {n : ℕ} :
+    ∑ i ∈ Finset.range n, G' (p.iter i.succ) xs = ∑ ys ∈ (Finset.range n).biUnion (List.buckets xs ·.succ), (ys.map (G' p)).prod := by
+  simp [Finset.sum_biUnion]
+  congr! with i hi
+  clear hi n
+  induction i generalizing xs with
+  | zero =>
+    simp [G'_skip, G'_seq, Finset.sum_range_succ]
+    have {a b : 𝒲[Pk[F,N], Pk[F,N], 𝒮]} : a = 0 → a + b = b := by simp_all
+    apply this; clear this
     simp
-    rw [buckets]
-    rw [Finset.sum_union]
-    · simp
-      rw [Finset.sum_image]
-      · rw [Finset.sum_range_succ']
-        simp
-        rw [add_comm]
-        congr
-        have : (‖xs‖ + 2) = ‖xs‖ + 1 + 1 := by rfl
-        simp [this]
-        simp [← List.prod_cons, ← List.map_cons]
-        rw [ih]
-        simp at ih
-
-
-        sorry
-      · sorry
-    · sorry
-
-attribute [- simp] RPol.iter in
-theorem G'_iter_succ_eq {xs} {n} :
-    G' (p.iter (n + 1)) xs = ∑ b ∈ List.buckets xs (n + 1), (b.map (G' p)).prod := by
-  induction xs using Nat.strongRecMeasure List.length generalizing n; next xs ih =>
-  rcases xs with _ | ⟨α₀, xs⟩
-  · simp [RPol.iter, G'_seq, pow_succ']
-  · -- ext α β
-    induction n with
-    | zero =>
-      simp [RPol.iter, G'_seq]
-      have ih' := ih (n:=0)
-      clear ih
-      simp_all
-      rw [Finset.sum_range_succ']
-      simp
-      conv => enter [1, 2, 2]; simp [G'_skip]
-      simp
-      simp [List.buckets]
-      rw [Finset.sum_eq_single ‖xs‖]
-      · simp_all [G'_skip]
-      · simp_all [G'_skip]
-        intro _ _
-        split
-        · simp_all
-          omega
-        · simp_all
-      · simp_all
-    | succ n ihn =>
-      rw [RPol.iter]
-      simp only [G'_seq, List.length_cons]
-      rw [Finset.sum_range_succ']
-      simp only [List.take_succ_cons, List.drop_succ_cons, List.take_zero, List.drop_zero]
-      conv =>
-        enter [1, 1, 2, c]
-        rw [ih _ (by simp; omega)]
-      clear ih
-      rw [ihn]; clear ihn
-      simp [Finset.mul_sum]
-      calc
-        _ = ∑ x ∈ ..=‖xs‖ + 1,
-                ∑ i ∈ List.buckets ((α₀ :: xs)[x..]) (n + 1),
-                  G' p ((α₀ :: xs)[..x]) * (List.map (G' p) i).prod := by
-          nth_rw 2 [Finset.sum_range_succ']
-          simp
-        _ = _ := by
-          simp [← List.prod_cons, ← List.map_cons, List.buckets_succ]
-
-attribute [- simp] RPol.iter in
-theorem G'_iter_eq {xs} {n} :
-    G' (p.iter n) xs = if n = 0 ∧ xs = [] then 1 else ∑ b ∈ List.buckets xs n, (b.map (G' p)).prod := by
-  rcases n with _ | n
-  · simp [RPol.iter, G'_skip]
-    rcases xs with _ | _
-    · simp
+    intro i hi
+    split
+    · simp_all; omega
     · simp_all
-  · simp [G'_iter_succ_eq]
-
-theorem ωSup_nat_eq_with_map {f g : Chain 𝒮} (m : ℕ → ℕ) (h : ∀ i, i ≤ m i) (h' : ∀ i, f i = g (m i)) : ωSup f = ωSup g := by
-  apply le_antisymm
-  · simp
-    intro i
-    apply le_ωSup_of_le (m i)
-    grind
-  · simp
-    intro j
-    obtain ⟨i, hi⟩ : ∃ i, j ≤ m i := ⟨j, h j⟩
-    grw [hi]
-    apply le_ωSup_of_le i
-    grind
-
-theorem G'_eq_A' {xs} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) : G' p.Iter xs = ωSup ⟨fun n ↦ A' p n xs, sorry⟩ := by
-  simp [A'_iter_eq, ihp]
-  ext α β
-  simp [G', G]
-  simp [G_eq_G', G'_iter_eq]
-  rw [ωSum_nat_eq_ωSup_succ]
-  -- TODO: use antisymm and find the appropriate upperbound in both directions
-  -- symm
-  -- let g : ℕ → ℕ := sorry
-  -- have hg : ∀ i, i ≤ g i := sorry
-  -- apply ωSup_nat_eq_with_map g hg fun n ↦ ?_
-  -- simp
-  -- simp [DFunLike.coe]
-  -- simp [← Finset.sum_apply]
-  -- congr!
-  -- clear α β
-  -- rcases xs with _ | ⟨α₀, xs⟩
-  -- · sorry
-  -- · rcases xs with _ | ⟨α₀, xs⟩
-  --   · simp
-  --     simp [Finset.sum_range_succ']
-  --     rcases n with _ | _ | _ | _ | _ | _ | n
-  --     · simp
-  --     · simp [G''_succ', List.partitions]
-  --     · sorry
-  --     · sorry
-  --     · sorry
-  --     · simp [G''_succ']
-  --       have : g = fun _ ↦ 7 := sorry
-  --       simp [this, Finset.sum_range_succ, List.partitions]
-  --       simp [List.buckets]
-  --       simp [pow_succ]
-  --       simp [mul_add, add_mul, ← mul_assoc, ← add_assoc]
-  --       grind
-  -- simp
-  -- simp only [G'_iter_eq, ihp]
-
-
-
-
-theorem A'_iter_cons {α₀} {xs} {n} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
-    A' p n (α₀::xs) = List.partitions := by
-  induction n with
-  | zero => simp; sorry
-  | succ n ih =>
-    ext
-    simp [A']
-    rw [approx_𝒜_iter_eq]
-    simp
-    simp [𝒪_heart_n_eq_G', ihp, 𝒜_eq_G', approx_𝒜_eq_A']
-    simp [← Matrix.mul_apply, ← Finset.mul_sum, ← Finset.sum_mul]
-    simp [← Matrix.sum_apply]
-    simp [Matrix.mul_assoc, ← Matrix.mul_sum]
-    nth_rw 2 [Finset.sum_range_succ]
-    simp [mul_add, ← mul_assoc, ihp]
-    have : (∑ x ∈ ..=n, G' p [] ^ x) = G'' p (n + 1) := by simp [G'']
-    simp [this]
-
-
-theorem A'_iter_two_single' {α₀} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
-    A' p 2 [α₀] = G'' p 2 * G' p [α₀] * G'' p 2 := by
-  ext; simp [A', G'', 𝒪_heart_n_eq_G', approx_𝒜_iter_nonempty, 𝒜_eq_G', ihp, mul_assoc, Finset.sum_range_succ, mul_add, add_mul, Finset.sum_add_distrib]
-  simp [← mul_assoc]
-  simp [← Finset.sum_mul]
-  simp [← Matrix.mul_apply]
-theorem A'_iter_three_single {α₀} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
-    A' p 3 [α₀] = G'' p 3 * G' p [α₀] * G'' p 3 := by
-  ext; simp [A', G'', 𝒪_heart_n_eq_G', approx_𝒜_iter_nonempty, 𝒜_eq_G', ihp, mul_assoc, Finset.sum_range_succ, mul_add, add_mul, Finset.sum_add_distrib]
-  simp [← mul_assoc]
-  simp [← Finset.sum_mul]
-  simp [← Matrix.mul_apply]
-theorem A'_iter_four_single {α₀} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
-    A' p 4 [α₀] = G'' p 4 * G' p [α₀] * G'' p 4 := by
-  ext; simp [A', G'', 𝒪_heart_n_eq_G', approx_𝒜_iter_nonempty, 𝒜_eq_G', ihp, mul_assoc, Finset.sum_range_succ, mul_add, add_mul, Finset.sum_add_distrib]
-  simp [← mul_assoc]
-  simp [← Finset.sum_mul]
-  simp [← Matrix.mul_apply]
-theorem A'_iter_two_pair {α₀ α₁} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
-    A' p 2 [α₀, α₁] = G' p [α₀] + G' p [] * G' p [α₀] + G' p [α₀] * G' p [] + G' p [] * G' p [α₀] * G' p [] := by
-  ext; simp [A', 𝒪_heart_n_eq_G', approx_𝒜_iter_nonempty, 𝒜_eq_G', ihp, mul_assoc, Finset.sum_range_succ, mul_add, add_mul, Finset.sum_add_distrib]
-  simp [← mul_assoc]
-  simp [← Finset.sum_mul]
-  simp [← Matrix.mul_apply]
-  simp [← add_assoc, ← mul_assoc, ← Matrix.add_apply]
-  sorry
-theorem A'_iter_three_single {α₀} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
-    A' p 3 [α₀] = sorry := by
-  ext; simp [A', 𝒪_heart_n_eq_G', approx_𝒜_iter_nonempty, 𝒜_eq_G', ihp, mul_assoc, Finset.sum_range_succ, mul_add, add_mul, Finset.sum_add_distrib]
-  simp [← mul_assoc]
-  simp [← Finset.sum_mul]
-  simp [← Matrix.mul_apply]
-  simp [← add_assoc, ← mul_assoc, ← Matrix.add_apply]
-theorem A'_iter_three_pair {α₀ α₁} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
-    A' p 3 [α₀, α₁] = sorry := by
-  ext; simp [A', 𝒪_heart_n_eq_G', approx_𝒜_iter_nonempty, 𝒜_eq_G', ihp, mul_assoc, Finset.sum_range_succ, mul_add, add_mul, Finset.sum_add_distrib]
-  simp [← mul_assoc]
-  simp [← Finset.sum_mul]
-  simp [← Matrix.mul_apply]
-  simp [← add_assoc, ← mul_assoc, ← Matrix.add_apply]
-
-
-theorem approx_𝒜_iter_eq_ωSup_approx' {α β} {n} {xₙ} (h : ‖xₙ‖ ≤ n) (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
-    approx_𝒜 p n ⟨α, xₙ, β⟩ = sorry := by-- if n = 0 then 0 else ∑ m ∈ Finset.range (count n ‖xₙ‖), ∑ xs ∈ X m xₙ, (xs.map (G' p)).prod α β := by
-  induction xₙ using Nat.strongRecMeasure List.length generalizing α β; next xₙ ihₙ =>
-  clear ihₙ
-  rcases n with _ | _ | _ | _ | n
-  · simp [𝒪_heart_n_eq_G', ihp]
-    rw [approx_𝒜_iter_eq]
-    simp [𝒪_heart_n]
-  · sorry
-  · simp
-    clear h
-    rcases xₙ with _ | ⟨α₀, xₙ⟩
-    · simp_all [𝒪_heart_n_eq_G', ihp, X_nil, Finset.sum_range_succ]
-      sorry
-    · rcases xₙ with _ | ⟨α₁, xₙ⟩
-      · rw [approx_𝒜_iter_eq]
-        simp [𝒪_heart_n_eq_G', 𝒜_eq_G', ihp, X, Z, Finset.range_add_one]
-        simp_all [𝒪_heart_n_eq_G', ihp, X_nil, Finset.sum_range_succ, 𝒜_eq_G', ← Matrix.mul_apply, ← Finset.mul_sum, ← Finset.sum_mul, add_mul, mul_add, Finset.sum_add_distrib]
-        simp [← add_assoc, ← Matrix.add_apply]
-        sorry
-      · rcases xₙ with _ | ⟨α₂, xₙ⟩
-        · rw [approx_𝒜_iter_eq]
-          simp [𝒪_heart_n_eq_G', 𝒜_eq_G', ihp, X, Z, Finset.range_add_one]
-          conv =>
-            enter [1, 2, 2, _, 2, _]; rw [approx_𝒜_iter_eq]
-          simp [𝒪_heart_n_eq_G', 𝒜_eq_G', ihp, X, Z, Finset.range_add_one]
-          simp_all [𝒪_heart_n_eq_G', ihp, X_nil, Finset.sum_range_succ, 𝒜_eq_G', ← Matrix.mul_apply, ← Finset.mul_sum, ← Finset.sum_mul, add_mul, mul_add, Finset.sum_add_distrib]
-          simp [← add_assoc, ← Matrix.add_apply, ← Matrix.mul_assoc]
-          sorry
-      -- simp [Finset.sum_range_succ]
-  --   · rcases xₙ with _ | ⟨α₁, xₙ⟩
-  --     · -- simp [Finset.sum_range_succ]
-  --       rw [approx_𝒜_iter_eq]
-  --       simp [𝒪_heart_n_eq_G', 𝒜_eq_G', ihp, X, Z, Finset.range_add_one]
-  --       simp_all [𝒪_heart_n_eq_G', ihp, X_nil, Finset.sum_range_succ, 𝒜_eq_G', ← Matrix.mul_apply, ← Finset.mul_sum, ← Finset.sum_mul]
-  --       sorry
-  --     · rcases xₙ with _ | ⟨α₂, xₙ⟩
-  --       · -- simp [Finset.sum_range_succ]
-  --         rw [approx_𝒜_iter_eq]
-  --         simp [𝒪_heart_n_eq_G', 𝒜_eq_G', ihp, X, Z, Finset.range_add_one]
-  --         simp_all [𝒪_heart_n_eq_G', ihp, X_nil, Finset.sum_range_succ, 𝒜_eq_G', ← Matrix.mul_apply, ← Finset.mul_sum, ← Finset.sum_mul]
-  --         simp [approx_𝒜_iter_eq]
-  --         simp [𝒪_heart_n_eq_G', 𝒜_eq_G', ihp, X, Z, Finset.range_add_one]
-  --         simp_all [𝒪_heart_n_eq_G', ihp, X_nil, Finset.sum_range_succ, 𝒜_eq_G', ← Matrix.mul_apply, ← Finset.mul_sum, ← Finset.sum_mul]
-  --       -- · rcases xₙ with _ | ⟨α₃, xₙ⟩
-  --       --   · -- simp [Finset.sum_range_succ]
-  --       --     rw [approx_𝒜_iter_eq]
-  --       --     simp [𝒪_heart_n_eq_G', 𝒜_eq_G', ihp, X, Z, Finset.range_add_one]
-  --       --     simp_all [𝒪_heart_n_eq_G', ihp, X_nil, Finset.sum_range_succ, 𝒜_eq_G', ← Matrix.mul_apply, ← Finset.mul_sum, ← Finset.sum_mul]
-  --       --     conv =>
-  --       --       enter [1, 2, 1, 2, x]
-  --       --       rw [approx_𝒜_iter_eq]
-  --       --     simp [𝒪_heart_n_eq_G', 𝒜_eq_G', ihp, X, Z, Finset.range_add_one]
-  --       --     simp_all [𝒪_heart_n_eq_G', ihp, X_nil, Finset.sum_range_succ, 𝒜_eq_G', ← Matrix.mul_apply, ← Finset.mul_sum, ← Finset.sum_mul]
-  --       --     conv =>
-  --       --       enter [1, 2, 2, 2, x]
-  --       --       rw [approx_𝒜_iter_eq]
-  --       --     simp [𝒪_heart_n_eq_G', 𝒜_eq_G', ihp, X, Z, Finset.range_add_one]
-  --       --     simp_all [𝒪_heart_n_eq_G', ihp, X_nil, Finset.sum_range_succ, 𝒜_eq_G', ← Matrix.mul_apply, ← Finset.mul_sum, ← Finset.sum_mul]
-  --       --     conv =>
-  --       --       enter [1, 2, 2, 2, x, 2, 2, 2, _]
-  --       --       rw [approx_𝒜_iter_eq]
-  --       --     simp [𝒪_heart_n_eq_G', 𝒜_eq_G', ihp, X, Z, Finset.range_add_one]
-  --       --     simp_all [𝒪_heart_n_eq_G', ihp, X_nil, Finset.sum_range_succ, 𝒜_eq_G', ← Matrix.mul_apply, ← Finset.mul_sum, ← Finset.sum_mul, mul_add, Finset.sum_add_distrib]
-  --       --     simp [← add_assoc, ← Matrix.add_apply, ← Matrix.mul_assoc]
-  --       --   · rcases xₙ with _ | ⟨α₄, xₙ⟩
-  --       --     · -- simp [Finset.sum_range_succ]
-  --       --       rw [approx_𝒜_iter_eq]
-  --       --       simp [𝒪_heart_n_eq_G', 𝒜_eq_G', ihp, X, Z, Finset.range_add_one]
-  --       --       simp_all [𝒪_heart_n_eq_G', ihp, X_nil, Finset.sum_range_succ, 𝒜_eq_G', ← Matrix.mul_apply, ← Finset.mul_sum, ← Finset.sum_mul]
-  --       --       conv =>
-  --       --         enter [1, 2, 1, 2, x]
-  --       --         rw [approx_𝒜_iter_eq]
-  --       --       simp [𝒪_heart_n_eq_G', 𝒜_eq_G', ihp, X, Z, Finset.range_add_one]
-  --       --       simp_all [𝒪_heart_n_eq_G', ihp, X_nil, Finset.sum_range_succ, 𝒜_eq_G', ← Matrix.mul_apply, ← Finset.mul_sum, ← Finset.sum_mul]
-  --       --       conv =>
-  --       --         enter [1, 2, 2, 2, x]
-  --       --         rw [approx_𝒜_iter_eq]
-  --       --       simp [𝒪_heart_n_eq_G', 𝒜_eq_G', ihp, X, Z, Finset.range_add_one]
-  --       --       simp_all [𝒪_heart_n_eq_G', ihp, X_nil, Finset.sum_range_succ, 𝒜_eq_G', ← Matrix.mul_apply, ← Finset.mul_sum, ← Finset.sum_mul]
-  --       --       conv =>
-  --       --         enter [1, 2, 2, 2, x, 2, 2, 2, _]
-  --       --         rw [approx_𝒜_iter_eq]
-  --       --       simp [𝒪_heart_n_eq_G', 𝒜_eq_G', ihp, X, Z, Finset.range_add_one]
-  --       --       simp_all [𝒪_heart_n_eq_G', ihp, X_nil, Finset.sum_range_succ, 𝒜_eq_G', ← Matrix.mul_apply, ← Finset.mul_sum, ← Finset.sum_mul, mul_add, Finset.sum_add_distrib]
-  --       --       simp [← add_assoc, ← Matrix.add_apply, ← Matrix.mul_assoc]
-
-          sorry
-      simp [X, Z, Finset.range_add_one]
-      simp_all [𝒪_heart_n_eq_G', ihp, X_nil]
-
-  -- induction n generalizing xₙ α β with
-  -- | zero =>
-  --   simp_all; subst_eqs
-  --   symm
-  --   simp [𝒪_heart_n_apply]
-  -- | succ n ih =>
-  --   rcases xₙ with _ | ⟨α₀, xₙ⟩
-  --   · simp_all
-  --     simp [𝒪_heart_n_eq_G', ihp, X_nil]
-  --     simp [Finset.sum_range_succ']
-  --     rw [Finset.sum_apply]
-  --     simp
-  --   · symm at ihp
-  --     simp [approx_𝒜_iter_nonempty, ihp]
-  --     simp [𝒪_heart_n_eq_G', ihp, X_nil]
-  --     simp_all [G_eq_G', ← Matrix.mul_apply, ← Finset.sum_mul]
-  --     simp [← Matrix.sum_mul, ← Matrix.mul_sum, ← Matrix.sum_apply]
-  --     conv =>
-  --       enter [1, 2, x, 2, x, 2]
-  --       rw [ihₙ _ (by simp; omega) (by simp; omega)]
-  --     simp [Finset.sum_comm (γ:=Pk[F,N]), Finset.mul_sum, ← Matrix.mul_apply]
-  --     rcases xₙ with _ | ⟨α₁, xₙ⟩
-  --     · simp
-  --       simp [← Matrix.sum_mul, ← Matrix.mul_sum, ← Matrix.sum_apply]
-  --       sorry
-  --     · sorry
-
-theorem G_iter_eq_ωSup_approx {α β} {xₙ} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
-    G⟦~p*⟧ ⟨α, xₙ, β⟩ = ωSup ⟨fun n ↦ approx_𝒜 p n ⟨α, xₙ, β⟩, approx_𝒜_apply_monotone p⟩ := by
-  conv =>
-    enter [2, 1, 1, n]
-    rw [approx_𝒜_iter_eq]
-    enter [3, 2, i, 2, _, 2, _]
-    rw [approx_𝒜_iter_eq]
-    enter [2, 3, 2, i, 2, _, 2, _]
-    rw [approx_𝒜_iter_eq]
-    -- enter [2, 3, 2, i, 2, _, 2, _]
-    -- rw [approx_𝒜_iter_eq]
-    -- enter [2, 3, 2, i, 2, _, 2, _]
-    -- rw [approx_𝒜_iter_eq]
-    -- enter [2, 3, 2, i, 2, _, 2, _]
-    -- rw [approx_𝒜_iter_eq]
-    -- enter [2, 3, 2, i, 2, _, 2, _]
-    -- rw [approx_𝒜_iter_eq]
-  simp only [List.drop_eq_nil_iff, List.length_drop, List.drop_drop, mul_ite, Finset.sum_ite_irrel]
-  -- simp [approx_𝒜_eq_sum_G _ ihp]
-  rcases xₙ with _ | ⟨α₀, xₙ⟩
-  · sorry
-  · rcases xₙ with _ | ⟨α₁, xₙ⟩
-    · sorry
-    · rcases xₙ with _ | ⟨α₂, xₙ⟩
-      · sorry
-      · rcases xₙ with _ | ⟨α₃, xₙ⟩
-        · simp only [reduceCtorEq, ↓reduceIte, List.length_cons, List.length_nil, zero_add,
-          Nat.reduceAdd, Nat.reduceLeDiff, List.take_succ_cons, ← Finset.sum_mul, Nat.reduceSubDiff,
-          List.drop_succ_cons, Finset.sum_range_succ, Finset.range_one, Finset.sum_singleton,
-          nonpos_iff_eq_zero, OfNat.ofNat_ne_zero, List.take_zero, tsub_zero, List.drop_zero,
-          Nat.reduceSub, List.take_nil, List.drop_nil, approx_𝒜_iter_empty, le_refl,
-          Nat.not_ofNat_le_one, Nat.add_one_sub_one]
-          simp only [G, RPol.instHPow, Countsupp.ωSum_apply]
-          let Q n xs := fun a b ↦ if xs = [] then 𝒪_heart_n p n a b else 𝒜⟦~p⟧ ⟨a, xs, b⟩
-          -- have {A B : Pk[F,N] → Pk[F,N] → 𝒮} :
-          have : ∀ n xs a b, 𝒜⟦~p⟧ ⟨a, xs, b⟩ = Q n xs a b := by intros; simp [Q]; rintro ⟨_⟩; sorry
-          conv =>
-            enter [2, 1, 1, n]
-            simp only [this n]
-          have : ∀ n a b, 𝒪_heart_n p n a b = Q n [] a b := by intros; simp [Q]
-          simp [this]
-          simp only [← Matrix.mul_apply, ← mul_assoc, ← Matrix.add_apply, Matrix.mul_add]
-          simp only [Matrix.add_apply]
-          let Q' xs := fun a b ↦ G⟦~p⟧ ⟨a, xs, b⟩
-          have : ∀ xs a b, G⟦~p⟧ ⟨a, xs, b⟩ = Q' xs a b := by intros; rfl
-          rw [ωSum_nat_eq_succ, ωSum_nat_eq_succ, ωSum_nat_eq_succ, ωSum_nat_eq_succ]
-          conv =>
-            left
-            simp [G, G.concat_apply, GS.splitAtJoined]
-            enter [2, 2, 1]
-            simp [Finset.sum_range_succ]
-            simp [← Matrix.mul_apply, ← mul_assoc, ← Matrix.add_apply, Matrix.mul_add, this]
-            simp
-        · rcases xₙ with _ | ⟨α₀, xₙ⟩
-          · simp
-    simp [G, ωSum_nat_eq_ωSup, Chain.map]; unfold Function.comp; simp
-    apply le_antisymm
-    · simp
-      intro n
-      apply le_ωSup_of_le n
-      simp [𝒪_heart_n_apply]
-      gcongr with i
-      induction i generalizing α β with
-      | zero => simp; rfl
-      | succ i ih =>
-        simp [pow_succ', G, G.concat_apply, GS.splitAtJoined, Matrix.mul_apply, ihp]
-        gcongr
-        · rfl
-        · apply ih; simp_all; omega
-    · simp
-      intro n
-      apply le_ωSup_of_le n
-      simp [𝒪_heart_n_apply]
-      gcongr with i
-      induction i generalizing α β with
-      | zero => simp; rfl
-      | succ i ih =>
-        simp [pow_succ', G, G.concat_apply, GS.splitAtJoined, Matrix.mul_apply, ihp]
-        gcongr
-        · rfl
-        · apply ih; simp_all; omega
-  · simp [approx_𝒜_iter_nonempty, 𝒪_heart_n_apply]
-    rw [← ωSup_ωSup_eq_ωSup' (f:=fun n m ↦
-        ∑ x ∈ ..=‖xₙ‖,
-          ∑ x_1,
-            ∑ x_2,
-              (∑ i ∈ Finset.range n, ((ι p ⊠ 𝒪 p) ^ i) α x_2) * 𝒜⟦~p⟧ (x_2, α₀ :: xₙ[..x], x_1) *
-                approx_𝒜 p m (x_1, xₙ[x..], β))]
-    rotate_left
-    · refine monotone_nat_of_le_succ fun n m ↦ (by simp; gcongr <;> simp)
-    · refine fun _ ↦ monotone_nat_of_le_succ (fun _ ↦ by gcongr; omega)
-    simp [G]
-    apply le_antisymm
-    · simp
-      intro n
-    · simp
-
-theorem new_approach'' {n} {α β} {xs} (h : ‖xs‖ ≤ n) : 𝒜⟦~(p.iterLe n)⟧ ⟨α, xs, β⟩ = approx_𝒜 p (n + 1) ⟨α, xs, β⟩ := by
-  induction n generalizing α xs β with
-  | zero => simp_all [𝒪_heart_n]; rfl
   | succ n ih =>
     simp_all
-    simp [approx_𝒜, approx_ι, approx_𝒪]
-    rw [xδ_approx_δ_iter]
-    rw [ι_wProd_δ, ι_wProd_𝒪]
-    simp
-    have : ∀ (x : 𝒲[𝟙, S p, 𝒮]), @HMul.hMul 𝒲[𝟙, 𝟙, 𝒮] 𝒲[𝟙, S p, 𝒮] 𝒲[𝟙, S p, 𝒮] _ ((fun x ↦ 1)) x = x.coe_unique_left := by intro x; ext; simp [Matrix.mul_apply]
-    simp [this]
-    simp [δ.δ', approx_δ.δ']
-    rw [xδ_δ'_as_sum_unfolded]
-    simp
-    have 𝒪_heart_eq {n} : 𝒪_heart_n p n = ∑ m ∈ Finset.range n, (Q⟦~p⟧^m) [] := by
-      ext α γ; simp [𝒪_heart_n, LawfulStar.star_eq_sum]; congr!
-    rcases xs with _ | ⟨α₀, xs⟩
-    · simp
-      simp [Matrix.coe_unique_left, Q, Matrix.down, 𝒪_heart_eq]
-      rw [Finset.sum_range_succ]
+    rw [G'_seq]
+    simp [ih]
+    simp [Finset.mul_sum]
+    simp [← List.prod_cons, ← List.map_cons]
+    have : ∑ x ∈ ..=‖xs‖, ∑ x_1 ∈ xs[x..].buckets (n + 1), (List.map (G' p) (xs[..x] :: x_1)).prod = ∑ x ∈ ..=‖xs‖, ∑ x_1 ∈ (xs[x..].buckets (n + 1)).image (xs[..x] :: ·), (List.map (G' p) x_1).prod := by
       simp
-      congr
-      · sorry
-      · sorry
-    · simp
-      simp only [crox, Listed.array_sum_eq_finset_sum]
-      simp [Matrix.mul_add, Matrix.add_mul, Matrix.sum_mul, Matrix.sum_apply, Matrix.mul_sum, Finset.sum_mul, ← Matrix.mul_assoc]
-      simp [List.getLast?_cons]
-      simp only [List.length_cons, add_le_add_iff_right] at h
-      symm
-      calc
-        -- _ = ((𝒪_heart_n p (n + 1 + 1) ⊟ ι p ⊡ δ p) α α₀ * xδ (δ p) (α₀ :: xs) * (𝒪 p ⊟' 𝒪_heart_n p (n + 1 + 1)) ((α₀ :: xs).getLast?.getD α) β).down +
-        --       ∑ x ∈ Finset.range xs.length,
-        --         ∑ x_1,
-        --           ((𝒪_heart_n p (n + 1 + 1) ⊟ ι p ⊡ δ p) α α₀ * xδ (δ p) (α₀ :: List.take x xs) * 𝒪 p ((α₀ :: xs)[x]?.getD default) x_1).down *
-        --                   𝒜⟦~p*⟧ (x_1, List.drop x xs, β) := by
-        --   rcases xs with _ | ⟨α₁, xs⟩
-        --   · simp
-        --   simp only [List.getLast?_cons_cons, List.length_cons]
-        --   congr! with i hi γ hγ
-        --   nth_rw 2 [Matrix.mul_assoc]
-        --   nth_rw 1 [Matrix.mul_assoc]
-        --   simp
-        --   congr
-        --   simp [A_sem_cases]
-        --   simp [ι, 𝒪]
-        --   rw [xδ_δ_iter]
-        --   simp
-        --   rw [ι_wProd_δ, ι_wProd_𝒪]
-        --   simp
-        --   have : ∀ (x : 𝒲[S.I {♡}, S p, 𝒮]), @HMul.hMul 𝒲[𝟙, S.I {♡}, 𝒮] 𝒲[S.I {♡}, S p, 𝒮] 𝒲[𝟙, S p, 𝒮] _ ((fun x ↦ 1)) x = x.coe_unique_left := by intro x; ext; simp [Matrix.mul_apply]
-        --   simp [this]
-        --   simp at hi
-        --   split_ifs with hi'
-        --   · omega
-        --   · simp [approx_δ.δ', List.head!_eq_head?, Option.getD_default_eq_iget, List.getLast?_drop, hi, hi', List.getLast?_cons]
-        -- _ = ((𝒪_heart_n p (n + 1 + 1) ⊟ ι p ⊡ δ p) α α₀ * xδ (δ p) (α₀ :: xs) * (𝒪 p ⊟' 𝒪_heart_n p (n + 1 + 1)) ((α₀ :: xs).getLast?.getD α) β).down +
-        --       ∑ i ∈ Finset.range xs.length,
-        --         ∑ γ,
-        --           (𝒪_heart_n p (n + 1 + 1) * Q⟦~p⟧ (α₀ :: xs.take i)) α γ *
-        --                   Q⟦~p*⟧ (List.drop i xs) γ β := by
-        --   congr! with i hi γ hγ
-        --   simp only [Finset.mem_range] at hi
-        --   nth_rw 1 [Matrix.mul_apply]
-        --   simp [Q, sox, Matrix.sum_mul]
-        --   congr! with ξ hξ
-        --   simp [RPol.wnka_sem_case]
-        --   simp [xδ, fox, ← Matrix.mul_assoc]
-        --   congr! 3
-        --   rcases i with _ | i
-        --   · simp [List.getLast?_cons]
-        --   · have : i < xs.length := by omega
-        --     simp [List.getLast?_cons, List.getLast?_take, this]
-        _ = (𝒪_heart_n p (n + 1 + 1) * Q⟦~p⟧ (α₀ :: xs) * 𝒪_heart_n p (n + 1 + 1)) α β +
-              ∑ i ∈ Finset.range xs.length, ∑ γ,
-                  (𝒪_heart_n p (n + 1 + 1) * Q⟦~p⟧ (α₀ :: xs.take i)) α γ * 𝒜⟦~(p.iterLe n)⟧ ⟨γ, List.drop i xs, β⟩ := by
-          conv =>
-            enter [2, 2, 2, i, 2, γ, 2]
-            rw [ih (by grind)]
-
-          sorry
-          -- congr! with i hi γ hγ
-          -- · nth_rw 2 [Matrix.mul_assoc]
-          --   nth_rw 1 [Matrix.mul_apply]
-          --   conv => right; arg 2; ext; rw [Matrix.mul_apply]
-          --   simp [Q, sox, sox', Matrix.sum_mul, Matrix.mul_sum, Finset.sum_mul, Finset.mul_sum, Matrix.mul_assoc, mul_assoc]
-          --   rw [Finset.sum_comm]
-          --   congr! 4 with γ hγ ξ hξ
-          --   simp [RPol.wnka_sem_case]
-          --   simp [xδ, fox, ← Matrix.mul_assoc]
-          --   congr! 3
-          -- · nth_rw 2 [Matrix.mul_assoc]
-          --   nth_rw 1 [Matrix.mul_apply]
-          --   conv => right; arg 2; ext; rw [Matrix.mul_apply]
-          --   simp [Q, sox, sox', Matrix.sum_mul, Matrix.mul_sum, Finset.sum_mul, Finset.mul_sum, Matrix.mul_assoc, mul_assoc]
-          --   rw [Finset.sum_comm]
-          --   congr! 4 with γ hγ ξ hξ
-          --   simp [RPol.wnka_sem_case]
-          --   simp [xδ, fox, ← Matrix.mul_assoc]
-          --   congr! 3
-        _ = (𝒪_heart_n p (n + 1 + 1) * Q⟦~p⟧ (α₀ :: xs) * 𝒪_heart_n p (n + 1 + 1)) α β +
-              ∑ i ∈ Finset.range xs.length,
-                  ((𝒪_heart_n p (n + 1 + 1) * Q⟦~p⟧ (α₀ :: xs.take i)) * Q⟦~p*⟧ (List.drop i xs)) α β := by
-          simp [Matrix.mul_apply]
-        _ = ∑ i ∈ Finset.range (xs.length + 1), ((𝒪_heart_n p (n + 1 + 1) * Q⟦~p⟧ (α₀ :: xs.take i)) * Q⟦~p*⟧ (List.drop i xs)) α β := by
-          simp [Finset.sum_range_succ]
-          rw [add_comm]
-          congr!
-          ext
-          simp [Q]
-          rw [RPol.wnka_sem_case]
-          simp [ι, xδ, 𝒪]
-          rw [ι_wProd_𝒪]
-          simp [Matrix.down, Matrix.mul_apply]
-        _ = ∑ i ∈ Finset.range (xs.length + 1), ∑ ξ, ∑ γ, 𝒪_heart_n p (n + 1 + 1) α γ * 𝒜⟦~p⟧ ⟨γ, α₀ :: xs.take i, ξ⟩ * 𝒜⟦~p*⟧ ⟨ξ, List.drop i xs, β⟩ := by
-          simp [Matrix.mul_apply, Finset.sum_mul, RPol.Q_eq_A_sem]
-        _ = ω∑ (m : ℕ), ∑ i ∈ Finset.range (xs.length + 1), ∑ ξ, ∑ γ, (𝒜⟦~p⟧^m) ⟨α, [], γ⟩ * 𝒜⟦~p⟧ ⟨γ, α₀ :: xs.take i, ξ⟩ * 𝒜⟦~p*⟧ ⟨ξ, List.drop i xs, β⟩ := by
-          simp [← ωSum_mul_left, ωSum_sum_comm]
-          simp [𝒪_heart_eq, ← ωSum_mul_left, ← ωSum_mul_right, ← ωSum_sum_comm]
-          congr!
-          sorry
-        _ = ω∑ (m : ℕ), ω∑ (n : ℕ), ∑ i ∈ Finset.range (xs.length + 1), ∑ ξ, ∑ γ, (𝒜⟦~p⟧^m) ⟨α, [], γ⟩ * 𝒜⟦~p⟧ ⟨γ, α₀ :: xs.take i, ξ⟩ * (𝒜⟦~p⟧^n) ⟨ξ, List.drop i xs, β⟩ := by
-          simp [ωSum_mul_left, ωSum_sum_comm]
-          congr!
-          rw [← ihₙ _ (by simp; omega)]
+    rw [this]; clear this
+    rw [← Finset.sum_biUnion]
+    · congr
+      ext ys
+      simp [List.mem_buckets_iff]
+      constructor
+      · simp
+        rintro i hi zs h h' ⟨_⟩
+        simp_all
+      · simp
+        rintro ⟨_⟩ h
+        simp
+        clear ih
+        induction ys generalizing n with
+        | nil => simp_all
+        | cons y ys ih =>
+          simp_all
+          use ‖y‖
           simp
+          omega
+    · simp
+      intro i hi j hj h S h₁ h₂ Z hZ
+      simp_all only [Set.mem_Iio, ne_eq, Finset.le_eq_subset, Finset.bot_eq_empty,
+        Finset.notMem_empty]
+      specialize h₁ hZ
+      specialize h₂ hZ
+      simp_all
+      obtain ⟨l₁, h₁, _, _⟩ := h₁
+      obtain ⟨l₂, h₂, h'⟩ := h₂
+      simp_all
+      omega
 
+theorem ωSup_nat_eq_succ {α : Type*} [OmegaCompletePartialOrder α] (f : Chain α) :
+    ωSup f = ωSup ⟨(f <| · + 1), by intro a b hab; simp_all; grw [hab]⟩ := by
+  apply le_antisymm
+  all_goals simp; intro n; apply le_ωSup_of_le (n + 1); simp
+  apply f.mono; omega
 
-    -- simp [approx_𝒜, approx_ι, approx_𝒪]
-    -- rw [xδ_approx_δ_iter]
-    -- rw [ι_wProd_δ, ι_wProd_𝒪]
-    -- simp
-    -- have : ∀ (x : 𝒲[𝟙, S p, 𝒮]), @HMul.hMul 𝒲[𝟙, 𝟙, 𝒮] 𝒲[𝟙, S p, 𝒮] 𝒲[𝟙, S p, 𝒮] _ ((fun x ↦ 1)) x = x.coe_unique_left := by intro x; ext; simp [Matrix.mul_apply]
-    -- simp [this]
-    -- simp [approx_δ.δ']
-    -- rw [xδ_δ'_as_sum_unfolded]
-    -- simp
-    -- have 𝒪_heart_eq {n} : 𝒪_heart_n p n = ∑ m ∈ Finset.range n, (Q⟦~p⟧^m) [] := by
-    --   ext α γ; simp [𝒪_heart_n, LawfulStar.star_eq_sum]; congr!
-    -- rcases xₙ with _ | ⟨α₀, xₙ⟩
-    -- · simp
-    --   simp [Matrix.coe_unique_left, Q, Matrix.down, 𝒪_heart_eq]
-    --   rfl
-    -- · simp
-    --   simp [crox, Listed.array_sum_eq_finset_sum]
-    --   simp [Matrix.mul_add, Matrix.add_mul, Matrix.sum_mul, Matrix.sum_apply, Matrix.mul_sum, Finset.sum_mul, ← Matrix.mul_assoc]
-
-theorem new_approach : 𝒜⟦~p*⟧ = ωSup ⟨fun n ↦ approx_𝒜 p n, sorry⟩ := by
-  ext ⟨α, xₙ, β⟩
-  induction xₙ using Nat.strongRecMeasure List.length generalizing α β; next xₙ ihₙ =>
-  rw [A_sem_cases]
-  simp [Chain.map]; unfold Function.comp; simp
-  simp [approx_𝒜]
-  simp [ι, 𝒪, approx_ι, approx_𝒪]
-  rw [xδ_δ_iter]
-  conv =>
-    enter [2, 1, 1, x]
-    rw [xδ_approx_δ_iter]
-  simp
-  rw [ι_wProd_δ, ι_wProd_𝒪]
-  conv =>
-    enter [2, 1, 1, x]
-    rw [ι_wProd_δ, ι_wProd_𝒪]
-  simp
-  have : ∀ (x : 𝒲[S.I {♡}, S p, 𝒮]), @HMul.hMul 𝒲[𝟙, S.I {♡}, 𝒮] 𝒲[S.I {♡}, S p, 𝒮] 𝒲[𝟙, S p, 𝒮] _ ((fun x ↦ 1)) x = x.coe_unique_left := by intro x; ext; simp [Matrix.mul_apply]
-  simp [this]
-  have : ∀ (x : 𝒲[𝟙, S p, 𝒮]), @HMul.hMul 𝒲[𝟙, 𝟙, 𝒮] 𝒲[𝟙, S p, 𝒮] 𝒲[𝟙, S p, 𝒮] _ ((fun x ↦ 1)) x = x.coe_unique_left := by intro x; ext; simp [Matrix.mul_apply]
-  simp [this]
-  simp [δ.δ', approx_δ.δ']
-  rw [xδ_δ'_as_sum_unfolded]
-  conv =>
-    enter [2, 1, 1, x]
-    rw [xδ_δ'_as_sum_unfolded]
-  simp
-  have 𝒪_heart_eq : 𝒪_heart p = ω∑ (m : ℕ), (Q⟦~p⟧^m) [] := by
-    ext α γ; simp [𝒪_heart, LawfulStar.star_eq_sum]; congr!
-  rcases xₙ with _ | ⟨α₀, xₙ⟩
-  · simp
-    simp [Matrix.coe_unique_left, Q, Matrix.down, 𝒪_heart_eq]
-    simp [Matrix.mul_apply]
-  · simp
-    simp only [crox, Listed.array_sum_eq_finset_sum]
-    simp [Matrix.mul_add, Matrix.add_mul, Matrix.sum_mul, Matrix.sum_apply, Matrix.mul_sum, Finset.sum_mul, ← Matrix.mul_assoc]
-    -- symm
-    calc
-      _ = ((𝒪_heart p ⊟ ι p ⊡ δ p) α α₀ * xδ (δ p) (α₀ :: xₙ) * (𝒪 p ⊟' 𝒪_heart p) ((α₀ :: xₙ).getLast?.getD α) β).down +
-            ∑ x ∈ Finset.range xₙ.length,
-              ∑ x_1,
-                ((𝒪_heart p ⊟ ι p ⊡ δ p) α α₀ * xδ (δ p) (α₀ :: List.take x xₙ) * 𝒪 p ((α₀ :: xₙ)[x]?.getD default) x_1).down *
-                        𝒜⟦~p*⟧ (x_1, List.drop x xₙ, β) := by
-        rcases xₙ with _ | ⟨α₁, xₙ⟩
-        · simp
-        simp only [List.getLast?_cons_cons, List.length_cons]
-        congr! with i hi γ hγ
-        nth_rw 2 [Matrix.mul_assoc]
-        nth_rw 1 [Matrix.mul_assoc]
+theorem 𝒜_star_eq_G (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) : 𝒜⟦~p*⟧ = G⟦~p*⟧ := by
+  ext ⟨α, xs, β⟩
+  rw [𝒜_iter_eq_ωSup_approx]
+  simp [G]
+  simp [ωSum_nat_eq_ωSup_succ]
+  have f (k : ℕ) := congrFun₂ (G'_iter_eq_buckets p (n:=k) (xs:=xs)) α β
+  simp at f
+  conv at f => enter [k, 1]; rw [Finset.sum_apply, Finset.sum_apply]
+  simp [Finset.sum_range_succ', f, G_eq_G']
+  rw [ωSup_nat_eq_succ]
+  rcases xs with _ | ⟨x, xs⟩
+  · simp only [approx_𝒜_iter_empty, Chain.mk_apply, Finset.coe_range,
+    List.buckets_succ_pairwise_disjoint, Finset.sum_biUnion]
+    simp only [ihp, 𝒪_heart_n_eq_G', Finset.sum_range_succ', pow_zero, Matrix.add_apply,
+      List.buckets_nil, Nat.add_eq_zero_iff, one_ne_zero, and_false, ↓reduceIte,
+      Finset.sum_singleton, List.map_replicate, List.prod_replicate, G'_skip]
+  · simp [A'_iter_eq_partitionsFill', ihp, approx_𝒜_eq_A', G'_skip]
+    apply le_antisymm
+    all_goals apply ωSup_le _ _ fun n ↦ le_ωSup_of_le (List.count' (‖xs‖ + 1) (n + 1)) ?_
+    all_goals simp only [Chain.mk_apply]; repeat rw [Finset.sum_apply]
+    · gcongr
+      · simp
+      · grw [List.partitionsFill'_subset_buckets _ _ (by simp)]
         simp
-        congr
-        simp [A_sem_cases]
-        simp [ι, 𝒪]
-        rw [xδ_δ_iter]
+        intro i hi b hb
         simp
-        rw [ι_wProd_δ, ι_wProd_𝒪]
-        simp
-        have : ∀ (x : 𝒲[S.I {♡}, S p, 𝒮]), @HMul.hMul 𝒲[𝟙, S.I {♡}, 𝒮] 𝒲[S.I {♡}, S p, 𝒮] 𝒲[𝟙, S p, 𝒮] _ ((fun x ↦ 1)) x = x.coe_unique_left := by intro x; ext; simp [Matrix.mul_apply]
-        simp [this]
-        simp at hi
-        split_ifs with hi'
-        · omega
-        · simp [δ.δ', List.head!_eq_head?, Option.getD_default_eq_iget, List.getLast?_drop, hi, hi', List.getLast?_cons]
-      _ = ((𝒪_heart p ⊟ ι p ⊡ δ p) α α₀ * xδ (δ p) (α₀ :: xₙ) * (𝒪 p ⊟' 𝒪_heart p) ((α₀ :: xₙ).getLast?.getD α) β).down +
-            ∑ i ∈ Finset.range xₙ.length,
-              ∑ γ,
-                (𝒪_heart p * Q⟦~p⟧ (α₀ :: xₙ.take i)) α γ *
-                        Q⟦~p*⟧ (List.drop i xₙ) γ β := by
-        congr! with i hi γ hγ
-        simp only [Finset.mem_range] at hi
-        nth_rw 1 [Matrix.mul_apply]
-        simp [Q, sox, Matrix.sum_mul]
-        congr! with ξ hξ
-        simp [RPol.wnka_sem_case]
-        simp [xδ, fox, ← Matrix.mul_assoc]
-        congr! 3
         rcases i with _ | i
-        · simp [List.getLast?_cons]
-        · have : i < xₙ.length := by omega
-          simp [List.getLast?_cons, List.getLast?_take, this]
-      _ = (𝒪_heart p * Q⟦~p⟧ (α₀ :: xₙ) * 𝒪_heart p) α β +
-            ∑ i ∈ Finset.range xₙ.length, ∑ γ,
-                (𝒪_heart p * Q⟦~p⟧ (α₀ :: xₙ.take i)) α γ * Q⟦~p*⟧ (List.drop i xₙ) γ β := by
-        congr! with i hi γ hγ
-        nth_rw 2 [Matrix.mul_assoc]
-        nth_rw 1 [Matrix.mul_apply]
-        conv => right; arg 2; ext; rw [Matrix.mul_apply]
-        simp [Q, sox, sox', Matrix.sum_mul, Matrix.mul_sum, Finset.sum_mul, Finset.mul_sum, Matrix.mul_assoc, mul_assoc]
-        rw [Finset.sum_comm]
-        congr! 4 with γ hγ ξ hξ
-        simp [RPol.wnka_sem_case]
-        simp [xδ, fox, ← Matrix.mul_assoc]
-        congr! 3
-      _ = (𝒪_heart p * Q⟦~p⟧ (α₀ :: xₙ) * 𝒪_heart p) α β +
-            ∑ i ∈ Finset.range xₙ.length,
-                ((𝒪_heart p * Q⟦~p⟧ (α₀ :: xₙ.take i)) * Q⟦~p*⟧ (List.drop i xₙ)) α β := by
-        simp [Matrix.mul_apply]
-      _ = ∑ i ∈ Finset.range (xₙ.length + 1), ((𝒪_heart p * Q⟦~p⟧ (α₀ :: xₙ.take i)) * Q⟦~p*⟧ (List.drop i xₙ)) α β := by
-        simp [Finset.sum_range_succ]
-        rw [add_comm]
-        congr!
-        ext
-        simp [Q]
-        rw [RPol.wnka_sem_case]
-        simp [ι, xδ, 𝒪]
-        rw [ι_wProd_𝒪]
-        simp [Matrix.down, Matrix.mul_apply]
-      _ = ∑ i ∈ Finset.range (xₙ.length + 1), ∑ ξ, ∑ γ, 𝒪_heart p α γ * 𝒜⟦~p⟧ ⟨γ, α₀ :: xₙ.take i, ξ⟩ * 𝒜⟦~p*⟧ ⟨ξ, List.drop i xₙ, β⟩ := by
-        simp [Matrix.mul_apply, Finset.sum_mul, RPol.Q_eq_A_sem]
-      _ = ω∑ (m : ℕ), ∑ i ∈ Finset.range (xₙ.length + 1), ∑ ξ, ∑ γ, (𝒜⟦~p⟧^m) ⟨α, [], γ⟩ * 𝒜⟦~p⟧ ⟨γ, α₀ :: xₙ.take i, ξ⟩ * 𝒜⟦~p*⟧ ⟨ξ, List.drop i xₙ, β⟩ := by
-        simp only [ωSum_sum_comm]
-        simp only [𝒪_heart_eq, Pi.pow_apply, Matrix.ωSum_apply, ωSum_apply, ← ωSum_mul_right,
-          ← ωSum_sum_comm]
-        congr!
-        sorry
-      _ = ω∑ (m : ℕ), ω∑ (n : ℕ), ∑ i ∈ Finset.range (xₙ.length + 1), ∑ ξ, ∑ γ, (𝒜⟦~p⟧^m) ⟨α, [], γ⟩ * 𝒜⟦~p⟧ ⟨γ, α₀ :: xₙ.take i, ξ⟩ * (𝒜⟦~p⟧^n) ⟨ξ, List.drop i xₙ, β⟩ := by
-        simp [ωSum_mul_left, ωSum_sum_comm]
-        congr!
-        rw [ihₙ _ (by simp; omega)]
+        · simp_all
+        · use i
+          simp_all
+          simp_all [List.count', mul_add, add_mul]
+          omega
+    · gcongr
+      · simp
+      · simp [Nat.lt_iff_add_one_le]
+        intro i hi
+        apply subset_trans _ (List.buckets_subset_partitionsFill' (x :: xs) (n + 1) (by simp))
+        intro b hb
         simp
-        -- simp [ωSum_nat_eq_ωSup_succ, Chain.map, Function.comp]
-        -- unfold Function.comp
-        -- simp
-
-    sorry
-
+        use i + 1
+        simp_all [Nat.lt_iff_add_one_le]
 
 attribute [-simp] Function.iterate_succ in
 theorem RPol.wnka_sem (p : RPol[F,N,𝒮]) : (RPol.wnka p).sem = G p := by
@@ -5429,9 +2866,7 @@ theorem RPol.wnka_sem (p : RPol[F,N,𝒮]) : (RPol.wnka p).sem = G p := by
   | Add p₁ p₂ ih₁ ih₂ => rw [G, ← ih₁, ← ih₂]; exact wnka_sem_add
   | Weight w p ih => rw [G, ← ih]; exact wnka_sem_weight
   | Seq p₁ p₂ ih₁ ih₂ => exact wnka_sem_seq ih₁ ih₂
-  | Iter p₁ ih =>
-    ext ⟨α, xₙ, β⟩
-    exact congrFun₃ (M'_eq_Q p₁ ih) xₙ α β |>.symm
+  | Iter p₁ ih => exact 𝒜_star_eq_G p₁ ih.symm
 
 theorem the_complete_theorem (p : Pol[F,N,𝒮]) (π) (h) :
     p.sem ⟨π, []⟩ h = p.toRPol.wnka.sem (π, h.2.reverse, h.1) := by
@@ -5459,10 +2894,10 @@ theorem the_complete_theorem (p : Pol[F,N,𝒮]) (π) (h) :
         grind
       · simp
 
--- /--
--- info: 'WeightedNetKAT.the_complete_theorem' depends on axioms: [propext, Classical.choice, Quot.sound]
--- -/
--- #guard_msgs in
--- #print axioms the_complete_theorem
+/--
+info: 'WeightedNetKAT.the_complete_theorem' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms the_complete_theorem
 
 end WeightedNetKAT

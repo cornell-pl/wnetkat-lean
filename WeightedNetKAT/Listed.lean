@@ -706,8 +706,8 @@ def arrayVector' [DecidableEq α] (n : ℕ) : Listed (Vector α n) where
   encode_prop := sorry
 
 -- TODO: make the more efficient version sound
--- instance [DecidableEq α] (n : ℕ) : Listed (Vector α n) := Listed.arrayVector n
-instance [DecidableEq α] (n : ℕ) : Listed (Vector α n) := Listed.arrayVector' n
+instance [DecidableEq α] (n : ℕ) : Listed (Vector α n) := Listed.arrayVector n
+-- instance [DecidableEq α] (n : ℕ) : Listed (Vector α n) := Listed.arrayVector' n
 
 def pi_array [Inhabited β] [DecidableEq α] [DecidableEq β] : Array (α → β) :=
   -- printprint "pi_array time" <|
@@ -750,20 +750,20 @@ instance [Repr α] [Repr β] : Repr (α → β) where
 
 /--
 info: [[(Listed.T.a, 0), (Listed.T.b, 0), (Listed.T.c, 0), (Listed.T.d, 0)],
- [(Listed.T.a, 1), (Listed.T.b, 0), (Listed.T.c, 0), (Listed.T.d, 0)],
- [(Listed.T.a, 0), (Listed.T.b, 1), (Listed.T.c, 0), (Listed.T.d, 0)],
- [(Listed.T.a, 1), (Listed.T.b, 1), (Listed.T.c, 0), (Listed.T.d, 0)],
- [(Listed.T.a, 0), (Listed.T.b, 0), (Listed.T.c, 1), (Listed.T.d, 0)],
- [(Listed.T.a, 1), (Listed.T.b, 0), (Listed.T.c, 1), (Listed.T.d, 0)],
- [(Listed.T.a, 0), (Listed.T.b, 1), (Listed.T.c, 1), (Listed.T.d, 0)],
- [(Listed.T.a, 1), (Listed.T.b, 1), (Listed.T.c, 1), (Listed.T.d, 0)],
  [(Listed.T.a, 0), (Listed.T.b, 0), (Listed.T.c, 0), (Listed.T.d, 1)],
- [(Listed.T.a, 1), (Listed.T.b, 0), (Listed.T.c, 0), (Listed.T.d, 1)],
- [(Listed.T.a, 0), (Listed.T.b, 1), (Listed.T.c, 0), (Listed.T.d, 1)],
- [(Listed.T.a, 1), (Listed.T.b, 1), (Listed.T.c, 0), (Listed.T.d, 1)],
+ [(Listed.T.a, 0), (Listed.T.b, 0), (Listed.T.c, 1), (Listed.T.d, 0)],
  [(Listed.T.a, 0), (Listed.T.b, 0), (Listed.T.c, 1), (Listed.T.d, 1)],
- [(Listed.T.a, 1), (Listed.T.b, 0), (Listed.T.c, 1), (Listed.T.d, 1)],
+ [(Listed.T.a, 0), (Listed.T.b, 1), (Listed.T.c, 0), (Listed.T.d, 0)],
+ [(Listed.T.a, 0), (Listed.T.b, 1), (Listed.T.c, 0), (Listed.T.d, 1)],
+ [(Listed.T.a, 0), (Listed.T.b, 1), (Listed.T.c, 1), (Listed.T.d, 0)],
  [(Listed.T.a, 0), (Listed.T.b, 1), (Listed.T.c, 1), (Listed.T.d, 1)],
+ [(Listed.T.a, 1), (Listed.T.b, 0), (Listed.T.c, 0), (Listed.T.d, 0)],
+ [(Listed.T.a, 1), (Listed.T.b, 0), (Listed.T.c, 0), (Listed.T.d, 1)],
+ [(Listed.T.a, 1), (Listed.T.b, 0), (Listed.T.c, 1), (Listed.T.d, 0)],
+ [(Listed.T.a, 1), (Listed.T.b, 0), (Listed.T.c, 1), (Listed.T.d, 1)],
+ [(Listed.T.a, 1), (Listed.T.b, 1), (Listed.T.c, 0), (Listed.T.d, 0)],
+ [(Listed.T.a, 1), (Listed.T.b, 1), (Listed.T.c, 0), (Listed.T.d, 1)],
+ [(Listed.T.a, 1), (Listed.T.b, 1), (Listed.T.c, 1), (Listed.T.d, 0)],
  [(Listed.T.a, 1), (Listed.T.b, 1), (Listed.T.c, 1), (Listed.T.d, 1)]]
 -/
 #guard_msgs in
