@@ -47,22 +47,23 @@ instance [LE α] [OrderTop α] : One (Bottleneck α) := ⟨⊤⟩
   mul_one := by simp
 
 instance [LinearOrder α] [OrderBot α] [OrderTop α] : IsPositiveOrderedAddMonoid (Bottleneck α) where
-  add_le_add_left:= by
-    intro a b hab c
-    simp
-    if hac : a ≤ c then simp_all else
-    simp_all
-    exact .inr (hac.le.trans hab)
-  add_le_add_right := by
+  add_le_add_left := by
     intro a b hab c
     simp
     if hac : a ≤ c then simp_all else
     simp_all
     exact .inl (hac.le.trans hab)
+  add_le_add_right:= by
+    intro a b hab c
+    simp
+    if hac : a ≤ c then simp_all else
+    simp_all
+    exact .inr (hac.le.trans hab)
   bot_eq_zero := rfl
 instance [LinearOrder α] [OrderBot α] [OrderTop α] : CanonicallyOrderedAdd (Bottleneck α) where
   exists_add_of_le := by intro a b hab; simp; use b; simp_all
   le_self_add := by simp
+  le_add_self := by simp
 instance [LinearOrder α] [OrderBot α] [OrderTop α] : MulLeftMono (Bottleneck α) := ⟨sorry⟩
 instance [LinearOrder α] [OrderBot α] [OrderTop α] : MulRightMono (Bottleneck α) := ⟨sorry⟩
 

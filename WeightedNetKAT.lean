@@ -281,7 +281,7 @@ def main : IO Unit := do
   let v := rSafety.sem' n
   println! f!" ∘ rSafety: {reprStr v}"
 
-  if v < ⊤ then
+  if v ≠ ⊤ then
     println! " ∘ extracting witness..."
     let ρ := rSafety.extraction n.toEWNKA v
     println! f!" ∘ rSafety(witness): {reprStr (ρ.pks.map fun π ↦ π Switch.sw)}"

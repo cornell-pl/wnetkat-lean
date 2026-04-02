@@ -42,18 +42,13 @@ theorem max'_eq_unarc_sup {a b} : max' a b = unarc a ⊔ unarc b := by
       · rfl
       · simp [unarc]
         simp [WithBot.le_def]
-        intro c hc
-        cases hc
-        use b
-        exact ⟨rfl, h⟩
+        use a, b, h; split_ands <;> rfl
     · rw [max_eq_left]
       · rfl
       · simp [unarc]
         simp [WithBot.le_def]
-        intro c hc
-        cases hc
-        use a
-        exact ⟨rfl, le_of_not_ge h⟩
+        simp at h
+        use b, a, h.le; split_ands <;> rfl
 
 @[simp]
 theorem min'_eq_unarc_inf {a b} : min' a b = unarc a ⊓ unarc b := by
@@ -68,24 +63,22 @@ theorem min'_eq_unarc_inf {a b} : min' a b = unarc a ⊓ unarc b := by
       · rfl
       · simp [unarc]
         simp [WithBot.le_def]
-        intro c hc
-        cases hc
-        use b
-        exact ⟨rfl, h⟩
+        use a, b, h; split_ands <;> rfl
     · rw [min_eq_right]
       · rfl
       · simp [unarc]
         simp [WithBot.le_def]
-        intro c hc
-        cases hc
-        use a
-        exact ⟨rfl, le_of_not_ge h⟩
+        simp at h
+        use b, a, h.le; split_ands <;> rfl
 
 @[simp] instance : PartialOrder Arctic where
   le a b := unarc a ≤ unarc b
   le_refl a := le_refl a.unarc
   le_trans a b c h₁ h₂ := Preorder.le_trans a.unarc b.unarc c.unarc h₁ h₂
   le_antisymm a b hab hba := by have := le_antisymm hab hba; exact this
+
+theorem arctic_lt_iff {x y : Arctic} : x < y ↔ x.unarc ≤ y.unarc ∧ ¬y.unarc ≤ x.unarc := by
+  simp only [instPartialOrder]
 
 theorem arc_le {x y} : arc x ≤ arc y ↔ x ≤ y := by simp
 theorem unarc_le {x y} : unarc x ≤ unarc y ↔ x ≤ y := by simp
@@ -170,14 +163,15 @@ instance : Semiring Arctic where
   nsmul_zero _ := by simp
 
 instance : IsPositiveOrderedAddMonoid Arctic where
-  add_le_add_left _ _ h _ := by simp [le_sup_of_le_right h]
+  add_le_add_right _ _ h _ := by simp [le_sup_of_le_right h]
+  add_le_add_left _ _ h _ := by simp [le_sup_of_le_left h]
   bot_eq_zero := rfl
 
-instance : MulLeftMono Arctic := ⟨fun _ _ _ h ↦ add_left_mono (α:=WithBot ℕ∞) h⟩
-instance : MulRightMono Arctic := ⟨fun _ _ _ h ↦ add_right_mono (α:=WithBot ℕ∞) h⟩
+instance : MulLeftMono Arctic := ⟨fun _ _ _ h ↦ add_right_mono (α:=WithBot ℕ∞) h⟩
+instance : MulRightMono Arctic := ⟨fun _ _ _ h ↦ add_left_mono (α:=WithBot ℕ∞) h⟩
 
-instance : AddLeftMono (WithBot ℕ∞) := ⟨fun _ _ _ h ↦ add_left_mono (α:=WithBot ℕ∞) h⟩
-instance : AddRightMono (WithBot ℕ∞) := ⟨fun _ _ _ h ↦ add_right_mono (α:=WithBot ℕ∞) h⟩
+instance : AddLeftMono (WithBot ℕ∞) := ⟨fun _ _ _ h ↦ add_right_mono (α:=WithBot ℕ∞) h⟩
+instance : AddRightMono (WithBot ℕ∞) := ⟨fun _ _ _ h ↦ add_left_mono (α:=WithBot ℕ∞) h⟩
 
 open OmegaCompletePartialOrder
 
@@ -230,7 +224,7 @@ instance : OmegaContinuousNonUnitalSemiring Arctic where
     refine ωScottContinuous_iff_monotone_map_ωSup.mpr ?_
     simp [ωSup]
     constructor
-    · intro x y h; simp_all; exact add_le_add_left (α:=WithBot ℕ∞) h a.unarc
+    · intro x y h; simp_all; exact add_le_add_right (α:=WithBot ℕ∞) h a.unarc
     · intro c
       sorry
       -- apply le_antisymm
@@ -267,7 +261,8 @@ theorem le_zero_arc {x : Arctic} : x ≤ arc 0 ↔ x = arc ⊥ ∨ x = arc 0 := 
     rcases x with _ | _ | x
     · left; rfl
     · contrapose! h
-      exact compareOfLessAndEq_eq_lt.mp rfl
+      sorry
+      -- exact compareOfLessAndEq_eq_lt.mp rfl
     · suffices x = 0 by subst_eqs; right; rfl
       contrapose! h
       simp_all
@@ -275,7 +270,8 @@ theorem le_zero_arc {x : Arctic} : x ≤ arc 0 ↔ x = arc ⊥ ∨ x = arc 0 := 
       | zero => simp at h
       | succ x ih =>
         simp_all
-        exact compare_gt_iff_gt.mp rfl
+        sorry
+        -- exact compare_gt_iff_gt.mp rfl
   · rintro (⟨_, _⟩ | ⟨_, _⟩)
     · simp
     · rfl
@@ -339,16 +335,24 @@ theorem help_me {a b : Arctic}
   constructor
   · apply unarc_le.mpr
     simp [WithBot.le_def]
-    intro c hc
-    use b
-    constructor
+    right
+    use a, b
+    split_ands
+    · gcongr
     · rfl
-    · grw [← h']
-      apply le_of_eq
-      symm
-      sorry
-  ·
-    sorry
+    · rfl
+  · apply arctic_lt_iff.mpr
+    -- simp
+    constructor
+    · apply unarc_le.mpr
+      simp [WithBot.le_def]
+      right
+      use a, b
+      split_ands
+      · gcongr
+      · rfl
+      · rfl
+    · sorry
 
 @[simp] theorem unarc_get {x} (h : Option.isSome x.unarc = true) : Option.get (unarc x) h = x.get h := rfl
 

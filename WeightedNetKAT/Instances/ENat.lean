@@ -10,22 +10,22 @@ instance : IsPositiveOrderedAddMonoid ℕ∞ where
 instance : OmegaContinuousNonUnitalSemiring ℕ∞ where
   ωScottContinuous_add_left := by
     intro x
-    refine ωScottContinuous.of_monotone_map_ωSup ⟨add_left_mono, ?_⟩
+    refine ωScottContinuous.of_monotone_map_ωSup ⟨add_right_mono, ?_⟩
     intro c
     exact ENat.add_iSup ⇑c
   ωScottContinuous_add_right := by
     intro x
-    refine ωScottContinuous.of_monotone_map_ωSup ⟨add_right_mono, ?_⟩
+    refine ωScottContinuous.of_monotone_map_ωSup ⟨add_left_mono, ?_⟩
     intro c
     exact ENat.iSup_add ⇑c
   ωScottContinuous_mul_left := by
     intro x
-    refine ωScottContinuous.of_monotone_map_ωSup ⟨mul_left_mono, ?_⟩
+    refine ωScottContinuous.of_monotone_map_ωSup ⟨mul_right_mono, ?_⟩
     intro c
     exact ENat.mul_iSup x ⇑c
   ωScottContinuous_mul_right := by
     intro x
-    refine ωScottContinuous.of_monotone_map_ωSup ⟨mul_right_mono, ?_⟩
+    refine ωScottContinuous.of_monotone_map_ωSup ⟨mul_left_mono, ?_⟩
     intro c
     exact ENat.iSup_mul (⇑c) x
 

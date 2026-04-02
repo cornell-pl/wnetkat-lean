@@ -12,13 +12,13 @@ instance : IsPositiveOrderedAddMonoid (Language α) where
 
 instance : OmegaContinuousNonUnitalSemiring (Language α) where
   ωScottContinuous_add_left x :=
-    ωScottContinuous.of_monotone_map_ωSup ⟨add_left_mono, (Language.add_iSup · x)⟩
+    ωScottContinuous.of_monotone_map_ωSup ⟨add_right_mono, (Language.add_iSup · x)⟩
   ωScottContinuous_add_right x :=
-    ωScottContinuous.of_monotone_map_ωSup ⟨add_right_mono, (Language.iSup_add · x)⟩
+    ωScottContinuous.of_monotone_map_ωSup ⟨add_left_mono, (Language.iSup_add · x)⟩
   ωScottContinuous_mul_left x :=
-    ωScottContinuous.of_monotone_map_ωSup ⟨mul_left_mono, (Language.mul_iSup · x)⟩
+    ωScottContinuous.of_monotone_map_ωSup ⟨mul_right_mono, (Language.mul_iSup · x)⟩
   ωScottContinuous_mul_right x :=
-    ωScottContinuous.of_monotone_map_ωSup ⟨mul_right_mono, (Language.iSup_mul · x)⟩
+    ωScottContinuous.of_monotone_map_ωSup ⟨mul_left_mono, (Language.iSup_mul · x)⟩
 
 instance : WeightedNetKAT.Star (Language α) where
   star m := KStar.kstar m

@@ -101,7 +101,7 @@ theorem Pol.sem_n_mono (p : Pol[F,N,𝒮]) : Monotone p.sem_n := by
     exact le_trans (Countsupp.bind_mono_right (p₁.sem_n n₁ h) _ _ (ih₂ h₁₂)) (Countsupp.bind_mono_left _ (ih₁ h₁₂ h))
   | Weight w p ih =>
     intro n₁ n₂ h₁₂ h; simp [sem_n]
-    apply fun h' ↦ mul_left_mono (ih h₁₂ h h')
+    apply fun h' ↦ mul_right_mono (ih h₁₂ h h')
   | Add p₁ p₂ ih₁ ih₂ =>
     intro n₁ n₂ h₁₂ h; simp [sem_n]
     gcongr
