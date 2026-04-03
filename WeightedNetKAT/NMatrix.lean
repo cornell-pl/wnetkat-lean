@@ -94,6 +94,8 @@ theorem asMatrix_eq_apply : X.asMatrix = DFunLike.coe X := rfl
 @[simp] theorem asMatrix_apply {i} : X.asMatrix i = X i := rfl
 @[simp] theorem ofMatrix_apply {M : Matrix (Fin m) (Fin n) α} {i} : ofMatrix M i = M i := by
   simp [ofMatrix]
+@[simp] theorem ofMatrix_apply₂ {M : Matrix (Fin m) (Fin n) α} {i j} : ofMatrix M i j = M i j := by
+  simp [ofMatrix]
 
 theorem eq_of_asMatrix (h : X.asMatrix = X'.asMatrix) : X = X' := by
   ext i j; exact congrFun₂ h i j
@@ -204,14 +206,13 @@ instance [Add α] : Add (NMatrix m n α) where
   add a b := .ofMatrix (a.asMatrix + b.asMatrix)
 instance [Mul α] [AddCommMonoid α] : HMul (NMatrix l m α) (NMatrix m n α) (NMatrix l n α) where
   hMul a b := .ofMatrix (a.asMatrix * b.asMatrix)
-@[simp] instance [Mul α] [AddCommMonoid α] : Mul (NMatrix n n α) := ⟨HMul.hMul⟩
+instance [Mul α] [AddCommMonoid α] : Mul (NMatrix n n α) := ⟨HMul.hMul⟩
+
+theorem add_def [Add α] : X + X' = .ofMatrix (X.asMatrix + X'.asMatrix) := rfl
+theorem hmul_def [Mul α] [AddCommMonoid α] : X * Y = .ofMatrix (X.asMatrix * Y.asMatrix) := rfl
 
 @[simp]
-theorem add_apply [Add α] {i} : (X + X') i = X i + X' i := by
-  unfold instAdd
-  rw [HAdd.hAdd, instHAdd]
-  simp
-  rfl
+theorem add_apply [Add α] {i} : (X + X') i = X i + X' i := by simp [add_def]; rfl
 
 instance [AddCommMonoid α] : AddCommMonoid (NMatrix m n α) where
   add_assoc X Y Z := by ext; simp [add_assoc]
@@ -276,11 +277,11 @@ theorem add_zero [NonUnitalSemiring α] : X + 0 = X := by
 instance {α : Type*} [Semiring α] : Semiring (NMatrix n n α) where
   left_distrib A B C := by ext; simp [left_distrib, mul_coe]
   right_distrib A B C := by ext; simp [right_distrib, mul_coe]
-  zero_mul A := by ext; simp only [instMulOfAddCommMonoid, zero_mul]
-  mul_zero A := by ext; simp only [instMulOfAddCommMonoid, mul_zero]
+  zero_mul A := by ext; simp only [zero_mul]
+  mul_zero A := by ext; simp only [mul_zero]
   mul_assoc A B C := by ext; simp [mul_assoc]
-  one_mul A := by ext; simp only [instMulOfAddCommMonoid, one_mul]
-  mul_one A := by ext; simp only [instMulOfAddCommMonoid, mul_one]
+  one_mul A := by ext; simp only [one_mul]
+  mul_one A := by ext; simp only [mul_one]
 
 section
 
@@ -336,7 +337,7 @@ instance : MulLeftMono (NMatrix n n α) where
   elim a b c h := by
     simp_all
     have h' : b.asMatrix ≤ c.asMatrix := h
-    have h'' : a.asMatrix * b.asMatrix ≤ a.asMatrix * c.asMatrix := by apply mul_le_mul_left' h'
+    have h'' : a.asMatrix * b.asMatrix ≤ a.asMatrix * c.asMatrix := by apply mul_le_mul_right h'
     have h'' : NMatrix.ofMatrix (a.asMatrix * b.asMatrix) ≤ NMatrix.ofMatrix (a.asMatrix * c.asMatrix) := by intro i j; simp [h'' i j]
     exact h''
 
@@ -364,7 +365,7 @@ theorem fromBlocks_mul [NonUnitalSemiring α] :
     · simp [Matrix.mul_apply, hi, hj]
       simp [Finset.sum_fin_eq_sum_range, Finset.sum_range_add]
       congr! 2
-      grind [Finset.mem_range]
+      grind
     · simp [Matrix.mul_apply, hi, hj]
   · let i' : Fin n ⊕ Fin o := .inl ⟨i, by omega⟩
     let j' : Fin p ⊕ Fin q := .inr ⟨j - p, by omega⟩
@@ -374,7 +375,7 @@ theorem fromBlocks_mul [NonUnitalSemiring α] :
     · simp [Matrix.mul_apply, hi, hj]
       simp [Finset.sum_fin_eq_sum_range, Finset.sum_range_add]
       congr! 2
-      grind [Finset.mem_range]
+      grind
     · simp [Matrix.mul_apply, hi, hj]
   · let i' : Fin n ⊕ Fin o := .inr ⟨i - n, by omega⟩
     let j' : Fin p ⊕ Fin q := .inl ⟨j, by omega⟩
@@ -384,7 +385,7 @@ theorem fromBlocks_mul [NonUnitalSemiring α] :
     · simp [Matrix.mul_apply, hi, hj]
       simp [Finset.sum_fin_eq_sum_range, Finset.sum_range_add]
       congr! 2
-      grind [Finset.mem_range]
+      grind
     · simp [Matrix.mul_apply, hi, hj]
   · let i' : Fin n ⊕ Fin o := .inr ⟨i - n, by omega⟩
     let j' : Fin p ⊕ Fin q := .inr ⟨j - p, by omega⟩
@@ -394,7 +395,7 @@ theorem fromBlocks_mul [NonUnitalSemiring α] :
     · simp [Matrix.mul_apply, hi, hj]
       simp [Finset.sum_fin_eq_sum_range, Finset.sum_range_add]
       congr! 2
-      grind [Finset.mem_range]
+      grind
     · simp [Matrix.mul_apply, hi, hj]
 
 end
@@ -439,8 +440,7 @@ theorem fromBlocks_le_iff [OmegaCompletePartialOrder α] :
       replace h := h ⟨i + n, by omega⟩ ⟨j + l, by omega⟩
       simp at h
       exact h
-  · intro ⟨_, _, _, _⟩
-    intro ⟨i, hi⟩ ⟨j, hj⟩
+  · intro ⟨_, _, _, _⟩ ⟨i, hi⟩ ⟨j, hj⟩
     simp
     split_ifs <;> apply_assumption
 
@@ -465,7 +465,9 @@ theorem ωSum_apply {m n : ℕ} {𝒮 : Type*} [AddCommMonoid 𝒮] {ι : Type*}
     [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
     (f : ι → NMatrix m n 𝒮) {x y} :
     (ω∑ i, f i) x y = ω∑ i, f i x y := by
-  simp [ωSum, OmegaCompletePartialOrder.ωSup, NMatrix.ofMatrix]
+  simp only [ωSum, ωSup, ofMatrix, ofFn_apply]
+  unfold instOmegaCompletePartialOrderMatrix_weightedNetKAT._aux_9
+  simp only [ωSup]
   congr! 1
   ext k
   simp [Chain.map, OrderHom.comp]

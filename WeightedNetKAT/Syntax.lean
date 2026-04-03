@@ -6,8 +6,8 @@ namespace WeightedNetKAT
 
 variable {𝒮 : Type}
 
-variable {F : Type} [Fintype F] [Listed F] [DecidableEq F]
-variable {N : Type} [Fintype N] [DecidableEq N]
+variable {F : Type} [Listed F] [DecidableEq F]
+variable {N : Type} [DecidableEq N]
 
 -- abbrev Pk (F N : Type) := F → N
 -- notation "Pk[" F "," N "]" => Pk F N
@@ -42,8 +42,7 @@ instance Pk.ofNat {n : ℕ} [OfNat N n] : OfNat Pk[F,N] n where
 instance {F : Type} [Listed F] [Repr F] [Repr N] : Repr Pk[F,N] where
   reprPrec x _ := s!"\{{Listed.listOf _ |>.map (fun k ↦ s!"{reprStr k}↦{reprStr (x k)}") |> ",".intercalate}}"
 
-def H (F N : Type) [Listed F] := Pk[F,N] × List Pk[F,N]
-notation "H[" F "," N "]" => H F N
+notation "H[" F "," N "]" => Pk[F,N] × List Pk[F,N]
 
 instance : DecidableEq H[F,N] := inferInstanceAs (DecidableEq (_ × _))
 instance [Listed N] : Countable H[F,N] := inferInstanceAs (Countable (_ × _))

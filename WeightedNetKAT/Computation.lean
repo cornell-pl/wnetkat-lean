@@ -47,9 +47,9 @@ section
 variable {X : Type} {𝒮 : Type}
 variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [Semiring 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] [DecidableEq 𝒮]
 variable {F : Type} [Listed F] [DecidableEq F]
-variable {N : Type} [Listed N] [DecidableEq N]
+variable {N : Type} [DecidableEq N]
 
-def Finsupp.to𝒲 (m : H[F,N] →₀ 𝒮) : H[F,N] →c 𝒮 := ⟨m.toFun, Set.Finite.countable m.finite_support⟩
+def Finsupp.to𝒲 (m : H[F,N] →₀ 𝒮) : H[F,N] →c 𝒮 := ⟨m.toFun, Set.Finite.countable m.hasFiniteSupport⟩
 
 @[simp] def Finsupp.to𝒲_apply (m : H[F,N] →₀ 𝒮) (x : H[F,N]) : m.to𝒲 x = m x := rfl
 @[simp] def Finsupp.to𝒲_eq_zero (m : H[F,N] →₀ 𝒮) : m.to𝒲 = 0 ↔ m = 0 := by
@@ -59,11 +59,11 @@ def Finsupp.to𝒲 (m : H[F,N] →₀ 𝒮) : H[F,N] →c 𝒮 := ⟨m.toFun, Se
     exact congrFun (congrArg DFunLike.coe h) x
   · simp_all [to𝒲]; intro _; rfl
 
-noncomputable instance (m : H[F,N] →₀ 𝒮) : Fintype ↑m.to𝒲.support := m.finite_support.fintype
+noncomputable instance (m : H[F,N] →₀ 𝒮) : Fintype ↑m.to𝒲.support := m.hasFiniteSupport.fintype
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] [DecidableEq 𝒮] in
 @[simp]
-theorem 𝒲.bind_of_𝒞' (m : H[F,N] →₀ 𝒮) (f : H[F,N] → H[F,N] →c 𝒮) :
+theorem 𝒲.bind_of_𝒞' [Listed N] (m : H[F,N] →₀ 𝒮) (f : H[F,N] → H[F,N] →c 𝒮) :
     (m.to𝒲.bind fun h ↦ f h) = ∑ h ∈ m.support, ⟨fun h' ↦ m h * f h h', SetCoe.countable (Function.support fun h' ↦ m h * (f h) h')⟩ := by
   have : Finite m.to𝒲.support := by
     refine Set.Finite.ofFinset m.support fun x ↦ ?_
@@ -85,13 +85,13 @@ theorem 𝒲.η_eq_η' (x : H[F,N]) : η (α:=𝒮) x = (η' x).to𝒲 := by ext
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 @[simp]
-theorem 𝒲.bind_of_𝒞 (m : H[F,N] →₀ 𝒮) (f : H[F,N] → H[F,N] →₀ 𝒮) :
+theorem 𝒲.bind_of_𝒞 [Listed N] (m : H[F,N] →₀ 𝒮) (f : H[F,N] → H[F,N] →₀ 𝒮) :
     (m.to𝒲.bind fun h ↦ (f h).to𝒲) = (m.bind f).to𝒲 := by
   ext; simp [bind_of_𝒞', ne_eq, Finsupp.bind]
   rw [← Finset.sum_attach]
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
-theorem 𝒲.η_bind (x : H[F,N]) (f : H[F,N] → H[F,N] →c 𝒮) :
+theorem 𝒲.η_bind [Listed N] (x : H[F,N]) (f : H[F,N] → H[F,N] →c 𝒮) :
     (η x).bind f = ⟨fun h ↦ η x x * f x h, SetCoe.countable _⟩ := by
   simp [𝒲.η_eq_η']
   if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm]; rfl
@@ -107,20 +107,16 @@ theorem Pred.compute_eq_sem_n (p : Pred[F,N]) :
   ext
   rw [Pred.sem]
   simp
-  split_ifs
-  · split
-    simp_all
-  · split
-    simp_all
+  split_ifs <;> simp_all
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
-variable [DecidableEq F] in
+variable [Listed N] in
 attribute [local simp] Pol.sem_n Pol.compute in
 theorem Pol.compute_eq_sem_n (p : Pol[F,N,𝒮]) (n : ℕ) : p.sem_n n = fun h ↦ (p.compute n h).to𝒲 := by
   induction p with
   | Filter t => simp [sem_n, compute]; apply Pred.compute_eq_sem_n
-  | Mod f e => ext; simp; split; simp_all
-  | Dup => ext; simp; split; simp_all
+  | Mod f e => ext; simp
+  | Dup => ext; simp
   | Seq p q ihp ihq => simp_all only [sem_n, 𝒲.bind_of_𝒞, compute]
   | Weight w p =>
     simp_all
@@ -135,7 +131,7 @@ theorem Pol.compute_eq_sem_n (p : Pol[F,N,𝒮]) (n : ℕ) : p.sem_n n = fun h �
     congr with x
     suffices (p.iter x).sem_n n = (fun h ↦ (p.iter x).compute n h |>.to𝒲) by simp [this]
     induction x with
-    | zero => ext; simp [Pred.sem, Pred.compute, η', Pred.test]; rfl
+    | zero => ext; simp [Pred.sem, Pred.compute, η', Pred.test]
     | succ x ihx => simp_all only [iter, sem_n, 𝒲.bind_of_𝒞, compute]
 
 end WeightedNetKAT

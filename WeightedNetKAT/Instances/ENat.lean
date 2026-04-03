@@ -46,6 +46,5 @@ instance : WeightedNetKAT.LawfulStar ℕ∞ where
       | zero => simp
       | succ m ih =>
         simp [Finset.sum_range_succ', pow_succ, ← Finset.sum_mul]
-        gcongr
         apply le_trans (ENat.self_le_mul_right m h)
         gcongr

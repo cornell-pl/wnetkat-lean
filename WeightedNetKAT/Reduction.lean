@@ -82,48 +82,22 @@ theorem RPol.seq_of_prefix {p : RPol[F,N,𝒮]} {h₀ h₁ : H[F,N]} (h : (p.sem
   | Drop => simp [RPol.sem] at h
   | Skip => simp [RPol.sem] at h; grind
   | Test π₀ =>
-    simp [RPol.sem] at h; split at h; split at h; simp_all
-    subst_eqs
-    obtain ⟨_, _⟩ := h
-    · subst_eqs
-      simp
-    · simp_all only [Countsupp.coe_zero, Pi.zero_apply, not_true_eq_false]
+    simp [RPol.sem] at h; split at h <;> simp_all
   | Mod γ =>
-    simp [RPol.sem] at h; split at h
-    obtain ⟨_, _⟩ := h₁
-    simp_all
-    obtain ⟨⟨_⟩, _⟩ := h
-    simp_all
+    simp [RPol.sem] at h
+    grind
   | Dup =>
-    simp [RPol.sem] at h; split at h
-    obtain ⟨_, _⟩ := h₁
-    simp_all
-    obtain ⟨⟨_⟩, _⟩ := h
-    simp
+    simp [RPol.sem] at h
+    grind
   | Seq p₁ p₂ ih₁ ih₂ =>
     simp [RPol.sem] at h
-    obtain ⟨x, y⟩ := h₁
-    simp_all
-    obtain ⟨h₂, h₃, h₄⟩ := h
-    have h₄ : ¬(p₂.sem h₂) (x, y) = 0 := by intro; simp_all
-    specialize ih₁ h₃
-    specialize ih₂ h₄
-    simp_all
-    exact List.IsSuffix.trans ih₁ ih₂
+    grind
   | Add p₁ p₂ ih₁ ih₂ =>
     simp [RPol.sem] at h
-    obtain ⟨x, y⟩ := h₁
-    simp_all
-    apply not_or_of_imp at h
-    rcases h with h | h
-    · apply ih₁ h
-    · apply ih₂ h
+    grind
   | Weight w p₁ ih =>
     simp [RPol.sem] at h
-    obtain ⟨x, y⟩ := h₁
-    simp_all
-    have : ¬(p₁.sem h₀) (x, y) = 0 := by intro; simp_all
-    apply ih this
+    grind
   | Iter p₁ ih =>
     simp [RPol.sem] at h
     obtain ⟨x, y⟩ := h₁
@@ -131,48 +105,15 @@ theorem RPol.seq_of_prefix {p : RPol[F,N,𝒮]} {h₀ h₁ : H[F,N]} (h : (p.sem
     obtain ⟨n, h⟩ := h
     induction n generalizing h₀ with
     | zero => simp_all [RPol.sem]
-    | succ n ih' =>
-      simp_all [RPol.sem]
-      obtain ⟨w, l, r⟩ := h
-      have : ¬((p₁.iter n).sem w) (x, y) = 0 := by intro; simp_all
-      specialize ih' this
-      specialize ih l
-      exact List.IsSuffix.trans ih ih'
-
--- def Finset.toList' {α : Type} [Encodable α] [DecidableEq α] (s : Finset α) : List α := s.val.rep
--- theorem Finset.nodup_toList' {α : Type} [Encodable α] [DecidableEq α] (s : Finset α) :
---     (Finset.toList' s).Nodup := by
---   have := Quotient.rep_spec s.val
---   simp at this
---   rw [toList', ← Multiset.coe_nodup, this]
---   exact s.nodup
--- @[simp]
--- theorem Finset.mem_toList'_iff {α : Type} [Encodable α] [DecidableEq α] (s : Finset α) (x : α) :
---     x ∈ (Finset.toList' s) ↔ x ∈ s := by
---   have := Quotient.rep_spec s.val
---   simp at this
---   rw [toList', ← Multiset.mem_coe, this]
---   rfl
--- @[simp]
--- theorem Finset.toList'_toFinset {α : Type} [Encodable α] [DecidableEq α] (s : Finset α) :
---     (Finset.toList' s).toFinset = s := by
---   ext; simp [mem_toList'_iff]
--- @[simp]
--- theorem Finset.toList'_empty {α : Type} [Encodable α] [DecidableEq α] :
---     Finset.toList' (∅ : Finset α) = [] := by
---   have := Quotient.rep_spec (∅ : Finset α).val
---   simp at this
---   exact (Multiset.coe_eq_zero (toList' ∅)).mp this
+    | succ => simp_all [RPol.sem]; grind
 
 @[simp]
 instance RPol.instZero : Zero RPol[F,N,𝒮] where
   zero := wnk_rpol {drop}
+instance : Add RPol[F,N,𝒮] := ⟨RPol.Add⟩
+omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq F] [DecidableEq N] in
 @[simp]
-instance : HAdd RPol[F,N,𝒮] RPol[F,N,𝒮] RPol[F,N,𝒮] where
-  hAdd p q := p.Add q
-@[simp]
-instance : Add RPol[F,N,𝒮] where
-  add p q := p.Add q
+theorem RPol.add_def (p q : RPol[F,N,𝒮]) : p + q = p.Add q := rfl
 
 @[simp]
 theorem RPol.instAdd_sem (p q : RPol[F,N,𝒮]) : (p + q).sem = p.sem + q.sem := by
@@ -210,7 +151,7 @@ theorem Pol.filter_toRol_sem_eq_sum (t : Pred[F,N]) :
     intro l
     induction l with
     | nil => simp
-    | cons p l ih => simp_all
+    | cons p l ih => simp_all [RPol.sem]; rfl
   rw [this]; clear this
   -- TODO: this might not be needed once we have `DecidableEq RPol`
   classical
@@ -237,7 +178,7 @@ theorem Pol.assign_toRol_sem_eq_sum (f : F) (v : N) :
     intro l
     induction l with
     | nil => simp
-    | cons p l ih => simp_all
+    | cons p l ih => simp_all [RPol.sem]; rfl
   simp [this]; clear this
   -- TODO: this might not be needed once we have `DecidableEq RPol`
   classical
@@ -261,37 +202,24 @@ theorem Pol.toRol_sem_eq_sem (p : Pol[F,N,𝒮]) : p.toRPol.sem = p.sem := by
       · subst_eqs
         rw [Finset.sum_eq_single h₀.1]
         · simp_all
-          split
-          simp
         · simp_all
           intro p
           split_ifs
           · simp_all
-            split
-            simp_all
-            intro h
-            split_ifs
-            · simp_all
-            · simp_all
+            split <;> simp_all
           · simp_all
         · simp_all
       · simp_all
         intro p
         split_ifs
         · simp_all
-          split
-          split_ifs
-          · simp_all
-          · simp_all
+          split <;> simp_all
         · simp_all
     · simp_all
       intro p
       split_ifs
       · simp_all
-        split
-        split_ifs
-        · simp_all
-        · simp_all
+        split <;> simp_all
       · simp_all
   | Mod f v =>
     simp [Pol.sem]
@@ -299,14 +227,11 @@ theorem Pol.toRol_sem_eq_sem (p : Pol[F,N,𝒮]) : p.toRPol.sem = p.sem := by
     ext h₀ h₁
     if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
     simp
-    split
-    rename_i π h₀
-    simp_all
     split_ifs
     · subst_eqs
-      rw [Finset.sum_eq_single π]
+      rw [Finset.sum_eq_single h₀.1]
       · simp
-        rw [ωSum_eq_single ⟨(π, h₀), by simp [h10]⟩]
+        rw [ωSum_eq_single ⟨h₀, by simp [h10]⟩]
         · simp
         · simp
       · simp_all
@@ -319,11 +244,10 @@ theorem Pol.toRol_sem_eq_sem (p : Pol[F,N,𝒮]) : p.toRPol.sem = p.sem := by
       intro p a
       split_ifs
       · subst_eqs
-        split
-        · simp_all
-          grind
+        simp_all
+        grind
       · simp_all
-  | Dup => simp [toRPol, sem, RPol.sem]; rfl
+  | Dup => simp [toRPol, sem, RPol.sem]
   | Seq p₁ p₂ ih₁ ih₂ => simp [toRPol, sem, RPol.sem, ih₁, ih₂]
   | Add p₁ p₂ ih₁ ih₂ => simp [toRPol, sem, RPol.sem, ih₁, ih₂]
   | Weight w p₁ ih => simp [toRPol, sem, RPol.sem, ih]

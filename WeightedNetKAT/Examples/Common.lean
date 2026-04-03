@@ -1,6 +1,7 @@
 import Mathlib.Logic.Encodable.Pi
 import WeightedNetKAT.Computation
 import WeightedNetKAT.WNKA
+import WeightedNetKAT.WNKA.Explicit
 import WeightedNetKAT.Instances.Boolean
 import WeightedNetKAT.Instances.Bottleneck
 
@@ -55,7 +56,7 @@ def S.repr {F N 𝒮 : Type} [Listed F] {p : RPol[F,N,𝒮]} (s : S p) : String 
   | wnk_rpol { @test ~_ } => "♡"
   | wnk_rpol { @mod ~_ } => "♡"
   | wnk_rpol { dup } =>
-    match s.1 with
+    match s with
     | ♡ => "♡"
     | ♣ => "♣"
   | wnk_rpol { ~_ ⨁ ~_ } =>
@@ -70,7 +71,7 @@ def S.repr {F N 𝒮 : Type} [Listed F] {p : RPol[F,N,𝒮]} (s : S p) : String 
   | wnk_rpol { ~p₁* } =>
     match s with
     | .inl s => let s' : S p₁ := s; s'.repr
-    | .inr ⟨♡, _⟩ => "♡*"
+    | .inr 𝟙 => "♡*"
 
 instance {F N 𝒮 : Type} [Listed F] {p : RPol[F,N,𝒮]} : Repr (S p) where
   reprPrec s _ := s.repr
@@ -125,7 +126,7 @@ def RPol.eval_string {F N 𝒮 : Type}
     [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
     [DecidableEq 𝒮] [Star 𝒮] (p : RPol[F,N,𝒮]) (s : GS[F,N])
     :=
-      p.wnka.sem s
+      p.ewnka.sem s
 
 instance myRepr {α A B : Type} [DecidableEq α] [Zero α] [DecidableEq A] [DecidableEq B]
     [Listed A] [Listed B] [Repr α] [Repr A] [Repr B] : Repr 𝒲[A, B, α] where

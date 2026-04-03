@@ -10,15 +10,13 @@ deriving DecidableEq
 instance : HOr BoolRing BoolRing BoolRing := ⟨or⟩
 instance : HAnd BoolRing BoolRing BoolRing := ⟨and⟩
 
-instance : HAdd BoolRing BoolRing BoolRing := ⟨or⟩
-instance : HMul BoolRing BoolRing BoolRing := ⟨and⟩
 instance : Add BoolRing := ⟨or⟩
 instance : Mul BoolRing := ⟨and⟩
 instance : Zero BoolRing := ⟨false⟩
 instance : One BoolRing := ⟨true⟩
 
-@[simp] theorem BoolRing.add_eqq_or {a b : BoolRing} : a + b = (or a b) := by simp [HAdd.hAdd]
-@[simp] theorem BoolRing.mul_eqq_and {a b : BoolRing} : a * b = (and a b) := by simp [HMul.hMul]
+@[simp] theorem BoolRing.add_eq_or {a b : BoolRing} : a + b = (or a b) := by rfl
+@[simp] theorem BoolRing.mul_eq_and {a b : BoolRing} : a * b = (and a b) := by rfl
 
 @[simp] theorem BoolRing.zero_eq_false : (0 : BoolRing) = false := rfl
 @[simp] theorem BoolRing.one_eq_true : (1 : BoolRing) = true := rfl

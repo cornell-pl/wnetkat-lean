@@ -4,6 +4,12 @@ import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
 open OmegaCompletePartialOrder
 open scoped RightActions
 
+namespace WeightingNotation
+
+scoped notation "𝒲[" x ", " y ", " s "]" => Matrix x y s
+
+end WeightingNotation
+
 section
 
 variable {𝒮 : Type*} [OmegaCompletePartialOrder 𝒮]

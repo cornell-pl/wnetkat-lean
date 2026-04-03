@@ -485,18 +485,19 @@ theorem ωSum_add {f g : X → 𝒮} :
     ω∑ (x : X), (f x + g x) = ω∑ (x : X), f x + ω∑ x, g x := by
   simp [ωSum]
   simp [ωSup_add_ωSup, ← Finset.sum_add_distrib]
-  congr! with n i hi
+  congr with n
+  congr! with i hi
   split <;> simp
 
 theorem ωSum_mul_left {f : X → 𝒮} {a : 𝒮} :
     ω∑ (x : X), a * f x = a * ω∑ (x : X), f x := by
   simp [ωSum, mul_ωSup, Finset.mul_sum]
-  congr!; split <;> simp
+  congr; congr!; split <;> simp
 
 theorem ωSum_mul_right {f : X → 𝒮} {a : 𝒮} :
     ω∑ (x : X), f x * a = (ω∑ (x : X), f x) * a := by
   simp [ωSum, ωSup_mul, Finset.sum_mul]
-  congr!; split <;> simp
+  congr; congr!; split <;> simp
 
 theorem ωSum_sum_comm {Y : Type*} (S : Finset Y) {f : X → Y → 𝒮} :
     ω∑ (x : X), ∑ y ∈ S, f x y = ∑ y ∈ S, ω∑ (x : X), f x y := by

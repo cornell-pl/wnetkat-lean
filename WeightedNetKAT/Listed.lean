@@ -1,3 +1,4 @@
+import Batteries.Data.Array.Pairwise
 import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 import Mathlib.Algebra.GroupWithZero.Basic
 import Mathlib.Algebra.GroupWithZero.Nat
@@ -55,8 +56,7 @@ theorem getElem_product {l₁ : List α} {l₂ : List β} {i} (hi : i < (l₁ ×
     split_ifs
     · simp_all [Nat.mod_eq_of_lt]
       have : i / l₂.length = 0 := by simp_all [Nat.div_eq_of_lt]
-      sorry
-      -- grind
+      grind
     · rw [ih (by simp [List.length_product]; omega)]
       simp
       constructor
@@ -111,8 +111,6 @@ theorem pair_mem_product {l₁ : Array α} {l₂ : Array β} {x} {y} : (x, y) �
 def size_product {l₁ : Array α} {l₂ : Array β} : (l₁ ×ˢ l₂).size = l₁.size * l₂.size := by
   convert List.length_product (l₁:=l₁.toList) (l₂:=l₂.toList)
   simp [← product_eq_toList_product]
-
-def Pairwise (R : α → α → Prop) (l : Array α) : Prop := l.toList.Pairwise R
 
 def Nodup (l : Array α) : Prop := l.Pairwise (· ≠ ·)
 
@@ -176,6 +174,7 @@ class Listed (α : Type*) where
 
 namespace Listed
 
+@[implicit_reducible]
 def ofArray {α : Type*} [DecidableEq α]
     (array : Array α) (nodup : array.Nodup) (complete : ∀ a, a ∈ array) : Listed α where
   array
@@ -198,6 +197,7 @@ def encode_inj : Function.Injective (Listed.encode (α:=α)) := by
 
 instance : Countable α := ⟨⟨Listed.encode, Listed.encode_inj⟩⟩
 
+@[implicit_reducible]
 def lift [Listed α] {γ : Type*} (f : α ≃ γ) : Listed γ where
   array := array.map f
   size := array.size
@@ -291,6 +291,7 @@ def decodeFin_bijective : Function.Bijective (decodeFin (α:=α)) := by
   · intro a b h; exact decodeFin_inj h
   · intro i; use encodeFin i; simp
 
+@[implicit_reducible]
 def fintype [DecidableEq α] : Fintype α := {
   elems := (listOf α).toFinset
   complete := by simp [listOf, complete]
@@ -481,6 +482,11 @@ theorem cool_bijection.invFun_eq_invFun' (n m : ℕ) (i) : cool_bijection.invFun
       simp
       ext
       simp_all
+      have {n : ℕ} {i : Fin n} : i.val = i % n := by
+        refine Eq.symm (Nat.mod_eq_of_lt ?_)
+        simp
+      rw [this]
+      congr
       sorry
 
 set_option pp.deepTerms true in
@@ -659,39 +665,12 @@ theorem Array.length_product {α β : Type*} (a : Array α) (b : Array β) :
 @[simp]
 theorem arrayVector_size [DecidableEq α] (n : ℕ) : (arrayVector (α:=α) n).size = Listed.size α ^ n := by
   induction n with
-  | zero => simp [size, Listed.array, arrayVector, arrayVector_aux]
+  | zero => unfold size; simp only [arrayVector, Nat.pow_zero, arrayVector_aux, pow_zero]
   | succ n ih =>
+    unfold size at ih ⊢
     simp_all [size, Listed.array, arrayVector, arrayVector_aux, pow_succ]
-
-theorem idk''' [DecidableEq α] (n : ℕ) :
-    (arrayVector n).array = Array.ofFn (cool_bijection.toFun (Listed.size α) n) := by
-  simp [arrayVector]
-  fun_induction arrayVector_aux with
-  | case1 => ext; simp; omega
-  | case2 n L complete ih =>
-    have h_size : size (Fin (size α)) = size α := by simp
-    ext i hi₁ hi₂ j hj
-    · simp_all [L, pow_succ]
-      -- congr! 1
-      -- show size (Fin (size α)) = size α
-      -- simp
-    · simp_all [L]
-      congr! 1
-      simp [cool_bijection.toFun]
-      have : (Array.ofFn (cool_bijection.toFun (size α) n) ×ˢ (array (α:=Fin (size α)))).size = (Array.ofFn (cool_bijection.toFun (size α) n)).size * (array (α:=Fin (size α))).size := by simp
-
-
-      if hj' : j = ((Array.ofFn (cool_bijection.toFun (size α) n) ×ˢ (array (α:=Fin (size α))))[i]'(by simp_all [size, pow_succ])).1.size then
-        simp_all
-        sorry
-      else
-        simp_all
-        simp [Vector.size] at hj'
-        have : j < n := by omega
-        simp_all
-
-        sorry
-
+    unfold size at ih ⊢
+    simp_all
 
 #check (arrayVector (α:=Fin 5) 7).array
 
@@ -800,5 +779,57 @@ theorem sum_fin
     :
     ∑ (i : Fin (size α)), f i = ∑ (i : α), f (encodeFin i) :=
   (Function.Bijective.sum_comp encodeFin_bijective f).symm
+
+instance : Unique (Fin (size Unit)) where
+  uniq := by intro ⟨a, ha⟩; have : size Unit = 1 := rfl; grind
+
+@[simp, grind =]
+theorem size_isEmpty {α : Type*} [Listed α] [Subsingleton α] [i : IsEmpty α] : size α = 0 := by
+  rw [← size_prop]
+  simp
+  suffices ∀ {xs : Array α}, xs = #[] by simp_all
+  intro xs
+  rcases xs with ⟨xs⟩
+  simp_all
+  induction xs with
+  | nil => rfl
+  | cons x xs => apply i.elim' x
+@[simp, grind =]
+theorem size_subsingleton_nonempty {α : Type*} [Listed α] [ss : Subsingleton α] [i : Nonempty α] : size α = 1 := by
+  rw [← size_prop]
+  show (arrayOf α).size = 1
+  if h : (arrayOf α).size < 2 then
+    have : (arrayOf α).size ≠ 0 := by
+      let a : α := Classical.choice i
+      have := mem_arrayOf a
+      grind
+    omega
+  else
+    simp [Nat.lt_iff_add_one_le] at h
+    let a := (arrayOf α)[0]
+    let b := (arrayOf α)[1]
+    simp_all [subsingleton_iff]
+    have : (arrayOf α).Nodup := nodup
+    simp [Array.Nodup, Array.pairwise_iff_getElem] at this
+    replace : a ≠ b := by grind
+    specialize ss a b
+    contradiction
+@[simp, grind =]
+theorem size_unique {α : Type*} [Listed α] [i : Unique α] : size α = 1 := by
+  apply size_subsingleton_nonempty
+
+@[grind .]
+theorem size_subsingleton {α : Type*} [Listed α] [i : Subsingleton α] : size α ≤ 1 := by
+  if Nonempty α then grind else simp_all
+
+@[simp, grind =]
+theorem encodeFin_subsingleton {α : Type*} [Listed α] [Subsingleton α] (a : α) :
+    encodeFin a = ⟨0, by have : Nonempty α := Nonempty.intro a; simp_all⟩ := by
+  have : size α ≤ 1 := size_subsingleton; omega
+@[simp, grind =]
+theorem encode_subsingleton {α : Type*} [Listed α] [Subsingleton α] (a : α) :
+    encode a = 0 := by
+  have := encodeFin_subsingleton a
+  simpa [encodeFin]
 
 end Listed

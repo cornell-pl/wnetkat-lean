@@ -172,7 +172,9 @@ def RPol.iter (p : RPol[F,N,𝒮]) : ℕ → RPol[F,N,𝒮]
   | 0 => .Skip
   | n+1 => p.Seq (p.iter n)
 
-@[simp, reducible] instance RPol.instHPow : HPow RPol[F,N,𝒮] ℕ RPol[F,N,𝒮] where hPow p n := p.iter n
+@[reducible] instance RPol.instHPow : HPow RPol[F,N,𝒮] ℕ RPol[F,N,𝒮] where hPow p n := p.iter n
+omit [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] in
+@[simp] theorem RPol.pow_eq_iter (p : RPol[F,N,𝒮]) (n : ℕ) : p ^ n = p.iter n := by rfl
 
 @[simp]
 def RPol.iterDepth : RPol[F,N,𝒮] → ℕ

@@ -161,8 +161,8 @@ instance : OrderBot (X →c 𝒮) where
   bot := 0
   bot_le C x := by simp
 
-instance : MulLeftMono (X →c 𝒮) := ⟨fun C _ _ h x ↦ mul_le_mul_left' (h x) (C x)⟩
-instance : MulRightMono (X →c 𝒮) := ⟨fun C _ _ h x ↦ mul_le_mul_right' (h x) (C x)⟩
+instance : MulLeftMono (X →c 𝒮) := ⟨fun C _ _ h x ↦ mul_le_mul_right (h x) (C x)⟩
+instance : MulRightMono (X →c 𝒮) := ⟨fun C _ _ h x ↦ mul_le_mul_left (h x) (C x)⟩
 
 instance : IsPositiveOrderedAddMonoid (X →c 𝒮) where
   add_le_add_left _ _ h C x := add_le_add_left (h x) (C x)
@@ -276,7 +276,7 @@ omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring �
 theorem ωSum_apply [Countable X] {Y : Type} {f : X → Y →c 𝒮} {y : Y} :
     (ω∑ (x : X), f x) y = ω∑ (x : X), f x y := by
   simp [ωSum, Chain.map]
-  congr! with n
+  congr!; ext n
   simp
   congr with x
   split <;> simp_all
@@ -329,6 +329,7 @@ theorem bind_continuous_left {Y : Type} (g : X → Y →c 𝒮) :
       Subtype.forall, not_false_eq_true, true_and, S']
       intro x n h h'
       use i
+      exact n
     · grind only [cases eager Subtype]
     · grind only [Finset.mem_filterMap, Option.some.injEq, mem_support_iff, Subtype.mk.injEq,
         ωSup_eq_zero_iff, cases eager Subtype, cases Or]

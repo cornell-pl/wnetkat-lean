@@ -1,4 +1,5 @@
 import WeightedNetKAT.WNKA
+import WeightedNetKAT.WNKA.Explicit
 
 open OmegaCompletePartialOrder
 open scoped RightActions
@@ -33,10 +34,10 @@ abbrev Run := List (Q × (Pk[F,N] × Pk[F,N]) × Q) × ((Pk[F,N] × Pk[F,N]) × 
 notation "Run["f","n","q"]" => Run (F:=f) (N:=n) (Q:=q)
 
 /--
-error: failed to synthesize
+error: failed to synthesize instance of type class
   DecidableEq (List (Q × (Pk[F,N] × Pk[F,N]) × Q))
 
-Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 -/
 #guard_msgs in
 example : DecidableEq (List (Q × (Pk[F,N] × Pk[F,N]) × Q)) := inferInstance
@@ -110,7 +111,6 @@ decreasing_by
     · simp only [lt_add_iff_pos_left, add_pos_iff, zero_lt_one, or_true]
     · simp
       rintro x ρ α β q h' ⟨_⟩
-      refine Nat.lt_add_one_of_le ?_
       specialize h _ h'
       sorry
   · apply List.max?_getD_lt

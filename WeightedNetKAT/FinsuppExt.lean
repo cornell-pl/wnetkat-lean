@@ -236,8 +236,8 @@ instance : OrderBot (ι →₀ M) where
   bot := 0
   bot_le a i := by simp
 
-instance : MulLeftMono (ι →₀ M) := ⟨fun a _ _ h i ↦ mul_le_mul_left' (h i) (a i)⟩
-instance : MulRightMono (ι →₀ M) := ⟨fun a _ _ h i ↦ mul_le_mul_right' (h i) (a i)⟩
+instance : MulLeftMono (ι →₀ M) := ⟨fun a _ _ h i ↦ mul_le_mul_right (h i) (a i)⟩
+instance : MulRightMono (ι →₀ M) := ⟨fun a _ _ h i ↦ mul_le_mul_left (h i) (a i)⟩
 
 instance : AddCommMonoid (ι →₀ M) where
   add_assoc _ _ _ := by ext; apply add_assoc
@@ -344,7 +344,8 @@ omit [MulLeftMono M] [MulRightMono M] [OmegaContinuousNonUnitalSemiring M] [Deci
 theorem ωSum_apply [Countable ι] {Y : Type} [DecidableEq Y] [Fintype Y] {f : ι → Y →₀ M} {y : Y} :
     (ω∑ (x : ι), f x) y = ω∑ (x : ι), f x y := by
   simp [ωSum, Chain.map]
-  congr! with n
+  congr!
+  ext n
   simp
   congr with x
   split <;> simp_all

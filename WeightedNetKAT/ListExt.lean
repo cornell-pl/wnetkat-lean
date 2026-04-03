@@ -643,7 +643,7 @@ theorem corep_reconstruct {α : Type*} {ls : List (List α)} :
       · simp_all
         rename_i ys i ys' l h
         simp [replicate]
-        suffices rtakeWhile (fun x ↦ decide (‖x‖ = 0)) ([] :: ls) = rtakeWhile (fun x ↦ decide (‖x‖ = 0)) ls by
+        suffices rtakeWhile (fun x ↦ decide (x = [])) ([] :: ls) = rtakeWhile (fun x ↦ decide (x = [])) ls by
           simp [this, ih]
         clear ih
         induction ls using reverseRecOn with

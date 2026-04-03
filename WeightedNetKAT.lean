@@ -1,5 +1,6 @@
 import WeightedNetKAT.Examples.Common
 import WeightedNetKAT.WNKA
+import WeightedNetKAT.WNKA.Explicit
 import WeightedNetKAT.rSafety
 import WeightedNetKAT.rReachability
 import WeightedNetKAT.Instances.Language
@@ -145,10 +146,7 @@ def p (𝒮) [Semiring 𝒮] : RPol[Switch,City,𝒮] := wnk_rpol {
 }
 
 example : p _ = p_latency := by
-  simp [p, p_latency, build_of_rel, latency, Listed.arrayOf, Listed.array, p', latency.ms, Array.sum', List.sum']
-  simp only [HAdd.hAdd, Zero.zero, OfNat.ofNat]
-  simp only [Nat.zero_eq, WithTop.coe_zero, Nat.cast_ofNat, -RPol.Add.injEq, -RPol.Seq.injEq,
-    reduceCtorEq, and_false, RPol.Weight.injEq, and_true, true_and, false_and, and_self]
+  cbv
   sorry
 
 -- p_0 = 2 (*) sw <- 1
@@ -217,19 +215,19 @@ open WeightedNetKAT
 
 example {Q : Type} [Repr Q] : Repr (rReachability.Run (F:=Switch) (N:=City) (Q:=Q)) := inferInstance
 
--- /-- info: 'WeightedNetKAT.RPol.wnka' depends on axioms: [propext, Classical.choice, Quot.sound] -/
--- #guard_msgs in
--- #print axioms RPol.wnka
--- /--
--- info: 'WeightedNetKAT.the_complete_theorem' depends on axioms: [propext, Classical.choice, Quot.sound]
--- -/
--- #guard_msgs in
--- #print axioms the_complete_theorem
--- /--
--- info: 'WeightedNetKAT.rSafety.sem'' depends on axioms: [propext, Classical.choice, Quot.sound]
--- -/
--- #guard_msgs in
--- #print axioms rSafety.sem'
+/-- info: 'WeightedNetKAT.RPol.wnka' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms RPol.wnka
+/--
+info: 'WeightedNetKAT.the_complete_theorem' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms the_complete_theorem
+/--
+info: 'WeightedNetKAT.rSafety.sem'' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms rSafety.sem'
 
 instance : Std.ToFormat Pk[Switch,City] where
   format x :=
@@ -248,7 +246,7 @@ instance : Std.ToFormat Pk[Switch,City] where
 instance (priority := 1000000) {Q} [Std.ToFormat Q] : Repr Run[Switch,City,Q] where
   reprPrec := fun (ρ, (α, β), n) _ ↦ f!"⟨{ρ.reverse.map fun ⟨q₀, (α', β'), q₁⟩ ↦ (q₀, (β', α'), q₁)}, ({α}, {β}), {n}⟩"
 
-instance {𝒮} {p : RPol[Switch,City,𝒮]} : Std.ToFormat (S p) where
+instance {𝒮} {p : RPol[Switch,City,𝒮]} : Std.ToFormat (@S Switch instListedSwitch City 𝒮 p) where
   format x := reprStr x
 
 def main : IO Unit := do
@@ -274,19 +272,20 @@ def main : IO Unit := do
   -- let pol := wnk_rpol { (~(p Arctic) ; dup)* }
   let pol := wnk_rpol { (~p_latency ; dup)* }
   -- let res ← pol.eval
-  let n : WNKA _ _ _ (S pol) := pol.wnka
+  let n : EWNKA Switch City Arctic (S pol) := pol.ewnka
 
   println! " ∘ WNKA has been built!"
 
-  let v := rSafety.sem' n
+  let v := rSafety.Esem' n
   println! f!" ∘ rSafety: {reprStr v}"
 
   if v ≠ ⊤ then
     println! " ∘ extracting witness..."
-    let ρ := rSafety.extraction n.toEWNKA v
+    let ρ := rSafety.extraction n v
     println! f!" ∘ rSafety(witness): {reprStr (ρ.pks.map fun π ↦ π Switch.sw)}"
   else
     println! " ∘ rSafety is ⊤!"
 
-  let ρ := rReachability.all n |>.filter fun (a, b) ↦ b ≠ Arctic.arc 0
-  println! f!" ∘ rReachability: {(ρ.map fun (a, b) ↦ ((instReprRunSwitchCityOfToFormat.reprPrec a 0), reprStr b))}"
+  -- let ρ := rReachability.all n |>.filter fun (a, b) ↦ b ≠ Arctic.arc 0
+  -- letI : Std.ToFormat (S pol) := instToFormatSSwitchCity
+  -- println! f!" ∘ rReachability: {(ρ.map fun (a, b) ↦ ((instReprRunSwitchCityOfToFormat.reprPrec a 0), reprStr b))}"

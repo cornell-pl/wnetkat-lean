@@ -1,4 +1,5 @@
 import WeightedNetKAT.WNKA
+import WeightedNetKAT.WNKA.Explicit
 
 open OmegaCompletePartialOrder
 open scoped RightActions
@@ -10,7 +11,6 @@ namespace WeightedNetKAT
 variable {F : Type} [Fintype F] [Listed F] [DecidableEq F]
 variable {N : Type} [Listed N] [DecidableEq N]
 variable {𝒮 : Type} [Semiring 𝒮]
-variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
 
 namespace rSafety
 
@@ -51,13 +51,15 @@ def Δ_star : List Pk[F,N] → 𝒲[Q' F N Q, Q' F N Q, 𝒮]
   | [] => 1
   | α::x => Δ 𝒜 α * Δ_star x
 
-def sem : List Pk[F,N] → 𝒮 := fun x ↦ (I * Δ_star 𝒜 x * Λ : 𝒲[_, _, 𝒮]) () ()
+-- def sem : List Pk[F,N] → 𝒮 := fun x ↦ (I * Δ_star 𝒜 x * Λ : 𝒲[_, _, 𝒮]) () ()
 
 def M : 𝒲[Q' F N Q, Q' F N Q, 𝒮] := ∑ (α : Pk[F,N]), Δ 𝒜 α
 
-def M_star : 𝒲[Q' F N Q, Q' F N Q, 𝒮] := (M 𝒜)^*
+variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
 
-def sem' :=
+noncomputable def M_star : 𝒲[Q' F N Q, Q' F N Q, 𝒮] := Star.star (M 𝒜)
+
+noncomputable def sem' :=
     ((I : 𝒲[𝟙, Q' F N Q, 𝒮]) * M_star 𝒜 * (Λ : 𝒲[Q' F N Q, 𝟙, 𝒮]) : 𝒲[_, _, 𝒮]) () ()
 
 def EI : E𝒲[𝟙, Q' F N Q, 𝒮] := Eη₂ () (.inr .qι)
@@ -104,20 +106,20 @@ omit [Fintype F] [Fintype Q] [Star 𝒮] in
 theorem EΛ_eq_Λ : EΛ (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) = EMatrix.ofMatrix Λ := by
   ext; simp [EΛ, Λ, η₂]
 
+variable [LawfulStar 𝒮] [StarIter 𝒮]
+
 omit [Fintype F] in
 @[simp]
 theorem Esem'_eq_sem' : Esem' ℰ = sem' ℰ.toWNKA := by
-  suffices EMatrix.asMatrix (EM ℰ).asNMatrix^* = (M ℰ.toWNKA)^* by
-    simp [Esem', sem', EM_star, M_star, this]
-  ext i j
-  simp [Star.star, EM, M]
+  simp [Esem', sem', EM_star, M_star]
   congr!
-  ext
-  simp [EMatrix.asNMatrix, Matrix.sum_apply]
+  ext i j
+  simp only [EMatrix.asNMatrix, EM, EΔ_eq_Δ, ← EMatrix.ofMatrix_sum, LawfulStar.star_eq_sum,
+    EMatrix.asMatrix_apply₂, M, Matrix.ωSum_apply, ωSum_apply]
+  show (ω∑ (n : ℕ), EMatrix.ofMatrix (∑ i, Δ ℰ.toWNKA i) ^ n) i j = _
+  simp only [← EMatrix.ofMatrix_pow, EMatrix.ωSum_apply, EMatrix.ofMatrix_apply₂]
 
 def sem'_fast := Esem' 𝒜.toEWNKA
-
-@[csimp] theorem sem'_csimp : @sem' = @sem'_fast := by ext; simp [sem'_fast]
 
 variable [DecidableEq 𝒮]
 

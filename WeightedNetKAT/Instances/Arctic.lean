@@ -71,19 +71,28 @@ theorem min'_eq_unarc_inf {a b} : min' a b = unarc a ⊓ unarc b := by
         simp at h
         use b, a, h.le; split_ands <;> rfl
 
-@[simp] instance : PartialOrder Arctic where
+instance : PartialOrder Arctic where
   le a b := unarc a ≤ unarc b
   le_refl a := le_refl a.unarc
   le_trans a b c h₁ h₂ := Preorder.le_trans a.unarc b.unarc c.unarc h₁ h₂
   le_antisymm a b hab hba := by have := le_antisymm hab hba; exact this
 
+@[simp] theorem le_def {x y : Arctic} : x ≤ y ↔ x.unarc ≤ y.unarc := by rfl
+
+@[simp]
 theorem arctic_lt_iff {x y : Arctic} : x < y ↔ x.unarc ≤ y.unarc ∧ ¬y.unarc ≤ x.unarc := by
-  simp only [instPartialOrder]
+  simp [le_def, lt_iff_le_and_ne, unarc]
+  intro h
+  rfl
+
 
 theorem arc_le {x y} : arc x ≤ arc y ↔ x ≤ y := by simp
 theorem unarc_le {x y} : unarc x ≤ unarc y ↔ x ≤ y := by simp
 theorem arc_lt {x y} : arc x < arc y ↔ x < y := by simp; exact le_of_lt
 theorem unarc_lt {x y} : unarc x < unarc y ↔ x < y := by simp; exact le_of_lt
+
+@[gcongr]
+theorem unarc_le_of {x y} (h : x ≤ y) : unarc x ≤ unarc y := by rw [unarc_le]; exact h
 
 instance : Top Arctic := inferInstanceAs (Top (WithBot ℕ∞))
 instance : Bot Arctic := inferInstanceAs (Bot (WithBot ℕ∞))
@@ -95,32 +104,58 @@ instance : SemilatticeSup Arctic where
   sup := max'
   le_sup_left a b := by simp; apply le_sup_left
   le_sup_right a b := by simp; apply le_sup_right
-  sup_le := by simp; exact fun a b c a_1 a_2 ↦ ⟨a_1, a_2⟩
+  sup_le := by
+    simp
+    intro a b c hac hbc
+    if h : a.unarc ≤ b.unarc then
+      simp [h]
+      exact hbc
+    else
+      simp at h
+      simp [h.le]
+      exact hac
 instance : SemilatticeInf Arctic where
   inf := min'
   inf_le_left a b := by simp; apply inf_le_left
   inf_le_right a b := by simp; apply inf_le_right
-  le_inf := by simp; exact fun a b c a_1 a_2 ↦ ⟨a_1, a_2⟩
+  le_inf := by
+    simp
+    intro a b c hab hac
+    if h : b.unarc ≤ c.unarc then
+      simp [h]
+      exact hab
+    else
+      simp at h
+      simp [h.le]
+      exact hac
 instance : Lattice Arctic where
 noncomputable instance : CompleteLattice Arctic where
   sSup c := arc (sSup (unarc '' c))
   sInf c := arc (sInf (unarc '' c))
-  le_sSup c x h := by
-    have := le_sSup (s:=unarc '' c) (a:=unarc x) ?_
-    · have := arc_le.mp this; exact this
-    · simp; use x
-  sSup_le c x h := by
-    have := sSup_le (s:=unarc '' c) (a:=unarc x) ?_
-    · have := arc_le.mp this; exact this
-    · simp; apply h
-  le_sInf c x h := by
-    have := le_sInf (s:=unarc '' c) (a:=unarc x) ?_
-    · have := arc_le.mp this; exact this
-    · simp; apply h
-  sInf_le c x h := by
-    have := sInf_le (s:=unarc '' c) (a:=unarc x) ?_
-    · have := arc_le.mp this; exact this
-    · simp; use x
+  isLUB_sSup c := by
+    constructor
+    · simp [upperBounds]
+      intro x h
+      have := le_sSup (s:=unarc '' c) (a:=unarc x) ?_
+      · have := arc_le.mp this; exact this
+      · simp; use x
+    · simp [lowerBounds]
+      intro x h
+      have := sSup_le (s:=unarc '' c) (a:=unarc x) ?_
+      · have := arc_le.mp this; simp_all
+      · simp; apply h
+  isGLB_sInf c := by
+    constructor
+    · simp [lowerBounds]
+      intro x h
+      have := sInf_le (s:=unarc '' c) (a:=unarc x) ?_
+      · have := arc_le.mp this; exact this
+      · simp; use x
+    · simp [upperBounds]
+      intro x h
+      have := le_sInf (s:=unarc '' c) (a:=unarc x) ?_
+      · have := arc_le.mp this; simp_all
+      · simp; apply h
 @[simp] instance : Zero Arctic := ⟨arc ⊥⟩
 @[simp] instance : One Arctic := ⟨arc 0⟩
 instance : Add Arctic := ⟨fun a b ↦ a ⊔ b⟩
@@ -191,8 +226,9 @@ theorem iSup_eq_iSup' {α} :
     = @iSup Arctic α instCompleteLattice.toCompleteSemilatticeSup.toSupSet := by
   ext f
   apply le_antisymm
-  · simp; apply le_iSup
-  · simp; intro i
+  · simp; apply @le_iSup _ _ instCompleteLattice
+  · apply @iSup_le _ _ instCompleteLattice
+    simp; intro i
     have : @LE.le (WithBot ℕ∞) instCompleteLattice.toCompleteSemilatticeInf.toLE (f i) (iSup f) :=
       le_iSup_iff.mpr fun b a ↦ a i
     exact this
@@ -285,7 +321,7 @@ noncomputable instance : CompleteLinearOrder Arctic where
     have := le_himp_iff (a:=unarc a) (b:=unarc b) (c:=unarc c)
     simp only at this
     nth_rw 1 [← arc_le] at this
-    nth_rw 2 [← arc_le] at this
+    nth_rw 1 [← arc_le] at this
     rw [arc_inf] at this
     convert this
   himp_bot a := by congr; apply himp_bot
@@ -293,7 +329,7 @@ noncomputable instance : CompleteLinearOrder Arctic where
     have := sdiff_le_iff (a:=unarc a) (b:=unarc b) (c:=unarc c)
     simp only at this
     nth_rw 1 [← arc_le] at this
-    nth_rw 2 [← arc_le] at this
+    nth_rw 1 [← arc_le] at this
     rw [arc_sup] at this
     convert this
   top_sdiff a := by congr; apply CompleteLinearOrder.top_sdiff
@@ -341,8 +377,7 @@ theorem help_me {a b : Arctic}
     · gcongr
     · rfl
     · rfl
-  · apply arctic_lt_iff.mpr
-    -- simp
+  · rw [lt_iff_le_not_ge]
     constructor
     · apply unarc_le.mpr
       simp [WithBot.le_def]
@@ -352,7 +387,9 @@ theorem help_me {a b : Arctic}
       · gcongr
       · rfl
       · rfl
-    · sorry
+    · contrapose h
+      simp_all
+      sorry
 
 @[simp] theorem unarc_get {x} (h : Option.isSome x.unarc = true) : Option.get (unarc x) h = x.get h := rfl
 
@@ -398,81 +435,82 @@ instance : MulLeftMono (WithBot ℕ∞) where
 
 instance : WeightedNetKAT.LawfulStar Arctic where
   star_eq_sum x := by
-    simp; split_ifs with h
-    · simp [ωSum_nat_eq_ωSup, ωSup]
-      rcases h with (⟨_, _⟩ | ⟨_, _⟩)
-      · simp
-        apply le_antisymm
-        · simp
-          apply le_iSup₂_of_le 1 0
-          simp
-        · simp
-          intro i j h
-          rcases j with _ | j
-          · simp
-          · simp [right_distrib]
-      · simp
-        apply le_antisymm
-        · simp
-          apply le_iSup₂_of_le 1 0
-          simp
-        · simp
-    · apply le_antisymm
-      · simp_all
-        simp [ωSum_nat_eq_ωSup, ωSup]
-        apply (iSup_eq_top _).mpr
-        intro b hb
-        simp [lt_iSup_iff]
-        rcases b with _ | _ | b
-        · use 1, 0; simp; apply bot_lt_iff_ne_bot.mpr; exact not_eq_of_beq_eq_false rfl
-        · absurd hb; simp; rfl
-        · use b + 2, b + 1
-          simp [right_distrib]
-          have l₁ : ∀ (a b c : WithBot ℕ∞), a < b → 0 ≤ c → a < b + c := by
-            simp
-            intro a b c hab hc
-            exact lt_add_of_lt_of_nonneg hab hc
-          have l₂ : ∀ {a b c : Arctic}, a < b → 0 ≤ c.unarc → a < b.unarc + c.unarc := by
-            intro a b c
-            simp
-            intro h₁ h₂ h₃
-            have h₃ := l₁ a.unarc b.unarc c.unarc (unarc_lt.mpr h₂) h₃
-            constructor
-            · exact h₃.le
-            · exact unarc_lt.mp h₃
-          apply l₂ <;> clear l₁ l₂
-          · simp_all
-            set b' : WithBot ℕ∞ := some (some b)
-            have : @Nat.cast (WithBot ℕ∞) WithBot.addMonoidWithOne.toNatCast b = b' := by rfl
-            simp [this]
-            have : ∀ {a b : WithBot ℕ∞}, unarc (a * b) = unarc a * unarc b := by simp [unarc]
-            simp [this]
-            constructor
-            · nth_rw 1 [← mul_one (a:=unarc b')]
-              apply mul_le_mul' (α:=WithBot ℕ∞)
-              · sorry
-              · sorry
-            · sorry
-          ·
-            sorry
-          -- if x = ⊤ then
-          --   subst_eqs
-          --   simp
-          --   rw [top_add]
-          --   · exact hb
-          --   · simp
-          --     exact not_eq_of_beq_eq_false rfl
-          -- else
-          --   have : x.unarc ≠ ⊤ := by expose_names; exact h_1
-          --   simp_all
-          --   apply help_me
-          --   · simp
-          --   · simp_all
-          --   · simp_all
-          --   · simp_all
-          --   · simp_all
-          --     sorry
-      · apply le_top
+    sorry
+    -- simp; split_ifs with h
+    -- · simp [ωSum_nat_eq_ωSup, ωSup]
+    --   rcases h with (⟨_, _⟩ | ⟨_, _⟩)
+    --   · simp
+    --     apply le_antisymm
+    --     · simp
+    --       apply le_iSup₂_of_le 1 0
+    --       simp
+    --     · simp
+    --       intro i j h
+    --       rcases j with _ | j
+    --       · simp
+    --       · simp [right_distrib]
+    --   · simp
+    --     apply le_antisymm
+    --     · simp
+    --       apply le_iSup₂_of_le 1 0
+    --       simp
+    --     · simp
+    -- · apply le_antisymm
+    --   · simp_all
+    --     simp [ωSum_nat_eq_ωSup, ωSup]
+    --     apply (iSup_eq_top _).mpr
+    --     intro b hb
+    --     simp [lt_iSup_iff]
+    --     rcases b with _ | _ | b
+    --     · use 1, 0; simp; apply bot_lt_iff_ne_bot.mpr; exact not_eq_of_beq_eq_false rfl
+    --     · absurd hb; simp; rfl
+    --     · use b + 2, b + 1
+    --       simp [right_distrib]
+    --       have l₁ : ∀ (a b c : WithBot ℕ∞), a < b → 0 ≤ c → a < b + c := by
+    --         simp
+    --         intro a b c hab hc
+    --         exact lt_add_of_lt_of_nonneg hab hc
+    --       have l₂ : ∀ {a b c : Arctic}, a < b → 0 ≤ c.unarc → a < b.unarc + c.unarc := by
+    --         intro a b c
+    --         simp
+    --         intro h₁ h₂ h₃
+    --         have h₃ := l₁ a.unarc b.unarc c.unarc (unarc_lt.mpr h₂) h₃
+    --         constructor
+    --         · exact h₃.le
+    --         · exact unarc_lt.mp h₃
+    --       apply l₂ <;> clear l₁ l₂
+    --       · simp_all
+    --         set b' : WithBot ℕ∞ := some (some b)
+    --         have : @Nat.cast (WithBot ℕ∞) WithBot.addMonoidWithOne.toNatCast b = b' := by rfl
+    --         simp [this]
+    --         have : ∀ {a b : WithBot ℕ∞}, unarc (a * b) = unarc a * unarc b := by simp [unarc]
+    --         simp [this]
+    --         constructor
+    --         · nth_rw 1 [← mul_one (a:=unarc b')]
+    --           apply mul_le_mul' (α:=WithBot ℕ∞)
+    --           · sorry
+    --           · sorry
+    --         · sorry
+    --       ·
+    --         sorry
+    --       -- if x = ⊤ then
+    --       --   subst_eqs
+    --       --   simp
+    --       --   rw [top_add]
+    --       --   · exact hb
+    --       --   · simp
+    --       --     exact not_eq_of_beq_eq_false rfl
+    --       -- else
+    --       --   have : x.unarc ≠ ⊤ := by expose_names; exact h_1
+    --       --   simp_all
+    --       --   apply help_me
+    --       --   · simp
+    --       --   · simp_all
+    --       --   · simp_all
+    --       --   · simp_all
+    --       --   · simp_all
+    --       --     sorry
+    --   · apply le_top
 
 instance : Repr Arctic where
   reprPrec a _ :=

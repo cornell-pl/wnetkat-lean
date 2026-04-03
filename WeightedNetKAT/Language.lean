@@ -218,8 +218,7 @@ theorem GS.sem_eq (g : GS[F,N]) (h) :
     subst_eqs
     simp [H]
     induction g generalizing π h with
-    | nil =>
-      simp_all [RPol.sem, η]
+    | nil => simp_all [RPol.sem]
     | cons x g ih =>
       simp_all [RPol.sem]
       rw [ωSum_eq_single ⟨⟨x, h⟩, by simp [h10]⟩ (by simp_all)]
@@ -241,7 +240,7 @@ theorem RPol.sem_G.Skip : wnk_rpol {skip}.sem_G_theorem (F:=F) (N:=N) (𝒮:=�
   if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
   simp [GS.sem_eq, sem, G]
   rw [ωSum_eq_single ⟨gs[π;π], (by simp [G, h10])⟩]
-  · simp [GS.mk, GS.H, η]
+  · simp [GS.mk, GS.H]
   · simp [G, GS.mk, GS.H, h10]
     rintro α _ _ ⟨_⟩
     have : α ≠ π := by rintro ⟨_⟩; grind
@@ -346,12 +345,10 @@ theorem RPol.sem_G.Seq {p₁ p₂} (ih₁ : p₁.sem_G_theorem) (ih₂ : p₂.se
     subst_eqs
     simp_all
     obtain ⟨⟨_⟩, h, h'⟩ := h
-    rw [Prod.eq_iff_fst_eq_snd_eq] at h
-    simp at h
     obtain ⟨⟨_⟩, ⟨_⟩⟩ := h
     simp_all [G, WeightedConcat.concat]
     apply Exists.intro
-    use hb
+    use ha
     apply Exists.intro
     use hc
     simp_all
@@ -452,14 +449,7 @@ theorem G.concat_apply {L R : GS F N →c 𝒮} {xₙ : GS F N} :
   rw [← ωSum_finset]
   apply ωSum_eq_ωSum_of_ne_one_bij (fun ⟨⟨⟨i, γ⟩, hi⟩, hi'⟩ ↦ by
     exact ⟨(α, A.take i, γ), by simp; contrapose! hi'; simp [hi', GS.splitAtJoined]⟩)
-  · intro ⟨⟨⟨i, γ⟩, hi⟩, b⟩
-    simp_all
-    simp_all
-    simp_all
-    rintro i' γ' hi' h h'
-    rw [Prod.eq_iff_fst_eq_snd_eq] at h'
-    simp at h'
-    grind
+  · intro ⟨⟨⟨i, γ⟩, hi⟩, b⟩; grind [List.take_eq_take_iff]
   · intro ⟨g₀, hg₀⟩
     simp at hg₀ ⊢
     intro g₁ hg₁ h h'
@@ -477,23 +467,7 @@ theorem G.concat_apply {L R : GS F N →c 𝒮} {xₙ : GS F N} :
     intro i γ hi hγ
     rw [ωSum_eq_single ⟨(γ, List.drop i A, αₙ), by simp; contrapose! hγ; simp [hγ]⟩]
     · simp
-    · simp
-      intro g hg hg' h
-      split at h
-      rename_i α' x β' γ' y ξ h'
-      split_ifs at h
-      subst_eqs
-      simp at h
-      rw [Prod.eq_iff_fst_eq_snd_eq] at h
-      obtain ⟨h₀, h₁⟩ := h
-      simp at h₁
-      obtain ⟨h₁, ⟨_⟩⟩ := h₁
-      suffices y = List.drop i A by subst_eqs; simp_all
-      rw [← h₁]
-      rw [List.drop_append]
-      simp
-      have : (i - min i A.length) = 0 := by omega
-      simp [this]
+    · grind
 
 variable [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem RPol.sem_G.Iter {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~p₁*}.sem_G_theorem (F:=F) (N:=N) (𝒮:=𝒮) := by
@@ -510,21 +484,21 @@ theorem RPol.sem_G.Iter {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~p₁*}.sem
       rw [ωSum_eq_single ⟨⟨h.1, [], h.1⟩, by simp [G, h10, GS.mk]⟩]
       · split_ifs with hα hβ
         · subst_eqs
-          simp [GS.sem_eq, GS.H, GS.mk]
+          simp [GS.sem_eq, GS.H]
         · subst_eqs
-          simp at hβ
+          contrapose hβ
+          use h.1
+          rfl
         · simp_all [GS.sem_eq, GS.mk, GS.H]
         · simp_all [GS.sem_eq, GS.H]
       · simp [GS.mk, GS.sem_eq, GS.H, G]
         rintro α h10 h' β ⟨_⟩
-        rw [Prod.eq_iff_fst_eq_snd_eq] at h'
-        simp at h'
-        simp_all
+        split_ifs <;> simp_all
     | succ n ih' =>
       have := RPol.sem_G.Seq (p₁:=p₁) (p₂:=p₁.iter n) ih ih'
       simp_all
   simp only [sem_G_theorem] at this; simp only [this]; clear this
-  simp [G, Countsupp.instHMul]
+  simp [G]
   ext α
   simp [← ωSum_mul_right]
   rw [ωSum_comm]

@@ -22,6 +22,13 @@ namespace WeightedNetKAT
 abbrev η {ι : Type} {α : Type} [DecidableEq ι] [Zero α] [One α] (i : ι): ι →c α :=
   ⟨Pi.single i 1, Set.Countable.mono Pi.support_single_subset (Set.countable_singleton i)⟩
 
+-- @[simp] theorem η_apply₁ {ι : Type} {α : Type} [DecidableEq ι] [Zero α] [One α] {x : ι} :
+--     η x = ⟨fun y ↦ if x = y then (1 : α) else 0, by
+--       refine Set.Subsingleton.countable ?_
+--       refine Set.subsingleton_of_forall_eq x fun b ↦ ?_
+--       simp_all⟩ := by
+--   ext
+--   simp [Pi.single, Function.update]; grind
 @[simp] theorem η_apply {ι : Type} {α : Type} [DecidableEq ι] [Zero α] [One α] {x y : ι} :
     η x y = if x = y then (1 : α) else 0 := by
   simp [Pi.single, Function.update]; grind
@@ -59,6 +66,7 @@ def Pred.test (t : Pred[F,N]) (pk : Pk[F,N]) : Prop :=
   | wnk_pred {~t ∨ ~u} => t.test pk ∨ u.test pk
   | wnk_pred {~t ∧ ~u} => t.test pk ∧ u.test pk
   | wnk_pred {¬~t} => ¬Pred.test t pk
+@[reducible]
 def Pred.test_decidable {t : Pred[F,N]} : DecidablePred t.test := fun pk ↦
   match h : t with
   | wnk_pred {false} => .isFalse (by simp [Pred.test])
@@ -89,7 +97,11 @@ def Pol.iter (p : Pol[F,N,X]) : ℕ → Pol[F,N,X]
   | 0 => wnk_pol { skip }
   | n+1 => wnk_pol {~p ; ~(p.iter n)}
 
-@[simp, reducible] instance Pol.instHPow : HPow Pol[F,N,X] ℕ Pol[F,N,X] where hPow p n := p.iter n
+@[reducible] instance Pol.instHPow : HPow Pol[F,N,X] ℕ Pol[F,N,X] where hPow p n := p.iter n
+
+omit [Fintype F] [DecidableEq F] [Listed F] [DecidableEq N] in
+@[simp]
+theorem Pol.pow_eq_iter {p : Pol[F,N,X]} {n} : p ^ n = p.iter n := rfl
 
 @[simp]
 def Pol.iterDepth : Pol[F,N,X] → ℕ
@@ -105,6 +117,10 @@ theorem Pol.iterDepth_iter {p : Pol[F,N,X]} {n : ℕ} :
     (p.iter n).iterDepth = if n = 0 then 0 else p.iterDepth := by
   rcases n with _ | n <;> simp_all
   induction n with simp_all
+omit [Fintype F] [DecidableEq F] [DecidableEq N] [Listed F] in
+@[simp]
+theorem Pol.iterDepth_pow {p : Pol[F,N,X]} {n : ℕ} :
+    (p ^ n).iterDepth = if n = 0 then 0 else p.iterDepth := Pol.iterDepth_iter
 
 open OmegaCompletePartialOrder in
 noncomputable def Pol.sem (p : Pol[F,N,𝒮]) : H[F,N] → H[F,N] →c 𝒮 := match p with
@@ -116,7 +132,7 @@ noncomputable def Pol.sem (p : Pol[F,N,𝒮]) : H[F,N] → H[F,N] →c 𝒮 := m
   | wnk_pol {~p ⨁ ~q} => fun h ↦ p.sem h + q.sem h
   | wnk_pol {~p*} => fun h ↦ ω∑ n : ℕ, (p ^ n).sem h
 termination_by (p.iterDepth, sizeOf p)
-decreasing_by all_goals simp_all; (try split_ifs) <;> omega
+decreasing_by all_goals simp_all [Prod.lex_iff]; try grind
 
 variable {M : Type} [Semiring M] [OmegaCompletePartialOrder M] [OrderBot M] [IsPositiveOrderedAddMonoid M] in
 open OmegaCompletePartialOrder in
@@ -136,7 +152,7 @@ theorem map_ωSum {ι : Type} [Countable ι] (g : 𝒮 →+* M) (hg : ωScottCon
   simp only [ωSum]
   rw [hg.map_ωSup]
   simp only [Chain.map, OrderHom.mk_comp_mk, Function.comp_def, map_sum]
-  grind [map_zero]
+  grind
 variable {M : Type} [Semiring M] [OmegaCompletePartialOrder M] [OrderBot M] [IsPositiveOrderedAddMonoid M] in
 open OmegaCompletePartialOrder in
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [Fintype F] in
@@ -148,21 +164,21 @@ theorem Pol.map_sem (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) (hf : ωScottContinuo
     split_ifs
     · simp only [η_apply, MonoidWithZeroHom.map_ite_one_zero]
     · simp only [Countsupp.coe_zero, Pi.zero_apply]
-      grind [map_zero]
-  | Mod => simp only [map, sem]; split; simp
-  | Dup => simp only [map, sem]; split; simp
+      grind
+  | Mod => simp only [sem, η_apply, MonoidWithZeroHom.map_ite_one_zero, map]
+  | Dup => simp only [sem, η_apply, MonoidWithZeroHom.map_ite_one_zero, map]
   | Seq p q =>
     simp only [map, sem, Countsupp.bind_apply, map_ωSum f hf, map_mul]
     symm
     apply ωSum_eq_ωSum_of_ne_one_bij (fun ⟨⟨a, _⟩, h⟩ ↦ ⟨a, by contrapose! h; simp_all⟩)
     · intro; grind
     · intro; simp only [Set.mem_range, Subtype.exists]
-      grind [Countsupp.mem_support_iff, map_zero, Function.mem_support]
+      grind [Countsupp.mem_support_iff, Function.mem_support]
     · grind
   | Add p q ihp ihq => simp only [map, sem, Countsupp.add_apply, ihp, ihq, map_add]
   | Weight w p ih => simp only [map, sem, Countsupp.hMul_apply_left, ih, map_mul]
   | Iter p ih =>
-    simp only [map, sem, instHPow, Countsupp.ωSum_apply]
+    simp only [sem, pow_eq_iter, Countsupp.ωSum_apply, map]
     suffices ∀ x, (((p.map f).iter x).sem h) h' = f ((p.iter x).sem h h') by
       simp only [this]; apply map_ωSum f hf
     intro x
@@ -173,8 +189,12 @@ theorem Pol.map_sem (p : Pol[F,N,𝒮]) (f : 𝒮 →+* M) (hf : ωScottContinuo
       apply ωSum_eq_ωSum_of_ne_one_bij (fun ⟨⟨a, _⟩, h⟩ ↦ ⟨a, by contrapose! h; simp_all⟩)
       · intro; grind
       · intro; simp only [Set.mem_range, Subtype.exists]
-        grind [Countsupp.mem_support_iff, map_zero, Function.mem_support]
+        grind [Countsupp.mem_support_iff, Function.mem_support]
       · grind
+
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Fintype F] [DecidableEq F] [DecidableEq N] in
+@[simp]
+theorem zero_apply {x} : (@OfNat.ofNat (H[F,N] → 𝒮) 0 Zero.toOfNat0 : H[F,N] → 𝒮) x = 0 := rfl
 
 example {t u : Pred[F,N]} :
     wnk_pol { ~t ∨ ~u }.sem (𝒮:=𝒮) = wnk_pol { @filter ~t ⨁ (¬~t; @filter ~u) }.sem := by
@@ -188,6 +208,7 @@ example {t u : Pred[F,N]} :
     else
       simp [h]
       rw [ωSum_eq_single ⟨(π₁, h₁), by simp_all; grind⟩] <;> simp_all
+
 
 noncomputable def Φ (p : Pol[F,N,𝒮]) (d : H[F,N] → H[F,N] →c 𝒮) : H[F,N] → H[F,N] →c 𝒮 :=
   fun h ↦ η h + (p.sem h).bind d
@@ -274,7 +295,7 @@ omit [Fintype F] in
 theorem Pol.iter_sem_isLfp (p : Pol[F,N,𝒮]) : IsLfp (Φ p) (wnk_pol {~p*}.sem) := by
   constructor
   · ext h h'
-    simp only [Φ, sem, instHPow, Countsupp.add_apply, η_apply, Countsupp.ωSum_apply]
+    simp only [Φ, sem, Countsupp.add_apply, η_apply, Countsupp.ωSum_apply]
     suffices
           ((p.sem h).bind fun h ↦ ω∑ (n : ℕ), (p.iter n).sem h)
         = ω∑ (n : ℕ), (p.sem h).bind fun h ↦ (p.iter n).sem h by

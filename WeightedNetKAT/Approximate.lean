@@ -16,15 +16,18 @@ variable {X : Type} {𝒮 : Type}
 variable {F : Type} [Listed F] [DecidableEq F]
 variable {N : Type} [DecidableEq N]
 
-@[simp]
 instance : Zero Pol[F,N,𝒮] where
   zero := wnk_pol {drop}
-@[simp]
-instance : HAdd Pol[F,N,𝒮] Pol[F,N,𝒮] Pol[F,N,𝒮] where
-  hAdd p q := p.Add q
-@[simp]
 instance : Add Pol[F,N,𝒮] where
   add p q := p.Add q
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
+omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Listed F] [DecidableEq F] [DecidableEq N] in
+@[simp]
+theorem Pol.zero_def : (0 : Pol[F,N,𝒮]) = wnk_pol {drop} := rfl
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
+omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Listed F] [DecidableEq F] [DecidableEq N] in
+@[simp]
+theorem Pol.add_def (p q : Pol[F,N,𝒮]) : p + q = p.Add q := rfl
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 @[simp]
@@ -82,12 +85,12 @@ theorem Pol.approx_n_sem (p : Pol[F,N,𝒮]) (n : ℕ) : (p.approx_n n).sem = p.
       | nil =>
         simp
         induction n generalizing h with
-        | zero => simp
+        | zero => simp [Pred.test]
         | succ n ih =>
-          simp_all
+          simp_all [Pred.test]
           congr
-          funext h'
-          apply ih h'
+          funext ⟨α, h'⟩
+          apply ih α h'
       | cons q l ih' => ext; simp [ih', add_assoc]
 
 omit [OmegaContinuousNonUnitalSemiring 𝒮] in
@@ -109,17 +112,18 @@ theorem Pol.sem_n_mono (p : Pol[F,N,𝒮]) : Monotone p.sem_n := by
     · exact ih₂ h₁₂ h
   | Iter p ih =>
     intro n₁ n₂ h₁₂ h; simp [sem_n]
-    apply le_trans (Finset.sum_mono_set_of_nonneg (by simp) (GCongr.finset_range_subset_of_le h₁₂))
-    simp
-    apply Finset.sum_le_sum fun i hi ↦ ?_
-    induction i generalizing h with
-    | zero => simp [sem_n]
-    | succ i ih' =>
-      simp [sem_n]
-      simp at hi
-      apply le_trans (Countsupp.bind_mono_left (𝒮:=𝒮) ((p.iter i).sem_n n₁) (ih h₁₂ h))
-      apply Countsupp.bind_mono_right _ _ _
-      exact fun h ↦ ih' h (by simp; omega)
+    apply le_trans (Finset.sum_mono_set_of_nonneg (by simp) ?_)
+    · simp
+      apply Finset.sum_le_sum fun i hi ↦ ?_
+      induction i generalizing h with
+      | zero => simp [sem_n]
+      | succ i ih' =>
+        simp [sem_n]
+        simp at hi
+        apply le_trans (Countsupp.bind_mono_left (𝒮:=𝒮) ((p.iter i).sem_n n₁) (ih h₁₂ h))
+        apply Countsupp.bind_mono_right _ _ _
+        exact fun h ↦ ih' h (by simp; omega)
+    · simp [h₁₂]
 
 attribute [local simp] Pol.sem Pol.sem_n Pred.sem in
 theorem Pol.iter_m_sem_eq_ωSup_sem_n [Fintype N] {p : Pol[F,N,𝒮]} (h : p.sem = ωSup ⟨p.sem_n, p.sem_n_mono⟩) (m : ℕ) :
@@ -154,8 +158,8 @@ theorem Pol.sem_n_approx [Fintype N] (p : Pol[F,N,𝒮]) : p.sem = ωSup ⟨p.se
     simp_all [Chain.map]
     unfold Function.comp
     simp
-  | Mod f i => funext; simp only [sem, asdsad, Chain.map, OrderHom.mk_comp_mk]; unfold Function.comp; simp; rfl
-  | Dup => funext; simp only [sem, asdsad, Chain.map, OrderHom.mk_comp_mk]; unfold Function.comp; simp; rfl
+  | Mod f i => funext; simp only [sem, asdsad, Chain.map, OrderHom.mk_comp_mk]; unfold Function.comp; simp
+  | Dup => funext; simp only [sem, asdsad, Chain.map, OrderHom.mk_comp_mk]; unfold Function.comp; simp
   | Seq p₁ p₂ ih₁ ih₂ =>
     funext h
     simp only [sem, ih₁, asdsad, Chain.map, OrderHom.mk_comp_mk, ih₂]
@@ -180,7 +184,7 @@ theorem Pol.sem_n_approx [Fintype N] (p : Pol[F,N,𝒮]) : p.sem = ωSup ⟨p.se
     simp [Chain.map, Function.comp_def]
   | Iter p ih =>
     funext h
-    simp only [sem, Pol.instHPow, iter_m_sem_eq_ωSup_sem_n ih]; clear ih
+    simp only [sem, pow_eq_iter, iter_m_sem_eq_ωSup_sem_n ih, asdsad]; clear ih
     simp [ωSum_ωSup']
     simp [Chain.map, Function.comp_def]
     simp [ωSum_nat_eq_ωSup]

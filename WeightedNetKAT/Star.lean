@@ -4,28 +4,8 @@ import Mathlib.Data.Matrix.Block
 import Mathlib.Data.Matrix.Mul
 import WeightedNetKAT.Listed
 import WeightedNetKAT.MatrixExt
-import WeightedNetKAT.EMatrix
 import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
 import Mathlib.Tactic.Ring.RingNF
-
-namespace Matrix
-
-variable {l m n m' n' α : Type*}
-variable [Listed l] [DecidableEq l] [Listed m] [DecidableEq m] [Listed n] [DecidableEq n]
-variable [Listed m'] [DecidableEq m'] [Listed n'] [DecidableEq n']
-
-def concrete (M : Matrix m n α) : Matrix m n α := EMatrix.ofMatrix M |>.asMatrix
-
-def concrete_concrete (M : Matrix m n (Matrix m' n' α)) : Matrix m n (Matrix m' n' α) :=
-  (M.concrete.map .concrete).concrete
-
-omit [DecidableEq m] [DecidableEq n] in
-@[simp] theorem concrete_id : Matrix.concrete (m:=m) (n:=n) (α:=α) = id := by ext; simp [concrete]
-omit [DecidableEq m] [DecidableEq n] [DecidableEq m'] [DecidableEq n'] in
-@[simp] theorem concrete_concrete_id :
-    Matrix.concrete_concrete (m:=m) (n:=n) (m':=m') (n':=n') (α:=α) = id := by ext; simp [concrete_concrete]
-
-end Matrix
 
 namespace WeightedNetKAT
 
