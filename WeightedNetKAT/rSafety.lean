@@ -87,7 +87,7 @@ def Esem : List Pk[F,N] → 𝒮 := fun x ↦
 def EM : E𝒲[Q' F N Q, Q' F N Q, 𝒮] := ∑ (α : Pk[F,N]), EΔ ℰ α
 
 def EM_star : E𝒲[Q' F N Q, Q' F N Q, 𝒮] :=
-  let R := (EM ℰ |>.asNMatrix)^*
+  let R := (EM ℰ)^*
   R
 
 def Esem' :=
@@ -114,8 +114,8 @@ theorem Esem'_eq_sem' : Esem' ℰ = sem' ℰ.toWNKA := by
   simp [Esem', sem', EM_star, M_star]
   congr!
   ext i j
-  simp only [EMatrix.asNMatrix, EM, EΔ_eq_Δ, ← EMatrix.ofMatrix_sum, LawfulStar.star_eq_sum,
-    EMatrix.asMatrix_apply₂, M, Matrix.ωSum_apply, ωSum_apply]
+  simp only [EM, EΔ_eq_Δ, ← EMatrix.ofMatrix_sum, LawfulStar.star_eq_sum, EMatrix.asMatrix_apply₂,
+    M, Matrix.ωSum_apply, ωSum_apply]
   show (ω∑ (n : ℕ), EMatrix.ofMatrix (∑ i, Δ ℰ.toWNKA i) ^ n) i j = _
   simp only [← EMatrix.ofMatrix_pow, EMatrix.ωSum_apply, EMatrix.ofMatrix_apply₂]
 
@@ -126,7 +126,7 @@ variable [DecidableEq 𝒮]
 def extraction_len (n : ℕ) (r : 𝒮) : Option GS[F,N] :=
   let x := Listed.arrayOf (Pk[F,N] × Vector Pk[F,N] n × Pk[F,N])
   let y : Array (GS[F,N]) := x.map fun (α, xs, β) ↦ GS.mk α xs.toList β
-  y.find? (ℰ.toWNKA.sem · = r)
+  y.find? (ℰ.sem · = r)
 
 partial def extraction_go [Inhabited F] [Inhabited N] (n : ℕ) (r : 𝒮) : GS[F,N] :=
   match extraction_len ℰ n r with

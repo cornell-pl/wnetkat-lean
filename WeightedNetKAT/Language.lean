@@ -282,7 +282,7 @@ theorem RPol.sem_G.Dup : wnk_rpol {dup}.sem_G_theorem (F:=F) (N:=N) (𝒮:=𝒮)
     if h10 : (1 : 𝒮) = 0 then simp [eq_zero_of_zero_eq_one h10.symm] else
     rw [ωSum_eq_single ⟨gs[π;π;dup;π], (by simp [G, h10])⟩]
     · simp_all [GS.mk, η]
-    · simp_all [G, GS.mk]
+    · simp [G, GS.mk]
       intro g hg
       split_ifs
       · grind
@@ -482,21 +482,22 @@ theorem RPol.sem_G.Iter {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~p₁*}.sem
       ext h h'
       simp
       rw [ωSum_eq_single ⟨⟨h.1, [], h.1⟩, by simp [G, h10, GS.mk]⟩]
-      · split_ifs with hα hβ
-        · subst_eqs
-          simp [GS.sem_eq, GS.H]
-        · subst_eqs
-          contrapose hβ
-          use h.1
-          rfl
-        · simp_all [GS.sem_eq, GS.mk, GS.H]
-        · simp_all [GS.sem_eq, GS.H]
+      · if hh :  h = h' then
+          subst_eqs
+          simp only [↓reduceIte]
+          split_ifs with hβ
+          · simp [GS.sem_eq, GS.H]
+          · contrapose hβ
+            use h.1
+            rfl
+        else
+          simp [GS.sem_eq, GS.H, hh]
       · simp [GS.mk, GS.sem_eq, GS.H, G]
         rintro α h10 h' β ⟨_⟩
         split_ifs <;> simp_all
     | succ n ih' =>
       have := RPol.sem_G.Seq (p₁:=p₁) (p₂:=p₁.iter n) ih ih'
-      simp_all
+      simp_all only [sem_G_theorem, iter, iter.eq_2]
   simp only [sem_G_theorem] at this; simp only [this]; clear this
   simp [G]
   ext α

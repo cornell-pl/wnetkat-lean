@@ -1,6 +1,6 @@
 import Mathlib.Data.Countable.Basic
 import Mathlib.Logic.Encodable.Pi
-import WeightedNetKAT.Listed
+import WeightedNetKAT.Listed.Vector
 
 namespace WeightedNetKAT
 

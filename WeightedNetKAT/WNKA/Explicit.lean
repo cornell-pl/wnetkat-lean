@@ -391,6 +391,11 @@ def EWNKA.toEWNKA_δ_apply {α β} : ℰ.toWNKA.δ α β = (ℰ.δ α β).asMatr
 def EWNKA.toEWNKA_𝒪_apply {α β} : ℰ.toWNKA.𝒪 α β = (ℰ.𝒪 α β).asMatrix := by
   simp [EWNKA.toWNKA]; rfl
 
+abbrev _root_.Listed.Li (α : Type*) [Listed α] : Type := Fin (Listed.size α)
+notation "Li[" α "]" => Listed.Li α
+
+instance {α : Type*} [Listed α] : Listed Li[α] := inferInstanceAs (Listed <| Fin (Listed.size α))
+
 def EWNKA.compute (𝒜 : EWNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) :
     EMatrix Q 𝟙 𝒮 :=
   match s with
@@ -399,6 +404,182 @@ def EWNKA.compute (𝒜 : EWNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) :
   | [α, α'] => 𝒜.𝒪 α α'
   | α::α'::s => 𝒜.δ α α' * 𝒜.compute (α' :: s)
 
+-- def EWNKA.Li𝒪 (ℰ : EWNKA[F,N,S,Q]) : E𝒲[Li[Pk[F,N]], Li[Pk[F,N]], E𝒲[Q, 𝟙, 𝒮]] := ℰ.𝒪
+
+def EWNKA.compute.go (𝒜 : EWNKA[F,N,𝒮,Q]) (acc : E𝒲[Q, Q, 𝒮]) (s : List Pk[F,N]) :
+    EMatrix Q 𝟙 𝒮 :=
+  match s with
+  -- NOTE: these are unreachable in practice, but setting them to 1 is okay by idempotency
+  | [] | [_] => .fill 1
+  | [α, α'] => acc * 𝒜.𝒪 α α'
+  | α::α'::s => EWNKA.compute.go 𝒜 (𝒜.δ α α' * acc) (α' :: s)
+def EWNKA.compute''' (𝒜 : EWNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) :
+    EMatrix Q 𝟙 𝒮 :=
+  EWNKA.compute.go 𝒜 1 s
+
+
+-- def EWNKA.compute'' (𝒜 : EWNKA[F,N,𝒮,Q]) (s : List Li[Pk[F,N]]) (n : ℕ) :
+--     EMatrix Q 𝟙 𝒮 :=
+--   if h : n ≤ 1 then
+--     .fill 1
+--   else
+--     let α₀ : Li[Pk[F,N]] := ⟨0, by sorry⟩
+--     Id.run do
+--     let mut A := 𝒜.𝒪.asNMatrix (s[n - 2]?.getD α₀) (s[n - 1]?.getD α₀)
+--     for h : i in 3...=n do
+--       A := 𝒜.δ.asNMatrix (s[n - i]?.getD α₀) (s[n - i + 1]?.getD α₀) * A
+--     return A
+
+-- def EWNKA.compute' (𝒜 : EWNKA[F,N,𝒮,Q]) (s : Array Li[Pk[F,N]]) (n : ℕ) :
+--     EMatrix Q 𝟙 𝒮 :=
+--   if h : n ≤ 1 then
+--     .fill 1
+--   else
+--     let α₀ : Li[Pk[F,N]] := ⟨0, by sorry⟩
+--     Id.run do
+--     let mut A := 𝒜.𝒪.asNMatrix (s[n - 2]?.getD α₀) (s[n - 1]?.getD α₀)
+--     for h : i in 3...=n do
+--       A := 𝒜.δ.asNMatrix (s[n - i]?.getD α₀) (s[n - i + 1]?.getD α₀) * A
+--     return A
+
+-- @[simp]
+-- theorem EMatrix.asNMatrix_apply {α β 𝒮 : Type*} [Listed α] [Listed β] (A : EMatrix α β 𝒮) (a : α) (b : β) :
+--     (@DFunLike.coe E𝒲[α, β, 𝒮] α (fun x ↦ β → 𝒮) EMatrix.instFunLikeForall A.asNMatrix a b : 𝒮) = A a b := by
+--   rfl
+
+-- theorem EWNKA.compute'_eq_compute'' {𝒜 : EWNKA[F,N,𝒮,Q]} {xs} {n : ℕ} (hn : xs.length = n) :
+--     𝒜.compute'' xs n = 𝒜.compute' xs.toArray n := by
+--   induction n generalizing xs with
+--   | zero => simp [compute'', compute']
+--   | succ n ih =>
+--     simp_all only [compute'', EMatrix.nmatrix_apply_eq_apply, EMatrix.asNMatrix_apply,
+--       bind_pure_comp, map_pure, forIn'_eq_forIn, bind_pure, dite_eq_ite, compute',
+--       List.getElem?_toArray, List.getElem?_map, add_le_iff_nonpos_left, nonpos_iff_eq_zero,
+--       Nat.reduceSubDiff, Order.lt_add_one_iff, tsub_le_iff_right, le_add_iff_nonneg_right, zero_le,
+--       getElem?_pos, Option.getD_some, add_tsub_cancel_right, lt_add_iff_pos_right, Order.lt_one_iff,
+--       List.size_toArray, List.length_map, List.getElem_toArray, List.getElem_map]
+
+-- theorem EWNKA.compute_eq_compute' {𝒜 : EWNKA[F,N,𝒮,Q]} {xs : List Pk[F,N]} (acc : E𝒲[Q, Q, 𝒮]) :
+--     acc * 𝒜.compute xs = EWNKA.compute.go acc xs := by
+--   induction xs with
+--   | nil => rfl
+--   | cons x₀ xs ih =>
+--     rcases xs with _ | ⟨x₁, xs⟩
+--     · rfl
+--     · rcases xs with _ | ⟨x₂, xs⟩
+--       · sorry
+--       rcases xs with _ | ⟨x₃, xs⟩
+--       · unfold compute''' compute compute.go at ih ⊢
+--         simp at ih ⊢
+--         rfl
+--       · unfold compute''' compute compute.go at ih ⊢
+--         simp at ih ⊢
+--         rcases xs with _ | ⟨x₄, xs⟩
+--         · unfold compute compute.go at ih ⊢
+--           simp
+--         simp at ih
+
+
+
+--       simp
+--       rw [ih]
+--     sorry
+--     simp_all [compute, compute'''. compute.go]
+
+-- theorem EWNKA.compute_eq_compute' {𝒜 : EWNKA[F,N,𝒮,Q]} {xs} {n : ℕ} (hn : xs.length = n) :
+--     𝒜.compute xs = 𝒜.compute' (xs.map Listed.encodeFin).toArray n := by
+--   rw [← EWNKA.compute'_eq_compute'' (by simp [hn])]
+--   induction n using Nat.strongRec generalizing xs with
+--   | ind n ih =>
+--     rcases n with _ | n
+--     · have : xs = [] := (by grind); subst_eqs; rfl
+--     rcases xs with _ | ⟨x₀, xs⟩
+--     · subst_eqs
+--     rcases xs with _ | ⟨x₁, xs⟩
+--     · subst_eqs; simp_all; rfl
+--     rcases xs with _ | ⟨x₂, xs⟩
+--     · simp_all
+--       simp [compute, compute'']
+--       rw [forIn_eq_forIn', Std.Rcc.forIn'_eq_if]
+--       simp
+--     · simp_all only [Order.lt_add_one_iff, List.length_cons, Nat.add_right_cancel_iff,
+--       List.map_cons]
+--       replace ih := ih (xs := (x₁ :: x₂ :: xs)) n
+--       simp [hn] at ih
+--       simp_all [compute, compute']
+--       rcases n with _ | n
+--       · simp_all only [Nat.add_eq_zero_iff, List.length_eq_zero_iff, one_ne_zero, and_false,
+--         and_self]
+--       · simp_all only [Nat.add_right_cancel_iff, compute'', add_le_iff_nonpos_left,
+--         nonpos_iff_eq_zero, Nat.reduceSubDiff, List.length_cons, List.length_map,
+--         Order.lt_add_one_iff, tsub_le_iff_right, le_add_iff_nonneg_right, zero_le, getElem?_pos,
+--         Option.getD_some, add_tsub_cancel_right, lt_add_iff_pos_right, Order.lt_one_iff,
+--         EMatrix.nmatrix_apply_eq_apply, EMatrix.asNMatrix_apply, List.getElem?_cons_succ,
+--         bind_pure_comp, map_pure, forIn'_eq_forIn, bind_pure, dite_eq_ite, Nat.add_eq_zero_iff,
+--         one_ne_zero, and_false, ↓reduceDIte, List.getElem_cons_succ]
+--         clear ih
+--         nth_rw 2 [forIn_eq_forIn']
+--         rw [Std.Rcc.forIn'_eq_if]
+--         simp_all
+--         nth_rw 1 [forIn_eq_forIn']
+--         rw [Std.Rcc.forIn'_eq_if]
+--         simp
+--         rcases n with _ | _ | n
+--         · simp_all
+--           omega
+--         · simp_all
+--           rw [forIn_eq_forIn', Std.Roc.forIn'_eq_forIn'_toList]
+--           simp
+--         · simp
+--           rw [forIn_eq_forIn', Std.Roc.forIn'_eq_forIn'_toList]
+--           rw [forIn_eq_forIn', Std.Roc.forIn'_eq_forIn'_toList]
+--           simp
+--           have : (3<...=n + 1 + 1 + 1 + 1).toList = (List.range (n + 1)).map (· + 4) := by
+--             apply List.ext_getElem
+--             · simp
+--             · simp; omega
+--           simp [this, List.range_succ]
+--           have : (3<...=n + 1 + 1 + 1).toList = (List.range n).map (· + 4) := by
+--             apply List.ext_getElem
+--             · simp
+--             · simp; omega
+--           simp [this, List.range_succ]
+--           congr! 1
+--           clear this
+--           clear this
+--           simp [List.foldl_map]
+--           simp_all
+--           congr
+--           · ext
+--             simp
+--             rcases n with _ | n
+--             · simp_all
+--             · simp_all
+
+--             congr! 3
+--           simp
+--           induction n generalizing xs with
+--           | zero => simp
+--           | succ n ih =>
+--             simp [List.range_succ]
+--             congr! 1
+
+--             congr
+--           · ext A i p ⟨⟩
+--             simp
+--             rcases i with _ | _ | _ | _ | _ | i
+--             · simp
+--             · simp
+--             · simp
+--             · simp
+--             · simp
+--               rcases n with _ | n
+--               · simp
+--               · simp
+--             have : n + 1 + 1 + 1 - i = n + 1 + 1 - i + 1 := by sorry
+--             simp [this]
+--           · congr!
+--             grind
 def EWNKA.sem (𝒜 : EWNKA[F,N,𝒮,Q]) : GS[F,N] →c 𝒮 :=
   ⟨(fun x ↦ (𝒜.ι * 𝒜.compute x.pks) () ()), SetCoe.countable _⟩
 

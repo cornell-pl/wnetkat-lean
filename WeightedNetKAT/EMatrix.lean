@@ -239,6 +239,12 @@ instance instHMul [Mul α] [AddCommMonoid α] : HMul (EMatrix l m α) (EMatrix m
 instance instMul [Mul α] [AddCommMonoid α] : Mul (EMatrix m m α) :=
   inferInstanceAs (Mul (NMatrix _ _ α))
 
+
+@[simp]
+theorem hmul_eq_hmul [Mul α] [AddCommMonoid α] :
+      @HMul.hMul (EMatrix m m α) (EMatrix m m α) (EMatrix m m α) instHMul
+    = @HMul.hMul (EMatrix m m α) (EMatrix m m α) (EMatrix m m α) (@_root_.instHMul _ instMul) := rfl
+
 instance [AddCommMonoid α] : AddCommMonoid (EMatrix m n α) :=
     inferInstanceAs (AddCommMonoid (NMatrix _ _ α))
 @[default_instance 100]
@@ -556,6 +562,6 @@ theorem ofMatrix_ofNatMatrix_asNatMatrix {m n 𝒮 : Type*} [Listed m] [Listed n
 
 end
 
-attribute [simp, grind] get_eq_apply
+attribute [simp, grind =] get_eq_apply
 
 end EMatrix

@@ -50,23 +50,23 @@ def test {𝒮} [Semiring 𝒮] {α : Type} (c : α) : RPol[Switch,α,𝒮] :=
   .Test (.fill c)
 
 def latency : City → City → Option Arctic
-  -- | SEA, DEN => ms 3
-  -- | SEA, BAY => ms 2
+  | SEA, DEN => ms 3
+  | SEA, BAY => ms 2
 
-  -- | CHI, NYC => ms 3
-  -- | CHI, IND => ms 2
+  | CHI, NYC => ms 3
+  | CHI, IND => ms 2
 
-  -- | BAY, DEN => ms 4
-  -- | BAY, LA => ms 1
+  | BAY, DEN => ms 4
+  | BAY, LA => ms 1
 
-  -- | DEN, KAN => ms 3
+  | DEN, KAN => ms 3
 
-  -- | KAN, IND => ms 2
-  -- | KAN, HOU => ms 3
+  | KAN, IND => ms 2
+  | KAN, HOU => ms 3
 
   | IND, ATL => ms 3
 
-  -- | DC, NYC => ms 1
+  | DC, NYC => ms 1
 
   | LA, HOU => ms 6
 
