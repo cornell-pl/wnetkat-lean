@@ -307,8 +307,7 @@ instance [Fintype ι] : OmegaCompletePartialOrder (ι →₀ M) where
     ⟨Fintype.elems.filter (C' · ≠ 0), C', (by simp [C', Fintype.complete])⟩
   le_ωSup C i hi := le_ωSup_of_le i (by simp)
   ωSup_le C m hm i := by
-    simp only [ne_eq, Finsupp.coe_mk, ωSup_le_iff, Chain.map_coe, OrderHom.coe_mk,
-      Function.comp_apply]
+    simp only [ne_eq, coe_mk, ωSup_le_iff]
     exact fun j ↦ hm j i
 
 omit [MulLeftMono M] [MulRightMono M] [OmegaContinuousNonUnitalSemiring M] [DecidableEq M] in
@@ -345,9 +344,8 @@ theorem ωSum_apply [Countable ι] {Y : Type} [DecidableEq Y] [Fintype Y] {f : �
     (ω∑ (x : ι), f x) y = ω∑ (x : ι), f x y := by
   simp [ωSum, Chain.map]
   congr!
-  ext n
-  simp
-  congr with x
+  simp only [Function.comp_apply, sum_apply''']
+  congr!
   split <;> simp_all
 
 end OmegaCompletePartialOrder

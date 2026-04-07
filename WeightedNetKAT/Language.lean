@@ -135,8 +135,6 @@ def G.unexpander : Unexpander
 | _ => throw ()
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
--- TODO: this proof is incredibly slow
-set_option maxHeartbeats 500000 in
 attribute [-simp] Function.iterate_succ in
 theorem G.iter_succ (p₁ : RPol[F,N,𝒮]) (n : ℕ) :
     G (p₁.iter (n + 1)) = (G p₁ ♢ ·)^[n] (G p₁) := by
@@ -157,8 +155,8 @@ theorem G.iter_succ (p₁ : RPol[F,N,𝒮]) (n : ℕ) :
         · grind only [= List.append_assoc, Countsupp.coe_mk, Countsupp.mem_support_iff,
           =_ List.append_assoc, Subtype.mk.injEq, → List.eq_nil_of_append_eq_nil,
           cases eager Subtype]
-      · grind only [Countsupp.coe_mk, List.append_nil, Countsupp.mem_support_iff, Subtype.mk.injEq,
-          → List.eq_nil_of_append_eq_nil, ωSum_zero, cases eager Subtype, cases Or]
+      · simp only [ωSum_eq_zero_iff]
+        grind
     else
       simp at hgs
       simp only [RPol.iter, G, WeightedConcat.concat, ofPk, GS.mk, Countsupp.coe_mk, mul_ite,

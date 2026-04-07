@@ -12,7 +12,7 @@ open OmegaCompletePartialOrder
 
 @[simp]
 theorem Chain.mk_apply {β : Type*} [Preorder β] (f : ℕ → β) (hf : Monotone f) (a : ℕ) :
-    Chain.instFunLikeNat.coe ({toFun := f, monotone' := hf} : OrderHom ℕ β) a = f a := rfl
+    Chain.instFunLikeNat.coe (⟨f, hf⟩ : Chain β) a = f a := rfl
 
 @[simp]
 theorem OmegaCompletePartialOrder.ωSup_const {α : Type*} [OmegaCompletePartialOrder α] (x : α) :
@@ -116,25 +116,25 @@ variable {𝒮 : Type*}
 
 open OmegaContinuousNonUnitalSemiring
 
-theorem ωSup_add {f : ℕ →o 𝒮} (a : 𝒮) :
+theorem ωSup_add {f : Chain 𝒮} (a : 𝒮) :
     ωSup f + a = ωSup ⟨fun i ↦ f i + a, fun i j hij ↦ add_le_add (f.mono hij) (by rfl)⟩ :=
   ωScottContinuous_add_right _ |>.map_ωSup _
-theorem add_ωSup {f : ℕ →o 𝒮} (a : 𝒮) :
+theorem add_ωSup {f : Chain 𝒮} (a : 𝒮) :
     a + ωSup f = ωSup ⟨fun i ↦ a + f i, fun i j hij ↦ add_le_add (by rfl) (f.mono hij)⟩ :=
   ωScottContinuous_add_left _ |>.map_ωSup _
-theorem ωSup_mul {f : ℕ →o 𝒮} (a : 𝒮) :
+theorem ωSup_mul {f : Chain 𝒮} (a : 𝒮) :
     ωSup f * a = ωSup ⟨fun i ↦ f i * a, fun i j hij ↦ mul_le_mul' (f.mono hij) (by rfl)⟩ :=
   ωScottContinuous_mul_right _ |>.map_ωSup _
-theorem mul_ωSup {f : ℕ →o 𝒮} (a : 𝒮) :
+theorem mul_ωSup {f : Chain 𝒮} (a : 𝒮) :
     a * ωSup f = ωSup ⟨fun i ↦ a * f i, fun i j hij ↦ mul_le_mul' (by rfl) (f.mono hij)⟩ :=
   ωScottContinuous_mul_left _ |>.map_ωSup _
 
-theorem ωSup_add_ωSup {f g : ℕ →o 𝒮} :
+theorem ωSup_add_ωSup {f g : Chain 𝒮} :
     ωSup f + ωSup g = ωSup ⟨fun i ↦ f i + g i, fun i j hij ↦ by simp only; gcongr⟩ := by
   simp only [add_ωSup, ωSup_add]
   rw [ωSup_ωSup_eq_ωSup']
   intro _ _ _ _; simp only; gcongr
-theorem ωSup_mul_ωSup {f g : ℕ →o 𝒮} :
+theorem ωSup_mul_ωSup {f g : Chain 𝒮} :
     ωSup f * ωSup g = ωSup ⟨fun i ↦ f i * g i, fun i j hij ↦ by simp only; gcongr⟩ := by
   simp only [mul_ωSup, ωSup_mul]
   rw [ωSup_ωSup_eq_ωSup']
@@ -314,8 +314,15 @@ theorem ωSum_nat_eq_ωSup
         · obtain ⟨q, hq⟩ := hq
           simp [hq] at ha
           simp_all
-        · grind
-      · grind
+        · split at hb
+          · simp_all
+          · grind
+      · split at hb
+        · simp_all
+          split at ha
+          · simp_all
+          · grind
+        · simp_all
     · simp_all [t]
       intro b hb h'
       use e₀.encode b
@@ -326,8 +333,11 @@ theorem ωSum_nat_eq_ωSup
       · obtain ⟨q, hq⟩ := hq
         simp [hq] at h
         simp_all
+        subst_eqs
+        simp
+      · simp_all
+        simp_all [Encodable.decode₂]
         grind
-      · grind
   · simp [le_ωSum_of_finset]
 
 attribute [local simp] Encodable.decode₂_eq_some in
@@ -470,7 +480,6 @@ theorem ωSum_nat_eq_succ
     {f : ℕ → 𝒮} : ω∑ (x : ℕ), f x = f 0 + ω∑ (x : ℕ), f (x + 1) := by
   simp [ωSum_nat_eq_ωSup]
   rw [add_ωSup]
-  simp only [OrderHom.coe_mk]
   apply le_antisymm
   · apply ωSup_le _ _ fun i ↦ ?_
     rcases i with _ | i
