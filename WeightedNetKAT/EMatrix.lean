@@ -114,8 +114,7 @@ theorem apply_ofFnSlow : ofFnSlow X = X := by
   ext; simp [ofFnSlow, get]
 
 @[simp, grind]
-theorem ofFn_apply {f : Fin (Listed.size m) → Fin (Listed.size n) → α} : (ofFn f) = fun i j ↦ f (Listed.encodeFin i) (Listed.encodeFin j) := by
-  ext i j
+theorem ofFn_apply {f : Fin (Listed.size m) → Fin (Listed.size n) → α} {i j} : (ofFn f) i j = f (Listed.encodeFin i) (Listed.encodeFin j) := by
   simp [ofFn, DFunLike.coe]
   simp [get]
 
@@ -171,14 +170,16 @@ def asNatMatrix₂ (M : EMatrix m n (EMatrix m' n' α)) :
 def ofNatMatrix₂ (M : Matrix (Fin (Listed.size m)) (Fin (Listed.size n)) (Matrix (Fin (Listed.size m')) (Fin (Listed.size n')) α)) :
     EMatrix m n (EMatrix m' n' α) := (NMatrix.ofFn M).map .ofNatMatrix
 
-@[simp, grind] theorem asMatrix₂_ofMatrix₂ {X : EMatrix m n (EMatrix m' n' α)} : EMatrix.ofMatrix₂ X.asMatrix₂ = X := by
+@[simp, grind =] theorem asMatrix₂_ofMatrix₂ {X : EMatrix m n (EMatrix m' n' α)} : EMatrix.ofMatrix₂ X.asMatrix₂ = X := by
   simp [ofMatrix₂]
   ext i j i' j'
   simp [map, asMatrix₂, ofFnSlow]
-omit [Listed m'] [Listed n'] in
-@[simp, grind] theorem ofMatrix₂_asMatrix₂ {M : Matrix m n (Matrix m' n' α)} :
-    (EMatrix.ofMatrix M).asMatrix = M := by
-  simp [ofMatrix, asMatrix]
+-- omit [Listed m'] [Listed n'] in
+@[simp, grind =] theorem ofMatrix₂_asMatrix₂ {M : Matrix m n (Matrix m' n' α)} :
+    (EMatrix.ofMatrix₂ M).asMatrix₂ = M := by
+  simp [ofMatrix₂]
+  ext
+  simp [map, asMatrix₂, ofFnSlow]
 
 theorem eq_ofMatrix (h : X.asMatrix = X'.asMatrix) : X = X' := by
   ext i j; exact congrFun₂ h i j
@@ -236,8 +237,8 @@ theorem add_apply [Add α] {i j} : (X + X') i j = X i j + X' i j := by
 @[default_instance 100]
 instance instHMul [Mul α] [AddCommMonoid α] : HMul (EMatrix l m α) (EMatrix m n α) (EMatrix l n α) :=
   inferInstanceAs (HMul (NMatrix _ _ α) (NMatrix _ _ α) (NMatrix _ _ α))
-instance instMul [Mul α] [AddCommMonoid α] : Mul (EMatrix m m α) :=
-  inferInstanceAs (Mul (NMatrix _ _ α))
+instance instMul [Mul α] [AddCommMonoid α] : Mul (EMatrix m m α) where
+  mul a b := a * b
 
 
 @[simp]
@@ -262,7 +263,7 @@ instance [AddCommMonoid α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPosi
     IsPositiveOrderedAddMonoid E𝒲[m, n, α] :=
   inferInstanceAs (IsPositiveOrderedAddMonoid (NMatrix _ _ α))
 
-theorem mul_def [Fintype n] [Mul α] [AddCommMonoid α] : X * Y = X.asNMatrix * Y.asNMatrix := by
+theorem mul_def  [Mul α] [AddCommMonoid α] : X * Y = X.asNMatrix * Y.asNMatrix := by
   rfl
 
 @[simp]
@@ -273,12 +274,6 @@ theorem mul_get [Fintype n] [Mul α] [AddCommMonoid α] : (X * Y).get = X.asMatr
 @[simp]
 theorem mul_apply [Fintype n] [Mul α] [AddCommMonoid α] {a b} : (X * Y) a b = (X.asMatrix * Y.asMatrix) a b := by
   simp [mul_def, NMatrix.hmul_def, NMatrix.ofMatrix, asNMatrix, asMatrix, get, Matrix.mul_apply]
-@[simp]
-theorem mul'_apply [Fintype m] [Mul α] [AddCommMonoid α] {A B : EMatrix m m α} {a b} :
-    (_root_.instHMul.hMul A B) a b = (A.asMatrix * B.asMatrix) a b := by
-  conv => left; simp [HMul.hMul, Mul.mul, instMul._aux_1]
-  simp [Matrix.mul_apply']
-  simp [dotProduct]
 
 theorem asMatrix_mul [Fintype n] [Mul α] [AddCommMonoid α] : (X * Y).asMatrix = X.asMatrix * Y.asMatrix := by simp [asMatrix]
 
@@ -384,8 +379,8 @@ theorem ofMatrix₂_get {m m' n n' 𝒮 : Type*} [Listed m] [Listed n] [Listed m
   simp [ofMatrix₂, ofMatrix, map]
 @[simp]
 theorem ofMatrix₂_apply {m m' n n' 𝒮 : Type*} [Listed m] [Listed n] [Listed m'] [Listed n']
-    {m : 𝒲[m, n, 𝒲[m', n', 𝒮]]} {i j} :
-    ofMatrix₂ m i j = ofMatrix (m i j) := by
+    {M : 𝒲[m, n, 𝒲[m', n', 𝒮]]} {i j} :
+    ofMatrix₂ M i j = ofMatrix (M i j) := by
   ext
   simp
   simp [ofMatrix₂, ofMatrix, map]
@@ -396,8 +391,8 @@ theorem ofMatrix₂_apply {m m' n n' 𝒮 : Type*} [Listed m] [Listed n] [Listed
 --   ext; simp
 @[simp]
 theorem toMatrix₂_ofMatrix₂ {m m' n n' 𝒮 : Type*} [Listed m] [Listed n] [Listed m'] [Listed n']
-    {m : E𝒲[m, n, E𝒲[m', n', 𝒮]]} :
-    ofMatrix₂ (asMatrix₂ m) = m := by
+    {M : E𝒲[m, n, E𝒲[m', n', 𝒮]]} :
+    ofMatrix₂ (asMatrix₂ M) = M := by
   ext; simp
 @[simp]
 theorem NMatrix_get {m n 𝒮 : Type*} [Listed m] [Listed n]
@@ -455,21 +450,23 @@ theorem ofMatrix_pow {m 𝒮 : Type*} [Listed m] [Semiring 𝒮] [DecidableEq m]
   | succ i ih =>
     simp [pow_succ, ← ih]
     ext a b
-    simp only [get, getN_eq, Listed.encodeFin_decodeFin, ofMatrix_apply₂, Matrix.mul_apply,
-      mul'_apply, ofMatrix_asMatrix]
+    simp [get, getN_eq, Listed.encodeFin_decodeFin, ofMatrix_apply₂, Matrix.mul_apply,
+      mul_apply, ofMatrix_asMatrix]
 
 @[simp]
-theorem sum_apply {m n 𝒮 : Type*} [Listed m] [Listed n] [AddCommMonoid 𝒮] {ι : Type*} {S : Finset ι} [DecidableEq ι]
+theorem sum_apply {m n 𝒮 : Type*} [Listed m] [Listed n] [AddCommMonoid 𝒮] {ι : Type*} {S : Finset ι}
     (f : ι → E𝒲[m, n, 𝒮]) {x y} :
     (∑ i ∈ S, f i) x y = ∑ i ∈ S, f i x y := by
+  classical
   induction S using Finset.induction with
   | empty => simp
   | insert x S h ih => simp_all
 
 @[simp]
-theorem asMatrix_sum {m n 𝒮 : Type*} [Listed m] [Listed n] [AddCommMonoid 𝒮] {ι : Type*} {S : Finset ι} [DecidableEq ι]
+theorem asMatrix_sum {m n 𝒮 : Type*} [Listed m] [Listed n] [AddCommMonoid 𝒮] {ι : Type*} {S : Finset ι}
     (f : ι → E𝒲[m, n, 𝒮]) :
     asMatrix (∑ i ∈ S, f i) = ∑ i ∈ S, asMatrix (f i) := by
+  classical
   induction S using Finset.induction with
   | empty => simp
   | insert x S h ih => simp_all
@@ -477,7 +474,7 @@ theorem asMatrix_sum {m n 𝒮 : Type*} [Listed m] [Listed n] [AddCommMonoid �
 open OmegaCompletePartialOrder
 
 @[simp]
-theorem ωSum_apply {m n 𝒮 : Type*} [Listed m] [Listed n] [AddCommMonoid 𝒮] {ι : Type*} [Countable ι] [DecidableEq ι]
+theorem ωSum_apply {m n 𝒮 : Type*} [Listed m] [Listed n] [AddCommMonoid 𝒮] {ι : Type*} [Countable ι]
     [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
     (f : ι → E𝒲[m, n, 𝒮]) {x y} :
     (ω∑ i, f i) x y = ω∑ i, f i x y := by
@@ -498,7 +495,7 @@ theorem ωSum_apply {m n 𝒮 : Type*} [Listed m] [Listed n] [AddCommMonoid 𝒮
     split <;> simp_all
 
 @[simp]
-theorem asMatrix_ωSum {m n 𝒮 : Type*} [Listed m] [Listed n] [AddCommMonoid 𝒮] {ι : Type*} [Countable ι] [DecidableEq ι]
+theorem asMatrix_ωSum {m n 𝒮 : Type*} [Listed m] [Listed n] [AddCommMonoid 𝒮] {ι : Type*} [Countable ι]
     [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
     (f : ι → E𝒲[m, n, 𝒮]) :
     asMatrix (ω∑ i, f i) = ω∑ i, asMatrix (f i) := by
@@ -520,7 +517,7 @@ theorem asMatrix_ωSum {m n 𝒮 : Type*} [Listed m] [Listed n] [AddCommMonoid �
     split <;> simp_all
 
 @[simp]
-theorem asMatrix_ωSum' {m n 𝒮 : Type*} [Listed m] [Listed n] [AddCommMonoid 𝒮] {ι : Type*} [Countable ι] [DecidableEq ι]
+theorem asMatrix_ωSum' {m n 𝒮 : Type*} [Listed m] [Listed n] [AddCommMonoid 𝒮] {ι : Type*} [Countable ι]
     [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
     (f : ι → N𝒲[Listed.size m, Listed.size n, 𝒮]) :
     asMatrix (ω∑ i, f i : N𝒲[Listed.size m, Listed.size n, 𝒮]) = ω∑ i, asMatrix (f i) := asMatrix_ωSum f

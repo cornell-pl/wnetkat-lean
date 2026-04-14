@@ -31,7 +31,7 @@ variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddM
 /-- An efficient version of [`WNKA`] that uses explicit matrices. -/
 structure EWNKA (F N 𝒮 Q: Type)
     [Semiring 𝒮]
-    [Listed F] [Listed N] [DecidableEq N]
+    [Listed F] [Listed N]
     [Listed Q]
 where
   /-- `ι` is the initial weightings. -/
@@ -99,7 +99,7 @@ theorem S.Eδ_delta_eq_δ
 
 end delta
 
-abbrev Eη₂ {X Y : Type} [DecidableEq X] [DecidableEq Y] [instX : Listed X] [instY : Listed Y] (i : X) (j : Y) : EMatrix X Y 𝒮 :=
+abbrev Eη₂ {X Y : Type} [instX : Listed X] [instY : Listed Y] (i : X) (j : Y) : EMatrix X Y 𝒮 :=
   let i := Listed.encode i; let j := Listed.encode j;
   .ofFn fun i' j' ↦ if i = i' ∧ j = j' then 1 else 0
 
@@ -112,11 +112,114 @@ def Eι (p : RPol[F,N,𝒮]) : EMatrix 𝟙 (S p) 𝒮 := match p with
   | wnk_rpol {~p₁ ; ~_} => Eι[Eι p₁, 0]
   | wnk_rpol {~_*} => Eι[0, .ofFn fun 0 ↦ 1]
 
+section idk
+
+variable {Pk : Type} [Listed Pk]
+
+def boxₑ {X} [Listed X] {Q : Type} [Mul Q] [AddCommMonoid Q] {Z : Type} [Listed Z] [Unique Z]
+    (l : E𝒲[Z, X, Q]) (r : E𝒲[Pk, Pk, E𝒲[X, Z, Q]]) :
+    E𝒲[Pk,Pk,Q] :=
+  .ofFn fun α β ↦ (l * r.asNMatrix α β).asNMatrix ⟨0, by simp⟩ ⟨0, by simp⟩
+
+infixr:50 " ⊠ₑ " => boxₑ
+
+@[simp]
+theorem boxₑ_eq_box {X} [Listed X] [Fintype X] {Q : Type} [Mul Q] [AddCommMonoid Q] {Z : Type} [Listed Z] [Unique Z]
+    (l : E𝒲[Z, X, Q]) (r : E𝒲[Pk, Pk, E𝒲[X, Z, Q]]) :
+    boxₑ l r = EMatrix.ofMatrix (box l.asMatrix r.asMatrix₂) := by
+  ext
+  simp [boxₑ, box, Matrix.down]
+  simp only [EMatrix.asNMatrix, Listed.decodeFin, Listed.decode, get_getElem?,
+    EMatrix.ofMatrix_apply₂, Matrix.mul_apply, EMatrix.asMatrix_apply₂, EMatrix.asMatrix₂_apply,
+    EMatrix.get_eq_apply]
+  congr!
+  · symm; apply Unique.default_eq
+  · symm; apply Unique.default_eq
+
+def foxₑ {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+    [Listed A] [Listed B] [Listed C]
+    (l : E𝒲[A, B, Q]) (r : E𝒲[Pk, Pk, E𝒲[B, C, Q]]) :
+    E𝒲[Pk, Pk, E𝒲[A, C, Q]] :=
+  .ofFn fun α β ↦ l * r.asNMatrix α β
+
+infixr:50 " ⊡ₑ " => foxₑ
+
+@[simp]
+theorem foxₑ_eq_fox{A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+    [Listed A] [Listed B] [Listed C] [Fintype A]
+    [Fintype B] [Fintype C]
+    (l : E𝒲[A, B, Q]) (r : E𝒲[Pk, Pk, E𝒲[B, C, Q]]) :
+    foxₑ l r = EMatrix.ofMatrix₂ (fox l.asMatrix r.asMatrix₂) := by
+  ext
+  simp [foxₑ, fox, Matrix.mul_apply]
+  congr
+
+@[specialize, inline]
+def soxₑ {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+    [Listed A] [Listed B]
+    (l : E𝒲[Pk, Pk, Q]) (r : E𝒲[Pk, Pk, E𝒲[A, B, Q]]) :
+    E𝒲[Pk, Pk, E𝒲[A, B, Q]] :=
+  .ofFn fun α β ↦ ∑ m, l.asNMatrix α m •> r.asNMatrix m β
+
+infixr:50 " ⊟ₑ " => soxₑ
+
+@[simp]
+theorem soxₑ_eq_sox {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+    [Listed A] [Listed B]
+    [Fintype A] [Fintype B]
+    [Fintype Pk]
+    (l : E𝒲[Pk, Pk, Q]) (r : E𝒲[Pk, Pk, E𝒲[A, B, Q]]) :
+    soxₑ l r = EMatrix.ofMatrix₂ (sox l.asMatrix r.asMatrix₂) := by
+  ext
+  simp [soxₑ, sox, Matrix.mul_apply, Matrix.sum_apply, EMatrix.sum_apply]
+  simp [HSMul.hSMul]
+  congr
+
+def sox'ₑ {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+    [Listed A] [Listed B]
+    (l : E𝒲[Pk, Pk, E𝒲[A, B, Q]]) (r : E𝒲[Pk, Pk, Q]) :
+    E𝒲[Pk, Pk, E𝒲[A, B, Q]] :=
+  .ofFn fun α β ↦ (Listed.array.map fun m ↦ l.asNMatrix α m <• r.asNMatrix m β).sum
+
+infixr:50 " ⊟'ₑ " => sox'ₑ
+
+@[simp]
+theorem sox'ₑ_eq_sox' {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+    [Listed A] [Listed B]
+    [Fintype A] [Fintype B]
+    [Fintype Pk]
+    (l : E𝒲[Pk, Pk, E𝒲[A, B, Q]]) (r : E𝒲[Pk, Pk, Q]) :
+    sox'ₑ l r = EMatrix.ofMatrix₂ (sox' l.asMatrix₂ r.asMatrix) := by
+  ext
+  simp [sox'ₑ, sox', Matrix.sum_apply, EMatrix.sum_apply]
+  simp [HSMul.hSMul]
+  congr
+
+def croxₑ {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+    [Listed A] [Listed B] [DecidableEq C] [Listed C]
+    (l : E𝒲[Pk, Pk, E𝒲[A, B, Q]]) (r : E𝒲[Pk, Pk, E𝒲[B, C, Q]]) :
+    E𝒲[Pk, Pk, E𝒲[A, C, Q]] :=
+  .ofFn fun α β ↦ (Listed.array.map fun m ↦ l.asNMatrix α m * r.asNMatrix m β).sum
+
+infixr:50 " ⊞ₑ " => croxₑ
+
+@[simp]
+theorem croxₑ_eq_crox {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+    [Listed A] [Listed B] [DecidableEq C] [Listed C]
+    [Fintype A] [Fintype B] [Fintype C]
+    [Fintype Pk]
+    (l : E𝒲[Pk, Pk, E𝒲[A, B, Q]]) (r : E𝒲[Pk, Pk, E𝒲[B, C, Q]]) :
+    croxₑ l r = EMatrix.ofMatrix₂ (crox l.asMatrix₂ r.asMatrix₂) := by
+  ext
+  simp [croxₑ, crox, Matrix.mul_apply, Matrix.sum_apply, EMatrix.sum_apply]
+  congr
+
+end idk
 
 
 variable [Star 𝒮]
 
-def E𝒪_lambda [Listed N] [DecidableEq N] (p : RPol[F,N,𝒮]) :
+def E𝒪_lambda [Listed N] (p : RPol[F,N,𝒮]) :
     EMatrix Pk[F,N] Pk[F,N] (EMatrix (S p) 𝟙 𝒮) :=
   match _ : p with
   | wnk_rpol {drop} => 0
@@ -133,17 +236,17 @@ def E𝒪_lambda [Listed N] [DecidableEq N] (p : RPol[F,N,𝒮]) :
     let 𝒪₂ := E𝒪_lambda p₂
     .ofFn fun α β ↦ E𝒪_lambda[𝒪₁.getN α β, 𝒪₂.getN α β]
   | wnk_rpol {~p₁ ; ~p₂} =>
-    let 𝒪₁ := E𝒪_lambda p₁ |>.asNatMatrix₂
-    let M₂ := E𝒪_lambda p₂ |>.asNatMatrix₂
-    let M₃ := Eι p₂ |>.asNatMatrix
+    let 𝒪₁ := E𝒪_lambda p₁ |>.asNMatrix₂
+    let M₂ := E𝒪_lambda p₂ |>.asNMatrix₂
+    let M₃ := Eι p₂ |>.asNMatrix
     .ofFn fun α β ↦
-      E𝒪_lambda[(Listed.array.map fun γ ↦ (𝒪₁ α γ * M₃ * M₂ γ β)).sum |> EMatrix.ofNatMatrix, M₂ α β |> EMatrix.ofNatMatrix]
+      E𝒪_lambda[(Listed.array.map fun γ ↦ (𝒪₁ α γ * M₃ * M₂ γ β)).sum, M₂ α β]
   | wnk_rpol {~p₁*} =>
-    let 𝒪₁ := E𝒪_lambda p₁ |>.asNatMatrix
+    let 𝒪₁ := E𝒪_lambda p₁ |>.asNMatrix
     let M₂ :=
-      let ι₁ := EMatrix.asNatMatrix (Eι p₁)
-      let 𝒪₁ := EMatrix.asNatMatrix₂ (E𝒪_lambda p₁)
-      let X := EMatrix.ofNatMatrix (ι₁ ⊠ 𝒪₁) |>.asNMatrix
+      let ι₁ := Eι p₁
+      let 𝒪₁ := E𝒪_lambda p₁
+      let X := ι₁ ⊠ₑ 𝒪₁
       let Y : N𝒲[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮] := X^*
       Y
     .ofFn fun α β ↦
@@ -153,9 +256,9 @@ def E𝒪_lambda [Listed N] [DecidableEq N] (p : RPol[F,N,𝒮]) :
       ]
 
 def E𝒪_heart [Listed N] [DecidableEq N] (p₁ : RPol[F,N,𝒮]) : EMatrix Pk[F,N] Pk[F,N] 𝒮 :=
-  let ι₁ := EMatrix.asNatMatrix (Eι p₁)
-  let 𝒪₁ := EMatrix.asNatMatrix₂ (E𝒪_lambda p₁)
-  let X := EMatrix.ofNatMatrix (ι₁ ⊠ 𝒪₁) |>.asNMatrix
+  let ι₁ := Eι p₁
+  let 𝒪₁ := E𝒪_lambda p₁
+  let X := ι₁ ⊠ₑ 𝒪₁
   let Y : N𝒲[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮] := X^*
   Y
 
@@ -217,7 +320,7 @@ theorem E𝒪_heart_eq_𝒪_heart {p : RPol[F,N,𝒮]} (h : E𝒪_lambda p = EMa
   simp [LawfulStar.star_eq_sum]
   ext α β
   simp
-  convert EMatrix.ωSum_apply (ι:=ℕ) (x:=α) (y:=β) (f:=fun n ↦ (EMatrix.ofNatMatrix ((EMatrix.ofMatrix (ι p)).asNatMatrix ⊠ (E𝒪_lambda p).asNatMatrix₂)).asNMatrix ^ n)
+  convert EMatrix.ωSum_apply (ι:=ℕ) (x:=α) (y:=β) (f:=fun n ↦ EMatrix.ofMatrix (ι p ⊠ (E𝒪_lambda p).asMatrix₂) ^ n)
   symm
   rename_i n
   ext α β
@@ -229,13 +332,19 @@ theorem E𝒪_heart_eq_𝒪_heart {p : RPol[F,N,𝒮]} (h : E𝒪_lambda p = EMa
     if α = β then
       subst_eqs
       simp_all
+      simp [OfNat.ofNat, One.one, EMatrix.instOneOfZero._aux_1]
     else
-      simp_all
+      simp_all [OfNat.ofNat, One.one, EMatrix.instOneOfZero._aux_1, Matrix.diagonal]
+
   | succ n ih =>
-    simp [pow_succ, ih, NMatrix.hmul_def, Matrix.mul_apply, box]
+    simp [pow_succ, ih, Matrix.mul_apply, box]
     congr!
     simp [h]
-    simp [EMatrix.asNMatrix, Matrix.down, box]
+
+theorem _root_.EMatrix.apply_encodeFin {m n α : Type*} [Listed m] [Listed n] {M : N𝒲[Listed.size m, Listed.size n, α]} {i j} :
+      (@DFunLike.coe E𝒲[m, n, α] m (fun _ ↦ n → α) EMatrix.instFunLikeForall M i j : α)
+    = M (Listed.encodeFin i) (Listed.encodeFin j) := by
+  rfl
 
 @[simp]
 theorem E𝒪_lambda_eq_𝒪 {p : RPol[F,N,𝒮]} : E𝒪_lambda p = EMatrix.ofMatrix₂ (𝒪 p) := by
@@ -264,6 +373,36 @@ theorem E𝒪_lambda_eq_𝒪 {p : RPol[F,N,𝒮]} : E𝒪_lambda p = EMatrix.ofM
     ext α β i j
     simp [𝒪, E𝒪_lambda]
     simp_all
+    congr
+    · ext u ⟨_⟩
+      simp [Matrix.sum_apply]
+      simp only [_root_.EMatrix.apply_encodeFin]
+      simp only [Listed.encodeFin_subsingleton, Fin.zero_eta, Fin.isValue, NMatrix.sum_apply,
+        NMatrix.mul_coe]
+      congr! with γ
+      simp [Matrix.mul_apply]
+      congr!
+      · simp only [_root_.EMatrix.apply_encodeFin]
+        simp only [EMatrix.asNMatrix₂]
+        simp only [EMatrix.ofMatrix₂, EMatrix.map, EMatrix.getN_eq, EMatrix.ofFnSlow_apply₂,
+          EMatrix.asNMatrix, NMatrix.hmul_def, NMatrix.ofMatrix_apply₂, Matrix.mul_apply,
+          Finset.univ_unique, NMatrix.asMatrix_apply, EMatrix.nmatrix_apply_eq_apply,
+          Listed.encodeFin_decodeFin, EMatrix.ofMatrix_apply₂, Finset.sum_singleton]
+        congr
+        show ((NMatrix.ofFn fun i j ↦ EMatrix.ofMatrix _) _ _) _ _ = _
+        simp
+      · ext v ⟨_⟩
+        simp only [EMatrix.asNMatrix₂]
+        simp only [EMatrix.ofMatrix₂, EMatrix.map, EMatrix.getN_eq, EMatrix.ofFnSlow_apply₂]
+        show ((NMatrix.ofFn fun i j ↦ EMatrix.ofMatrix _) _ _) _ _ = _
+        simp
+    · ext
+      simp
+      letI : Fintype Pk[F,N] := Listed.fintype
+      letI : DecidableEq Pk[F,N] := Listed.decidableEq
+      simp [EMatrix.ofMatrix₂, EMatrix.map, EMatrix.getN_eq, EMatrix.ofFnSlow_apply₂, EMatrix.asNMatrix₂]
+      show ((NMatrix.ofFn fun i j ↦ EMatrix.ofMatrix _) _ _) _ _ = _
+      simp
   next p ih =>
     ext
     simp [𝒪, E𝒪_lambda, ih]
@@ -279,14 +418,7 @@ theorem E𝒪_lambda_eq_𝒪 {p : RPol[F,N,𝒮]} : E𝒪_lambda p = EMatrix.ofM
 
 def ι_aux (p : RPol[F,N,𝒮]) : Matrix 𝟙 (S p) 𝒮 := Eι p |>.asMatrix
 
--- @[csimp] theorem ι_csimp : @ι = @ι_aux := by
---   funext p x _ _ _ _ _ p
---   simp [ι_aux, Eι_eq_ι]
-
 def 𝒪_aux (p : RPol[F,N,𝒮]) : Matrix Pk[F,N] Pk[F,N] (Matrix (S p) 𝟙 𝒮) := E𝒪_lambda p |>.asMatrix₂
-
--- @[csimp] theorem 𝒪_csimp : @𝒪 = @𝒪_aux := by
---   ext; simp [𝒪_aux, E𝒪_lambda_eq_𝒪]
 
 def Eδ_delta (p : RPol[F,N,𝒮]) : EMatrix Pk[F,N] Pk[F,N] (EMatrix (S p) (S p) 𝒮) :=
   match p with
@@ -301,23 +433,22 @@ def Eδ_delta (p : RPol[F,N,𝒮]) : EMatrix Pk[F,N] Pk[F,N] (EMatrix (S p) (S p
       Eδ_delta[[δ₁.getN α β,    0],
         [0,           δ₂.getN α β]]
   | wnk_rpol {~p₁ ; ~p₂} =>
-    let ι₂ := Eι p₂ |>.asNatMatrix
-    let δ₁ := Eδ_delta p₁ |>.asNatMatrix
-    let δ₂ := Eδ_delta p₂ |>.asNatMatrix₂
-    let 𝒪₁ := E𝒪_lambda p₁ |>.asNatMatrix₂
+    let ι₂ := Eι p₂
+    let δ₁ := Eδ_delta p₁ |>.asNMatrix
+    let δ₂ := Eδ_delta p₂ |>.asNMatrix
+    let 𝒪₁ := E𝒪_lambda p₁ |>.asNMatrix
     .ofFn fun α β ↦
-      Eδ_delta[[δ₁ α β,    EMatrix.ofNatMatrix (∑ γ, (𝒪₁ α γ * ι₂ * δ₂ γ β))],
-        [0,           EMatrix.ofNatMatrix (δ₂ α β)]]
+      Eδ_delta[[δ₁ α β, ∑ γ, 𝒪₁ α γ * ι₂ * δ₂ γ β],
+               [0,      δ₂ α β]]
   | wnk_rpol {~p₁*} =>
-    let ι₁ := Eι p₁ |>.asNatMatrix
-    let δ₁ := Eδ_delta p₁ |>.asNatMatrix₂
-    let 𝒪_heart₁ := E𝒪_heart p₁ |>.asNatMatrix
-    let X := 𝒪_heart₁ ⊟ ι₁ ⊡ δ₁
-    let Eδ' : E𝒲[Pk[F,N], Pk[F,N], E𝒲[S p₁, S p₁, 𝒮]] :=
-      δ₁ + ((E𝒪_lambda p₁).asNatMatrix₂ ⊞ X) |> EMatrix.ofNatMatrix₂
+    let ι₁ := Eι p₁
+    let δ₁ := Eδ_delta p₁
+    let 𝒪_heart₁ := E𝒪_heart p₁
+    let X := 𝒪_heart₁ ⊟ₑ ι₁ ⊡ₑ δ₁
+    let Eδ' : E𝒲[Pk[F,N], Pk[F,N], E𝒲[S p₁, S p₁, 𝒮]] := δ₁ + ((E𝒪_lambda p₁) ⊞ₑ X)
     .ofFn fun α β ↦
       Eδ_delta[[Eδ'.getN α β, 0],
-        [(X α β).coe_unique_left |> EMatrix.ofNatMatrix, 0]]
+               [X.asNMatrix α β, 0]]
 
 @[simp]
 theorem Eδ_delta_eq_δ {p : RPol[F,N,𝒮]} : Eδ_delta p = EMatrix.ofMatrix₂ (δ p) := by
@@ -328,24 +459,24 @@ theorem Eδ_delta_eq_δ {p : RPol[F,N,𝒮]} : Eδ_delta p = EMatrix.ofMatrix₂
   next => ext; simp [Eδ_delta, δ]
   next => ext; simp [Eδ_delta, δ]
   next => ext; simp [Eδ_delta, δ]
-  next => ext; simp_all [Eδ_delta, δ, S]; congr!; ext; simp
+  next =>
+    ext; simp_all [Eδ_delta, δ, S]
+    simp only [_root_.EMatrix.apply_encodeFin]
+    simp only [EMatrix.asNMatrix_apply, Listed.encodeFin_decodeFin, EMatrix.ofMatrix₂_apply,
+      EMatrix.ofMatrix_asMatrix]
   next => ext; simp_all [Eδ_delta, δ, S]
   next => ext; simp_all [Eδ_delta, δ]
   next p ih =>
     ext α β i j; simp_all [Eδ_delta, δ, δ.δ', E𝒪_heart_eq_𝒪_heart]
     congr!
-    · ext i' j'; simp_all
-      simp [EMatrix.ofNatMatrix₂]
-      simp [sox, fox, crox, Matrix.sum_apply, Matrix.mul_apply]
-    · ext i j
-      simp_all only [EMatrix.ofNatMatrix_asMatrix]
-      simp [sox, fox, -Matrix.coe_unique_left_apply, Matrix.sum_apply]
+    ext i' j'; simp_all
+    simp only [_root_.EMatrix.apply_encodeFin]
+    simp only [EMatrix.asNMatrix_apply, Listed.encodeFin_decodeFin, EMatrix.ofMatrix₂_apply,
+      Listed.encodeFin_subsingleton, Fin.zero_eta, Fin.isValue]
+    simp only [Fin.isValue, EMatrix.nmatrix_apply_eq_apply, Listed.encodeFin_decodeFin,
+      EMatrix.ofMatrix_apply₂]
 
 def δ_aux (p : RPol[F,N,𝒮]) : 𝒲[Pk[F,N],Pk[F,N],𝒲[S p,S p,𝒮]] := Eδ_delta p |>.asMatrix₂
-
--- @[csimp] theorem δ_csimp : @δ = @δ_aux := by
---   ext
---   simp [δ_aux, Eδ_delta_eq_δ]
 
 def RPol.ewnka (p : RPol[F,N,𝒮]) : EWNKA[F,N,𝒮,S p] := ⟨Eι p, Eδ_delta p, E𝒪_lambda p⟩
 
@@ -364,9 +495,9 @@ def EWNKA.toWNKA : WNKA[F,N,𝒮,Q] where
   δ := EMatrix.asMatrix₂ ℰ.δ
   𝒪 := EMatrix.asMatrix₂ ℰ.𝒪
 
-omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] [DecidableEq F] in
-@[simp] theorem WNKA.toWNKA_toEWNKA : 𝒜.toEWNKA.toWNKA = 𝒜 := by simp [WNKA.toEWNKA, EWNKA.toWNKA]; congr <;> ext <;> simp
-omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] [DecidableEq F] in
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] [DecidableEq F] [DecidableEq N] in
+@[simp] theorem WNKA.toWNKA_toEWNKA : 𝒜.toEWNKA.toWNKA = 𝒜 := by simp [WNKA.toEWNKA, EWNKA.toWNKA]
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] [DecidableEq F] [DecidableEq N] in
 @[simp] theorem EWNKA.toEWNKA_toWNKA : ℰ.toWNKA.toEWNKA = ℰ := by simp [WNKA.toEWNKA, EWNKA.toWNKA]
 
 -- omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
@@ -375,11 +506,8 @@ omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoi
 -- omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[simp] theorem RPol.ewnka_toWNKA (p : RPol[F,N,𝒮]) : p.ewnka.toWNKA = p.wnka := by
   simp [wnka, ewnka, EWNKA.toWNKA]
-  constructor <;> ext <;> simp
 
 def RPol.wnka_fast (p : RPol[F,N,𝒮]) := p.ewnka.toWNKA
-
--- @[csimp] theorem RPol.wnka_csimp : @RPol.wnka = @RPol.wnka_fast := by ext; simp [wnka_fast]
 
 @[simp]
 def EWNKA.toEWNKA_ι_apply {α β} : ℰ.toWNKA.ι α β = ℰ.ι α β := by
@@ -391,10 +519,7 @@ def EWNKA.toEWNKA_δ_apply {α β} : ℰ.toWNKA.δ α β = (ℰ.δ α β).asMatr
 def EWNKA.toEWNKA_𝒪_apply {α β} : ℰ.toWNKA.𝒪 α β = (ℰ.𝒪 α β).asMatrix := by
   simp [EWNKA.toWNKA]; rfl
 
-abbrev _root_.Listed.Li (α : Type*) [Listed α] : Type := Fin (Listed.size α)
-notation "Li[" α "]" => Listed.Li α
-
-instance {α : Type*} [Listed α] : Listed Li[α] := inferInstanceAs (Listed <| Fin (Listed.size α))
+notation "Li[" α "]" => Fin (Listed.size α)
 
 def EWNKA.compute (𝒜 : EWNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) :
     EMatrix Q 𝟙 𝒮 :=
@@ -404,184 +529,73 @@ def EWNKA.compute (𝒜 : EWNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) :
   | [α, α'] => 𝒜.𝒪 α α'
   | α::α'::s => 𝒜.δ α α' * 𝒜.compute (α' :: s)
 
--- def EWNKA.Li𝒪 (ℰ : EWNKA[F,N,S,Q]) : E𝒲[Li[Pk[F,N]], Li[Pk[F,N]], E𝒲[Q, 𝟙, 𝒮]] := ℰ.𝒪
-
-def EWNKA.compute.go (𝒜 : EWNKA[F,N,𝒮,Q]) (acc : E𝒲[Q, Q, 𝒮]) (s : List Pk[F,N]) :
-    EMatrix Q 𝟙 𝒮 :=
-  match s with
-  -- NOTE: these are unreachable in practice, but setting them to 1 is okay by idempotency
-  | [] | [_] => .fill 1
-  | [α, α'] => acc * 𝒜.𝒪 α α'
-  | α::α'::s => EWNKA.compute.go 𝒜 (𝒜.δ α α' * acc) (α' :: s)
-def EWNKA.compute''' (𝒜 : EWNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) :
-    EMatrix Q 𝟙 𝒮 :=
-  EWNKA.compute.go 𝒜 1 s
-
-
--- def EWNKA.compute'' (𝒜 : EWNKA[F,N,𝒮,Q]) (s : List Li[Pk[F,N]]) (n : ℕ) :
---     EMatrix Q 𝟙 𝒮 :=
---   if h : n ≤ 1 then
---     .fill 1
---   else
---     let α₀ : Li[Pk[F,N]] := ⟨0, by sorry⟩
---     Id.run do
---     let mut A := 𝒜.𝒪.asNMatrix (s[n - 2]?.getD α₀) (s[n - 1]?.getD α₀)
---     for h : i in 3...=n do
---       A := 𝒜.δ.asNMatrix (s[n - i]?.getD α₀) (s[n - i + 1]?.getD α₀) * A
---     return A
-
--- def EWNKA.compute' (𝒜 : EWNKA[F,N,𝒮,Q]) (s : Array Li[Pk[F,N]]) (n : ℕ) :
---     EMatrix Q 𝟙 𝒮 :=
---   if h : n ≤ 1 then
---     .fill 1
---   else
---     let α₀ : Li[Pk[F,N]] := ⟨0, by sorry⟩
---     Id.run do
---     let mut A := 𝒜.𝒪.asNMatrix (s[n - 2]?.getD α₀) (s[n - 1]?.getD α₀)
---     for h : i in 3...=n do
---       A := 𝒜.δ.asNMatrix (s[n - i]?.getD α₀) (s[n - i + 1]?.getD α₀) * A
---     return A
-
--- @[simp]
--- theorem EMatrix.asNMatrix_apply {α β 𝒮 : Type*} [Listed α] [Listed β] (A : EMatrix α β 𝒮) (a : α) (b : β) :
---     (@DFunLike.coe E𝒲[α, β, 𝒮] α (fun x ↦ β → 𝒮) EMatrix.instFunLikeForall A.asNMatrix a b : 𝒮) = A a b := by
---   rfl
-
--- theorem EWNKA.compute'_eq_compute'' {𝒜 : EWNKA[F,N,𝒮,Q]} {xs} {n : ℕ} (hn : xs.length = n) :
---     𝒜.compute'' xs n = 𝒜.compute' xs.toArray n := by
---   induction n generalizing xs with
---   | zero => simp [compute'', compute']
---   | succ n ih =>
---     simp_all only [compute'', EMatrix.nmatrix_apply_eq_apply, EMatrix.asNMatrix_apply,
---       bind_pure_comp, map_pure, forIn'_eq_forIn, bind_pure, dite_eq_ite, compute',
---       List.getElem?_toArray, List.getElem?_map, add_le_iff_nonpos_left, nonpos_iff_eq_zero,
---       Nat.reduceSubDiff, Order.lt_add_one_iff, tsub_le_iff_right, le_add_iff_nonneg_right, zero_le,
---       getElem?_pos, Option.getD_some, add_tsub_cancel_right, lt_add_iff_pos_right, Order.lt_one_iff,
---       List.size_toArray, List.length_map, List.getElem_toArray, List.getElem_map]
-
--- theorem EWNKA.compute_eq_compute' {𝒜 : EWNKA[F,N,𝒮,Q]} {xs : List Pk[F,N]} (acc : E𝒲[Q, Q, 𝒮]) :
---     acc * 𝒜.compute xs = EWNKA.compute.go acc xs := by
---   induction xs with
---   | nil => rfl
---   | cons x₀ xs ih =>
---     rcases xs with _ | ⟨x₁, xs⟩
---     · rfl
---     · rcases xs with _ | ⟨x₂, xs⟩
---       · sorry
---       rcases xs with _ | ⟨x₃, xs⟩
---       · unfold compute''' compute compute.go at ih ⊢
---         simp at ih ⊢
---         rfl
---       · unfold compute''' compute compute.go at ih ⊢
---         simp at ih ⊢
---         rcases xs with _ | ⟨x₄, xs⟩
---         · unfold compute compute.go at ih ⊢
---           simp
---         simp at ih
-
-
-
---       simp
---       rw [ih]
---     sorry
---     simp_all [compute, compute'''. compute.go]
-
--- theorem EWNKA.compute_eq_compute' {𝒜 : EWNKA[F,N,𝒮,Q]} {xs} {n : ℕ} (hn : xs.length = n) :
---     𝒜.compute xs = 𝒜.compute' (xs.map Listed.encodeFin).toArray n := by
---   rw [← EWNKA.compute'_eq_compute'' (by simp [hn])]
---   induction n using Nat.strongRec generalizing xs with
---   | ind n ih =>
---     rcases n with _ | n
---     · have : xs = [] := (by grind); subst_eqs; rfl
---     rcases xs with _ | ⟨x₀, xs⟩
---     · subst_eqs
---     rcases xs with _ | ⟨x₁, xs⟩
---     · subst_eqs; simp_all; rfl
---     rcases xs with _ | ⟨x₂, xs⟩
---     · simp_all
---       simp [compute, compute'']
---       rw [forIn_eq_forIn', Std.Rcc.forIn'_eq_if]
---       simp
---     · simp_all only [Order.lt_add_one_iff, List.length_cons, Nat.add_right_cancel_iff,
---       List.map_cons]
---       replace ih := ih (xs := (x₁ :: x₂ :: xs)) n
---       simp [hn] at ih
---       simp_all [compute, compute']
---       rcases n with _ | n
---       · simp_all only [Nat.add_eq_zero_iff, List.length_eq_zero_iff, one_ne_zero, and_false,
---         and_self]
---       · simp_all only [Nat.add_right_cancel_iff, compute'', add_le_iff_nonpos_left,
---         nonpos_iff_eq_zero, Nat.reduceSubDiff, List.length_cons, List.length_map,
---         Order.lt_add_one_iff, tsub_le_iff_right, le_add_iff_nonneg_right, zero_le, getElem?_pos,
---         Option.getD_some, add_tsub_cancel_right, lt_add_iff_pos_right, Order.lt_one_iff,
---         EMatrix.nmatrix_apply_eq_apply, EMatrix.asNMatrix_apply, List.getElem?_cons_succ,
---         bind_pure_comp, map_pure, forIn'_eq_forIn, bind_pure, dite_eq_ite, Nat.add_eq_zero_iff,
---         one_ne_zero, and_false, ↓reduceDIte, List.getElem_cons_succ]
---         clear ih
---         nth_rw 2 [forIn_eq_forIn']
---         rw [Std.Rcc.forIn'_eq_if]
---         simp_all
---         nth_rw 1 [forIn_eq_forIn']
---         rw [Std.Rcc.forIn'_eq_if]
---         simp
---         rcases n with _ | _ | n
---         · simp_all
---           omega
---         · simp_all
---           rw [forIn_eq_forIn', Std.Roc.forIn'_eq_forIn'_toList]
---           simp
---         · simp
---           rw [forIn_eq_forIn', Std.Roc.forIn'_eq_forIn'_toList]
---           rw [forIn_eq_forIn', Std.Roc.forIn'_eq_forIn'_toList]
---           simp
---           have : (3<...=n + 1 + 1 + 1 + 1).toList = (List.range (n + 1)).map (· + 4) := by
---             apply List.ext_getElem
---             · simp
---             · simp; omega
---           simp [this, List.range_succ]
---           have : (3<...=n + 1 + 1 + 1).toList = (List.range n).map (· + 4) := by
---             apply List.ext_getElem
---             · simp
---             · simp; omega
---           simp [this, List.range_succ]
---           congr! 1
---           clear this
---           clear this
---           simp [List.foldl_map]
---           simp_all
---           congr
---           · ext
---             simp
---             rcases n with _ | n
---             · simp_all
---             · simp_all
-
---             congr! 3
---           simp
---           induction n generalizing xs with
---           | zero => simp
---           | succ n ih =>
---             simp [List.range_succ]
---             congr! 1
-
---             congr
---           · ext A i p ⟨⟩
---             simp
---             rcases i with _ | _ | _ | _ | _ | i
---             · simp
---             · simp
---             · simp
---             · simp
---             · simp
---               rcases n with _ | n
---               · simp
---               · simp
---             have : n + 1 + 1 + 1 - i = n + 1 + 1 - i + 1 := by sorry
---             simp [this]
---           · congr!
---             grind
+def EWNKA.sem' (𝒜 : EWNKA[F,N,𝒮,Q]) : GS[F,N] →c 𝒮 :=
+  ⟨fun ⟨α, xs, β⟩ ↦
+    (((α :: xs).zip xs).foldl (fun acc (γ, κ) ↦ acc * 𝒜.δ γ κ) 𝒜.ι * 𝒜.𝒪 (xs.getLast?.getD α) β) () (),
+    SetCoe.countable _⟩
 def EWNKA.sem (𝒜 : EWNKA[F,N,𝒮,Q]) : GS[F,N] →c 𝒮 :=
   ⟨(fun x ↦ (𝒜.ι * 𝒜.compute x.pks) () ()), SetCoe.countable _⟩
+
+@[noinline, specialize]
+def EWNKA.semArray' (𝒜 : EWNKA[F,N,𝒮,Q]) (m : E𝒲[𝟙, Q, 𝒮]) (γ : Pk[F,N]) : Pk[F,N] → 𝒮 :=
+  fun β ↦ (m * 𝒜.𝒪 γ β) () ()
+
+@[specialize, inline]
+def EWNKA.semArray (𝒜 : EWNKA[F,N,𝒮,Q]) (α_xs : Array Pk[F,N]) (h : 0 < α_xs.size) : Pk[F,N] → 𝒮 :=
+  let α_xs := α_xs.toSubarray
+  let xs := α_xs.drop 1
+  let m := (α_xs.iter.zip xs.iter).fold (fun acc (γ, κ) ↦ acc * 𝒜.δ γ κ) 𝒜.ι
+  let γ := α_xs.get ⟨α_xs.size - 1, by grind⟩
+  dbg_trace "head of m: {if h : 0 < m.data.size then "a" else "b"}"
+  𝒜.semArray' m γ
+  -- fun β ↦ (m * 𝒜.𝒪 γ β) () ()
+
+@[specialize, inline]
+def EWNKA.semArray'' (𝒜 : EWNKA[F,N,𝒮,Q]) (α_xs : Array Pk[F,N]) (h : 0 < α_xs.size) : E𝒲[𝟙, Q, 𝒮] × Pk[F,N] :=
+  let α_xs := α_xs.toSubarray
+  let xs := α_xs.drop 1
+  let m := (α_xs.iter.zip xs.iter).fold (fun acc (γ, κ) ↦ acc * 𝒜.δ γ κ) 𝒜.ι
+  let γ := α_xs.get ⟨α_xs.size - 1, by grind⟩
+  -- dbg_trace "head of m: {if h : 0 < m.data.size then "a" else "b"}"
+  ⟨m, γ⟩
+  -- fun β ↦ (m * 𝒜.𝒪 γ β) () ()
+
+@[csimp]
+theorem EWNKA.sem_eq_sem' : @EWNKA.sem = @EWNKA.sem' := by
+  ext _ _ _ _ _ _ _ Q _ 𝒜 ⟨α, xs, β⟩
+  simp [sem, sem', GS.pks]
+  generalize 𝒜.ι = M
+  induction xs generalizing M α with
+  | nil => simp [compute]
+  | cons x xs ih =>
+    simp [compute]
+    have : (M * (𝒜.δ α x * 𝒜.compute (x :: (xs ++ [β])))) = (M * 𝒜.δ α x) * 𝒜.compute (x :: (xs ++ [β])) := by
+      letI : DecidableEq Q := Listed.decidableEq
+      letI : Fintype Q := Listed.fintype
+      simp [Matrix.mul_assoc]
+    simp [this]
+    rw [ih]
+    simp [List.getLast?_cons]
+
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] [DecidableEq F] [LawfulStar N𝒲[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮]] in
+theorem EWNKA.semArray_eq_sem {ℰ : EWNKA[F,N,𝒮,Q]} {α_xs : Array Pk[F,N]} {β : Pk[F,N]} (h : 0 < α_xs.size) :
+    ℰ.semArray α_xs h β = ℰ.sem ⟨α_xs.toList.head (by grind [Array.ne_empty_of_size_pos]), α_xs.toList.tail, β⟩ := by
+  rcases α_xs with ⟨_ | ⟨α, xs⟩⟩
+  · simp at h
+  simp [sem_eq_sem', semArray, dbgTrace, semArray', sem', ← Std.Iter.foldl_toList, Subarray.get]
+  have : Std.Slice.size (({ toList := α :: xs } : Array _).toSubarray 0 (‖xs‖ + 1)) = ‖xs‖ + 1 := by grind
+  simp_all only [add_tsub_cancel_right]
+  have : ((Std.Slice.toList (({ toList := α :: xs } : Array _).toSubarray 0 (‖xs‖ + 1))).zip
+          (Std.Slice.toList (({ toList := α :: xs } : Array _).toSubarray 0 (‖xs‖ + 1))).tail) = (α::xs).zip xs := by
+    apply List.ext_getElem
+    · simp; grind
+    · simp_all
+      intro i h₁
+      simp [Subarray.getElem_toList]
+      rcases i with _ | i
+      · simp; cbv
+      · simp; cbv; rcases i with _ | i <;> simp
+  grind
 
 theorem RPol.ewnka_sem_eq_wnka_sem (p : RPol[F,N,𝒮]) : p.ewnka.sem = p.wnka.sem := by
   ext ⟨α, xs, β⟩
@@ -590,5 +604,7 @@ theorem RPol.ewnka_sem_eq_wnka_sem (p : RPol[F,N,𝒮]) : p.ewnka.sem = p.wnka.s
   congr! with s _
   ext s' ⟨⟩
   induction xs generalizing α s' with simp_all [Matrix.mul_apply, EWNKA.compute, WNKA.compute]
+
+#print axioms RPol.ewnka_sem_eq_wnka_sem
 
 end

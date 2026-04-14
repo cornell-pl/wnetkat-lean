@@ -158,10 +158,9 @@ theorem Pol.filter_toRol_sem_eq_sum (t : Pred[F,N]) :
   rw [← List.sum_toFinset]
   rw [List.toFinset_filterMap]
   · rw [Finset.sum_filterMap _ _ (by simp_all)]
-    congr with p
-    · simp [← h, Listed.listOf]
-    · rename_i h₀ h₁
-      split <;> simp only [Pi.zero_apply, Countsupp.coe_zero]
+    congr! 1 with p
+    · simp [← h]
+    · grind
   · grind
   · refine List.Nodup.filterMap ?_ ?_
     · grind

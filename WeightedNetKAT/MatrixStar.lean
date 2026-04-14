@@ -26,12 +26,6 @@ instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
     | zero => simp
     | succ n ih => simp [pow_succ, Matrix.mul_apply, ih]
 
-def nice {n : ℕ} (m : Matrix (Fin (n + 1)) (Fin (n + 1)) α) : Matrix (Fin n ⊕ 𝟙) (Fin n ⊕ 𝟙) α
-  | .inl l,  .inl r  => m ⟨l, by omega⟩ ⟨r, by omega⟩
-  | .inl l,  .inr () => m ⟨l, by omega⟩ ⟨n, by omega⟩
-  | .inr (), .inl r  => m ⟨n, by omega⟩ ⟨r, by omega⟩
-  | .inr (), .inr () => m ⟨n, by omega⟩ ⟨n, by omega⟩
-
 end
 
 section

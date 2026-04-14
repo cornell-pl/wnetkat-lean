@@ -10,6 +10,53 @@ import Mathlib.Data.Nat.Digits.Defs
 import Mathlib.Data.Nat.Digits.Lemmas
 import Mathlib.Data.List.DropRight
 
+namespace List
+
+variable {α β : Type*}
+
+def getElem_prod (l₁ : List α) (l₂ : List β) (i) (hi : i < (l₁ ×ˢ l₂).length) :
+    (l₁ ×ˢ l₂)[i] = (
+      l₁[i / l₂.length]'(by simp [length_product] at hi; refine (Nat.div_lt_iff_lt_mul (Nat.pos_of_lt_mul_left hi)).mpr hi),
+      l₂[i % l₂.length]'(by simp [length_product] at hi; refine Nat.mod_lt i (Nat.pos_of_lt_mul_left hi))) := by
+  induction l₁ generalizing i with
+  | nil => simp at hi
+  | cons a l₁ ih =>
+    simp at hi
+    simp_all [getElem_append, getElem_cons]
+    if h : i < l₂.length then
+      simp_all [Nat.mod_eq_of_lt]
+    else
+      simp [h]
+      if l₂ = [] then
+        subst_eqs
+        simp_all
+      else
+        simp_all
+        split_ands
+        · congr
+          refine Nat.div_eq_of_lt_le ?_ ?_
+          · simp [Nat.sub_mul]
+            have : i - l₂.length + l₂.length = i := by omega
+            rw [this]
+            exact Nat.div_mul_le_self i l₂.length
+          · simp [Nat.sub_mul, Nat.add_mul]
+            have : i / l₂.length * l₂.length - l₂.length + l₂.length = i / l₂.length * l₂.length := by
+              refine Nat.sub_add_cancel ?_
+              simp_all
+              refine Nat.le_mul_of_pos_left l₂.length ?_
+              simp_all
+              (expose_names; exact length_pos_iff.mpr h_1)
+            rw [this]
+            refine Nat.lt_div_mul_self ?_ ?_
+            · simp_all
+              (expose_names; exact length_pos_iff.mpr h_1)
+            · simp_all
+        · congr! 1
+          refine Eq.symm (Nat.mod_eq_sub_mod ?_)
+          simp_all
+
+end List
+
 namespace Array
 
 variable {α β : Type*}
@@ -36,8 +83,16 @@ theorem mem_product' {l₁ : Array α} {l₂ : Array β} {x} : x ∈ product l�
 theorem pair_mem_product {l₁ : Array α} {l₂ : Array β} {x} {y} : (x, y) ∈ l₁ ×ˢ l₂ ↔ x ∈ l₁ ∧ y ∈ l₂ := by
   simp
 
+@[simp]
 def size_product {l₁ : Array α} {l₂ : Array β} : (l₁ ×ˢ l₂).size = l₁.size * l₂.size := by
   convert List.length_product (l₁:=l₁.toList) (l₂:=l₂.toList)
+  simp [← product_eq_toList_product]
+@[simp]
+def getElem_product {l₁ : Array α} {l₂ : Array β} {i} (hi : i < (l₁ ×ˢ l₂).size) :
+    (l₁ ×ˢ l₂)[i] = (
+      l₁[i / l₂.size]'(by simp [size_product] at hi; refine (Nat.div_lt_iff_lt_mul (Nat.pos_of_lt_mul_left hi)).mpr hi),
+      l₂[i % l₂.size]'(by simp [size_product] at hi; refine Nat.mod_lt i (Nat.pos_of_lt_mul_left hi))) := by
+  convert List.getElem_prod (l₁:=l₁.toList) (l₂:=l₂.toList) i (by simp_all [List.length_product])
   simp [← product_eq_toList_product]
 
 def Nodup (l : Array α) : Prop := l.Pairwise (· ≠ ·)
@@ -120,6 +175,10 @@ instance : Listed Unit where
 variable {α β : Type*}
 variable [Listed α] [Listed β]
 
+theorem encode_lt_size (a : α) : encode a < size α := by
+  convert encode_len a
+  exact size_prop.symm
+
 def encode_inj : Function.Injective (Listed.encode (α:=α)) := by
   intro a b h; have := encode_prop a; have := encode_prop b; grind [encode_prop]
 
@@ -152,6 +211,7 @@ def listOf (α : Type*) [Listed α] : List α := Listed.array.toList
 @[simp, grind .] theorem mem_arrayOf (a : α) : a ∈ arrayOf α := complete a
 @[simp, grind .] theorem mem_listOf (a : α) : a ∈ listOf α := by simp [listOf]
 
+@[specialize, inline]
 def decode (i : ℕ) : Option α := array[i]?
 
 @[simp, grind =]
@@ -184,8 +244,10 @@ theorem decode_get_encode (n : ℕ) (h : (decode (α:=α) n).isSome) :
   have := List.Nodup.getElem_inj_iff (nodup (α:=α)) (i:=n) (j:=encode array[n]) (hi:=h) (hj:=by simp [encode_len])
   grind
 
+@[specialize, inline]
 def encodeFin {α : Type*} [i : Listed α] : α → Fin i.size :=
   fun a ↦ ⟨i.encode a, by simp [encode_len, ← size_prop]⟩
+@[specialize, inline]
 def decodeFin {α : Type*} [i : Listed α] : Fin i.size → α :=
   fun a ↦ i.decode a |>.get (by obtain ⟨a, ha⟩ := a; grind [decode, size_prop])
 
@@ -219,28 +281,62 @@ def decodeFin_bijective : Function.Bijective (decodeFin (α:=α)) := by
   · intro a b h; exact decodeFin_inj h
   · intro i; use encodeFin i; simp
 
+@[simp]
+theorem encode_eq_iff {α : Type*} [Listed α] {a b : α} :
+    encode a = encode b ↔ a = b := Function.Injective.eq_iff encode_inj
+@[simp]
+theorem encodeFin_eq_iff {α : Type*} [Listed α] {a b : α} :
+    encodeFin a = encodeFin b ↔ a = b := by simp [encodeFin]
+@[simp]
+theorem encodeFin_eq_encode_iff {α : Type*} [Listed α] {a b : α} :
+    (encodeFin a).val = encode b ↔ a = b := by simp [encodeFin]
+@[simp]
+theorem encode_eq_encodeFin_iff {α : Type*} [Listed α] {a b : α} :
+    encode a = (encodeFin b).val ↔ a = b := by simp [encodeFin]
+
 @[implicit_reducible]
-def fintype [DecidableEq α] : Fintype α := {
-  elems := (listOf α).toFinset
-  complete := by simp [listOf, complete]
-}
+def decidableEq : DecidableEq α := fun a b ↦
+  if h : encode a = encode b then .isTrue (by simp_all) else .isFalse (by simp_all)
+
+@[implicit_reducible]
+def fintype : Fintype α :=
+  letI : DecidableEq α := Listed.decidableEq
+  {
+    elems := (listOf α).toFinset
+    complete := by simp [listOf, complete]
+  }
 
 @[simp] theorem array_toFinset [DecidableEq α] :
-    (array (α:=α)).toList.toFinset = @Finset.univ α fintype := rfl
+    (array (α:=α)).toList.toFinset = @Finset.univ α fintype := by
+  ext; simp
 
-instance [DecidableEq α] [DecidableEq β] : Listed (α × β) :=
-  let A := array ×ˢ array
-  {
-    array := A
+instance : Listed (α × β) := {
+    array := array ×ˢ array
     size := Listed.size α * Listed.size β
-    size_prop := by simp [A, Array.size_product, size_prop]
+    size_prop := by simp [Array.size_product, size_prop]
     nodup := Array.Nodup.product nodup nodup
-    complete := by intro ⟨a, b⟩; simp [A, complete]
-    encode a := A.findIdx (· = a)
-    encode_len := by simp [A]
-    encode_prop a := by
-      have := Array.findIdx_getElem (p:=(· = a)) (xs:=A) (w:=?_)
-      simp at this; exact this
+    complete := by intro ⟨a, b⟩; simp [complete]
+    encode := fun (a, b) ↦ encode a * size β + encode b
+    encode_len := by
+      simp [Prod.forall, size_prop]
+      intro a b
+      have ha := encode_lt_size a
+      have hb := encode_lt_size b
+      simp_all only [gt_iff_lt]
+      simp only [Nat.lt_iff_add_one_le] at *
+      rw [add_assoc]
+      grw [hb]
+      grw [← ha]
+      rw [← Nat.succ_mul]
+    encode_prop := by
+      simp [size_prop]
+      intro a b
+      have hsβ : size β ≠ 0 := Nat.ne_zero_of_lt (encode_lt_size b)
+      have : (encode a * size β + encode b) / size β = encode a := by
+        have : ¬size β ≤ encode b % size β := by simp; exact Nat.mod_lt_of_lt (encode_lt_size b)
+        simp [Nat.add_div (Nat.zero_lt_of_ne_zero hsβ), this, hsβ, encode_lt_size b]
+      have : encode b % size β = encode b := Nat.mod_eq_of_lt (encode_lt_size b)
+      simp_all [encode_prop]
   }
 
 instance : Listed (α ⊕ β) where
@@ -320,18 +416,6 @@ def ofEquiv {α β : Type*} [i : Listed α] (e : α ≃ β) : Listed β where
     have := congrArg e (i.encode_prop (e.symm b))
     simpa
 
-@[simp]
-theorem encode_eq_iff {α : Type*} [Listed α] {a b : α} :
-    encode a = encode b ↔ a = b := Function.Injective.eq_iff encode_inj
-@[simp]
-theorem encodeFin_eq_iff {α : Type*} [Listed α] {a b : α} :
-    encodeFin a = encodeFin b ↔ a = b := by simp [encodeFin]
-@[simp]
-theorem encodeFin_eq_encode_iff {α : Type*} [Listed α] {a b : α} :
-    (encodeFin a).val = encode b ↔ a = b := by simp [encodeFin]
-@[simp]
-theorem encode_eq_encodeFin_iff {α : Type*} [Listed α] {a b : α} :
-    encode a = (encodeFin b).val ↔ a = b := by simp [encodeFin]
 @[simp]
 theorem encode_unit :
     encode () = 0 := rfl

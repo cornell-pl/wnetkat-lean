@@ -1,3 +1,4 @@
+import Mathlib.Data.List.Fold
 import Mathlib.Data.Matrix.Block
 import Mathlib.Tactic.Ring.RingNF
 import WeightedNetKAT.MatrixExt
@@ -8,30 +9,33 @@ structure NMatrix (m n : ℕ) (α : Type*) where
 namespace NMatrix
 
 variable {l k m m' n n' : ℕ} {α : Type*}
-variable {X X' : NMatrix m n α}
-variable {Y Y' : NMatrix n l α}
-variable {Z Z' : NMatrix l k α}
 
 @[inline]
 def ofFn (f : Fin m → Fin n → α) : NMatrix m n α :=
   ⟨.ofFn fun i ↦ f i.divNat i.modNat⟩
 
+@[simp]
+theorem get.index (i : Fin m) (j : Fin n) : i.val * n + j.val < m * n := by
+  rcases i with ⟨i, hi⟩; rcases j with ⟨j, hj⟩
+  rcases n with _ | n <;> rcases m with _ | m <;> try omega
+  simp_all
+  simp_all [Nat.lt_succ_iff]
+  ring_nf
+  simp [add_assoc]
+  nth_rw 3 [add_comm]
+  simp [Nat.lt_add_one_iff]
+  ring_nf
+  calc
+    i + i * n + j ≤ m + m * n + n := by gcongr
+    _ ≤ n + n * m + m := by ring_nf; rfl
+
 @[inline, deprecated]
 def get (M : NMatrix m n α) (i : Fin m) (j : Fin n) : α :=
-  M.data[i.val * n + j.val]'(by
-    rcases i with ⟨i, hi⟩; rcases j with ⟨j, hj⟩
-    clear X X' Y Y' M
-    rcases n with _ | n <;> rcases m with _ | m <;> try omega
-    simp_all
-    simp_all [Nat.lt_succ_iff]
-    ring_nf
-    simp [add_assoc]
-    nth_rw 3 [add_comm]
-    simp [Nat.lt_add_one_iff]
-    ring_nf
-    calc
-      i + i * n + j ≤ m + m * n + n := by gcongr
-      _ ≤ n + n * m + m := by ring_nf; rfl)
+  M.data[i.val * n + j.val]'(by simp_all)
+
+variable {X X' : NMatrix m n α}
+variable {Y Y' : NMatrix n l α}
+variable {Z Z' : NMatrix l k α}
 
 theorem ext_get (h : ∀ i j, X.get i j = X'.get i j) : X = X' := by
   cases X; cases X'
@@ -50,9 +54,24 @@ instance : FunLike (NMatrix m n α) (Fin m) (Fin n → α) where
 
 theorem get_eq_apply {i} : X.get i = X i := by rfl
 
+def set (M : NMatrix m n α) (i : Fin m) (j : Fin n) (a : α) : NMatrix m n α :=
+  ⟨M.data.set (i.val * n + j.val) a (by simp_all)⟩
+
 @[ext] theorem ext (h : ∀ i j, X i j = X' i j) : X = X' := ext_get h
 
-@[simp, grind]
+theorem set_apply (M : NMatrix m n α) (i : Fin m) (j : Fin n) (a : α) (i' : Fin m) (j' : Fin n) :
+    M.set i j a i' j' = if i = i' ∧ j = j' then a else M i' j' := by
+  simp [set, DFunLike.coe, get]; rw [Vector.getElem_set]
+  obtain ⟨j, hj⟩ := j
+  obtain ⟨j', hj'⟩ := j'
+  obtain ⟨i, hi⟩ := i
+  obtain ⟨i', hi'⟩ := i'
+  simp_all only [Fin.mk.injEq]
+  suffices i * n + j = i' * n + j' ↔ i = i' ∧ j = j' by grind
+
+  sorry
+
+@[simp, grind =]
 theorem ofFn_get {f : Fin m → Fin n → α} : (ofFn f).get = f := by
   ext ⟨i, hi⟩ ⟨j, hj⟩
   simp [ofFn, get]
@@ -66,7 +85,7 @@ theorem ofFn_get {f : Fin m → Fin n → α} : (ofFn f).get = f := by
   · simp [Fin.modNat]
     omega
 
-@[simp, grind]
+@[simp, grind =]
 theorem get_ofFn : ofFn X.get = X := by
   apply ext_get
   intro ⟨i, hi⟩ ⟨j, hj⟩
@@ -79,11 +98,12 @@ theorem get_ofFn : ofFn X.get = X := by
   · simp [Nat.mod_eq_of_lt, hj, this]
   · omega
 
-@[simp, grind]
+@[simp, grind =]
 theorem ofFn_apply {f : Fin m → Fin n → α} {i} : ofFn f i = f i := by
   simp [DFunLike.coe]
 
-@[simp, grind]
+
+@[simp, grind =]
 theorem apply_ofFn : ofFn X = X := by
   simp [DFunLike.coe]
 
@@ -181,32 +201,52 @@ def fill (a : α) : NMatrix m n α := .ofFn fun _ _ ↦ a
     (NMatrix.ofMatrix M).asMatrix = M := by
   ext; simp
 
-@[simp, grind]
+@[simp, grind =]
 theorem ofFn_asMatrix {f : Fin m → Fin n → α} : (ofFn f).asMatrix = f := ofFn_get
 
 def map {β : Type*} (M : NMatrix m n α) (f : α → β) : NMatrix m n β :=
   ⟨M.data.map f⟩
 
-@[simp, grind]
+@[simp, grind =]
 theorem map_apply {β : Type*} (M : NMatrix m n α) (f : α → β) {i j} :
     M.map f i j = f (M i j) := by
   simp [map, DFunLike.coe, get]
 
-instance [Zero α] [One α] : One (NMatrix n n α) := ⟨NMatrix.ofMatrix 1⟩
-instance [Zero α] : Zero (NMatrix m n α) := ⟨NMatrix.ofMatrix 0⟩
+instance [Zero α] [One α] : One (NMatrix n n α) := ⟨.ofFn fun i j ↦ if i = j then 1 else 0⟩
+instance [Zero α] : Zero (NMatrix m n α) := ⟨.fill 0⟩
 
-@[simp, grind]
+@[simp, grind =]
 theorem zero_apply [Zero α] {i j} : (0 : NMatrix m n α) i j = 0 := by
   simp [OfNat.ofNat, Zero.zero]
-@[simp, grind]
+@[simp, grind =]
 theorem one_apply [Zero α] [One α] {i j} : (1 : NMatrix n n α) i j = if i = j then 1 else 0 := by
   simp [OfNat.ofNat, One.one, Matrix.diagonal_apply]
 
-instance [Add α] : Add (NMatrix m n α) where
-  add a b := .ofMatrix (a.asMatrix + b.asMatrix)
-instance [Mul α] [AddCommMonoid α] : HMul (NMatrix l m α) (NMatrix m n α) (NMatrix l n α) where
-  hMul a b := .ofMatrix (a.asMatrix * b.asMatrix)
-instance [Mul α] [AddCommMonoid α] : Mul (NMatrix n n α) := ⟨HMul.hMul⟩
+def slowAdd [Add α] (a : NMatrix m n α) (b : NMatrix m n α) :
+    NMatrix m n α := .ofMatrix (a.asMatrix + b.asMatrix)
+@[specialize]
+def fastAdd [Add α] (X : NMatrix m n α) (Y : NMatrix m n α) : NMatrix m n α :=
+  ⟨X.data + Y.data⟩
+
+@[csimp]
+theorem slowAdd_eq_fastAdd : @slowAdd = @fastAdd := by
+  ext m n α _ X Y i j
+  simp [slowAdd, fastAdd]
+  simp [DFunLike.coe, get]
+
+instance [Add α] : Add (NMatrix m n α) := ⟨slowAdd⟩
+
+def slowMul [Mul α] [AddCommMonoid α] (a : NMatrix l m α) (b : NMatrix m n α) :
+    NMatrix l n α := .ofMatrix (a.asMatrix * b.asMatrix)
+
+@[specialize]
+def fastMul' [Mul α] [AddCommMonoid α] (X : NMatrix l m α) (Y : NMatrix m n α) : NMatrix l n α :=
+  -- dbg_trace "mul {m} × {n}"
+  .ofFn fun r c ↦ Fin.sum fun k ↦ X r k * Y k c
+
+@[default_instance 100]
+instance [Mul α] [AddCommMonoid α] : HMul (NMatrix l m α) (NMatrix m n α) (NMatrix l n α) := ⟨slowMul⟩
+instance [Mul α] [AddCommMonoid α] : Mul (NMatrix n n α) where mul a b := a * b
 
 theorem add_def [Add α] : X + X' = .ofMatrix (X.asMatrix + X'.asMatrix) := rfl
 theorem hmul_def [Mul α] [AddCommMonoid α] : X * Y = .ofMatrix (X.asMatrix * Y.asMatrix) := rfl
@@ -223,11 +263,24 @@ instance [AddCommMonoid α] : AddCommMonoid (NMatrix m n α) where
   nsmul_zero X := by ext; simp
   nsmul_succ X Y := by ext; simp; apply AddMonoid.nsmul_succ
 
+@[simp]
+theorem sum_apply {m n : ℕ} {𝒮 : Type*} [AddCommMonoid 𝒮] {ι : Type*} {S : Finset ι}
+    (f : ι → NMatrix m n 𝒮) {x y} :
+    (∑ i ∈ S, f i) x y = ∑ i ∈ S, f i x y := by
+  classical
+  induction S using Finset.induction with
+  | empty => simp
+  | insert x S h ih => simp_all
+
+@[csimp]
+theorem slowMul_eq_fastMul : @slowMul = @fastMul' := by
+  ext; simp [slowMul, fastMul', Matrix.mul_apply, dbgTrace]; rfl
+
 @[simp] theorem asMatrix_add [Add α] : (X + X').asMatrix = X.asMatrix + X'.asMatrix := by ext; simp
 
 @[simp]
 theorem mul_coe [Mul α] [AddCommMonoid α] : DFunLike.coe (X * Y) = X.asMatrix * Y.asMatrix := by
-  ext; simp [HMul.hMul]
+  ext; simp [hmul_def]
 
 theorem asMatrix_mul [Mul α] [AddCommMonoid α] : (X * Y).asMatrix = X.asMatrix * Y.asMatrix := by simp [asMatrix]
 
@@ -275,8 +328,8 @@ theorem add_zero [NonUnitalSemiring α] : X + 0 = X := by
 #eval! (NMatrix.ofFn (m:=2) (n:=2) (α:=ℕ × ℕ) fun i j ↦ (i, j)) + NMatrix.ofFn (m:=2) (n:=2) (α:=ℕ × ℕ) fun i j ↦ (i, j)
 
 instance {α : Type*} [Semiring α] : Semiring (NMatrix n n α) where
-  left_distrib A B C := by ext; simp [left_distrib, mul_coe]
-  right_distrib A B C := by ext; simp [right_distrib, mul_coe]
+  left_distrib A B C := by ext; simp [left_distrib, hmul_def]
+  right_distrib A B C := by ext; simp [right_distrib, hmul_def]
   zero_mul A := by ext; simp only [zero_mul]
   mul_zero A := by ext; simp only [mul_zero]
   mul_assoc A B C := by ext; simp [mul_assoc]
@@ -456,12 +509,12 @@ theorem fromBlocks_le [OmegaCompletePartialOrder α]
 
 end
 
-attribute [simp, grind] get_eq_apply
+attribute [simp, grind =] get_eq_apply
 
 open OmegaCompletePartialOrder
 
 @[simp]
-theorem ωSum_apply {m n : ℕ} {𝒮 : Type*} [AddCommMonoid 𝒮] {ι : Type*} [Countable ι] [DecidableEq ι]
+theorem ωSum_apply {m n : ℕ} {𝒮 : Type*} [AddCommMonoid 𝒮] {ι : Type*} [Countable ι]
     [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
     (f : ι → NMatrix m n 𝒮) {x y} :
     (ω∑ i, f i) x y = ω∑ i, f i x y := by

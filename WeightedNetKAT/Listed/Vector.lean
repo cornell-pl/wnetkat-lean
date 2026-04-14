@@ -244,6 +244,7 @@ theorem isRightInv (n m : ℕ) (v : Vector (Fin n) m) :
 end Vector.finBij
 
 open Vector.finBij in
+@[specialize]
 def Vector.finBij (n m : ℕ) : Fin (n ^ m) ≃ Vector (Fin n) m where
   toFun := invFun n m
   invFun := toFun n m
@@ -254,6 +255,7 @@ namespace Listed
 
 variable {α β : Type*} [Listed α] [Listed β]
 
+@[specialize]
 instance (n : ℕ) : Listed (Vector α n) :=
   let e₀ := Listed.equivFin (α := α)
   let e₁ := ⟨(·.map e₀.symm), (·.map e₀), by intro; simp, by intro; simp⟩

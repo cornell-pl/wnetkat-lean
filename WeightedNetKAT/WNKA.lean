@@ -154,16 +154,16 @@ variable [Star 𝒮]
 
 section
 
-variable {Pk : Type} [Listed Pk] [Fintype Pk]
+variable {Pk : Type*} [Fintype Pk]
 
-def box {X} [Fintype X] {Q : Type} [Mul Q] [AddCommMonoid Q] {Z : Type} [Fintype Z] [Unique Z]
+def box {X} [Fintype X] {Q : Type*} [Mul Q] [AddCommMonoid Q] {Z : Type*} [Fintype Z] [Unique Z]
     (l : 𝒲[Z, X, Q]) (r : 𝒲[Pk, Pk, 𝒲[X, Z, Q]]) :
     𝒲[Pk,Pk,Q] :=
   fun α β ↦ (l * r α β).down
 
 infixr:50 " ⊠ " => box
 
-def fox {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+def fox {A B C : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
     [Fintype A] [Fintype B] [Fintype C]
     (l : 𝒲[A, B, Q]) (r : 𝒲[Pk, Pk, 𝒲[B, C, Q]]) :
     𝒲[Pk, Pk, 𝒲[A, C, Q]] :=
@@ -171,30 +171,38 @@ def fox {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
 
 infixr:50 " ⊡ " => fox
 
-def sox {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+def sox {A B : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
     [Fintype A] [Fintype B]
     (l : 𝒲[Pk, Pk, Q]) (r : 𝒲[Pk, Pk, 𝒲[A, B, Q]]) :
     𝒲[Pk, Pk, 𝒲[A, B, Q]] :=
-  fun α β ↦ (Listed.array.map fun m ↦ l α m •> r m β).sum
+  fun α β ↦ ∑ m, l α m •> r m β
 
 infixr:50 " ⊟ " => sox
 
-def sox' {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+def sox' {A B : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
     [Fintype A] [Fintype B]
     (l : 𝒲[Pk, Pk, 𝒲[A, B, Q]]) (r : 𝒲[Pk, Pk, Q]) :
     𝒲[Pk, Pk, 𝒲[A, B, Q]] :=
-  fun α β ↦ (Listed.array.map fun m ↦ l α m <• r m β).sum
+  fun α β ↦ ∑ m, l α m <• r m β
 
 infixr:50 " ⊟' " => sox'
 
+def crox {A B C : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
+    [Fintype A] [Fintype B] [DecidableEq C] [Fintype C]
+    (l : 𝒲[Pk, Pk, 𝒲[A, B, Q]]) (r : 𝒲[Pk, Pk, 𝒲[B, C, Q]]) :
+    𝒲[Pk, Pk, 𝒲[A, C, Q]] :=
+  fun α β ↦ ∑ m, l α m * r m β
+
+infixr:50 " ⊞ " => crox
+
 @[simp]
-theorem Listed.array_sum_eq_finset_sum {α ι : Type} [Listed ι] [Fintype ι] [AddCommMonoid α] (f : ι → α) :
+theorem Listed.array_sum_eq_finset_sum {α ι : Type*} [Listed ι] [Fintype ι] [AddCommMonoid α] (f : ι → α) :
     (Listed.array.map f).sum = ∑ x, f x := by
   classical
   rw [← Array.sum_toList]
   simp [← List.sum_toFinset (f:=f) Listed.nodup, Fintype.sum_subset]
 
-theorem add_sox {A B : Type} {Q : Type} [NonUnitalSemiring Q]
+theorem add_sox {A B : Type*} {Q : Type*} [NonUnitalSemiring Q]
     [Fintype A] [Fintype B]
     (l l' : 𝒲[Pk, Pk, Q]) (r : 𝒲[Pk, Pk, 𝒲[A, B, Q]]) :
     ((l + l') ⊟ r) = (l ⊟ r) + (l' ⊟ r) := by
@@ -202,7 +210,7 @@ theorem add_sox {A B : Type} {Q : Type} [NonUnitalSemiring Q]
   simp [sox]
   simp [Matrix.sum_apply, add_mul, Finset.sum_add_distrib]
 
-theorem mul_sox {A B : Type} {Q : Type} [NonUnitalSemiring Q]
+theorem mul_sox {A B : Type*} {Q : Type*} [NonUnitalSemiring Q]
     [Fintype A] [Fintype B]
     (l l' : 𝒲[Pk, Pk, Q]) (r : 𝒲[Pk, Pk, 𝒲[A, B, Q]]) :
     ((l * l') ⊟ r) = (l ⊟ (l' ⊟ r)) := by
@@ -214,20 +222,12 @@ theorem mul_sox {A B : Type} {Q : Type} [NonUnitalSemiring Q]
 variable [DecidableEq Pk]
 
 @[simp]
-theorem one_sox {A B : Type} {Q : Type} [Semiring Q]
+theorem one_sox {A B : Type*} {Q : Type*} [Semiring Q]
     [Fintype A] [Fintype B]
     (r : 𝒲[Pk, Pk, 𝒲[A, B, Q]]) :
     ((1 : 𝒲[Pk, Pk, Q]) ⊟ r) = r := by
   ext α β a b
   simp [sox, Matrix.one_apply]
-
-def crox {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
-    [Fintype A] [Fintype B] [DecidableEq C] [Fintype C]
-    (l : 𝒲[Pk, Pk, 𝒲[A, B, Q]]) (r : 𝒲[Pk, Pk, 𝒲[B, C, Q]]) :
-    𝒲[Pk, Pk, 𝒲[A, C, Q]] :=
-  fun α β ↦ (Listed.array.map fun m ↦ l α m * r m β).sum
-
-infixr:50 " ⊞ " => crox
 
 end
 
@@ -1622,16 +1622,6 @@ theorem A'_iter_one_pair {α₀ α₁} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
 theorem A'_iter_one_triple {α₀ α₁ α₂} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
     A' p 1 [α₀, α₁, α₂] = G' p [α₀] * G' p [α₁] * G' p [α₂] + G' p [α₀] * G' p [α₁, α₂] + G' p [α₀, α₁] * G' p [α₂] + G' p [α₀, α₁, α₂] := by
   ext; simp [A', 𝒪_heart_n, approx_𝒜_iter_nonempty, 𝒜_eq_G', ihp, ← Matrix.mul_apply, mul_assoc, Finset.sum_range_succ, ← Matrix.add_apply, mul_add]
-theorem A'_iter_two_nil (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
-    A' p 2 [] = 1 + G' p [] := by
-  ext; simp [A', 𝒪_heart_n_eq_G', ihp, Finset.sum_range_succ]
-theorem A'_iter_two_single {α₀} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
-    A' p 2 [α₀] = G' p [α₀] + G' p [] * G' p [α₀] + G' p [α₀] * G' p [] + G' p [] * G' p [α₀] * G' p [] := by
-  ext; simp [A', 𝒪_heart_n_eq_G', approx_𝒜_iter_nonempty, 𝒜_eq_G', ihp, mul_assoc, Finset.sum_range_succ, mul_add, add_mul, Finset.sum_add_distrib]
-  simp [← mul_assoc]
-  simp [← Finset.sum_mul]
-  simp [← Matrix.mul_apply]
-  simp [add_assoc]
 
 noncomputable def G'' (n : ℕ) := ∑ i ∈ Finset.range n, (G' p [])^i
 @[simp] theorem G''_zero : G'' p 0 = 0 := by simp [G'']
@@ -1741,32 +1731,6 @@ theorem sum_partitions'_cons {𝒮' : Type*} [NonUnitalSemiring 𝒮'] {ι : Typ
     · simp_all
     · simp_all
     · simp_all
-      grind
-theorem List.replicate_nil_append_nonempty {ι : Type*} {n m : ℕ} {a : ι} {xs : List ι} :
-    List.replicate n [] ++ [(a :: xs)] ≠ List.replicate m [] := by
-  intro h
-  induction n generalizing m with
-  | zero => rcases m with _ | m <;> simp_all [List.replicate]
-  | succ n ih =>
-    simp [List.replicate] at h
-    contrapose! ih
-    simp_all
-    rcases m with _ | m
-    · simp_all
-    · simp [List.replicate] at h
-      grind
-theorem List.replicate_nil_append_nonempty' {ι : Type*} {n m : ℕ} {a : ι} {xs : List ι} {ys : List (List ι)} :
-    List.replicate n [] ++ (a :: xs) :: ys ≠ List.replicate m [] := by
-  intro h
-  induction n generalizing m with
-  | zero => rcases m with _ | m <;> simp_all [List.replicate]
-  | succ n ih =>
-    simp [List.replicate] at h
-    contrapose! ih
-    simp_all
-    rcases m with _ | m
-    · simp_all
-    · simp [List.replicate] at h
       grind
 
 theorem sum_partitionsFill' {𝒮' : Type*} [NonUnitalSemiring 𝒮'] {ι : Type*} [DecidableEq ι] {xs : List ι} {n} {f : List (List ι) → 𝒮'} :

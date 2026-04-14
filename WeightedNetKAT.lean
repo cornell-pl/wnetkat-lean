@@ -6,6 +6,7 @@ import WeightedNetKAT.rReachability
 import WeightedNetKAT.Instances.Language
 import WeightedNetKAT.Instances.ENat
 import WeightedNetKAT.Instances.Arctic
+import Lake.Util.Log
 
 def List.sum' {α : Type} [Add α] [Zero α] (a : List α) : α :=
   match a with
@@ -50,19 +51,19 @@ def test {𝒮} [Semiring 𝒮] {α : Type} (c : α) : RPol[Switch,α,𝒮] :=
   .Test (.fill c)
 
 def latency : City → City → Option Arctic
-  | SEA, DEN => ms 3
-  | SEA, BAY => ms 2
+  -- | SEA, DEN => ms 3
+  -- | SEA, BAY => ms 2
 
-  | CHI, NYC => ms 3
-  | CHI, IND => ms 2
+  -- | CHI, NYC => ms 3
+  -- | CHI, IND => ms 2
 
-  | BAY, DEN => ms 4
-  | BAY, LA => ms 1
+  -- | BAY, DEN => ms 4
+  -- | BAY, LA => ms 1
 
-  | DEN, KAN => ms 3
+  -- | DEN, KAN => ms 3
 
-  | KAN, IND => ms 2
-  | KAN, HOU => ms 3
+  -- | KAN, IND => ms 2
+  -- | KAN, HOU => ms 3
 
   | IND, ATL => ms 3
 
@@ -78,19 +79,19 @@ def latency : City → City → Option Arctic
 where ms := Arctic.arc
 
 def bandwidth : City → City → Option (Bottleneck EENat)
-  -- | SEA, DEN => mbps 500
-  -- | SEA, BAY => mbps 1000
+  | SEA, DEN => mbps 500
+  | SEA, BAY => mbps 1000
 
-  -- | CHI, NYC => mbps 1500
-  -- | CHI, IND => mbps 950
+  | CHI, NYC => mbps 1500
+  | CHI, IND => mbps 950
 
-  -- | BAY, DEN => mbps 800
-  -- | BAY, LA => mbps 1500
+  | BAY, DEN => mbps 800
+  | BAY, LA => mbps 1500
 
-  -- | DEN, KAN => mbps 450
+  | DEN, KAN => mbps 450
 
-  -- | KAN, IND => mbps 875
-  -- | KAN, HOU => mbps 750
+  | KAN, IND => mbps 875
+  | KAN, HOU => mbps 750
 
   | IND, ATL => mbps 600
 
@@ -249,39 +250,85 @@ instance (priority := 1000000) {Q} [Std.ToFormat Q] : Repr Run[Switch,City,Q] wh
 instance {𝒮} {p : RPol[Switch,City,𝒮]} : Std.ToFormat (@S Switch instListedSwitch City 𝒮 p) where
   format x := reprStr x
 
-def main : IO Unit := do
-  -- test Switch City
+namespace Perf
 
-  -- println! "Start"
-  -- let a : List ℕ := Test.things
-  -- println! "1 {a}"
-  -- let b : List ℕ := Test.things
-  -- println! "2 {b}"
-  -- let c : List ℕ := Test.things
-  -- println! "3 {c}"
-  -- let d : List ℕ := Test.things
-  -- println! "4 {d}"
-  -- let res := wnk_rpol { ~(p ℕ∞) }.eval
-  -- let n : ℕ := 12
-  -- let res := unsafe unsafeIO (println! "star_fin({n})")
-  -- let xs : Array Pk[Switch,City] := Listed.pi_array (α:=Switch) (β:=City)
-  -- println! f!"Pk[Switch,City]: {reprStr xs}"
-  -- let := Listed.ofArray xs Listed.pi_array_nodup (fun _ ↦ Listed.mem_pi_array)
-  -- let pol := wnk_rpol { ~p₁ }
-  -- let pol := wnk_rpol { (~p₁ ; dup)* }
-  -- let pol := wnk_rpol { (~(p Arctic) ; dup)* }
+structure Marker where
+  name : Option String
+  ns : ℕ
+
+def mark (name : Option String := none) : IO Marker := do
+  let m : Marker := ⟨name, ← IO.monoNanosNow⟩
+  return m
+
+structure Duration where
+  ns : ℕ
+
+instance : ToString Duration where
+  toString d :=
+    let nano := 1
+    let micr := nano * 1000
+    let mili := micr * 1000
+    let full := mili * 1000
+
+    let d := d.ns
+
+    if d < micr then
+      s!"{d}ns"
+    else if d < mili then
+      s!"{d / micr}µs"
+    else if d < full then
+      s!"{d / mili}ms"
+    else
+      s!"{Float.ofNat d / Float.ofNat full}s"
+
+def Marker.since (m : Marker) : IO Duration := do
+  let d : Duration := ⟨(← IO.monoNanosNow) - m.ns⟩
+  let s := if let some name := m.name then
+    s!"    ← ⏱️  {name} {d}"
+  else
+    s!"    ← ⏱️  {d}"
+  println! "{Lake.Ansi.chalk "90" s}"
+
+  return d
+
+def time {α : Type} (name : String) (f : Unit → α) : IO α := do
+  let m ← mark name
+  let v ← IO.lazyPure f
+  let _ ← m.since
+  return v
+def timeIO {α : Type} (name : String) (f : Unit → IO α) : IO α := do
+  let m ← mark name
+  let v ← f ()
+  let _ ← m.since
+  return v
+
+end Perf
+
+-- @[inline, specialize]
+def Option.map₂Fast {α β γ : Type*} (f : α → β → γ) (a : Option α) (b : Option β) : Option γ :=
+  match a, b with
+  | some a, some b => some (f a b)
+  | _, _ => none
+
+@[csimp]
+theorem Option.map₂_eq_map₂Fast : @map₂ = @map₂Fast := by
+  ext α β γ f a b g
+  simp [map₂Fast]
+  grind
+
+
+def main : IO Unit := do
   let pol := wnk_rpol { (~p_latency ; dup)* }
   -- let res ← pol.eval
-  let n : EWNKA Switch City Arctic (S pol) := pol.ewnka
-
+  let n : EWNKA Switch City Arctic (S pol) ← Perf.time "wnka" fun _ ↦ pol.ewnka
   println! " ∘ WNKA has been built!"
 
-  let v := rSafety.Esem' n
+  let v ← Perf.time "rSafety sem" fun _ ↦ rSafety.Esem' n
   println! f!" ∘ rSafety: {reprStr v}"
 
   if v ≠ ⊤ then
     println! " ∘ extracting witness..."
-    let ρ := rSafety.extraction n v
+    let ρ ← Perf.time "witness" fun _ ↦ rSafety.extraction n v
     println! f!" ∘ rSafety(witness): {reprStr (ρ.pks.map fun π ↦ π Switch.sw)}"
   else
     println! " ∘ rSafety is ⊤!"
