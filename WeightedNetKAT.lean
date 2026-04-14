@@ -6,6 +6,7 @@ import WeightedNetKAT.rReachability
 import WeightedNetKAT.Instances.Language
 import WeightedNetKAT.Instances.ENat
 import WeightedNetKAT.Instances.Arctic
+import WeightedNetKAT.Papers.PLDI2026
 import Lake.Util.Log
 
 def List.sum' {α : Type} [Add α] [Zero α] (a : List α) : α :=
@@ -145,25 +146,6 @@ def p (𝒮) [Semiring 𝒮] : RPol[Switch,City,𝒮] := wnk_rpol {
   (~(test HOU) ; ~(p' HOU)) ⨁
   (~(test ATL) ; ~(p' ATL))
 }
-
-example : p _ = p_latency := by
-  cbv
-  sorry
-
--- p_0 = 2 (*) sw <- 1
---         (+)
---       3 (*) sw <- 2
-
--- p_1 = 2 (*) sw <- 3
-
--- p_2 = 1 (*) sw <- 3
-
--- p = sw = 0 ; p_0 (+)
---     sw = 1 ; p_1 (+)
---     sw = 2 ; p_2 (+)
---     sw = 3
-
--- net = (p; dup)*
 
 open Arctic in
 def p₀ : Fin 4 → RPol[Switch,Fin 4,Arctic]
@@ -316,6 +298,7 @@ theorem Option.map₂_eq_map₂Fast : @map₂ = @map₂Fast := by
   simp [map₂Fast]
   grind
 
+theorem myMarker : ∃ m, m = WeightedNetKAT.Paper.PLDI2026.marker := by grind
 
 def main : IO Unit := do
   let pol := wnk_rpol { (~p_latency ; dup)* }

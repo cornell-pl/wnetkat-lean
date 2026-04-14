@@ -90,6 +90,9 @@ variable {F : Type} [Fintype F] [Listed F] [DecidableEq F]
 variable {N : Type} [Listed N] [DecidableEq N]
 variable {𝒮 : Type} [Semiring 𝒮]
 
+def rSafety [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] (p : Pol[F,N,𝒮]) (r : 𝒮) : Prop :=
+  ∀ (π : Pk[F,N]) (h : H[F,N]), p.sem ⟨π, []⟩ h ≤ r
+
 namespace rSafety
 
 variable {Q 𝒮 : Type}
@@ -131,11 +134,11 @@ def Δ_star : List Pk[F,N] → 𝒲[Q' F N Q, Q' F N Q, 𝒮]
 
 def M : 𝒲[Q' F N Q, Q' F N Q, 𝒮] := ∑ (α : Pk[F,N]), Δ 𝒜 α
 
-variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
+variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮]
 
 noncomputable def M_star : 𝒲[Q' F N Q, Q' F N Q, 𝒮] := Star.star (M 𝒜)
 
-noncomputable def sem' :=
+noncomputable def sem' [Listed Q] [Star 𝒮] :=
     ((I : 𝒲[𝟙, Q' F N Q, 𝒮]) * M_star 𝒜 * (Λ : 𝒲[Q' F N Q, 𝟙, 𝒮]) : 𝒲[_, _, 𝒮]) () ()
 
 def EI : E𝒲[𝟙, Q' F N Q, 𝒮] := Eη₂ () (.inr .qι)
@@ -217,7 +220,54 @@ theorem Esem'_eq_sem' : Esem' ℰ = sem' ℰ.toWNKA := by
     ωSum_apply]
   simp only [← EMatrix.ofMatrix_pow, EMatrix.ofMatrix_apply₂]
 
-def sem'_fast := Esem' 𝒜.toEWNKA
+def ErSafety [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [LawfulStar 𝒮] (p : Pol[F,N,𝒮]) (r : 𝒮) : Prop :=
+  Esem' p.toRPol.ewnka ≤ r
+
+def sem'_fast {F : Type} [Listed F] [DecidableEq F] {N : Type} [Listed N] [DecidableEq N] {Q 𝒮 : Type}
+  [Fintype Q] [DecidableEq Q] [Semiring 𝒮] (𝒜 : WNKA[F,N,𝒮,Q]) [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮]
+  [IsPositiveOrderedAddMonoid 𝒮] [Listed Q] [Star 𝒮] := Esem' 𝒜.toEWNKA
+
+def _root_.WeightedNetKAT.RPol.wnkaFast {F : Type} [Listed F] {N : Type} [Listed N] {𝒮 : Type} [Semiring 𝒮]
+  [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq N] [DecidableEq F] [Star 𝒮] [LawfulStar 𝒮]
+  (p : RPol[F,N,𝒮]) : WNKA[F,N,𝒮,S p] := p.ewnka.toWNKA
+
+theorem rSafety_iff [Inhabited Pk[F,N]] {p : Pol[F,N,𝒮]} {r} :
+    rSafety p r ↔ ∀ (x : GS[F,N]), p.toRPol.wnka.sem x ≤ r := by
+  simp [rSafety, the_complete_theorem]
+  constructor
+  · intro h ⟨π, x, γ⟩
+    specialize h π γ x.reverse
+    grind
+  · intro h π x γ
+    grind
+theorem rSafety_iff' [Inhabited Pk[F,N]] {p : Pol[F,N,𝒮]} {r} :
+    rSafety p r ↔ ω∑ (x : GS[F,N]), p.toRPol.wnka.sem x ≤ r := by
+  rw [rSafety_iff]
+  constructor
+  · intro h
+    apply ωSum_le_of_finset fun S ↦ ?_
+    sorry
+  · intro h x
+    grw [← h, ← le_ωSum_of_finset (S:={x})]
+    simp
+theorem rSafety_iff'' [Inhabited Pk[F,N]] {p : Pol[F,N,𝒮]} {r} :
+    rSafety p r ↔ sem' p.toRPol.wnka ≤ r := by
+  rw [rSafety_iff']
+  congr!
+  simp [sem']
+  simp [I, Λ, M_star, M, Δ]
+  simp [Matrix.mul_apply]
+  rw [LawfulStar.star_eq_sum]
+  simp
+  sorry
+
+theorem rSafety_iff_ErSafety [Inhabited Pk[F,N]] {p : Pol[F,N,𝒮]} {r} : rSafety p r ↔ ErSafety p r := by
+  rw [rSafety_iff'']
+  simp [ErSafety]
+
+instance [DecidableRel (· ≤ · : 𝒮 → 𝒮 → Prop)] {p : Pol[F,N,𝒮]} {r} : Decidable (ErSafety p r) := by
+  rw [ErSafety]
+  exact inferInstance
 
 variable [DecidableEq 𝒮]
 

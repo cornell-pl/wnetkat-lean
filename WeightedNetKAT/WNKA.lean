@@ -297,13 +297,12 @@ instance : Unique (Fin (Listed.size 𝟙)) where
   default := ⟨0, by show 0 < 1; omega⟩
   uniq := by have : Listed.size 𝟙 = 1 := rfl; omega
 
-def RPol.wnka (p : RPol[F,N,𝒮]) : WNKA[F,N,𝒮,S p] := ⟨ι p, δ p, 𝒪 p⟩
+variable [LawfulStar 𝒮]
 
-omit [Star 𝒮] in
+def RPol.wnka [Star 𝒮] [LawfulStar 𝒮] (p : RPol[F,N,𝒮]) : WNKA[F,N,𝒮,S p] := ⟨ι p, δ p, 𝒪 p⟩
+
 @[simp] theorem RPol.wnka_ι (p : RPol[F,N,𝒮]) : p.wnka.ι = ι p := rfl
-omit [Star 𝒮] in
 @[simp] theorem RPol.wnka_δ (p : RPol[F,N,𝒮]) : p.wnka.δ = δ p := rfl
-omit [Star 𝒮] in
 @[simp] theorem RPol.wnka_𝒪 (p : RPol[F,N,𝒮]) : p.wnka.𝒪 = 𝒪 p := rfl
 
 def WNKA.compute' {Q : Type} [Fintype Q] [DecidableEq Q] (𝒜 : WNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) :
@@ -364,7 +363,6 @@ def 𝒜.unexpander : Unexpander
   `(𝒜⟦$y⟧)
 | _ => throw ()
 
-omit [Star 𝒮] in
 theorem RPol.A_sem_eq (p : RPol[F,N,𝒮]) : 𝒜⟦~p⟧ = p.wnka.sem := rfl
 
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] in
@@ -502,12 +500,10 @@ theorem GS.eq_iff_pks_eq (g₁ g₂ : GS[F,N]) : g₁ = g₂ ↔ g₁.pks = g₂
     grind only [List.length_cons, List.length_nil, List.append_inj, List.length_append, →
       List.eq_nil_of_append_eq_nil]
 
-omit [Star 𝒮] in
 @[simp]
 theorem RPol.wnka_sem_pair (p : RPol[F,N,𝒮]) (α γ : Pk[F,N]) :
     p.wnka.sem (α, [], γ) = (ι p * 𝒪 p α γ) () () := by simp [wnka]; rfl
 
-omit [Star 𝒮] in
 theorem RPol.wnka_sem_eq_of (p : RPol[F,N,𝒮]) (f)
     (h₂ : ∀ (A : List Pk[F,N]) (α α' : Pk[F,N]), (ι p * p.wnka.compute' (A ++ [α]) * 𝒪 p α α') () () = f (GS.ofPks (A ++ [α, α']) (by simp))) :
     p.wnka.sem = f := by
@@ -551,7 +547,6 @@ def xδ {X : Type} [DecidableEq X] [Fintype X] (d : Pk[F,N] → Pk[F,N] → 𝒲
   | [] | [_] => 1
   | α::α'::xs => d α α' * xδ d (α'::xs)
 
-omit [Star 𝒮] in
 variable [Inhabited Pk[F,N]] in
 theorem xδ_δ_iter {p₁ : RPol[F,N,𝒮]} {α  : Pk[F,N]} {xₙ : List Pk[F,N]} :
       xδ (δ p₁.Iter) (α :: xₙ)
@@ -561,7 +556,6 @@ theorem xδ_δ_iter {p₁ : RPol[F,N,𝒮]} {α  : Pk[F,N]} {xₙ : List Pk[F,N]
   | nil => simp [S, xδ]
   | cons α₁ xₙ ih => rw [xδ, ih, δ, δ_wProd_δ]; simp; rfl
 
-omit [Star 𝒮] in
 variable [Inhabited Pk[F,N]] in
 theorem xδ_approx_δ_iter {p₁ : RPol[F,N,𝒮]} {α  : Pk[F,N]} {xₙ : List Pk[F,N]} {n} :
       xδ (approx_δ p₁ n) (α :: xₙ)
@@ -571,7 +565,6 @@ theorem xδ_approx_δ_iter {p₁ : RPol[F,N,𝒮]} {α  : Pk[F,N]} {xₙ : List 
   | nil => simp only [xδ, ↓reduceIte, S.δ_identity]
   | cons α₁ xₙ ih => rw [xδ, ih, approx_δ, δ_wProd_δ]; simp [xδ]
 
-omit [Star 𝒮] in
 theorem RPol.wnka_sem_case (p₁ : RPol[F,N,𝒮]) {α β} {xₙ} :
       p₁.wnka.sem (α, xₙ, β)
     = (ι p₁ * xδ (δ p₁) (α :: xₙ) * 𝒪 p₁ (xₙ.getLastD α) β).down := by
@@ -595,7 +588,6 @@ theorem RPol.wnka_sem_case (p₁ : RPol[F,N,𝒮]) {α β} {xₙ} :
       | nil => simp [WNKA.compute', xδ]
       | cons x A => simp_all [WNKA.compute', xδ]
 
-omit [Star 𝒮] in
 theorem RPol.wnka_sem_drop :
     (RPol.wnka wnk_rpol {drop}).sem = G (wnk_rpol {drop} : RPol[F,N,𝒮]) := by
   ext x
@@ -612,7 +604,6 @@ theorem RPol.wnka_sem_drop :
     simp only [WNKA.sem, wnka, GS.pks, List.cons_append, GS.mk, Countsupp.coe_mk, WNKA.compute, δ,
       List.append_eq_nil_iff, List.cons_ne_self, and_false, imp_self, Matrix.zero_mul,
       Matrix.mul_zero, Matrix.zero_apply]
-omit [Star 𝒮] in
 @[simp]
 theorem RPol.wnka_sem_skip :
     (RPol.wnka wnk_rpol {skip}).sem = G (wnk_rpol {skip} : RPol[F,N,𝒮]) := by
@@ -633,7 +624,6 @@ theorem RPol.wnka_sem_skip :
       List.append_eq_nil_iff, List.cons_ne_self, and_false, imp_self, Matrix.zero_mul,
       Matrix.mul_zero, Matrix.zero_apply, right_eq_ite_iff, forall_exists_index]
     grind
-omit [Star 𝒮] in
 theorem RPol.wnka_sem_test {t} :
     (RPol.wnka wnk_rpol {@test ~t}).sem = G (wnk_rpol {@test ~t} : RPol[F,N,𝒮]) := by
   ext x
@@ -651,7 +641,6 @@ theorem RPol.wnka_sem_test {t} :
     simp only [WNKA.sem, wnka, GS.pks, List.cons_append, GS.mk, Countsupp.coe_mk, WNKA.compute, δ,
       Matrix.zero_mul, Matrix.mul_zero, Matrix.zero_apply]
     grind
-omit [Star 𝒮] in
 theorem RPol.wnka_sem_mod {π} :
     (RPol.wnka wnk_rpol {@mod ~π}).sem = G (wnk_rpol {@mod ~π} : RPol[F,N,𝒮]) := by
   ext x
@@ -669,7 +658,6 @@ theorem RPol.wnka_sem_mod {π} :
     simp only [WNKA.sem, wnka, GS.pks, List.cons_append, GS.mk, Countsupp.coe_mk, WNKA.compute, δ,
       Matrix.zero_mul, Matrix.mul_zero, Matrix.zero_apply]
     grind only
-omit [Star 𝒮] in
 theorem RPol.wnka_compute'_dup {A : List Pk[F,N]} :
       wnk_rpol {dup}.wnka.compute' (𝒮:=𝒮) A
     = match A with
@@ -709,7 +697,6 @@ theorem RPol.wnka_compute'_dup {A : List Pk[F,N]} :
         · rfl
       next => simp_all
 
-omit [Star 𝒮] in
 theorem RPol.wnka_sem_dup :
     (RPol.wnka wnk_rpol {dup}).sem = G (F:=F) (N:=N) (𝒮:=𝒮) wnk_rpol {dup} := by
   apply wnka_sem_eq_of
@@ -759,7 +746,6 @@ theorem RPol.wnka_sem_dup :
       right_eq_ite_iff, forall_exists_index]
       grind
 
-omit [Star 𝒮] in
 theorem RPol.wnka_sem_add {p₁ p₂ : RPol[F,N,𝒮]} :
     wnk_rpol {~p₁ ⨁ ~p₂}.wnka.sem = p₁.wnka.sem + p₂.wnka.sem := by
   ext ⟨α, xₙ, β⟩
@@ -779,7 +765,6 @@ theorem RPol.wnka_sem_add {p₁ p₂ : RPol[F,N,𝒮]} :
     | nil => simp [xδ, δ]; rw [ι_wProd_δ, ι_wProd_𝒪]; simp
     | cons α₀ xₙ ih => simp [xδ, δ, ← Matrix.mul_assoc, ι_wProd_δ, ih]
 
-omit [Star 𝒮] in
 theorem RPol.wnka_sem_weight {w} {p : RPol[F,N,𝒮]} :
     wnk_rpol {~w ⨀ ~p}.wnka.sem = (w * p.wnka.sem) := by
   ext ⟨α, xₙ, β⟩
@@ -790,7 +775,6 @@ theorem RPol.wnka_sem_weight {w} {p : RPol[F,N,𝒮]} :
   | nil => simp [xδ]
   | cons α₀ xₙ ih => simp [xδ, δ, ih]
 
-omit [Star 𝒮] in
 theorem RPol.seq_wnka_compute'' {p₁ p₂ : RPol[F,N,𝒮]} [Inhabited Pk[F,N]] {A} :
         wnk_rpol {~p₁; ~p₂}.wnka.compute' A =
     δ[[p₁.wnka.compute' A,
@@ -822,7 +806,6 @@ theorem RPol.seq_wnka_compute'' {p₁ p₂ : RPol[F,N,𝒮]} [Inhabited Pk[F,N]]
         simp only [WNKA.compute'_right, wnka_δ]
         grind [Matrix.mul_assoc]
 
-omit [Star 𝒮] in
 theorem RPol.wnka_sem_seq {p₁ p₂ : RPol[F,N,𝒮]}
     (ih₁ : p₁.wnka.sem = G p₁) (ih₂ : p₂.wnka.sem = G p₂) :
     wnk_rpol {~p₁ ; ~p₂}.wnka.sem = G wnk_rpol {~p₁; ~p₂} := by
@@ -900,7 +883,6 @@ def M'.unexpander : Unexpander
   `(M'⟦$y⟧)
 | _ => throw ()
 
-omit [Star 𝒮] in
 theorem G.star_apply (p₁ : RPol[F,N,𝒮]) (α : Pk[F,N]) (s) (β : Pk[F,N]) :
       (G⟦~p₁*⟧ : _ →c 𝒮) (α, s, β)
     = G⟦skip⟧ (α, s, β) +
@@ -939,7 +921,7 @@ def Q.unexpander : Unexpander
   `(Q⟦$y⟧)
 | _ => throw ()
 
-omit [Star 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem RPol.Q_eq_A_sem (p : RPol[F,N,𝒮]) {xs} : Q⟦~p⟧ xs = fun x z ↦ 𝒜⟦~p⟧ ⟨x, xs, z⟩ := by
   ext
   simp [Q, A_sem]
