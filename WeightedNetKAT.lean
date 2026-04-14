@@ -202,10 +202,10 @@ example {Q : Type} [Repr Q] : Repr (rReachability.Run (F:=Switch) (N:=City) (Q:=
 #guard_msgs in
 #print axioms RPol.wnka
 /--
-info: 'WeightedNetKAT.the_complete_theorem' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'WeightedNetKAT.Pol.sem_eq_toRPol_wnka_sem' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms the_complete_theorem
+#print axioms Pol.sem_eq_toRPol_wnka_sem
 /--
 info: 'WeightedNetKAT.rSafety.sem'' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
@@ -298,11 +298,8 @@ theorem Option.map₂_eq_map₂Fast : @map₂ = @map₂Fast := by
   simp [map₂Fast]
   grind
 
-theorem myMarker : ∃ m, m = WeightedNetKAT.Paper.PLDI2026.marker := by grind
-
 def main : IO Unit := do
   let pol := wnk_rpol { (~p_latency ; dup)* }
-  -- let res ← pol.eval
   let n : EWNKA Switch City Arctic (S pol) ← Perf.time "wnka" fun _ ↦ pol.ewnka
   println! " ∘ WNKA has been built!"
 

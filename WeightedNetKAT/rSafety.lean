@@ -233,7 +233,7 @@ def _root_.WeightedNetKAT.RPol.wnkaFast {F : Type} [Listed F] {N : Type} [Listed
 
 theorem rSafety_iff [Inhabited Pk[F,N]] {p : Pol[F,N,𝒮]} {r} :
     rSafety p r ↔ ∀ (x : GS[F,N]), p.toRPol.wnka.sem x ≤ r := by
-  simp [rSafety, the_complete_theorem]
+  simp [rSafety, Pol.sem_eq_toRPol_wnka_sem]
   constructor
   · intro h ⟨π, x, γ⟩
     specialize h π γ x.reverse

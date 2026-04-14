@@ -2078,7 +2078,7 @@ theorem RPol.wnka_sem (p : RPol[F,N,𝒮]) : (RPol.wnka p).sem = G p := by
   | Seq p₁ p₂ ih₁ ih₂ => exact wnka_sem_seq ih₁ ih₂
   | Iter p₁ ih => exact 𝒜_star_eq_G p₁ ih.symm
 
-theorem the_complete_theorem (p : Pol[F,N,𝒮]) (π) (h) :
+theorem Pol.sem_eq_toRPol_wnka_sem (p : Pol[F,N,𝒮]) (π) (h) :
     p.sem ⟨π, []⟩ h = p.toRPol.wnka.sem (π, h.2.reverse, h.1) := by
   rw [← Pol.toRol_sem_eq_sem, RPol.sem_G, RPol.wnka_sem]
   simp [GS.sem_eq]
@@ -2105,10 +2105,10 @@ theorem the_complete_theorem (p : Pol[F,N,𝒮]) (π) (h) :
       · simp
 
 /--
-info: 'WeightedNetKAT.the_complete_theorem' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'WeightedNetKAT.Pol.sem_eq_toRPol_wnka_sem' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms the_complete_theorem
+#print axioms Pol.sem_eq_toRPol_wnka_sem
 
 end
 
