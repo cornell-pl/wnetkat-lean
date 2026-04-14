@@ -46,7 +46,7 @@ Section 5, Inline 1: p'.wnka.sem
 Section 5, Table 1: (S p', p'.wnka.ι, p'.wnka.δ, p'.wnka.𝒪)
 Section 5, Lemma 2: p'.wnka_sem
 -- TODO: update name
-Section 5, Corollary 1: Pol.sem_eq_toRPol_wnka_sem p
+Section 5, Corollary 1: p.sem_eq_toRPol_wnka_sem
 variable {n : Type} [Fintype n] [DecidableEq n] in
 Section 5, Definition 4: Matrix.Star.instStar (α := 𝒮) (n := n)
 
