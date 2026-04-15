@@ -10,6 +10,14 @@ import WeightedNetKAT.Papers.PLDI2026
 import WeightedNetKAT.Perf
 import Lake.Util.Log
 
+/-!
+
+# Abilene
+
+This file contains a simplified version of the _Abilene_ network
+
+-/
+
 def List.sum' {α : Type} [Add α] [Zero α] (a : List α) : α :=
   match a with
   | [] => 0
