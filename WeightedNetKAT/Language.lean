@@ -60,7 +60,7 @@ variable {N : Type} [Listed N] [DecidableEq N]
 def GS.mk (α : Pk[F,N]) (x : List Pk[F,N]) (β : Pk[F,N]) : GS[F,N] := ⟨α, x, β⟩
 
 class WeightedConcat (α : Type) (β : outParam Type) where
-  /-- Weighted concatination -/
+  /-- Weighted concatenation -/
   concat : α → α → β
 
 @[inherit_doc]
