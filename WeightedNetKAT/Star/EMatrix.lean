@@ -68,39 +68,54 @@ def star_fin' {n : ℕ} (m : NMatrix n n α) : NMatrix n n α :=
 
     NMatrix.fromBlocks α β γ δ
 
-/-- A more efficient version of `star_fin'` that splits the matrix up into four approximately equal
-blocks. -/
-def star_fin'' {n : ℕ} (M : NMatrix n n α) : NMatrix n n α :=
-  let m := n / 2
-  if h : m = 0 then
-    if h : n = 0 then
-      .ofFn fun a b ↦ False.elim (by have := a.isLt; omega)
-    else
-      .ofFn fun _ _ ↦ (M ⟨0, by grind⟩ ⟨0, by grind⟩)^*
-  else
-    let m' := n - m
-    let M' : NMatrix (m + m') (m + m') α := ⟨M.data.cast (by simp [m, m']; grind)⟩
-    -- let m' := m
-    let a := M'.toBlocks₁₁
-    let b := M'.toBlocks₁₂
-    let c := M'.toBlocks₂₁
-    let d := M'.toBlocks₂₂
+def _root_.Nat.powTwoRec {motive : ℕ → Sort*} (base : motive 1) (induct : ∀ i, motive (2 ^ i) → motive (2 ^ i + 2 ^ i)) (n : ℕ) :
+    motive (2 ^ n) := by
+  induction n with
+  | zero => exact base
+  | succ n ih =>
+    specialize induct n ih
+    have : 2 ^ n + 2 ^ n = 2 ^ (n + 1) := by grind
+    rw [← this]
+    assumption
+def _root_.Nat.powTwoRec' {motive : ℕ → Sort*} (base : motive 1) (induct : ∀ i, motive (2 ^ i) → motive (2 ^ i + 2 ^ i)) (n : ℕ) (hn : n.isPowerOfTwo) :
+    motive n := by
+  let r := Nat.powTwoRec base induct n.log2
+  have : (2 ^ n.log2) = n := by obtain ⟨m, ⟨_⟩⟩ := hn; simp
+  rw [this] at r
+  exact r
 
-    let η₁ := star_fin' a
+def starFin₂ {n : ℕ} (h : n.isPowerOfTwo) : NMatrix n n α → NMatrix n n α :=
+  let f₁ := fun M ↦ .ofFn fun _ _ ↦ (M ⟨0, by grind⟩ ⟨0, by grind⟩)^*
+  let f₂ := fun n (f : NMatrix (2 ^ n) (2 ^ n) α → NMatrix (2 ^ n) (2 ^ n) α) (M : NMatrix (2 ^ n + 2 ^ n) (2 ^ n + 2 ^ n) α) ↦
+    let a := M.toBlocks₁₁
+    let b := M.toBlocks₁₂
+    let c := M.toBlocks₂₁
+    let d := M.toBlocks₂₂
+
+    let η₁ := f a
     let η₂ := c * η₁
     let η₂' := η₁ * b
     let η₃ := η₂ * b
 
-    let δ := star_fin' (d + η₃)
+    let δ := f (d + η₃)
     let γ := δ * η₂
     let β := η₂' * δ
     let α := η₁ + β * η₂
 
     ⟨(NMatrix.fromBlocks α β γ δ).data.cast (by grind)⟩
+  Nat.powTwoRec' (motive := fun n ↦ NMatrix n n α → NMatrix n n α) f₁ f₂ n h
+
+/-- A more efficient version of `star_fin'` that splits the matrix up into four approximately equal
+blocks. -/
+def starFin {n : ℕ} (M : NMatrix n n α) : NMatrix n n α :=
+  if hn : n.isPowerOfTwo then
+    starFin₂ hn M
+  else
+    sorry
 
 -- NOTE: this should be `@[csimp]` once we've proven it correct
 -- @[csimp]
-theorem star_fin'_eq_star_fin'' : @star_fin' = @star_fin'' := by
+theorem star_fin'_eq_starFin : @star_fin' = @starFin := by
   sorry
 
 instance {n : ℕ} [AddCommMonoid α] [Mul α] [WeightedNetKAT.Star α] :
@@ -168,6 +183,43 @@ theorem star_fin'_iter {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [Star
           NMatrix.add_assoc]
       · grind only [NMatrix.add_mul, NMatrix.add_comm, NMatrix.mul_assoc, ← NMatrix.add_assoc]
 
+-- TODO
+theorem starFin_iter_pow_two {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] {n : ℕ} (M : NMatrix (2 ^ n) (2 ^ n) α) :
+    1 + M * starFin M = starFin M := by
+  revert M
+  apply Nat.powTwoRec (motive := fun n ↦ ∀ (M : NMatrix n n α), 1 + M * starFin M = starFin M) ?_ ?_ n
+  · intro M
+    ext ⟨i, hi⟩ ⟨j, hj⟩
+    simp at hi hj
+    subst_eqs
+    simp [starFin, Matrix.mul_apply]
+    sorry
+  · clear n;
+    intro n ih M
+    let a : NMatrix (2 ^ n) (2 ^ n) α := M.toBlocks₁₁
+    let b := M.toBlocks₁₂
+    let c := M.toBlocks₂₁
+    let d := M.toBlocks₂₂
+
+    set a' := starFin a
+    have ha' : starFin a = a' := rfl
+    replace ih : 1 + a * a' = a' := ih _
+
+    wlog h : M = NMatrix.fromBlocks a b c d generalizing a b c d
+    · absurd h; simp [a, b, c, d]
+    · simp [h] at *
+      rw [starFin]
+      sorry
+
+theorem starFin_iter {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] {n : ℕ} (M : NMatrix n n α) :
+    1 + M * starFin M = starFin M := by
+  if hm : n.isPowerOfTwo then
+    obtain ⟨n, ⟨_⟩⟩ := hm
+    exact starFin_iter_pow_two M
+  else
+    -- TODO: prove for non powers of two
+    sorry
+
 instance {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [LawfulStar α] {n : ℕ} :
     StarIter (NMatrix n n α) := ⟨star_fin'_iter⟩
 
@@ -226,17 +278,12 @@ instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
     ext
     simp [mul_apply]
 
--- TODO: we need this
+-- TODO: we need this to show that our algorithms are computable; sorry for now
 instance {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [LawfulStar α] [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α] {n : ℕ} :
     LawfulStar (NMatrix n n α) where
   star_eq_sum m := by
     apply le_antisymm
-    · rw [← star_fin'_iter, ← star_fin'_iter, ← star_fin'_iter, ← star_fin'_iter, ← star_fin'_iter, ← star_fin'_iter]
-      simp [mul_add, ← add_assoc, ← pow_succ, ← mul_assoc]
-      rw [ωSum_nat_eq_succ, ωSum_nat_eq_succ, ωSum_nat_eq_succ, ωSum_nat_eq_succ, ωSum_nat_eq_succ, ωSum_nat_eq_succ]
-      simp [pow_succ', _root_.ωSum_mul_left, ← add_assoc, ← mul_assoc]
-      gcongr
-      sorry
+    · sorry
     · simp [ωSum_nat_eq_ωSup]
       intro i
       induction i with

@@ -293,10 +293,18 @@ instance [DecidableRel (· ≤ · : 𝒮 → 𝒮 → Prop)] {p : Pol[F,N,𝒮]}
 
 variable [DecidableEq 𝒮]
 
+/-- Enumerate _all_ GS and check their weight
+
+Example execution time: **N/A**
+-/
 def extraction_len (n : ℕ) (r : 𝒮) : Option GS[F,N] :=
   let x := Listed.arrayOf (Pk[F,N] × Vector Pk[F,N] n × Pk[F,N])
   let y : Array (GS[F,N]) := x.map fun (α, xs, β) ↦ GS.mk α xs.toList β
   y.find? (ℰ.sem · = r)
+/-- Enumerate _all_ GS and check their weight, reusing computation up to the exit weight
+
+Example execution time: **113.988409s**
+-/
 def extraction_len' (n : ℕ) (r : 𝒮) : Option GS[F,N] :=
   let pks := Listed.arrayOf Pk[F,N]
   let x := Listed.arrayOf (Vector Pk[F,N] (n + 1))
@@ -306,10 +314,26 @@ def extraction_len' (n : ℕ) (r : 𝒮) : Option GS[F,N] :=
       pks.findSome? (fun β ↦ if f.finish β = r then some (α_xs, β) else none))
   |>.map fun (α_xs, β) ↦ GS.mk α_xs.head α_xs.tail.toList β
 
+def extraction_len'' (acc : E𝒲[𝟙, Q, 𝒮]) (n : ℕ) (γ : Li[Pk[F,N]]) (r : 𝒮) : Option GS[F,N] :=
+  let pks := Listed.arrayOf Li[Pk[F,N]]
+  match n with
+  | 0 =>
+    pks.findSome? (fun β ↦ if (acc * ℰ.𝒪.asNMatrix γ β) () () = r then some ⟨Listed.decodeFin γ, [], Listed.decodeFin β⟩ else none)
+  | n + 1 =>
+    pks.findSome? (fun β ↦ if let some gs := extraction_len'' (acc * ℰ.δ.asNMatrix γ β) n β r then (some ⟨Listed.decodeFin γ, gs.1 :: gs.2.1, gs.2.2⟩) else none)
+
+/-- Enumerate _all_ GS and check their weight, reusing computation up for every prefix
+
+Example execution time: **30.157497s**
+-/
+def extraction_len₀ (n : ℕ) (r : 𝒮) : Option GS[F,N] :=
+  let pks := Listed.arrayOf Li[Pk[F,N]]
+  pks.findSome? (extraction_len'' ℰ ℰ.ι n · r)
+
 partial def extraction_go [Inhabited F] [Inhabited N] (n : ℕ) (r : 𝒮) : GS[F,N] :=
-  match extraction_len' ℰ n r with
-  | some ρ => ρ
-  | none => extraction_go (n + 1) r
+    match extraction_len₀ ℰ n r with
+    | some ρ => ρ
+    | none => extraction_go (n + 1) r
 
 def extraction [Inhabited F] [Inhabited N] (r : 𝒮) : GS[F,N] := extraction_go ℰ 0 r
 
