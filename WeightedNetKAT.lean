@@ -1,4 +1,5 @@
 import WeightedNetKAT.Examples.Abilene
+import WeightedNetKAT.Papers
 
 open WeightedNetKAT
 
