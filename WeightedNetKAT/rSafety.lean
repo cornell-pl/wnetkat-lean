@@ -250,6 +250,16 @@ theorem rSafety_iff' [Inhabited Pk[F,N]] {p : Pol[F,N,𝒮]} {r} :
   · intro h x
     grw [← h, ← le_ωSum_of_finset (S:={x})]
     simp
+
+section
+
+local instance {n} : Fintype (Vector Pk[F,N] n) := Listed.fintype
+
+theorem ωSum_GS_eq_ωSum_nat {f : GS[F,N] → 𝒮} : ω∑ (x : GS F N), f x = ω∑ n, ∑ (α : Pk[F,N]) (xs : Vector Pk[F,N] n) (β : Pk[F,N]), f ⟨α, xs.toList, β⟩ := by
+  sorry
+
+end
+
 theorem rSafety_iff'' [Inhabited Pk[F,N]] {p : Pol[F,N,𝒮]} {r} :
     rSafety p r ↔ sem' p.toRPol.wnka ≤ r := by
   rw [rSafety_iff']
@@ -259,7 +269,19 @@ theorem rSafety_iff'' [Inhabited Pk[F,N]] {p : Pol[F,N,𝒮]} {r} :
   simp [Matrix.mul_apply]
   rw [LawfulStar.star_eq_sum]
   simp
-  sorry
+  rw [ωSum_GS_eq_ωSum_nat]
+  nth_rw 2 [ωSum_nat_eq_succ]
+  simp
+  nth_rw 2 [ωSum_nat_eq_succ]
+  simp [Matrix.sum_apply, Δ]
+  congr with n
+  induction n with
+  | zero =>
+    simp [Matrix.sum_apply, Δ, pow_succ, Matrix.mul_apply]
+    sorry
+  | succ n ih =>
+    simp [Matrix.sum_apply, pow_succ, Matrix.mul_apply]
+    sorry
 
 theorem rSafety_iff_ErSafety [Inhabited Pk[F,N]] {p : Pol[F,N,𝒮]} {r} : rSafety p r ↔ ErSafety p r := by
   rw [rSafety_iff'']
@@ -280,9 +302,8 @@ def extraction_len' (n : ℕ) (r : 𝒮) : Option GS[F,N] :=
   let x := Listed.arrayOf (Vector Pk[F,N] (n + 1))
   x.findSome?
     (fun α_xs ↦
-      let ⟨m, γ⟩ := ℰ.semArray'' α_xs.toArray (by simp)
-      pks.findSome? (fun β ↦ if (m * ℰ.𝒪 γ β) () () = r then some (α_xs, β) else none)
-      )
+      let f := ℰ.semArray α_xs.toArray (by simp)
+      pks.findSome? (fun β ↦ if f.finish β = r then some (α_xs, β) else none))
   |>.map fun (α_xs, β) ↦ GS.mk α_xs.head α_xs.tail.toList β
 
 partial def extraction_go [Inhabited F] [Inhabited N] (n : ℕ) (r : 𝒮) : GS[F,N] :=

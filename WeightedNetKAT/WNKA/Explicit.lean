@@ -538,29 +538,35 @@ def EWNKA.sem' (𝒜 : EWNKA[F,N,𝒮,Q]) : GS[F,N] →c 𝒮 :=
 def EWNKA.sem (𝒜 : EWNKA[F,N,𝒮,Q]) : GS[F,N] →c 𝒮 :=
   ⟨(fun x ↦ (𝒜.ι * 𝒜.compute x.pks) () ()), SetCoe.countable _⟩
 
-@[noinline, specialize]
-def EWNKA.semArray' (𝒜 : EWNKA[F,N,𝒮,Q]) (m : E𝒲[𝟙, Q, 𝒮]) (γ : Pk[F,N]) : Pk[F,N] → 𝒮 :=
-  fun β ↦ (m * 𝒜.𝒪 γ β) () ()
+/-- Stores partial computation of the weight of a trace.
+
+We want to compute the prefix as little as possible, and reuse it the final computation with `𝒪`.
+This structure turned out to be crucial for performance, as Lean would push the computation of the
+prefix into the lambda where the final `β` was given, leading it to recomputing the prefix for every
+final packet.
+
+This gives roughly a `|Pk[F,N]|` times speed up.
+-/
+structure EWNKA.Precompute (ℰ : EWNKA[F,N,𝒮,Q]) where
+  m : E𝒲[𝟙, Q, 𝒮]
+  γ : Pk[F,N]
 
 @[specialize, inline]
-def EWNKA.semArray (𝒜 : EWNKA[F,N,𝒮,Q]) (α_xs : Array Pk[F,N]) (h : 0 < α_xs.size) : Pk[F,N] → 𝒮 :=
+def EWNKA.Precompute.finish {ℰ : EWNKA[F,N,𝒮,Q]} (p : ℰ.Precompute) (β : Pk[F,N]) : 𝒮 :=
+  (p.m * ℰ.𝒪 p.γ β) () ()
+
+-- TODO: make `Li[Pk[F,N]]`
+@[specialize, noinline]
+def EWNKA.semArray_aux (𝒜 : EWNKA[F,N,𝒮,Q]) (α_xs : Array Pk[F,N]) (h : 0 < α_xs.size) : 𝒜.Precompute :=
   let α_xs := α_xs.toSubarray
   let xs := α_xs.drop 1
   let m := (α_xs.iter.zip xs.iter).fold (fun acc (γ, κ) ↦ acc * 𝒜.δ γ κ) 𝒜.ι
   let γ := α_xs.get ⟨α_xs.size - 1, by grind⟩
-  dbg_trace "head of m: {if h : 0 < m.data.size then "a" else "b"}"
-  𝒜.semArray' m γ
-  -- fun β ↦ (m * 𝒜.𝒪 γ β) () ()
-
-@[specialize, inline]
-def EWNKA.semArray'' (𝒜 : EWNKA[F,N,𝒮,Q]) (α_xs : Array Pk[F,N]) (h : 0 < α_xs.size) : E𝒲[𝟙, Q, 𝒮] × Pk[F,N] :=
-  let α_xs := α_xs.toSubarray
-  let xs := α_xs.drop 1
-  let m := (α_xs.iter.zip xs.iter).fold (fun acc (γ, κ) ↦ acc * 𝒜.δ γ κ) 𝒜.ι
-  let γ := α_xs.get ⟨α_xs.size - 1, by grind⟩
-  -- dbg_trace "head of m: {if h : 0 < m.data.size then "a" else "b"}"
   ⟨m, γ⟩
-  -- fun β ↦ (m * 𝒜.𝒪 γ β) () ()
+
+@[specialize, inline]
+def EWNKA.semArray (𝒜 : EWNKA[F,N,𝒮,Q]) (α_xs : Array Pk[F,N]) (h : 0 < α_xs.size) : 𝒜.Precompute :=
+  𝒜.semArray_aux α_xs h
 
 @[csimp]
 theorem EWNKA.sem_eq_sem' : @EWNKA.sem = @EWNKA.sem' := by
@@ -581,10 +587,10 @@ theorem EWNKA.sem_eq_sem' : @EWNKA.sem = @EWNKA.sem' := by
 
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] [DecidableEq F] [LawfulStar N𝒲[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮]] in
 theorem EWNKA.semArray_eq_sem {ℰ : EWNKA[F,N,𝒮,Q]} {α_xs : Array Pk[F,N]} {β : Pk[F,N]} (h : 0 < α_xs.size) :
-    ℰ.semArray α_xs h β = ℰ.sem ⟨α_xs.toList.head (by grind [Array.ne_empty_of_size_pos]), α_xs.toList.tail, β⟩ := by
+    (ℰ.semArray α_xs h).finish β = ℰ.sem ⟨α_xs.toList.head (by grind [Array.ne_empty_of_size_pos]), α_xs.toList.tail, β⟩ := by
   rcases α_xs with ⟨_ | ⟨α, xs⟩⟩
   · simp at h
-  simp [sem_eq_sem', semArray, dbgTrace, semArray', sem', ← Std.Iter.foldl_toList, Subarray.get]
+  simp [sem_eq_sem', semArray, semArray_aux, sem', ← Std.Iter.foldl_toList, Subarray.get, Precompute.finish]
   have : Std.Slice.size (({ toList := α :: xs } : Array _).toSubarray 0 (‖xs‖ + 1)) = ‖xs‖ + 1 := by grind
   simp_all only [add_tsub_cancel_right]
   have : ((Std.Slice.toList (({ toList := α :: xs } : Array _).toSubarray 0 (‖xs‖ + 1))).zip
