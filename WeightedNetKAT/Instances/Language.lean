@@ -1,7 +1,11 @@
-import Mathlib.Computability.Language
-import Mathlib.Data.ENat.Lattice
-import WeightedNetKAT.Computation
-import WeightedNetKAT.Star
+module
+
+public import Mathlib.Computability.Language
+public import Mathlib.Data.ENat.Lattice
+public import WeightedNetKAT.Computation
+public import WeightedNetKAT.Star
+
+@[expose] public section
 
 open OmegaCompletePartialOrder
 

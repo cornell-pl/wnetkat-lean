@@ -1,11 +1,15 @@
-import Mathlib.Algebra.BigOperators.Group.Finset.Basic
-import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
-import Mathlib.Algebra.BigOperators.Ring.List
-import Mathlib.Algebra.Module.NatInt
-import Mathlib.Algebra.Order.Ring.Nat
-import Mathlib.Data.Finset.Sort
-import Mathlib.Data.List.DropRight
-import Mathlib.Tactic.Ring.RingNF
+module
+
+public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
+public import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
+public import Mathlib.Algebra.BigOperators.Ring.List
+public import Mathlib.Algebra.Module.NatInt
+public import Mathlib.Algebra.Order.Ring.Nat
+public import Mathlib.Data.Finset.Sort
+public import Mathlib.Data.List.DropRight
+public import Mathlib.Tactic.Ring.RingNF
+
+@[expose] public section
 
 open scoped RightActions
 
@@ -275,8 +279,6 @@ theorem partitions_eq_partitions' {xs : List α} {n} :
         simp [hbs]
         grind
 
-#eval partitions' ([1, 2] : List ℕ) 3
-
 theorem mem_partitions'_iff {xs : List α} {n : ℕ} {ys}  :
     ys ∈ partitions' xs n ↔ (ys.map Prod.snd).flatten = xs ∧ ∀ a b, (a, b) ∈ ys → a ≤ n ∧ ¬b = [] := by
   induction xs generalizing ys with
@@ -396,21 +398,6 @@ def buckets (xs : List α) (n : ℕ) : Finset (List (List α)) :=
         match bs with
         | [] => [] -- NOTE: this case is unreachable
         | b::bs => (x::b)::bs
-
--- theorem buckets_card (xs : List α) (n : ℕ) :
---     (buckets xs n).card = Nat.choose (n + ‖xs‖ - 1) ‖xs‖ := by
---   induction xs generalizing n with
---   | nil =>
---     induction n with
---     | zero => simp [buckets]
---     | succ n ih => simp [buckets]
---   | cons x xs ih =>
---     induction n with
---     | zero => simp [buckets]
---     | succ n ih =>
---       simp [buckets]
-
--- #eval (range 10).map (fun n ↦ (Nat.choose (n + 4 - 1) 4, (buckets (range 4) n).card))
 
 @[simp]
 theorem buckets_nil {n} :
@@ -727,8 +714,5 @@ theorem buckets_subset_partitionsFill' (xs : List α) (n : ℕ) (h : xs ≠ []) 
     · nth_rw 2 [← this]
       simp
       apply h
-
-#print axioms buckets_subset_partitionsFill'
-#print axioms partitionsFill'_subset_buckets
 
 end List

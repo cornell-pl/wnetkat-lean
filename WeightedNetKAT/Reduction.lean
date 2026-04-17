@@ -1,9 +1,13 @@
-import Mathlib.Data.Finsupp.Defs
-import WeightedNetKAT.RPol
-import WeightedNetKAT.Semantics
-import WeightedNetKAT.RPol
-import WeightedNetKAT.Listed
-import Mathlib.Logic.Function.Basic
+module
+
+public import Mathlib.Data.Finsupp.Defs
+public import WeightedNetKAT.RPol
+public import WeightedNetKAT.Semantics
+public import WeightedNetKAT.RPol
+public import WeightedNetKAT.Listed
+public import Mathlib.Logic.Function.Basic
+
+@[expose] public section
 
 theorem Finset.filterMap_insert {α β : Type} [DecidableEq α] [DecidableEq β] (f : α → Option β) (hf : ∀ a a', ∀ b ∈ f a, b ∈ f a' → a = a') (a : α) (s : Finset α) :
       (insert a s).filterMap f hf

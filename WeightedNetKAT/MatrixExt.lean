@@ -1,5 +1,9 @@
-import Mathlib.Data.Matrix.Basic
-import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
+module
+
+public import Mathlib.Data.Matrix.Basic
+public import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
+
+@[expose] public section
 
 open OmegaCompletePartialOrder
 open scoped RightActions

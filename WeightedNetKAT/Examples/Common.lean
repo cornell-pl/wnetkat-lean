@@ -1,9 +1,13 @@
-import Mathlib.Logic.Encodable.Pi
-import WeightedNetKAT.Computation
-import WeightedNetKAT.WNKA
-import WeightedNetKAT.WNKA.Explicit
-import WeightedNetKAT.Instances.Boolean
-import WeightedNetKAT.Instances.Bottleneck
+module
+
+public import Mathlib.Logic.Encodable.Pi
+public import WeightedNetKAT.Computation
+public import WeightedNetKAT.WNKA
+public import WeightedNetKAT.WNKA.Explicit
+public import WeightedNetKAT.Instances.Boolean
+public import WeightedNetKAT.Instances.Bottleneck
+
+@[expose] public section
 
 open WeightingNotation
 

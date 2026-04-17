@@ -1,7 +1,11 @@
-import Mathlib.Data.ENat.Basic
-import Mathlib.Data.Nat.Cast.Order.Ring
-import WeightedNetKAT.Computation
-import WeightedNetKAT.Star
+module
+
+public import Mathlib.Data.ENat.Basic
+public import Mathlib.Data.Nat.Cast.Order.Ring
+public import WeightedNetKAT.Computation
+public import WeightedNetKAT.Star
+
+@[expose] public section
 
 open OmegaCompletePartialOrder
 
@@ -172,8 +176,3 @@ instance : Repr ℕ∞ where
 -- TODO: this became noncomputable for some reason
 instance : Repr EENat where
   reprPrec p n := if p = ⊤ then "⊤" else if p = ⊥ then "⊥" else reprPrec p.get!.toNat n
-
-#eval! (wnk_pol { ~1 ⨀ ~0 ← 3 } : Pol[Fin 3, ℕ, Bottleneck Secutiy₄]).compute 10 (0, []) (.ofFn fun x ↦ if x = 0 then 3 else 0, [])
-#eval! (wnk_pol { ~1 ⨀ ~0 ← 3 } : Pol[Fin 3, ℕ, Bottleneck ENat]).compute 10 (0, []) (.ofFn fun x ↦ if x = 0 then 3 else 0, [])
--- TODO: this became noncomputable for some reason
--- #eval! (wnk_pol { ~1 ⨀ ~0 ← 3 } : Pol[Fin 3, ℕ, Bottleneck EENat]).compute 10 (fun _ ↦ 0, []) (fun x ↦ if x = 0 then 3 else 0, [])

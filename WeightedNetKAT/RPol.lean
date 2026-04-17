@@ -1,4 +1,8 @@
-import WeightedNetKAT.Syntax
+module
+
+public import WeightedNetKAT.Syntax
+
+@[expose] public section
 
 namespace WeightedNetKAT
 
@@ -16,8 +20,7 @@ inductive RPol (W : Type) where
   | Weight (w : W) (p : RPol W)
   | Add (p q : RPol W)
   | Iter (p : RPol W)
--- TODO: we need to figure out how we can get `DecidableEq Pk[F,N]` to get this
--- deriving DecidableEq
+deriving DecidableEq
 
 notation "RPol[" f "," n "," w "]" => RPol (F:=f) (N:=n) (W:=w)
 
@@ -64,7 +67,7 @@ macro_rules|`(wnk_pk{~$t})=>`($t)
 macro_rules|`(wnk_rpol{~$t})=>`($t)
 
 @[app_unexpander RPol.Test]
-def RPol.unexpandTest : Unexpander
+meta def RPol.unexpandTest : Unexpander
 | `($(_) $x) => do
   let x ← match x with
   | `(wnk_pk{$x}) => pure x
@@ -73,15 +76,15 @@ def RPol.unexpandTest : Unexpander
 | _ => throw ()
 
 @[app_unexpander RPol.Skip]
-def RPol.unexpandSkip : Unexpander
+meta def RPol.unexpandSkip : Unexpander
 | _ => `(wnk_rpol { skip })
 
 @[app_unexpander RPol.Dup]
-def RPol.unexpandDup : Unexpander
+meta def RPol.unexpandDup : Unexpander
 | _ => `(wnk_rpol { dup })
 
 @[app_unexpander RPol.Seq]
-def RPol.unexpandSeq : Unexpander
+meta def RPol.unexpandSeq : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_rpol{$x}) => pure x
@@ -93,7 +96,7 @@ def RPol.unexpandSeq : Unexpander
 | _ => throw ()
 
 @[app_unexpander RPol.Mod]
-def RPol.unexpandMod : Unexpander
+meta def RPol.unexpandMod : Unexpander
 | `($(_) $x) => do
   let x ← match x with
     | `(wnk_pk{$x}) => pure x
@@ -102,7 +105,7 @@ def RPol.unexpandMod : Unexpander
 | _ => throw ()
 
 @[app_unexpander RPol.Add]
-def RPol.unexpandAdd : Unexpander
+meta def RPol.unexpandAdd : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_rpol{$x}) => pure x
@@ -114,7 +117,7 @@ def RPol.unexpandAdd : Unexpander
 | _ => throw ()
 
 @[app_unexpander RPol.Weight]
-def RPol.unexpandWeight : Unexpander
+meta def RPol.unexpandWeight : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_weight{$x}) => pure x
@@ -126,7 +129,7 @@ def RPol.unexpandWeight : Unexpander
 | _ => throw ()
 
 @[app_unexpander RPol.Iter]
-def RPol.unexpandIter : Unexpander
+meta def RPol.unexpandIter : Unexpander
 | `($(_) $x) => do
   let x ← match x with
     | `(wnk_rpol{$x}) => pure x
@@ -145,7 +148,7 @@ def RPol.unexpandIter : Unexpander
 -- Copied from Lean's term parenthesizer - applies the precedence rules in the grammar to add
 -- parentheses as needed.
 @[category_parenthesizer cwnk_pk]
-def cwnk_pk.parenthesizer : CategoryParenthesizer | prec => do
+meta def cwnk_pk.parenthesizer : CategoryParenthesizer | prec => do
   Parenthesizer.maybeParenthesize `cwnk_pk true wrapParens prec $
     Parenthesizer.parenthesizeCategoryCore `cwnk_pk prec
 where
@@ -155,7 +158,7 @@ where
 -- Copied from Lean's term parenthesizer - applies the precedence rules in the grammar to add
 -- parentheses as needed.
 @[category_parenthesizer cwnk_rpol]
-def cwnk_rpol.parenthesizer : CategoryParenthesizer | prec => do
+meta def cwnk_rpol.parenthesizer : CategoryParenthesizer | prec => do
   Parenthesizer.maybeParenthesize `cwnk_rpol true wrapParens prec $
     Parenthesizer.parenthesizeCategoryCore `cwnk_rpol prec
 where

@@ -1,7 +1,11 @@
-import WeightedNetKAT.Countsupp
-import WeightedNetKAT.Subst
-import WeightedNetKAT.Syntax
-import Mathlib.Algebra.Ring.Hom.Defs
+module
+
+public import WeightedNetKAT.Countsupp
+public import WeightedNetKAT.Subst
+public import WeightedNetKAT.Syntax
+public import Mathlib.Algebra.Ring.Hom.Defs
+
+@[expose] public section
 
 open OmegaCompletePartialOrder
 
@@ -22,18 +26,9 @@ namespace WeightedNetKAT
 abbrev η {ι : Type} {α : Type} [DecidableEq ι] [Zero α] [One α] (i : ι): ι →c α :=
   ⟨Pi.single i 1, Set.Countable.mono Pi.support_single_subset (Set.countable_singleton i)⟩
 
--- @[simp] theorem η_apply₁ {ι : Type} {α : Type} [DecidableEq ι] [Zero α] [One α] {x : ι} :
---     η x = ⟨fun y ↦ if x = y then (1 : α) else 0, by
---       refine Set.Subsingleton.countable ?_
---       refine Set.subsingleton_of_forall_eq x fun b ↦ ?_
---       simp_all⟩ := by
---   ext
---   simp [Pi.single, Function.update]; grind
 @[simp] theorem η_apply {ι : Type} {α : Type} [DecidableEq ι] [Zero α] [One α] {x y : ι} :
     η x y = if x = y then (1 : α) else 0 := by
   simp [Pi.single, Function.update]; grind
-
--- @[simp] theorem η_subtype_apply {x y : H[F,N]} : η x y = if x = y then (1 : 𝒮) else 0 := by rfl
 
 variable {X : Type} {𝒮 : Type}
   [Semiring 𝒮]
@@ -45,9 +40,6 @@ variable {X : Type} {𝒮 : Type}
 
 variable {F : Type} [Fintype F] [DecidableEq F] [Listed F]
 variable {N : Type} [DecidableEq N]
-
-noncomputable instance : DecidableEq (X →c 𝒮) := Classical.typeDecidableEq _
--- noncomputable instance : DecidableEq (H[F,N] →c 𝒮) := Classical.typeDecidableEq (𝒲 𝒮 H)
 
 @[simp]
 def Pred.orDepth : Pred[F,N] → ℕ

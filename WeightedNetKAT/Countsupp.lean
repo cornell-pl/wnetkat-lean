@@ -1,5 +1,9 @@
-import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
-import Mathlib.Data.Set.Countable
+module
+
+public import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
+public import Mathlib.Data.Set.Countable
+
+@[expose] public section
 
 open OmegaCompletePartialOrder
 

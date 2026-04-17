@@ -1,4 +1,8 @@
-import WeightedNetKAT.rSafety
+module
+
+public import WeightedNetKAT.rSafety
+
+@[expose] public section
 
 namespace Paper
 

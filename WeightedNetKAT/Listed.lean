@@ -1,14 +1,19 @@
-import Batteries.Data.Array.Pairwise
-import Mathlib.Algebra.BigOperators.Group.Finset.Defs
-import Mathlib.Algebra.GroupWithZero.Basic
-import Mathlib.Algebra.GroupWithZero.Nat
-import Mathlib.Algebra.Order.Group.Nat
-import Mathlib.Data.Countable.Defs
-import Mathlib.Data.Nat.Lattice
-import Mathlib.Data.Vector.Basic
-import Mathlib.Data.Nat.Digits.Defs
-import Mathlib.Data.Nat.Digits.Lemmas
-import Mathlib.Data.List.DropRight
+module
+
+public import Batteries.Data.Array.Pairwise
+public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
+public import Mathlib.Algebra.GroupWithZero.Basic
+public import Mathlib.Algebra.GroupWithZero.Nat
+public import Mathlib.Algebra.Order.Group.Nat
+public import Mathlib.Data.Countable.Defs
+public import Mathlib.Data.Nat.Lattice
+public import Mathlib.Data.Vector.Basic
+public import Mathlib.Data.Nat.Digits.Defs
+public import Mathlib.Data.Nat.Digits.Lemmas
+public import Mathlib.Data.List.DropRight
+public meta import Mathlib.Data.List.Defs
+
+@[expose] public section
 
 namespace List
 
@@ -120,7 +125,7 @@ theorem nodup_append {l₁ l₂ : Array α} :
     (l₁ ++ l₂).Nodup ↔ l₁.Nodup ∧ l₂.Nodup ∧ ∀ (a : α), a ∈ l₁ → ∀ (b : α), b ∈ l₂ → a ≠ b := by
   have := List.nodup_append (l₁:=l₁.toList) (l₂:=l₂.toList)
   simp [← nodup_iff_toList_nodup]
-  convert this <;> (ext; simp)
+  simpa only [mem_toList_iff, ne_eq]
 
 theorem Nodup.map {l : Array α} {f : α → β} (hf : Function.Injective f) :
     l.Nodup → (map f l).Nodup := by
@@ -141,7 +146,7 @@ theorem nodup_map_iff_inj_on {f : α → β} {l : Array α} (d : l.Nodup) :
     (map f l).Nodup ↔ ∀ (x : α), x ∈ l → ∀ (y : α), y ∈ l → f x = f y → x = y := by
   have := List.nodup_map_iff_inj_on (f:=f) d
   simp [← nodup_iff_toList_nodup]
-  convert this <;> (ext; simp)
+  simpa only [mem_toList_iff]
 
 end Array
 
@@ -186,9 +191,9 @@ instance : Countable α := ⟨⟨Listed.encode, Listed.encode_inj⟩⟩
 
 @[implicit_reducible]
 def lift [Listed α] {γ : Type*} (f : α ≃ γ) : Listed γ where
-  array := array.map f
-  size := array.size
-  size_prop := by simp; rfl
+  array := (array : Array α).map f
+  size := size α
+  size_prop := by simp [size_prop]
   nodup := by
     simp [Array.Nodup, Array.Pairwise]
     refine List.nodup_iff_pairwise_ne.mp ?_

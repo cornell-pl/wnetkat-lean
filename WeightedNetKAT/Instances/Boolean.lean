@@ -1,6 +1,10 @@
-import Mathlib.Data.Fintype.Order
-import WeightedNetKAT.Computation
-import WeightedNetKAT.Star
+module
+
+public import Mathlib.Data.Fintype.Order
+public import WeightedNetKAT.Computation
+public import WeightedNetKAT.Star
+
+@[expose] public section
 
 open OmegaCompletePartialOrder
 

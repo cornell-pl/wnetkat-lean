@@ -1,10 +1,14 @@
-import WeightedNetKAT.Computation
-import WeightedNetKAT.Star
-import WeightedNetKAT.Instances.ENat
-import Mathlib.Data.ENat.Basic
-import Mathlib.Algebra.Tropical.Lattice
-import Mathlib.Algebra.Tropical.BigOperators
-import Mathlib.Order.CompletePartialOrder
+module
+
+public import WeightedNetKAT.Computation
+public import WeightedNetKAT.Star
+public import WeightedNetKAT.Instances.ENat
+public import Mathlib.Data.ENat.Basic
+public import Mathlib.Algebra.Tropical.Lattice
+public import Mathlib.Algebra.Tropical.BigOperators
+public import Mathlib.Order.CompletePartialOrder
+
+@[expose] public section
 
 open OmegaCompletePartialOrder
 

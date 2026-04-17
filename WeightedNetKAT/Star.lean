@@ -1,11 +1,15 @@
-import Mathlib.Algebra.Group.Action.Opposite
-import Mathlib.Data.Matrix.Basis
-import Mathlib.Data.Matrix.Block
-import Mathlib.Data.Matrix.Mul
-import WeightedNetKAT.Listed
-import WeightedNetKAT.MatrixExt
-import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
-import Mathlib.Tactic.Ring.RingNF
+module
+
+public import Mathlib.Algebra.Group.Action.Opposite
+public import Mathlib.Data.Matrix.Basis
+public import Mathlib.Data.Matrix.Block
+public import Mathlib.Data.Matrix.Mul
+public import WeightedNetKAT.Listed
+public import WeightedNetKAT.MatrixExt
+public import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
+public import Mathlib.Tactic.Ring.RingNF
+
+@[expose] public section
 
 namespace WeightedNetKAT
 

@@ -1,13 +1,18 @@
-import Mathlib.Algebra.Group.Action.Opposite
-import Mathlib.Data.Matrix.Basis
-import Mathlib.Data.Matrix.Block
-import Mathlib.Data.Matrix.Mul
-import Mathlib.Tactic.Ring.RingNF
-import WeightedNetKAT.EMatrix
-import WeightedNetKAT.Listed
-import WeightedNetKAT.MatrixExt
-import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
-import WeightedNetKAT.MatrixStar
+module
+
+public import Mathlib.Algebra.Group.Action.Opposite
+public import Mathlib.Data.Matrix.Basis
+public import Mathlib.Data.Matrix.Block
+public import Mathlib.Data.Matrix.Mul
+public import Mathlib.Tactic.Ring.RingNF
+public import WeightedNetKAT.EMatrix
+public import WeightedNetKAT.Listed
+public import WeightedNetKAT.MatrixExt
+public import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
+public import WeightedNetKAT.Star.Matrix
+import all Init.Data.Nat.Power2.Basic
+
+@[expose] public section
 
 namespace Matrix.Star
 
@@ -68,6 +73,7 @@ def star_fin' {n : ℕ} (m : NMatrix n n α) : NMatrix n n α :=
 
     NMatrix.fromBlocks α β γ δ
 
+def _root_.Nat.isPowerOfTwo_iff {n : ℕ} : n.isPowerOfTwo ↔ ∃ m, n = 2 ^ m := by rfl
 def _root_.Nat.powTwoRec {motive : ℕ → Sort*} (base : motive 1) (induct : ∀ i, motive (2 ^ i) → motive (2 ^ i + 2 ^ i)) (n : ℕ) :
     motive (2 ^ n) := by
   induction n with
@@ -80,7 +86,7 @@ def _root_.Nat.powTwoRec {motive : ℕ → Sort*} (base : motive 1) (induct : �
 def _root_.Nat.powTwoRec' {motive : ℕ → Sort*} (base : motive 1) (induct : ∀ i, motive (2 ^ i) → motive (2 ^ i + 2 ^ i)) (n : ℕ) (hn : n.isPowerOfTwo) :
     motive n := by
   let r := Nat.powTwoRec base induct n.log2
-  have : (2 ^ n.log2) = n := by obtain ⟨m, ⟨_⟩⟩ := hn; simp
+  have : (2 ^ n.log2) = n := by rw [Nat.isPowerOfTwo_iff] at hn; obtain ⟨m, ⟨_⟩⟩ := hn; simp
   rw [this] at r
   exact r
 

@@ -1,5 +1,9 @@
-import WeightedNetKAT.Approximate
-import WeightedNetKAT.FinsuppExt
+module
+
+public import WeightedNetKAT.Approximate
+public import WeightedNetKAT.FinsuppExt
+
+@[expose] public section
 
 variable {X : Type} {𝒮 : Type}
   [Semiring 𝒮]

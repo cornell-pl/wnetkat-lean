@@ -1,4 +1,8 @@
-import WeightedNetKAT.Semantics
+module
+
+public import WeightedNetKAT.Semantics
+
+@[expose] public section
 
 open OmegaCompletePartialOrder OmegaContinuousNonUnitalSemiring
 

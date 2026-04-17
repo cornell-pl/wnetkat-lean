@@ -1,12 +1,16 @@
-import Mathlib.Algebra.BigOperators.Pi
-import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Algebra.Order.BigOperators.Group.Finset
-import Mathlib.Algebra.Order.GroupWithZero.Canonical
-import Mathlib.Algebra.Order.Pi
-import Mathlib.Data.Countable.Basic
-import Mathlib.Data.Nat.Lattice
-import Mathlib.Logic.Encodable.Basic
-import Mathlib.Order.OmegaCompletePartialOrder
+module
+
+public import Mathlib.Algebra.BigOperators.Pi
+public import Mathlib.Algebra.BigOperators.Ring.Finset
+public import Mathlib.Algebra.Order.BigOperators.Group.Finset
+public import Mathlib.Algebra.Order.GroupWithZero.Canonical
+public import Mathlib.Algebra.Order.Pi
+public import Mathlib.Data.Countable.Basic
+public import Mathlib.Data.Nat.Lattice
+public import Mathlib.Logic.Encodable.Basic
+public import Mathlib.Order.OmegaCompletePartialOrder
+
+@[expose] public section
 
 open OmegaCompletePartialOrder
 

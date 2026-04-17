@@ -1,20 +1,25 @@
-import Batteries.Data.Array.Pairwise
-import Mathlib.Algebra.Group.Action.Opposite
-import Mathlib.Data.List.DropRight
-import Mathlib.Data.Matrix.Basis
-import Mathlib.Data.Matrix.Mul
-import Mathlib.Tactic.DeriveFintype
-import Mathlib.Topology.Order.ScottTopology
-import WeightedNetKAT.ComputableSemiring
-import WeightedNetKAT.EMatrix
-import WeightedNetKAT.FinsuppExt
-import WeightedNetKAT.Language
-import WeightedNetKAT.ListExt
-import WeightedNetKAT.MatrixExt
-import WeightedNetKAT.MatrixStar
-import WeightedNetKAT.Star
-import WeightedNetKAT.Star.EMatrix
-import WeightedNetKAT.WNKA
+module
+
+public import Init.Data.Iterators.Lemmas.Basic
+public import Init.Data.Array.Subarray
+public import Std.Data.Iterators.Lemmas
+public import Std.Data.Iterators.Combinators.Zip
+public import Batteries.Data.Array.Pairwise
+public import Mathlib.Algebra.Group.Action.Opposite
+public import Mathlib.Data.List.DropRight
+public import Mathlib.Data.Matrix.Basis
+public import Mathlib.Data.Matrix.Mul
+public import Mathlib.Tactic.DeriveFintype
+public import Mathlib.Topology.Order.ScottTopology
+public import WeightedNetKAT.EMatrix
+public import WeightedNetKAT.FinsuppExt
+public import WeightedNetKAT.Language
+public import WeightedNetKAT.ListExt
+public import WeightedNetKAT.MatrixExt
+public import WeightedNetKAT.Star.EMatrix
+public import WeightedNetKAT.WNKA
+
+@[expose] public section
 
 open OmegaCompletePartialOrder
 open scoped RightActions
@@ -558,11 +563,18 @@ def EWNKA.Precompute.finish {ℰ : EWNKA[F,N,𝒮,Q]} (p : ℰ.Precompute) (β :
 -- TODO: make `Li[Pk[F,N]]`
 @[specialize, noinline]
 def EWNKA.semArray_aux (𝒜 : EWNKA[F,N,𝒮,Q]) (α_xs : Array Pk[F,N]) (h : 0 < α_xs.size) : 𝒜.Precompute :=
-  let α_xs := α_xs.toSubarray
-  let xs := α_xs.drop 1
-  let m := (α_xs.iter.zip xs.iter).fold (fun acc (γ, κ) ↦ acc * 𝒜.δ γ κ) 𝒜.ι
-  let γ := α_xs.get ⟨α_xs.size - 1, by grind⟩
+  let m := (Fin.foldl (α_xs.size - 1) · 𝒜.ι) <| fun acc i ↦
+    let γ := α_xs[i]
+    let κ := α_xs[i.val + 1]
+    acc * 𝒜.δ γ κ
+  let γ := α_xs[α_xs.size - 1]
   ⟨m, γ⟩
+
+  -- let α_xs := α_xs.toSubarray
+  -- let xs := α_xs.drop 1
+  -- let m := (Std.Iter.zip (Std.ToIterator.iter α_xs) (Std.ToIterator.iter xs)).fold (fun acc (γ, κ) ↦ acc * 𝒜.δ γ κ) 𝒜.ι
+  -- let γ := α_xs.get ⟨α_xs.size - 1, by grind⟩
+  -- ⟨m, γ⟩
 
 @[specialize, inline]
 def EWNKA.semArray (𝒜 : EWNKA[F,N,𝒮,Q]) (α_xs : Array Pk[F,N]) (h : 0 < α_xs.size) : 𝒜.Precompute :=
@@ -585,25 +597,18 @@ theorem EWNKA.sem_eq_sem' : @EWNKA.sem = @EWNKA.sem' := by
     rw [ih]
     simp [List.getLast?_cons]
 
+universe u
+
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] [DecidableEq F] [LawfulStar N𝒲[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮]] in
 theorem EWNKA.semArray_eq_sem {ℰ : EWNKA[F,N,𝒮,Q]} {α_xs : Array Pk[F,N]} {β : Pk[F,N]} (h : 0 < α_xs.size) :
     (ℰ.semArray α_xs h).finish β = ℰ.sem ⟨α_xs.toList.head (by grind [Array.ne_empty_of_size_pos]), α_xs.toList.tail, β⟩ := by
   rcases α_xs with ⟨_ | ⟨α, xs⟩⟩
   · simp at h
-  simp [sem_eq_sem', semArray, semArray_aux, sem', ← Std.Iter.foldl_toList, Subarray.get, Precompute.finish]
-  have : Std.Slice.size (({ toList := α :: xs } : Array _).toSubarray 0 (‖xs‖ + 1)) = ‖xs‖ + 1 := by grind
-  simp_all only [add_tsub_cancel_right]
-  have : ((Std.Slice.toList (({ toList := α :: xs } : Array _).toSubarray 0 (‖xs‖ + 1))).zip
-          (Std.Slice.toList (({ toList := α :: xs } : Array _).toSubarray 0 (‖xs‖ + 1))).tail) = (α::xs).zip xs := by
-    apply List.ext_getElem
-    · simp; grind
-    · simp_all
-      intro i h₁
-      simp [Subarray.getElem_toList]
-      rcases i with _ | i
-      · simp; cbv
-      · simp; cbv; rcases i with _ | i <;> simp
-  grind
+  simp [sem_eq_sem', semArray, semArray_aux, sem', Precompute.finish]
+  generalize ℰ.ι = ι
+  induction xs generalizing α ι with
+  | nil => simp
+  | cons x xs ih => simp at ih; simp [List.getLast?_cons, ← ih, Fin.foldl_succ]
 
 theorem RPol.ewnka_sem_eq_wnka_sem (p : RPol[F,N,𝒮]) : p.ewnka.sem = p.wnka.sem := by
   ext ⟨α, xs, β⟩

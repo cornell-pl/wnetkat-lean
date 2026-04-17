@@ -1,5 +1,9 @@
-import WeightedNetKAT.Instances.ENat
-import Lake.Util.Log
+module
+
+public import WeightedNetKAT.Instances.ENat
+public import Lake.Util.Log
+
+@[expose] public section
 
 namespace WeightedNetKAT
 

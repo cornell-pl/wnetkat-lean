@@ -1,5 +1,9 @@
-import WeightedNetKAT.Listed
-import WeightedNetKAT.NMatrix
+module
+
+public import WeightedNetKAT.Listed
+public import WeightedNetKAT.NMatrix
+
+@[expose] public section
 
 def EMatrix (m n α : Type*) [Listed m] [Listed n] := NMatrix (Listed.size m) (Listed.size n) α
 

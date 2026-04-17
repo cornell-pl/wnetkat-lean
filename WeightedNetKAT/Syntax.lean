@@ -1,6 +1,10 @@
-import Mathlib.Data.Countable.Basic
-import Mathlib.Logic.Encodable.Pi
-import WeightedNetKAT.Listed.Vector
+module
+
+public import Mathlib.Data.Countable.Basic
+public import Mathlib.Logic.Encodable.Pi
+public import WeightedNetKAT.Listed.Vector
+
+@[expose] public section
 
 namespace WeightedNetKAT
 
@@ -179,7 +183,7 @@ macro_rules|`(wnk_pred{~$t})=>`($t)
 macro_rules|`(wnk_pol{~$t})=>`($t)
 
 @[app_unexpander Pred.Bool]
-def Pred.unexpandBool : Unexpander
+meta def Pred.unexpandBool : Unexpander
 | `($(_) $x) =>
   match x with
   | `(true)  => let s := mkIdent $ .mkSimple "true";  `(wnk_pred { $s:ident })
@@ -188,7 +192,7 @@ def Pred.unexpandBool : Unexpander
 | _ => throw ()
 
 @[app_unexpander Pred.Not]
-def Pred.unexpandNot : Unexpander
+meta def Pred.unexpandNot : Unexpander
 | `($(_) $x) => do
   let x ← match x with
     | `(wnk_pred{$x}) => pure x
@@ -197,7 +201,7 @@ def Pred.unexpandNot : Unexpander
 | _ => throw ()
 
 @[app_unexpander Pred.Dis]
-def Pred.unexpandDis : Unexpander
+meta def Pred.unexpandDis : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_pred{$x}) => pure x
@@ -209,7 +213,7 @@ def Pred.unexpandDis : Unexpander
 | _ => throw ()
 
 @[app_unexpander Pred.Con]
-def Pred.unexpandCon : Unexpander
+meta def Pred.unexpandCon : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_pred{$x}) => pure x
@@ -221,7 +225,7 @@ def Pred.unexpandCon : Unexpander
 | _ => throw ()
 
 @[app_unexpander Pred.Test]
-def Pred.unexpandTest : Unexpander
+meta def Pred.unexpandTest : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_field{$x}) => pure x
@@ -233,7 +237,7 @@ def Pred.unexpandTest : Unexpander
 | _ => throw ()
 
 @[app_unexpander Pol.Filter]
-def Pol.unexpandFilter : Unexpander
+meta def Pol.unexpandFilter : Unexpander
 | `($(_) $f) =>
   match f with
   | `(wnk_pred {$f}) => `(wnk_pol {$f:cwnk_pred})
@@ -245,11 +249,11 @@ def Pol.unexpandFilter : Unexpander
 #check (wnk_pol { true ∧ ¬false ∨ true } : Pol[Unit,Unit,Unit])
 
 @[app_unexpander Pol.Dup]
-def Pol.unexpandDup : Unexpander
+meta def Pol.unexpandDup : Unexpander
 | _ => `(wnk_pol { dup })
 
 @[app_unexpander Pol.Seq]
-def Pol.unexpandSeq : Unexpander
+meta def Pol.unexpandSeq : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_pol{$x}) => pure x
@@ -261,7 +265,7 @@ def Pol.unexpandSeq : Unexpander
 | _ => throw ()
 
 @[app_unexpander Pol.Mod]
-def Pol.unexpandMod : Unexpander
+meta def Pol.unexpandMod : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_field{$x}) => pure x
@@ -273,7 +277,7 @@ def Pol.unexpandMod : Unexpander
 | _ => throw ()
 
 @[app_unexpander Pol.Add]
-def Pol.unexpandAdd : Unexpander
+meta def Pol.unexpandAdd : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_pol{$x}) => pure x
@@ -285,7 +289,7 @@ def Pol.unexpandAdd : Unexpander
 | _ => throw ()
 
 @[app_unexpander Pol.Weight]
-def Pol.unexpandWeight : Unexpander
+meta def Pol.unexpandWeight : Unexpander
 | `($(_) $x $y) => do
   let x ← match x with
     | `(wnk_weight{$x}) => pure x
@@ -297,7 +301,7 @@ def Pol.unexpandWeight : Unexpander
 | _ => throw ()
 
 @[app_unexpander Pol.Iter]
-def Pol.unexpandIter : Unexpander
+meta def Pol.unexpandIter : Unexpander
 | `($(_) $x) => do
   let x ← match x with
     | `(wnk_pol{$x}) => pure x
@@ -316,7 +320,7 @@ def Pol.unexpandIter : Unexpander
 -- Copied from Lean's term parenthesizer - applies the precedence rules in the grammar to add
 -- parentheses as needed.
 @[category_parenthesizer cwnk_pred]
-def cwnk_pred.parenthesizer : CategoryParenthesizer | prec => do
+meta def cwnk_pred.parenthesizer : CategoryParenthesizer | prec => do
   Parenthesizer.maybeParenthesize `cwnk_pred true wrapParens prec $
     Parenthesizer.parenthesizeCategoryCore `cwnk_pred prec
 where
@@ -326,7 +330,7 @@ where
 -- Copied from Lean's term parenthesizer - applies the precedence rules in the grammar to add
 -- parentheses as needed.
 @[category_parenthesizer cwnk_pol]
-def cwnk_pol.parenthesizer : CategoryParenthesizer | prec => do
+meta def cwnk_pol.parenthesizer : CategoryParenthesizer | prec => do
   Parenthesizer.maybeParenthesize `cwnk_pol true wrapParens prec $
     Parenthesizer.parenthesizeCategoryCore `cwnk_pol prec
 where

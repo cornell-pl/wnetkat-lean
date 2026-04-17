@@ -1,4 +1,8 @@
-import WeightedNetKAT.Papers.Syntax
+module
+
+public import WeightedNetKAT.Papers.Syntax
+
+@[expose] public section
 
 /-!
 

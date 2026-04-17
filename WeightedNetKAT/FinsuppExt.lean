@@ -1,30 +1,31 @@
-import Mathlib.Algebra.BigOperators.Group.Finset.Defs
-import Mathlib.Algebra.Order.Group.Nat
-import Mathlib.Algebra.Order.Monoid.Canonical.Defs
-import Mathlib.Algebra.Ring.Defs
-import Mathlib.Algebra.Ring.Nat
-import Mathlib.Data.Countable.Defs
-import Mathlib.Data.Finset.Defs
-import Mathlib.Data.Finset.Fold
-import Mathlib.Data.FunLike.Basic
-import Mathlib.Data.Set.Finite.Basic
-import Mathlib.Data.Set.Lattice
-import Mathlib.Logic.Encodable.Basic
-import Mathlib.Order.Defs.PartialOrder
-import Mathlib.Tactic.Ring.RingNF
-import Mathlib.Topology.Algebra.InfiniteSum.Defs
-import Mathlib.Order.OmegaCompletePartialOrder
-import Mathlib.Topology.Algebra.InfiniteSum.Order
-import Mathlib.Data.Finsupp.Defs
-import Mathlib.Algebra.Group.Pointwise.Finset.Scalar
-import Mathlib.Algebra.Group.Pointwise.Finset.Basic
--- import Mathlib.Algebra.BigOperators.Finsupp.Basic
--- import Mathlib.Data.Finsupp.Pointwise
--- import Mathlib.Data.Finsupp.Order
-import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
-import Mathlib.Algebra.Group.Finsupp
-import Mathlib.Algebra.BigOperators.Finsupp.Basic
-import Mathlib.Data.Finsupp.Order
+module
+
+public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
+public import Mathlib.Algebra.Order.Group.Nat
+public import Mathlib.Algebra.Order.Monoid.Canonical.Defs
+public import Mathlib.Algebra.Ring.Defs
+public import Mathlib.Algebra.Ring.Nat
+public import Mathlib.Data.Countable.Defs
+public import Mathlib.Data.Finset.Defs
+public import Mathlib.Data.Finset.Fold
+public import Mathlib.Data.FunLike.Basic
+public import Mathlib.Data.Set.Finite.Basic
+public import Mathlib.Data.Set.Lattice
+public import Mathlib.Logic.Encodable.Basic
+public import Mathlib.Order.Defs.PartialOrder
+public import Mathlib.Tactic.Ring.RingNF
+public import Mathlib.Topology.Algebra.InfiniteSum.Defs
+public import Mathlib.Order.OmegaCompletePartialOrder
+public import Mathlib.Topology.Algebra.InfiniteSum.Order
+public import Mathlib.Data.Finsupp.Defs
+public import Mathlib.Algebra.Group.Pointwise.Finset.Scalar
+public import Mathlib.Algebra.Group.Pointwise.Finset.Basic
+public import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
+public import Mathlib.Algebra.Group.Finsupp
+public import Mathlib.Algebra.BigOperators.Finsupp.Basic
+public import Mathlib.Data.Finsupp.Order
+
+@[expose] public section
 
 open OmegaCompletePartialOrder
 

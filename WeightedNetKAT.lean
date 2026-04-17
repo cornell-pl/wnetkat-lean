@@ -1,7 +1,9 @@
-import WeightedNetKAT.Examples.Abilene
-import WeightedNetKAT.Papers
+module
+
+public import WeightedNetKAT.Examples.Abilene
+public import WeightedNetKAT.Papers
 
 open WeightedNetKAT
 
-def main : IO Unit := do
+public def main : IO Unit := do
   Abilene.run

@@ -1,6 +1,10 @@
-import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
-import WeightedNetKAT.Star
-import WeightedNetKAT.MatrixExt
+module
+
+public import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
+public import WeightedNetKAT.Star
+public import WeightedNetKAT.MatrixExt
+
+@[expose] public section
 
 namespace Matrix.Star
 

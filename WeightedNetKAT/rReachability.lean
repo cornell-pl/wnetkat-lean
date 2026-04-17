@@ -1,5 +1,9 @@
-import WeightedNetKAT.WNKA
-import WeightedNetKAT.WNKA.Explicit
+module
+
+public import WeightedNetKAT.WNKA
+public import WeightedNetKAT.WNKA.Explicit
+
+@[expose] public section
 
 open OmegaCompletePartialOrder
 open scoped RightActions

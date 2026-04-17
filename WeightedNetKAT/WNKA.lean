@@ -1,17 +1,20 @@
-import Batteries.Data.Array.Pairwise
-import Mathlib.Algebra.Group.Action.Opposite
-import Mathlib.Data.List.DropRight
-import Mathlib.Data.Matrix.Basis
-import Mathlib.Data.Matrix.Mul
-import Mathlib.Tactic.DeriveFintype
-import Mathlib.Topology.Order.ScottTopology
-import WeightedNetKAT.ComputableSemiring
-import WeightedNetKAT.FinsuppExt
-import WeightedNetKAT.Language
-import WeightedNetKAT.ListExt
-import WeightedNetKAT.MatrixExt
-import WeightedNetKAT.MatrixStar
-import WeightedNetKAT.Star
+module
+
+public import Batteries.Data.Array.Pairwise
+public import Mathlib.Algebra.Group.Action.Opposite
+public import Mathlib.Data.List.DropRight
+public import Mathlib.Data.Matrix.Basis
+public import Mathlib.Data.Matrix.Mul
+public import Mathlib.Tactic.DeriveFintype
+public import Mathlib.Topology.Order.ScottTopology
+public import WeightedNetKAT.FinsuppExt
+public import WeightedNetKAT.Language
+public import WeightedNetKAT.ListExt
+public import WeightedNetKAT.MatrixExt
+public import WeightedNetKAT.Star.Matrix
+public import WeightedNetKAT.Star
+
+@[expose] public section
 
 open OmegaCompletePartialOrder
 open scoped RightActions
@@ -355,7 +358,7 @@ syntax "𝒜⟦" cwnk_rpol "⟧" : term
 macro_rules | `(𝒜⟦$p⟧) => `(RPol.A_sem wnk_rpol { $p })
 open Lean Elab PrettyPrinter Delaborator Meta Command Term in
 @[app_unexpander RPol.A_sem]
-def 𝒜.unexpander : Unexpander
+meta def 𝒜.unexpander : Unexpander
 | `($_ $y) => do
   let y ← match y with
     | `(wnk_rpol{$y}) => pure y
@@ -875,7 +878,7 @@ syntax "M'⟦" cwnk_rpol "⟧" : term
 macro_rules | `(M'⟦$p⟧) => `(M' wnk_rpol { $p })
 open Lean Elab PrettyPrinter Delaborator Meta Command Term in
 @[app_unexpander M']
-def M'.unexpander : Unexpander
+meta def M'.unexpander : Unexpander
 | `($_ $y) => do
   let y ← match y with
     | `(wnk_rpol{$y}) => pure y
@@ -913,7 +916,7 @@ syntax "Q⟦" cwnk_rpol "⟧" : term
 macro_rules | `(Q⟦$p⟧) => `(Q wnk_rpol { $p })
 open Lean Elab PrettyPrinter Delaborator Meta Command Term in
 @[app_unexpander Q]
-def Q.unexpander : Unexpander
+meta def Q.unexpander : Unexpander
 | `($_ $y) => do
   let y ← match y with
     | `(wnk_rpol{$y}) => pure y

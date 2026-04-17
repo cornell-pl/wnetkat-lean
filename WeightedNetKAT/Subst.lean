@@ -1,5 +1,9 @@
-import Mathlib.Data.Finset.Insert
-import Lean.PrettyPrinter.Delaborator.Basic
+module
+
+public import Mathlib.Data.Finset.Insert
+public import Lean.PrettyPrinter.Delaborator.Basic
+
+@[expose] public section
 
 class Subst (W Var : Type) (E : outParam Type) where
   /-- Written using `a[x ↦ e]`. Substitutes all `x` in `a` with `e`. -/
@@ -12,7 +16,7 @@ macro_rules | `($x[$i ↦ $j]) => `(Subst.subst $x $i $j)
 
 open Lean PrettyPrinter Delaborator SubExpr in
 @[app_unexpander Subst.subst]
-def Subst.substUnexpander : Unexpander
+meta def Subst.substUnexpander : Unexpander
 | `($(_) $m $x $v) => `($m[$x ↦ $v])
 | _ => throw ()
 

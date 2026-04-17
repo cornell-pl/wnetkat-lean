@@ -1,7 +1,11 @@
-import Mathlib.Data.Finsupp.Defs
-import WeightedNetKAT.RPol
-import WeightedNetKAT.Semantics
-import WeightedNetKAT.Reduction
+module
+
+public import Mathlib.Data.Finsupp.Defs
+public import WeightedNetKAT.RPol
+public import WeightedNetKAT.Semantics
+public import WeightedNetKAT.Reduction
+
+@[expose] public section
 
 section
 
@@ -10,28 +14,14 @@ variable {N : Type} [DecidableEq N]
 variable {𝒮 : Type}
 variable [Semiring 𝒮]
 
--- def 𝒲.map {X Y : Type} (m : X →c 𝒮) (f : Y → X) (hf : f.Injective) : 𝒲 𝒮 Y :=
---   ⟨(m <| f ·), by
---     simp only [Set.countable_coe_iff]
---     convert Set.Countable.preimage_of_injOn m.countable (fun ⦃x₁⦄ a ⦃x₂⦄ a ↦ by apply hf)⟩
-
--- def 𝒲.liftPi {Q : Type} [Countable Q] (f : Q → 𝒲 𝒮 Q) : 𝒲 𝒮 (Q × Q) :=
---   ⟨fun (x, y) ↦ f x y, SetCoe.countable _⟩
 def Finsupp.liftPi {Q P : Type} [i : Fintype Q] [DecidableEq Q] [DecidableEq P] (f : Q → P →₀ 𝒮) : (Q × P) →₀ 𝒮 :=
   ⟨(i.elems.biUnion (fun q ↦ (f q).support.map ⟨(q, ·), (Prod.mk_right_injective q)⟩)),
     (fun (x, y) ↦ f x y),
     (by simp [Fintype.complete])⟩
 
--- omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
--- @[simp]
--- theorem 𝒲.liftPi_apply {Q : Type} [Countable Q]
---     (f : Q → 𝒲 𝒮 Q) (q : Q) (p : Q) : 𝒲.liftPi f ⟨q, p⟩ = f q p := rfl
--- omit [WeightedOmegaCompletePartialOrder 𝒮] [WeightedOmegaContinuousPreSemiring 𝒮] in
 @[simp]
 theorem 𝒞.liftPi_apply {Q P : Type} [i : Fintype Q] [DecidableEq Q] [DecidableEq P]
     (f : Q → P →₀ 𝒮) (q : Q) (p : P) : Finsupp.liftPi f ⟨q, p⟩ = f q p := rfl
-
--- def 𝒲.equiv {X Y : Type} (m : X →c 𝒮) {e : Y ≃ X} : 𝒲 𝒮 Y := m.map _ e.injective
 
 end
 
@@ -126,7 +116,7 @@ syntax "G⟦" cwnk_rpol "⟧" : term
 macro_rules | `(G⟦$p⟧) => `(G wnk_rpol { $p })
 open Lean Elab PrettyPrinter Delaborator Meta Command Term in
 @[app_unexpander G]
-def G.unexpander : Unexpander
+meta def G.unexpander : Unexpander
 | `($_ $y) => do
   let y ← match y with
     | `(wnk_rpol{$y}) => pure y

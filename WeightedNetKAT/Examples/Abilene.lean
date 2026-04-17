@@ -1,14 +1,18 @@
-import WeightedNetKAT.Examples.Common
-import WeightedNetKAT.WNKA
-import WeightedNetKAT.WNKA.Explicit
-import WeightedNetKAT.rSafety
-import WeightedNetKAT.rReachability
-import WeightedNetKAT.Instances.Language
-import WeightedNetKAT.Instances.ENat
-import WeightedNetKAT.Instances.Arctic
-import WeightedNetKAT.Papers.PLDI2026
-import WeightedNetKAT.Perf
-import Lake.Util.Log
+module
+
+public import WeightedNetKAT.Examples.Common
+public import WeightedNetKAT.WNKA
+public import WeightedNetKAT.WNKA.Explicit
+public import WeightedNetKAT.rSafety
+public import WeightedNetKAT.rReachability
+public import WeightedNetKAT.Instances.Language
+public import WeightedNetKAT.Instances.ENat
+public import WeightedNetKAT.Instances.Arctic
+public import WeightedNetKAT.Papers.PLDI2026
+public import WeightedNetKAT.Perf
+public import Lake.Util.Log
+
+@[expose] public section
 
 /-!
 

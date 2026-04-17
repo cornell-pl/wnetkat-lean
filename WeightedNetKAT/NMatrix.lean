@@ -1,7 +1,11 @@
-import Mathlib.Data.List.Fold
-import Mathlib.Data.Matrix.Block
-import Mathlib.Tactic.Ring.RingNF
-import WeightedNetKAT.MatrixExt
+module
+
+public import Mathlib.Data.List.Fold
+public import Mathlib.Data.Matrix.Block
+public import Mathlib.Tactic.Ring.RingNF
+public import WeightedNetKAT.MatrixExt
+
+@[expose] public section
 
 structure NMatrix (m n : ℕ) (α : Type*) where
   data : Vector α (m * n)
@@ -10,7 +14,7 @@ namespace NMatrix
 
 variable {l k m m' n n' : ℕ} {α : Type*}
 
-@[inline]
+@[inline, specialize]
 def ofFn (f : Fin m → Fin n → α) : NMatrix m n α :=
   ⟨.ofFn fun i ↦ f i.divNat i.modNat⟩
 
@@ -274,7 +278,7 @@ theorem sum_apply {m n : ℕ} {𝒮 : Type*} [AddCommMonoid 𝒮] {ι : Type*} {
 
 @[csimp]
 theorem slowMul_eq_fastMul : @slowMul = @fastMul' := by
-  ext; simp [slowMul, fastMul', Matrix.mul_apply, dbgTrace]; rfl
+  ext; simp [slowMul, fastMul', Matrix.mul_apply]; rfl
 
 @[simp] theorem asMatrix_add [Add α] : (X + X').asMatrix = X.asMatrix + X'.asMatrix := by ext; simp
 
@@ -324,8 +328,6 @@ theorem zero_add [NonUnitalSemiring α] : 0 + X = X := by
 theorem add_zero [NonUnitalSemiring α] : X + 0 = X := by
   ext; simp only [_root_.add_zero]
 
-
-#eval! (NMatrix.ofFn (m:=2) (n:=2) (α:=ℕ × ℕ) fun i j ↦ (i, j)) + NMatrix.ofFn (m:=2) (n:=2) (α:=ℕ × ℕ) fun i j ↦ (i, j)
 
 instance {α : Type*} [Semiring α] : Semiring (NMatrix n n α) where
   left_distrib A B C := by ext; simp [left_distrib, hmul_def]

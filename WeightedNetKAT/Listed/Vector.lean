@@ -1,4 +1,12 @@
-import WeightedNetKAT.Listed
+module
+
+public import WeightedNetKAT.Listed
+public meta import WeightedNetKAT.Listed
+public import Mathlib.Data.Nat.Digits.Defs
+public import Mathlib.Algebra.Group.Nat.Defs
+
+
+@[expose] public section
 
 namespace Nat
 
@@ -293,6 +301,6 @@ info: [[(Listed.T.a, 0), (Listed.T.b, 0), (Listed.T.c, 0), (Listed.T.d, 0)],
  [(Listed.T.a, 1), (Listed.T.b, 1), (Listed.T.c, 1), (Listed.T.d, 1)]]
 -/
 #guard_msgs in
-#eval! letI := pi T (Fin 2); listOf (T → Fin 2)
+#eval letI := pi T (Fin 2); listOf (T → Fin 2)
 
 end Listed

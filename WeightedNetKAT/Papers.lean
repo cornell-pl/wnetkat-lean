@@ -1,4 +1,6 @@
-import WeightedNetKAT.Papers.PLDI2026
+module
+
+public import WeightedNetKAT.Papers.PLDI2026
 
 /-!
 
