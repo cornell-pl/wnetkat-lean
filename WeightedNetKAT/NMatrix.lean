@@ -63,53 +63,34 @@ def set (M : NMatrix m n α) (i : Fin m) (j : Fin n) (a : α) : NMatrix m n α :
 
 @[ext] theorem ext (h : ∀ i j, X i j = X' i j) : X = X' := ext_get h
 
+@[simp] theorem mk_apply {data i j} : (⟨data⟩ : NMatrix m n α) i j = data[i.val * n + j.val] := rfl
+@[simp, grind =] theorem data_getElem (M : NMatrix m n α) (i j) : M.data[i.val * n + j.val] = M i j := rfl
+
 theorem set_apply (M : NMatrix m n α) (i : Fin m) (j : Fin n) (a : α) (i' : Fin m) (j' : Fin n) :
     M.set i j a i' j' = if i = i' ∧ j = j' then a else M i' j' := by
-  simp [set, DFunLike.coe, get]; rw [Vector.getElem_set]
+  simp [set, Vector.getElem_set]
   obtain ⟨j, hj⟩ := j
   obtain ⟨j', hj'⟩ := j'
   obtain ⟨i, hi⟩ := i
   obtain ⟨i', hi'⟩ := i'
   simp_all only [Fin.mk.injEq]
   suffices i * n + j = i' * n + j' ↔ i = i' ∧ j = j' by grind
-
   sorry
 
 @[simp, grind =]
-theorem ofFn_get {f : Fin m → Fin n → α} : (ofFn f).get = f := by
-  ext ⟨i, hi⟩ ⟨j, hj⟩
-  simp [ofFn, get]
-  rcases n with _ | n <;> rcases m with _ | m <;> try omega
+theorem ofFn_apply {f : Fin m → Fin n → α} {i} : ofFn f i = f i := by
+  obtain ⟨i, hi⟩ := i
+  ext ⟨j, hj⟩
+  simp [ofFn]
   congr
   · simp [Fin.divNat]
-    rw [Nat.add_div]
-    · have : ¬n + 1 ≤ j := by omega
-      simp [Nat.mod_eq_of_lt, hj, this]
-    · simp
-  · simp [Fin.modNat]
-    omega
+    rw [Nat.add_div (Nat.zero_lt_of_lt hj)]
+    have : ¬n ≤ j := by omega
+    simp [Nat.mod_eq_of_lt, Nat.div_eq_of_lt, hj, this, Nat.zero_lt_of_lt hj]
+  · simp [Fin.modNat]; exact Nat.mod_eq_of_lt hj
 
 @[simp, grind =]
-theorem get_ofFn : ofFn X.get = X := by
-  apply ext_get
-  intro ⟨i, hi⟩ ⟨j, hj⟩
-  rcases n with _ | n <;> rcases m with _ | m <;> try omega
-  simp [ofFn, get]
-  have : ¬n + 1 ≤ j := by omega
-  simp [Nat.mod_eq_of_lt, hj]
-  congr
-  rw [Nat.add_div]
-  · simp [Nat.mod_eq_of_lt, hj, this]
-  · omega
-
-@[simp, grind =]
-theorem ofFn_apply {f : Fin m → Fin n → α} {i} : ofFn f i = f i := by
-  simp [DFunLike.coe]
-
-
-@[simp, grind =]
-theorem apply_ofFn : ofFn X = X := by
-  simp [DFunLike.coe]
+theorem apply_ofFn : ofFn X = X := by ext; simp
 
 def asMatrix (M : NMatrix m n α) : Matrix (Fin m) (Fin n) α := DFunLike.coe M
 def ofMatrix (M : Matrix (Fin m) (Fin n) α) : NMatrix m n α := .ofFn M
@@ -199,22 +180,21 @@ def fill (a : α) : NMatrix m n α := .ofFn fun _ _ ↦ a
 
 @[simp] def fill_apply {a : α} {i : Fin m} {j : Fin n} : fill a i j = a := by simp [fill]
 
-@[simp, grind] theorem asMatrix_ofMatrix : NMatrix.ofMatrix X.asMatrix = X := by
+@[simp, grind =] theorem asMatrix_ofMatrix : NMatrix.ofMatrix X.asMatrix = X := by
   simp [ofMatrix, asMatrix]
-@[simp, grind] theorem ofMatrix_asMatrix {M : Matrix (Fin m) (Fin n) α} :
+@[simp, grind =] theorem ofMatrix_asMatrix {M : Matrix (Fin m) (Fin n) α} :
     (NMatrix.ofMatrix M).asMatrix = M := by
   ext; simp
 
 @[simp, grind =]
-theorem ofFn_asMatrix {f : Fin m → Fin n → α} : (ofFn f).asMatrix = f := ofFn_get
+theorem ofFn_asMatrix {f : Fin m → Fin n → α} : (ofFn f).asMatrix = f := by ext; simp
 
 def map {β : Type*} (M : NMatrix m n α) (f : α → β) : NMatrix m n β :=
   ⟨M.data.map f⟩
 
 @[simp, grind =]
 theorem map_apply {β : Type*} (M : NMatrix m n α) (f : α → β) {i j} :
-    M.map f i j = f (M i j) := by
-  simp [map, DFunLike.coe, get]
+    M.map f i j = f (M i j) := by simp [map]
 
 instance [Zero α] [One α] : One (NMatrix n n α) := ⟨.ofFn fun i j ↦ if i = j then 1 else 0⟩
 instance [Zero α] : Zero (NMatrix m n α) := ⟨.fill 0⟩
@@ -224,7 +204,7 @@ theorem zero_apply [Zero α] {i j} : (0 : NMatrix m n α) i j = 0 := by
   simp [OfNat.ofNat, Zero.zero]
 @[simp, grind =]
 theorem one_apply [Zero α] [One α] {i j} : (1 : NMatrix n n α) i j = if i = j then 1 else 0 := by
-  simp [OfNat.ofNat, One.one, Matrix.diagonal_apply]
+  simp [OfNat.ofNat, One.one]
 
 def slowAdd [Add α] (a : NMatrix m n α) (b : NMatrix m n α) :
     NMatrix m n α := .ofMatrix (a.asMatrix + b.asMatrix)
@@ -236,7 +216,6 @@ def fastAdd [Add α] (X : NMatrix m n α) (Y : NMatrix m n α) : NMatrix m n α 
 theorem slowAdd_eq_fastAdd : @slowAdd = @fastAdd := by
   ext m n α _ X Y i j
   simp [slowAdd, fastAdd]
-  simp [DFunLike.coe, get]
 
 instance [Add α] : Add (NMatrix m n α) := ⟨slowAdd⟩
 
@@ -253,7 +232,7 @@ instance [Mul α] [AddCommMonoid α] : HMul (NMatrix l m α) (NMatrix m n α) (N
 instance [Mul α] [AddCommMonoid α] : Mul (NMatrix n n α) where mul a b := a * b
 
 theorem add_def [Add α] : X + X' = .ofMatrix (X.asMatrix + X'.asMatrix) := rfl
-theorem hmul_def [Mul α] [AddCommMonoid α] : X * Y = .ofMatrix (X.asMatrix * Y.asMatrix) := rfl
+theorem mul_def [Mul α] [AddCommMonoid α] : X * Y = .ofMatrix (X.asMatrix * Y.asMatrix) := rfl
 
 @[simp]
 theorem add_apply [Add α] {i} : (X + X') i = X i + X' i := by simp [add_def]; rfl
@@ -284,7 +263,7 @@ theorem slowMul_eq_fastMul : @slowMul = @fastMul' := by
 
 @[simp]
 theorem mul_coe [Mul α] [AddCommMonoid α] : DFunLike.coe (X * Y) = X.asMatrix * Y.asMatrix := by
-  ext; simp [hmul_def]
+  ext; simp [mul_def]
 
 theorem asMatrix_mul [Mul α] [AddCommMonoid α] : (X * Y).asMatrix = X.asMatrix * Y.asMatrix := by simp [asMatrix]
 
@@ -328,10 +307,9 @@ theorem zero_add [NonUnitalSemiring α] : 0 + X = X := by
 theorem add_zero [NonUnitalSemiring α] : X + 0 = X := by
   ext; simp only [_root_.add_zero]
 
-
 instance {α : Type*} [Semiring α] : Semiring (NMatrix n n α) where
-  left_distrib A B C := by ext; simp [left_distrib, hmul_def]
-  right_distrib A B C := by ext; simp [right_distrib, hmul_def]
+  left_distrib A B C := by ext; simp [left_distrib, mul_def]
+  right_distrib A B C := by ext; simp [right_distrib, mul_def]
   zero_mul A := by ext; simp only [zero_mul]
   mul_zero A := by ext; simp only [mul_zero]
   mul_assoc A B C := by ext; simp [mul_assoc]

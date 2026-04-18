@@ -201,7 +201,6 @@ theorem EΔ_eq_Δ {β} : EΔ (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) ℰ β = EMatrix.
   · rcases j with _ | _ <;> simp_all
     rfl
   · rcases i with _ | i <;> simp_all
-    rfl
   · rcases i with _ | _ <;> rcases j with _ | _ <;> simp_all
 
 omit [Fintype F] [Fintype Q] [Star 𝒮] in
@@ -216,13 +215,21 @@ variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemirin
 omit [Fintype F] in
 @[simp]
 theorem Esem'_eq_sem' : Esem' ℰ = sem' ℰ.toWNKA := by
-  simp [Esem', sem', EM_star, M_star]
-  congr!
-  ext i j
-  simp only [EM, EΔ_eq_Δ, ← EMatrix.ofMatrix_sum, Listed.sum_fin, Listed.encodeFin_decodeFin,
-    LawfulStar.star_eq_sum, EMatrix.asMatrix_apply₂, EMatrix.ωSum_apply, M, Matrix.ωSum_apply,
-    ωSum_apply]
-  simp only [← EMatrix.ofMatrix_pow, EMatrix.ofMatrix_apply₂]
+  simp [Esem', sem', EM_star, M_star, EMatrix.mul_apply, Matrix.mul_apply]
+  suffices DFunLike.coe (EM ℰ)^* = (M ℰ.toWNKA)^* by congr!
+  ext
+  simp [LawfulStar.star_eq_sum, EM, M]
+  congr! with n
+  ext α β
+  induction n generalizing α β with
+  | zero =>
+    simp
+    show (1 : NMatrix _ _ 𝒮) (Listed.encodeFin α) (Listed.encodeFin β) = _
+    simp
+    rfl
+  | succ n ih =>
+    simp [pow_succ, ih, EMatrix.mul_apply, Matrix.mul_apply, Matrix.sum_apply]
+
 
 def ErSafety [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [LawfulStar 𝒮] (p : Pol[F,N,𝒮]) (r : 𝒮) : Prop :=
   Esem' p.toRPol.ewnka ≤ r

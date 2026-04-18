@@ -53,7 +53,7 @@ def S.Eι {X Y : Type} [Listed X] [Listed Y] : (EMatrix 𝟙 X 𝒮) → (EMatri
 notation "Eι[" a "," b"]" => S.Eι a b
 
 omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
-@[grind, simp]
+@[grind =, simp]
 theorem S.Eι_eq_ι {X Y : Type} [Listed X] [Listed Y] {m₁ : EMatrix 𝟙 X 𝒮} {m₂ : EMatrix 𝟙 Y 𝒮} {i} {j} :
     Eι[m₁, m₂] i j = ι m₁.asMatrix m₂.asMatrix i j := by
   simp [Eι, ι]
@@ -117,7 +117,7 @@ def Eι (p : RPol[F,N,𝒮]) : EMatrix 𝟙 (S p) 𝒮 := match p with
   | wnk_rpol {~p₁ ; ~_} => Eι[Eι p₁, 0]
   | wnk_rpol {~_*} => Eι[0, .ofFn fun 0 ↦ 1]
 
-section idk
+section Operators
 
 variable {Pk : Type} [Listed Pk]
 
@@ -129,17 +129,18 @@ def boxₑ {X} [Listed X] {Q : Type} [Mul Q] [AddCommMonoid Q] {Z : Type} [Liste
 infixr:50 " ⊠ₑ " => boxₑ
 
 @[simp]
+theorem _root_.Liste.decodeFin_unique {α : Type*} [Listed α] [Unique α] (i : Fin (Listed.size α)) :
+    Listed.decodeFin i = default := by
+  exact Unique.eq_default (Listed.decodeFin i)
+
+@[simp]
 theorem boxₑ_eq_box {X} [Listed X] [Fintype X] {Q : Type} [Mul Q] [AddCommMonoid Q] {Z : Type} [Listed Z] [Unique Z]
     (l : E𝒲[Z, X, Q]) (r : E𝒲[Pk, Pk, E𝒲[X, Z, Q]]) :
     boxₑ l r = EMatrix.ofMatrix (box l.asMatrix r.asMatrix₂) := by
   ext
-  simp [boxₑ, box, Matrix.down]
-  simp only [EMatrix.asNMatrix, Listed.decodeFin, Listed.decode, get_getElem?,
-    EMatrix.ofMatrix_apply₂, Matrix.mul_apply, EMatrix.asMatrix_apply₂, EMatrix.asMatrix₂_apply,
-    EMatrix.get_eq_apply]
-  congr!
-  · symm; apply Unique.default_eq
-  · symm; apply Unique.default_eq
+  simp only [boxₑ, EMatrix.asNMatrix_apply, Liste.decodeFin_unique, EMatrix.mul_apply,
+    EMatrix.ofFn_apply, Listed.encodeFin_decodeFin, EMatrix.ofMatrix_apply, box, Matrix.down,
+    Matrix.mul_apply, EMatrix.asMatrix_apply₂, EMatrix.asMatrix₂]
 
 def foxₑ {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B] [Listed C]
@@ -156,8 +157,7 @@ theorem foxₑ_eq_fox{A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
     (l : E𝒲[A, B, Q]) (r : E𝒲[Pk, Pk, E𝒲[B, C, Q]]) :
     foxₑ l r = EMatrix.ofMatrix₂ (fox l.asMatrix r.asMatrix₂) := by
   ext
-  simp [foxₑ, fox, Matrix.mul_apply]
-  congr
+  simp [foxₑ, fox, Matrix.mul_apply, EMatrix.mul_apply, EMatrix.asMatrix₂]
 
 @[specialize, inline]
 def soxₑ {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
@@ -176,7 +176,7 @@ theorem soxₑ_eq_sox {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
     (l : E𝒲[Pk, Pk, Q]) (r : E𝒲[Pk, Pk, E𝒲[A, B, Q]]) :
     soxₑ l r = EMatrix.ofMatrix₂ (sox l.asMatrix r.asMatrix₂) := by
   ext
-  simp [soxₑ, sox, Matrix.mul_apply, Matrix.sum_apply, EMatrix.sum_apply]
+  simp [soxₑ, sox, Matrix.sum_apply, EMatrix.sum_apply]
   simp [HSMul.hSMul]
   congr
 
@@ -216,10 +216,12 @@ theorem croxₑ_eq_crox {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
     (l : E𝒲[Pk, Pk, E𝒲[A, B, Q]]) (r : E𝒲[Pk, Pk, E𝒲[B, C, Q]]) :
     croxₑ l r = EMatrix.ofMatrix₂ (crox l.asMatrix₂ r.asMatrix₂) := by
   ext
-  simp [croxₑ, crox, Matrix.mul_apply, Matrix.sum_apply, EMatrix.sum_apply]
-  congr
+  simp only [croxₑ, EMatrix.asNMatrix_apply, Listed.array_sum_eq_finset_sum, Listed.sum_fin,
+    Listed.encodeFin_decodeFin, EMatrix.ofFn_apply, EMatrix.sum_apply, EMatrix.mul_apply,
+    EMatrix.ofMatrix₂_apply, crox, EMatrix.ofMatrix_apply, Matrix.sum_apply, Matrix.mul_apply,
+    EMatrix.asMatrix₂]
 
-end idk
+end Operators
 
 
 variable [Star 𝒮]
@@ -271,8 +273,8 @@ omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoi
 theorem E𝒪_lambda_iter [Listed N] [DecidableEq N] (p₁ : RPol[F,N,𝒮]) :
     E𝒪_lambda wnk_rpol {~p₁*} = .ofFn fun α β ↦
       E𝒪_lambda[
-        (Listed.array.map fun γ ↦ (E𝒪_lambda p₁ |>.asNatMatrix) α γ <• (E𝒪_heart p₁ |>.asNatMatrix) γ β).sum,
-        .ofFn fun _ _ ↦ (E𝒪_heart p₁ |>.asNatMatrix) α β
+        (Listed.array.map fun γ ↦ (E𝒪_lambda p₁).asNMatrix α γ <• (E𝒪_heart p₁).asNMatrix γ β).sum,
+        .ofFn fun _ _ ↦ (E𝒪_heart p₁).asNMatrix α β
       ] :=
   rfl
 
@@ -340,9 +342,8 @@ theorem E𝒪_heart_eq_𝒪_heart {p : RPol[F,N,𝒮]} (h : E𝒪_lambda p = EMa
       simp [OfNat.ofNat, One.one, EMatrix.instOneOfZero._aux_1]
     else
       simp_all [OfNat.ofNat, One.one, EMatrix.instOneOfZero._aux_1, Matrix.diagonal]
-
   | succ n ih =>
-    simp [pow_succ, ih, Matrix.mul_apply, box]
+    simp [pow_succ, ih, Matrix.mul_apply, box, EMatrix.mul_apply]
     congr!
     simp [h]
 
@@ -386,26 +387,17 @@ theorem E𝒪_lambda_eq_𝒪 {p : RPol[F,N,𝒮]} : E𝒪_lambda p = EMatrix.ofM
         NMatrix.mul_coe]
       congr! with γ
       simp [Matrix.mul_apply]
-      congr!
-      · simp only [_root_.EMatrix.apply_encodeFin]
-        simp only [EMatrix.asNMatrix₂]
-        simp only [EMatrix.ofMatrix₂, EMatrix.map, EMatrix.getN_eq, EMatrix.ofFnSlow_apply₂,
-          EMatrix.asNMatrix, NMatrix.hmul_def, NMatrix.ofMatrix_apply₂, Matrix.mul_apply,
-          Finset.univ_unique, NMatrix.asMatrix_apply, EMatrix.nmatrix_apply_eq_apply,
-          Listed.encodeFin_decodeFin, EMatrix.ofMatrix_apply₂, Finset.sum_singleton]
-        congr
-        show ((NMatrix.ofFn fun i j ↦ EMatrix.ofMatrix _) _ _) _ _ = _
-        simp
-      · ext v ⟨_⟩
-        simp only [EMatrix.asNMatrix₂]
-        simp only [EMatrix.ofMatrix₂, EMatrix.map, EMatrix.getN_eq, EMatrix.ofFnSlow_apply₂]
-        show ((NMatrix.ofFn fun i j ↦ EMatrix.ofMatrix _) _ _) _ _ = _
-        simp
+      congr! with κ
+      · convert EMatrix.ext_iff.mp (EMatrix.ofMatrix₂_apply (M:=𝒪 p) (i:=α) (j:=γ)) u default
+        ext; simp
+      · convert EMatrix.ext_iff.mp (EMatrix.ofMatrix₂_apply (M:=𝒪 q) (i:=γ) (j:=β)) κ 0
+        ext; simp
     · ext
       simp
       letI : Fintype Pk[F,N] := Listed.fintype
       letI : DecidableEq Pk[F,N] := Listed.decidableEq
-      simp [EMatrix.ofMatrix₂, EMatrix.map, EMatrix.getN_eq, EMatrix.ofFnSlow_apply₂, EMatrix.asNMatrix₂]
+      simp only [EMatrix.asNMatrix₂, EMatrix.ofMatrix₂, EMatrix.map, EMatrix.getN_eq,
+        EMatrix.ofFnSlow_apply]
       show ((NMatrix.ofFn fun i j ↦ EMatrix.ofMatrix _) _ _) _ _ = _
       simp
   next p ih =>
@@ -464,22 +456,15 @@ theorem Eδ_delta_eq_δ {p : RPol[F,N,𝒮]} : Eδ_delta p = EMatrix.ofMatrix₂
   next => ext; simp [Eδ_delta, δ]
   next => ext; simp [Eδ_delta, δ]
   next => ext; simp [Eδ_delta, δ]
-  next =>
-    ext; simp_all [Eδ_delta, δ, S]
-    simp only [_root_.EMatrix.apply_encodeFin]
-    simp only [EMatrix.asNMatrix_apply, Listed.encodeFin_decodeFin, EMatrix.ofMatrix₂_apply,
-      EMatrix.ofMatrix_asMatrix]
+  next p q ih₁ ih₂ =>
+    ext α β i j; simp_all [Eδ_delta, δ, S]
+    congr! with γ
+    ext p' q'
+    simp [Matrix.mul_apply, EMatrix.mul_apply]
   next => ext; simp_all [Eδ_delta, δ, S]
   next => ext; simp_all [Eδ_delta, δ]
   next p ih =>
     ext α β i j; simp_all [Eδ_delta, δ, δ.δ', E𝒪_heart_eq_𝒪_heart]
-    congr!
-    ext i' j'; simp_all
-    simp only [_root_.EMatrix.apply_encodeFin]
-    simp only [EMatrix.asNMatrix_apply, Listed.encodeFin_decodeFin, EMatrix.ofMatrix₂_apply,
-      Listed.encodeFin_subsingleton, Fin.zero_eta, Fin.isValue]
-    simp only [Fin.isValue, EMatrix.nmatrix_apply_eq_apply, Listed.encodeFin_decodeFin,
-      EMatrix.ofMatrix_apply₂]
 
 def δ_aux (p : RPol[F,N,𝒮]) : 𝒲[Pk[F,N],Pk[F,N],𝒲[S p,S p,𝒮]] := Eδ_delta p |>.asMatrix₂
 
@@ -507,10 +492,8 @@ omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoi
 
 variable [LawfulStar 𝒮]
 
--- omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[simp] theorem RPol.wnka_toEWNKA (p : RPol[F,N,𝒮]) : p.wnka.toEWNKA = p.ewnka := by
   simp [wnka, ewnka, WNKA.toEWNKA]
--- omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[simp] theorem RPol.ewnka_toWNKA (p : RPol[F,N,𝒮]) : p.ewnka.toWNKA = p.wnka := by
   simp [wnka, ewnka, EWNKA.toWNKA]
 
@@ -560,7 +543,6 @@ structure EWNKA.Precompute (ℰ : EWNKA[F,N,𝒮,Q]) where
 def EWNKA.Precompute.finish {ℰ : EWNKA[F,N,𝒮,Q]} (p : ℰ.Precompute) (β : Pk[F,N]) : 𝒮 :=
   (p.m * ℰ.𝒪 p.γ β) () ()
 
--- TODO: make `Li[Pk[F,N]]`
 @[specialize, noinline]
 def EWNKA.semArray_aux (𝒜 : EWNKA[F,N,𝒮,Q]) (α_xs : Array Pk[F,N]) (h : 0 < α_xs.size) : 𝒜.Precompute :=
   let m := (Fin.foldl (α_xs.size - 1) · 𝒜.ι) <| fun acc i ↦
@@ -569,12 +551,6 @@ def EWNKA.semArray_aux (𝒜 : EWNKA[F,N,𝒮,Q]) (α_xs : Array Pk[F,N]) (h : 0
     acc * 𝒜.δ γ κ
   let γ := α_xs[α_xs.size - 1]
   ⟨m, γ⟩
-
-  -- let α_xs := α_xs.toSubarray
-  -- let xs := α_xs.drop 1
-  -- let m := (Std.Iter.zip (Std.ToIterator.iter α_xs) (Std.ToIterator.iter xs)).fold (fun acc (γ, κ) ↦ acc * 𝒜.δ γ κ) 𝒜.ι
-  -- let γ := α_xs.get ⟨α_xs.size - 1, by grind⟩
-  -- ⟨m, γ⟩
 
 @[specialize, inline]
 def EWNKA.semArray (𝒜 : EWNKA[F,N,𝒮,Q]) (α_xs : Array Pk[F,N]) (h : 0 < α_xs.size) : 𝒜.Precompute :=
@@ -587,15 +563,7 @@ theorem EWNKA.sem_eq_sem' : @EWNKA.sem = @EWNKA.sem' := by
   generalize 𝒜.ι = M
   induction xs generalizing M α with
   | nil => simp [compute]
-  | cons x xs ih =>
-    simp [compute]
-    have : (M * (𝒜.δ α x * 𝒜.compute (x :: (xs ++ [β])))) = (M * 𝒜.δ α x) * 𝒜.compute (x :: (xs ++ [β])) := by
-      letI : DecidableEq Q := Listed.decidableEq
-      letI : Fintype Q := Listed.fintype
-      simp [Matrix.mul_assoc]
-    simp [this]
-    rw [ih]
-    simp [List.getLast?_cons]
+  | cons x xs ih => simp [compute, ← EMatrix.mul_assoc, ih, List.getLast?_cons]
 
 universe u
 
@@ -613,11 +581,15 @@ theorem EWNKA.semArray_eq_sem {ℰ : EWNKA[F,N,𝒮,Q]} {α_xs : Array Pk[F,N]} 
 theorem RPol.ewnka_sem_eq_wnka_sem (p : RPol[F,N,𝒮]) : p.ewnka.sem = p.wnka.sem := by
   ext ⟨α, xs, β⟩
   simp [ewnka, wnka, EWNKA.sem, WNKA.sem]
-  simp [Matrix.mul_apply, GS.pks]
+  simp [Matrix.mul_apply, GS.pks, EMatrix.mul_apply]
   congr! with s _
   ext s' ⟨⟩
-  induction xs generalizing α s' with simp_all [Matrix.mul_apply, EWNKA.compute, WNKA.compute]
+  induction xs generalizing α s' with simp_all [Matrix.mul_apply, EMatrix.mul_apply, EWNKA.compute, WNKA.compute]
 
+/--
+info: 'WeightedNetKAT.RPol.ewnka_sem_eq_wnka_sem' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms RPol.ewnka_sem_eq_wnka_sem
 
 end
