@@ -5,5 +5,4 @@ public import WeightedNetKAT.Papers
 
 open WeightedNetKAT
 
-public def main : IO Unit := do
-  Abilene.run
+public def main : IO Unit := Abilene.run

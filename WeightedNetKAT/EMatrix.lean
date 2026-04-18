@@ -26,7 +26,6 @@ variable {Z Z' : EMatrix l w α}
 
 def getN (M : EMatrix m n α) (i : Fin (Listed.size m)) (j : Fin (Listed.size n)) : α := NMatrix.get M i j
 
-@[deprecated]
 def get (M : EMatrix m n α) (i : m) (j : n) : α :=
   let i' := Listed.encodeFin i
   let j' := Listed.encodeFin j
@@ -81,13 +80,6 @@ def ofNMatrix (N : NMatrix (Listed.size m) (Listed.size n) α) : EMatrix m n α 
 theorem NMatrix_coe_apply {M : EMatrix m n α} (i : m) (j : n) :
       @DFunLike.coe (NMatrix (Listed.size m) (Listed.size n) α) (Fin (Listed.size m)) (fun _ ↦ Fin (Listed.size n) → α) inferInstance M (Listed.encodeFin i) (Listed.encodeFin j)
     = M i j := rfl
--- @[simp, grind =]
--- theorem EMatrix_coe_apply {M : EMatrix m n α} (i : Fin (Listed.size m)) (j : Fin (Listed.size n)) :
---       @DFunLike.coe (EMatrix m n α) m (fun _ ↦ n → α) instFunLikeForall M (Listed.decodeFin i) (Listed.decodeFin j)
---     = @DFunLike.coe (NMatrix (Listed.size m) (Listed.size n) α) (Fin (Listed.size m)) (fun _ ↦ Fin (Listed.size n) → α) inferInstance M i j := by
---   simp only [DFunLike.coe, NMatrix.get, get, getN]
---   congr <;> simp
--- @[simp, grind =]
 @[simp]
 theorem NMatrix_ofFn_apply (i : m) (j : n) {f} :
       @DFunLike.coe E𝒲[m, n, α] m (fun _ ↦ n → α) instFunLikeForall (NMatrix.ofFn f) i j
@@ -95,50 +87,31 @@ theorem NMatrix_ofFn_apply (i : m) (j : n) {f} :
   simp only [DFunLike.coe, get, getN, NMatrix.get]
   simp only [NMatrix.data_getElem, NMatrix.ofFn_apply]
 
-
--- @[simp, grind =]
--- theorem ofFnSlow_apply {f : m → n → α} {i} : ofFnSlow f i = f i := by
---   ext j
---   simp [ofFnSlow]
--- @[simp, grind =]
--- theorem ofFnSlow_apply₂ {f : m → n → α} {i j} : ofFnSlow f i j = f i j := by
---   simp [ofFnSlow]
-
-@[simp, grind]
+@[simp, grind =]
 theorem apply_ofFnSlow : ofFnSlow X = X := by
   ext; simp [ofFnSlow]
-@[simp, grind]
+@[simp, grind =]
 theorem ofFnSlow_apply {f : m → n → α} {i} : ofFnSlow f i = f i := by
   ext; simp [ofFnSlow]
-@[simp, grind]
+@[simp, grind =]
 theorem ofFn_apply {f : Fin (Listed.size m) → Fin (Listed.size n) → α} {i j} :
     ofFn f i j = f (Listed.encodeFin i) (Listed.encodeFin j) := by
   simp [ofFn]
 
-
--- @[simp, grind]
--- theorem apply_ofFn : ofFn (DFunLike.coe X) = X := by simp [ofFn]
-
 def asMatrix (M : EMatrix m n α) : Matrix m n α := DFunLike.coe M
 def ofMatrix (M : Matrix m n α) : EMatrix m n α := .ofFnSlow M
 
--- @[simp, grind]
--- theorem ofFnSlow_asMatrix {f : m → n → α} : (ofFnSlow f).asMatrix = f := ofFnSlow_get
--- @[simp, grind]
--- theorem ofMatrix_get {f : m → n → α} : (EMatrix.ofMatrix f).get = f := ofFnSlow_get
-@[simp, grind]
+@[simp, grind =]
 theorem ofMatrix_apply {f : m → n → α} {i} : EMatrix.ofMatrix f i = f i := by simp [ofMatrix]
--- @[simp, grind]
--- theorem ofMatrix_apply₂ {f : m → n → α} {i j} : EMatrix.ofMatrix f i j = f i j := by simp [ofMatrix]
 
-@[simp, grind]
+@[simp, grind =]
 theorem asMatrix_apply {f : EMatrix m n α} {i} : EMatrix.asMatrix f i = f i := by simp [asMatrix]
-@[simp, grind]
+@[simp, grind =]
 theorem asMatrix_apply₂ {f : EMatrix m n α} {i j} : EMatrix.asMatrix f i j = f i j := by simp [asMatrix]
 
-@[simp, grind] theorem asMatrix_ofMatrix : EMatrix.ofMatrix X.asMatrix = X := by
+@[simp, grind =] theorem asMatrix_ofMatrix : EMatrix.ofMatrix X.asMatrix = X := by
   simp [ofMatrix, asMatrix]
-@[simp, grind] theorem ofMatrix_asMatrix {M : Matrix m n α} :
+@[simp, grind =] theorem ofMatrix_asMatrix {M : Matrix m n α} :
     (EMatrix.ofMatrix M).asMatrix = M := by ext; simp
 
 def map {β: Type*} (f : α → β) (M : EMatrix m n α) : EMatrix m n β :=
@@ -151,7 +124,6 @@ def ofMatrix₂ (M : Matrix m n (Matrix m' n' α)) : EMatrix m n (EMatrix m' n' 
   simp [ofMatrix₂]
   ext i j i' j'
   simp [map, asMatrix₂, ofFnSlow]
--- omit [Listed m'] [Listed n'] in
 @[simp, grind =] theorem ofMatrix₂_asMatrix₂ {M : Matrix m n (Matrix m' n' α)} :
     (EMatrix.ofMatrix₂ M).asMatrix₂ = M := by
   simp [ofMatrix₂]

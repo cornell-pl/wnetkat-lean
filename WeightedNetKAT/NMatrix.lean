@@ -33,7 +33,7 @@ theorem get.index (i : Fin m) (j : Fin n) : i.val * n + j.val < m * n := by
     i + i * n + j ≤ m + m * n + n := by gcongr
     _ ≤ n + n * m + m := by ring_nf; rfl
 
-@[inline, deprecated]
+@[inline]
 def get (M : NMatrix m n α) (i : Fin m) (j : Fin n) : α :=
   M.data[i.val * n + j.val]'(by simp_all)
 
