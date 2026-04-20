@@ -892,4 +892,22 @@ theorem mul_prod_mul_eq {α ι : Type*} [Semiring α] {xs : List ι} {a : α} {f
   | nil => simp
   | cons x xs ih => simp_all [mul_assoc]
 
+@[simp]
+theorem buckets_pairwise_disjoint {α : Type*} [DecidableEq α] {xs : List α} {S : Set ℕ} :
+    S.PairwiseDisjoint xs.buckets := by
+  intro i hi j hj h A h₁ h₂ ls hls
+  simp_all
+  specialize h₁ hls
+  specialize h₂ hls
+  simp_all [mem_buckets_iff]
+
+@[simp]
+theorem buckets_succ_pairwise_disjoint {α : Type*} [DecidableEq α] {xs : List α} {S : Set ℕ} :
+    S.PairwiseDisjoint (xs.buckets ·.succ) := by
+  intro i hi j hj h A h₁ h₂ ls hls
+  simp_all
+  specialize h₁ hls
+  specialize h₂ hls
+  simp_all [mem_buckets_iff]
+
 end List

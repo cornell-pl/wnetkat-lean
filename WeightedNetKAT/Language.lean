@@ -4,6 +4,7 @@ public import Mathlib.Data.Finsupp.Defs
 public import WeightedNetKAT.RPol
 public import WeightedNetKAT.Semantics
 public import WeightedNetKAT.Reduction
+public import WeightedNetKAT.ListExt
 
 @[expose] public section
 
@@ -54,7 +55,7 @@ class WeightedConcat (α : Type) (β : outParam Type) where
   concat : α → α → β
 
 @[inherit_doc]
-infixl:50 " ♢ " => WeightedConcat.concat
+infixl:70 " ♢ " => WeightedConcat.concat
 
 instance : WeightedConcat GS[F,N] (Option GS[F,N]) where
   concat | ⟨α, x, β⟩, ⟨γ, y, ξ⟩ => if β = γ then some ⟨α, x ++ y, ξ⟩ else none
@@ -76,6 +77,11 @@ notation "gs[" α ";" x ";" "dup" ";" y ";" "dup" ";" z ";" "dup" ";" β "]" => 
 #check gs[1;2]
 #check gs[1;2;dup;3]
 #check gs[1;2;dup;3]
+
+omit [Listed N] [DecidableEq F] [DecidableEq N] in
+@[simp]
+theorem GS.exists_mk {γ δ : Pk[F,N]} {xs} : (∃ α, gs[α;α] = (γ, xs, δ)) ↔ γ = δ ∧ xs = [] := by
+  constructor <;> simp_all [GS.mk]; grind
 
 open scoped Classical in
 noncomputable def G.ofPk (f : Pk[F,N] → GS[F,N]) : GS[F,N] →c 𝒮 :=
@@ -214,6 +220,8 @@ theorem GS.sem_eq (g : GS[F,N]) (h) :
       rw [ωSum_eq_single ⟨⟨x, x::h⟩, by simp [h10]⟩ (by simp_all)]
       simp_all
   · ext; simp [GS.toRPol, RPol.sem, ne_comm.mp h₀]
+
+
 
 @[simp]
 noncomputable def RPol.sem_G_theorem (p : RPol[F,N,𝒮]) : Prop :=
@@ -456,6 +464,184 @@ theorem G.concat_apply {L R : GS F N →c 𝒮} {xₙ : GS F N} :
     rw [ωSum_eq_single ⟨(γ, List.drop i A, αₙ), by simp; contrapose! hγ; simp [hγ]⟩]
     · simp
     · grind
+
+namespace G
+
+omit [MulLeftMono 𝒮] [MulRightMono 𝒮]
+
+variable {gs : GS[F,N]}
+
+@[simp]
+theorem skip_eq : (G⟦skip⟧ gs : 𝒮) = if gs.1 = gs.2.2 ∧ gs.2.1 = [] then 1 else 0 := by
+  obtain ⟨α, (_ | ⟨x, xs⟩), β⟩ := gs
+  · simp [G, GS.mk]; split_ifs <;> try simp_all
+    grind
+  · simp [G, GS.mk]; grind
+@[simp]
+theorem test_eq {π} : (G⟦@test ~π⟧ gs : 𝒮) = if gs.1 = gs.2.2 ∧ gs.1 = π ∧ gs.2.1 = [] then 1 else 0 := by
+  obtain ⟨α, (_ | ⟨x, xs⟩), β⟩ := gs
+  · simp [G, GS.mk]; split_ifs <;> (try simp_all) <;> grind
+  · simp [G, GS.mk]; grind
+@[simp]
+theorem mod_eq {π} : (G⟦@mod ~π⟧ gs : 𝒮) = if gs.2.2 = π ∧ gs.2.1 = [] then 1 else 0 := by
+  obtain ⟨α, (_ | ⟨x, xs⟩), β⟩ := gs
+  · simp [G, GS.mk]; split_ifs <;> (try simp_all); grind
+  · simp [G, GS.mk]; grind
+@[simp]
+theorem dup_eq : (G⟦dup⟧ gs : 𝒮) = if gs.2.2 = gs.1 ∧ gs.2.1 = [gs.1] then 1 else 0 := by
+  obtain ⟨α, (_ | ⟨x, xs⟩), β⟩ := gs
+  · simp [G, GS.mk]; grind
+  · simp [G, GS.mk]
+    split_ifs <;> try rfl
+    · grind
+    · simp_all
+
+@[simp]
+theorem skip_concat {x : GS F N →c 𝒮} : G⟦skip⟧ ♢ x = x := by
+  ext ⟨α, xn, β⟩
+  simp [G, concat_apply, GS.splitAtJoined, GS.mk]
+  rw [Finset.sum_eq_single 0]
+  · simp
+    rw [Finset.sum_eq_single α]
+    · simp
+    · simp; grind
+    · simp
+  · simp
+    grind [Prod.mk.injEq, List.take_eq_nil_iff, List.length_nil]
+  · simp
+@[simp]
+theorem concat_skip {x : GS F N →c 𝒮} : x ♢ G⟦skip⟧ = x := by
+  ext ⟨α, xn, β⟩
+  simp [G, concat_apply, GS.splitAtJoined, GS.mk]
+  rw [Finset.sum_eq_single xn.length]
+  · simp
+    rw [Finset.sum_eq_single β]
+    · simp
+    · simp; grind
+    · simp
+  · simp
+    grind [Prod.mk.injEq, List.take_eq_nil_iff, List.length_nil]
+  · simp
+
+@[simp]
+theorem seq_skip {p : RPol[F,N,𝒮]} : G⟦~p; skip⟧ = G⟦~p⟧ := by
+  ext ⟨α, xs, β⟩;
+  simp [G.concat_apply, G, GS.splitAtJoined, Finset.sum_range_succ, ite_and]
+  have {x} : x ∈ Finset.range xs.length → ¬xs.length ≤ x := by simp
+  rw [Finset.sum_ite_of_false]
+  · simp
+  · simp
+
+end G
+
+namespace GS
+
+omit [DecidableEq F] [DecidableEq N] [MulLeftMono 𝒮] [MulRightMono 𝒮]
+
+variable [DecidableEq N] [DecidableEq F]
+
+noncomputable instance : HPow (GS F N →c 𝒮) ℕ (GS F N →c 𝒮) where
+  hPow s n := (s ♢ ·)^[n] G⟦skip⟧
+
+variable {p p₁ p₂ : RPol[F,N,𝒮]} {n} {α β} {xn}
+
+theorem concat_assoc {a b c : GS F N →c 𝒮} :
+    a ♢ b ♢ c = a ♢ (b ♢ c) := by
+  ext γ
+  simp [G.concat_apply]
+  simp [Finset.sum_mul, Finset.mul_sum, mul_assoc]
+  have {s : GS F N} {n} {γ} : (s.splitAtJoined n γ).1.2.1.length = min n s.2.1.length := by
+    simp [splitAtJoined]
+    split
+    simp
+  have {s : GS F N} {n} {γ} : (s.splitAtJoined n γ).2.2.1.length = s.2.1.length - n := by
+    simp [splitAtJoined]
+    split
+    simp
+  have : ∀ {s : GS F N} {n m} {γ κ}, ((s.splitAtJoined n γ).1.splitAtJoined m κ).1 = (s.splitAtJoined (n ⊓ m) κ).1 := by
+    intro s n m γ κ
+    simp [splitAtJoined]
+    grind
+  have : ∀ {s : GS F N} {n m} {γ κ}, ((s.splitAtJoined n γ).2.splitAtJoined m κ).2 = (s.splitAtJoined (n + m) κ).2 := by
+    intro s n m γ κ
+    simp [splitAtJoined]
+    split
+    rename_i h; split at h; cases h
+    simp
+  have : ∀ {s : GS F N} {n m} {γ κ}, ((s.splitAtJoined m κ).2.splitAtJoined (n - m) γ).1 = ((s.splitAtJoined n γ).1.splitAtJoined m κ).2 := by
+    intro s n m γ κ
+    simp [splitAtJoined]
+    split
+    rename_i h; split at h; cases h
+    simp
+    rw [List.drop_take]
+  simp_all
+  have {n} {f : ℕ → Pk[F,N] → 𝒮} : ∑ x ∈ Finset.range n, ∑ (α : Pk[F, N]), f x α = ∑ (α : Pk[F, N]), ∑ x ∈ Finset.range n, f x α := by rw [Finset.sum_comm]
+  simp [this]
+  rw [Finset.sum_comm]; congr! 2 with α _ β
+  simp_all only [Finset.mem_univ]
+  have :
+        ∑ i ∈ ..=‖γ.2.1‖, ∑ x ∈ ..=min i ‖γ.2.1‖, a (γ.splitAtJoined (min i x) α).1 * (b ((γ.splitAtJoined i β).1.splitAtJoined x α).2 * c (γ.splitAtJoined i β).2)
+      = ∑ i ∈ ..=‖γ.2.1‖, ∑ x ∈ ..=i, a (γ.splitAtJoined x α).1 * (b ((γ.splitAtJoined i β).1.splitAtJoined x α).2 * c (γ.splitAtJoined i β).2) := by
+    congr!
+    · simp_all
+    · simp_all
+  simp [this]; clear this
+  have {n} {f : ℕ → ℕ → 𝒮} : ∑ x ∈ ..=n, ∑ y ∈ ..=n - x, f x y = ∑ x ∈ ..=n, ∑ y ∈ ..=x, f y (x - y) := by
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      simp [Finset.sum_range_succ (n := n + 1)]
+      have : ∑ x ∈ ..=n, ∑ y ∈ ..=n + 1 - x, f x y = ∑ x ∈ ..=n, ∑ y ∈ ..=(n - x) + 1, f x y := by
+        congr! 2
+        ext
+        simp_all
+        omega
+      simp [this]
+      conv => enter [1, 1, 2, x]; rw [Finset.sum_range_succ]
+      simp [ih, Finset.sum_add_distrib]
+      simp [add_assoc]
+      congr! 3 with i hi j hj k hk
+      grind
+  simp [this]
+  simp_all
+  congr!
+  grind
+
+variable (M : GS F N →c 𝒮)
+
+@[simp]
+theorem pow_zero : M^0 = G⟦skip⟧ := by
+  simp [HPow.hPow]
+@[simp]
+theorem pow_one : M^1 = M := by
+  ext ⟨α, xn, β⟩
+  simp [HPow.hPow, G, G.concat_apply, splitAtJoined, mk]
+  rw [Finset.sum_eq_single xn.length]
+  · simp
+    rw [Finset.sum_eq_single β]
+    · simp
+    · simp; grind
+    · simp
+  · simp
+    grind [List.length_nil]
+  · simp
+theorem pow_succ {n} : M^(n+1) = M ♢ M^n := by
+  simp only [HPow.hPow, G, mk, Function.iterate_succ', Function.comp_apply]
+theorem pow_succ' {n} : M^(n+1) = M^n ♢ M := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    nth_rw 1 [pow_succ]
+    nth_rw 2 [pow_succ]
+    rw [ih]
+    simp [concat_assoc]
+theorem pow_add {n m : ℕ} : M^(n + m) = M^n ♢ M^m := by
+  induction m with
+  | zero => simp
+  | succ m ih => simp [pow_succ', ← concat_assoc, ← ih, ← add_assoc]
+
+end GS
 
 variable [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem RPol.sem_G.Iter {p₁} (ih : p₁.sem_G_theorem) : wnk_rpol {~p₁*}.sem_G_theorem (F:=F) (N:=N) (𝒮:=𝒮) := by

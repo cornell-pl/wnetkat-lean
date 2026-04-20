@@ -214,4 +214,23 @@ instance {N : Type*} [DecidableEq N] [Fintype N] : OmegaContinuousNonUnitalSemir
 
 end
 
+open scoped RightActions
+open OmegaCompletePartialOrder
+
+@[simp]
+theorem fun_one_mul {𝒮 m n : Type*} [Semiring 𝒮] [Fintype m] [Unique m] (x : Matrix m n 𝒮) :
+    (@HMul.hMul _ _ _ instHMulOfFintypeOfMulOfAddCommMonoid (fun _ ↦ 1) x : Matrix m n 𝒮) = x := by
+  ext; simp [mul_apply, ← Unique.default_eq]
+@[simp]
+theorem mul_fun_one {𝒮 m n : Type*} [Semiring 𝒮] [Fintype n] [Unique n] (x : Matrix m n 𝒮) :
+    (@HMul.hMul _ _ _ instHMulOfFintypeOfMulOfAddCommMonoid x (fun _ ↦ 1) : Matrix m n 𝒮) = x := by
+  ext; simp [mul_apply, ← Unique.default_eq]
+
+theorem unit_mul_apply {α X Y : Type*} [AddCommMonoid α] [Mul α] (A : Matrix X Unit α) (B : Matrix Unit Y α) (x) (y) :
+    (A * B) x y = A x () * B () y := by simp [mul_apply]
+
+@[simp]
+theorem smul_apply' {α X : Type*} [AddCommMonoid α] [Mul α] (r : α) (A : Matrix X X α) (i j : X) :
+    (A <• r) i j = (A i j) •> r := rfl
+
 end Matrix

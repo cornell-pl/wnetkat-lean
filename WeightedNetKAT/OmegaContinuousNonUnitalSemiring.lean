@@ -47,28 +47,6 @@ theorem OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup' {α : Type*} [OmegaCompl
     = ωSup ⟨fun i ↦ f i i, fun i j hij ↦ le_trans (hf hij i) (hf' j hij)⟩ :=
   OmegaCompletePartialOrder.ωSup_ωSup_eq_ωSup ⟨fun i ↦ ⟨fun j ↦ f i j, hf' i⟩, hf⟩
 
--- theorem Finset.sum_le_sum_of_inj {α β 𝒮 : Type*} [NonUnitalSemiring 𝒮] [PartialOrder 𝒮] [IsOrderedAddMonoid 𝒮]
---     {f : α → 𝒮} {g : β → 𝒮} (e : (a : α) → f a ≠ 0 → β) (he : ∀ Function.Injective e)
---     (h₀ : ∀ (x : β), 0 ≤ g x)
---     {A : Finset α} {B : Finset β}
---     (he' : ∀ a ∈ A, (h : f a ≠ 0) → e a h ∈ B)
---     (he' : ∀ a ∈ A, (h : f a ≠ 0) → f a = g (e a h))
---     :
---     ∑ a ∈ A, f a ≤ ∑ b ∈ B, g b := by
---   rw [Finset.sum_bij_ne_zero (s:=A) (t:=A.map ⟨e, he⟩) (g:=fun b ↦ g b) (fun x _ _ ↦ e x)]
---   · apply Finset.sum_mono_set_of_nonneg h₀
---     intro
---     simp_all
---     grind
---   · simp_all
---   · simp_all
---     intro a₁ h₁ h₁' a₂ h₂ h₂' h
---     exact he h
---   · simp_all
---     intro a ha ha'
---     use a
---   · simp_all
-
 class IsPositiveOrderedAddMonoid (𝒮 : Type*) [AddCommMonoid 𝒮] [PartialOrder 𝒮] [OrderBot 𝒮]
     extends IsOrderedAddMonoid 𝒮 where
   protected bot_eq_zero : (⊥ : 𝒮) = 0
@@ -83,6 +61,17 @@ theorem nonpos_iff_eq_zero' {α : Type*} [AddCommMonoid α] [PartialOrder α] [O
     0 ≤ a := by
   rw [← IsPositiveOrderedAddMonoid.bot_eq_zero]
   simp
+
+theorem Finset.sum_range_le_sup_of_le {𝒮 : Type*} [Semiring 𝒮] [PartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] {m n} {f g : ℕ → 𝒮} (h : f ≤ g) :
+    ∑ i ∈ Finset.range n, f i ≤ ∑ i ∈ Finset.range (m ⊔ n), g i := by
+  if h' : m < n then
+    have : max m n = n := by omega
+    simp_all; gcongr; apply h
+  else
+    simp_all
+    grw [h']
+    · gcongr; apply h
+    · simp
 
 instance (𝒮 : Type*) [AddCommMonoid 𝒮] [PartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] : Subsingleton (AddUnits 𝒮) where
   allEq := by

@@ -102,8 +102,8 @@ namespace rSafety
 variable {Q 𝒮 : Type}
 variable [Listed Q] [Fintype Q] [DecidableEq Q]
 variable [Semiring 𝒮]
-variable (𝒜 : WNKA F N 𝒮 Q)
-variable (ℰ : EWNKA F N 𝒮 Q)
+variable (𝔄 : WNKA F N 𝒮 Q)
+variable (𝔈 : EWNKA F N 𝒮 Q)
 variable [Star 𝒮]
 
 @[grind]
@@ -120,9 +120,9 @@ abbrev Q' (F N Q : Type) [Listed F] := (Q × Pk[F,N]) ⊕ Q'₀
 
 def I : 𝒲[𝟙, Q' F N Q, 𝒮] := η₂ () (.inr .qι)
 def Δ (β : Pk[F,N]) : 𝒲[Q' F N Q, Q' F N Q, 𝒮]
-  | .inl (q, α), .inl (q', β') => if β = β' then 𝒜.δ α β q q' else 0
-  | .inr .qι, .inl (q, β') => if β = β' then 𝒜.ι () q else 0
-  | .inl (q, α), .inr .q𝒪 => 𝒜.𝒪 α β q ()
+  | .inl (q, α), .inl (q', β') => if β = β' then 𝔄.δ α β q q' else 0
+  | .inr .qι, .inl (q, β') => if β = β' then 𝔄.ι () q else 0
+  | .inl (q, α), .inr .q𝒪 => 𝔄.𝒪 α β q ()
 
   | (.inr .q𝒪), (.inr .q𝒪) => 0
   | (.inr .q𝒪), (.inr .qι) => 0
@@ -134,23 +134,23 @@ def Λ : 𝒲[Q' F N Q, 𝟙, 𝒮] := η₂ (.inr .q𝒪) ()
 
 def Δ_star : List Pk[F,N] → 𝒲[Q' F N Q, Q' F N Q, 𝒮]
   | [] => 1
-  | α::x => Δ 𝒜 α * Δ_star x
+  | α::x => Δ 𝔄 α * Δ_star x
 
-def M : 𝒲[Q' F N Q, Q' F N Q, 𝒮] := ∑ (α : Pk[F,N]), Δ 𝒜 α
+def M : 𝒲[Q' F N Q, Q' F N Q, 𝒮] := ∑ (α : Pk[F,N]), Δ 𝔄 α
 
 variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮]
 
-noncomputable def M_star : 𝒲[Q' F N Q, Q' F N Q, 𝒮] := Star.star (M 𝒜)
+noncomputable def M_star : 𝒲[Q' F N Q, Q' F N Q, 𝒮] := Star.star (M 𝔄)
 
 noncomputable def sem' [Listed Q] [Star 𝒮] :=
-    ((I : 𝒲[𝟙, Q' F N Q, 𝒮]) * M_star 𝒜 * (Λ : 𝒲[Q' F N Q, 𝟙, 𝒮]) : 𝒲[_, _, 𝒮]) () ()
+    ((I : 𝒲[𝟙, Q' F N Q, 𝒮]) * M_star 𝔄 * (Λ : 𝒲[Q' F N Q, 𝟙, 𝒮]) : 𝒲[_, _, 𝒮]) () ()
 
 def EI : E𝒲[𝟙, Q' F N Q, 𝒮] := Eη₂ () (.inr .qι)
 def EΔ (β : Li[Pk[F,N]]) : E𝒲[Q' F N Q, Q' F N Q, 𝒮] :=
   .ofFn fun q q' ↦ match (Listed.Li.getSum q).map Listed.Li.getProd id, (Listed.Li.getSum q').map Listed.Li.getProd id with
-    | .inl (q, α), .inl (q', β') => if β = β' then ℰ.δ.asNMatrix₂ α β q q' else 0
-    | .inr 0, .inl (q, β') => if β = β' then ℰ.ι.asNMatrix 0 q else 0
-    | .inl (q, α), .inr 1 => ℰ.𝒪.asNMatrix₂ α β q 0
+    | .inl (q, α), .inl (q', β') => if β = β' then 𝔈.δ.asNMatrix₂ α β q q' else 0
+    | .inr 0, .inl (q, β') => if β = β' then 𝔈.ι.asNMatrix 0 q else 0
+    | .inl (q, α), .inr 1 => 𝔈.𝒪.asNMatrix₂ α β q 0
 
     | (.inr 1), (.inr 1) => 0
     | (.inr 1), (.inr 0) => 0
@@ -162,22 +162,22 @@ def EΛ : E𝒲[Q' F N Q, 𝟙, 𝒮] := Eη₂ (.inr .q𝒪) ()
 
 def EΔ_star : List Li[Pk[F,N]] → E𝒲[Q' F N Q, Q' F N Q, 𝒮]
   | [] => 1
-  | α::xs => EΔ ℰ α * EΔ_star xs
+  | α::xs => EΔ 𝔈 α * EΔ_star xs
 def EΔ_star' (acc : E𝒲[𝟙, Q' F N Q, 𝒮]) : List Li[Pk[F,N]] → E𝒲[𝟙, Q' F N Q, 𝒮]
   | [] => acc
-  | α::xs => EΔ_star' (acc * EΔ ℰ α) xs
+  | α::xs => EΔ_star' (acc * EΔ 𝔈 α) xs
 
 def Esem : List Li[Pk[F,N]] → 𝒮 := fun x ↦
-    (EΔ_star' ℰ EI x * (EΛ : E𝒲[Q' F N Q, 𝟙, 𝒮]) : E𝒲[_, _, 𝒮]) () ()
+    (EΔ_star' 𝔈 EI x * (EΛ : E𝒲[Q' F N Q, 𝟙, 𝒮]) : E𝒲[_, _, 𝒮]) () ()
 
-def EM : E𝒲[Q' F N Q, Q' F N Q, 𝒮] := ∑ (α : Li[Pk[F,N]]), EΔ ℰ α
+def EM : E𝒲[Q' F N Q, Q' F N Q, 𝒮] := ∑ (α : Li[Pk[F,N]]), EΔ 𝔈 α
 
 def EM_star : E𝒲[Q' F N Q, Q' F N Q, 𝒮] :=
-  let R := (EM ℰ)^*
+  let R := (EM 𝔈)^*
   R
 
 def Esem' :=
-    ((EI : E𝒲[𝟙, Q' F N Q, 𝒮]) * EM_star ℰ * (EΛ : E𝒲[Q' F N Q, 𝟙, 𝒮]) : E𝒲[_, _, 𝒮]) () ()
+    ((EI : E𝒲[𝟙, Q' F N Q, 𝒮]) * EM_star 𝔈 * (EΛ : E𝒲[Q' F N Q, 𝟙, 𝒮]) : E𝒲[_, _, 𝒮]) () ()
 
 omit [Fintype F] [Fintype Q] [Star 𝒮] in
 @[simp]
@@ -185,7 +185,7 @@ theorem EI_eq_I : EI (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) = EMatrix.ofMatrix I := b
   ext; simp [EI, I, η₂]
 omit [Fintype F] [Fintype Q] [Star 𝒮] in
 @[simp]
-theorem EΔ_eq_Δ {β} : EΔ (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) ℰ β = EMatrix.ofMatrix (Δ ℰ.toWNKA (Listed.decodeFin β)) := by
+theorem EΔ_eq_Δ {β} : EΔ (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) 𝔈 β = EMatrix.ofMatrix (Δ 𝔈.toWNKA (Listed.decodeFin β)) := by
   simp [EΔ, Δ]
   rw [EMatrix.ofFn_eq_ofFnSlow]
   simp
@@ -214,9 +214,9 @@ variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemirin
 
 omit [Fintype F] in
 @[simp]
-theorem Esem'_eq_sem' : Esem' ℰ = sem' ℰ.toWNKA := by
+theorem Esem'_eq_sem' : Esem' 𝔈 = sem' 𝔈.toWNKA := by
   simp [Esem', sem', EM_star, M_star, EMatrix.mul_apply, Matrix.mul_apply]
-  suffices DFunLike.coe (EM ℰ)^* = (M ℰ.toWNKA)^* by congr!
+  suffices DFunLike.coe (EM 𝔈)^* = (M 𝔈.toWNKA)^* by congr!
   ext
   simp [LawfulStar.star_eq_sum, EM, M]
   congr! with n
@@ -235,24 +235,25 @@ def ErSafety [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrdered
   Esem' p.toRPol.ewnka ≤ r
 
 def sem'_fast {F : Type} [Listed F] [DecidableEq F] {N : Type} [Listed N] [DecidableEq N] {Q 𝒮 : Type}
-  [Fintype Q] [DecidableEq Q] [Semiring 𝒮] (𝒜 : WNKA[F,N,𝒮,Q]) [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮]
-  [IsPositiveOrderedAddMonoid 𝒮] [Listed Q] [Star 𝒮] := Esem' 𝒜.toEWNKA
+  [Fintype Q] [DecidableEq Q] [Semiring 𝒮] (𝔄 : WNKA[F,N,𝒮,Q]) [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮]
+  [IsPositiveOrderedAddMonoid 𝒮] [Listed Q] [Star 𝒮] := Esem' 𝔄.toEWNKA
 
 def _root_.WeightedNetKAT.RPol.wnkaFast {F : Type} [Listed F] {N : Type} [Listed N] {𝒮 : Type} [Semiring 𝒮]
   [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq N] [DecidableEq F] [Star 𝒮] [LawfulStar 𝒮]
   (p : RPol[F,N,𝒮]) : WNKA[F,N,𝒮,S p] := p.ewnka.toWNKA
 
 theorem rSafety_iff [Inhabited Pk[F,N]] {p : Pol[F,N,𝒮]} {r} :
-    rSafety p r ↔ ∀ (x : GS[F,N]), p.toRPol.wnka.sem x ≤ r := by
-  simp [rSafety, Pol.sem_eq_toRPol_wnka_sem]
+    rSafety p r ↔ ∀ (x : GS[F,N]), 𝒜⟦~p.toRPol⟧ x ≤ r := by
+  simp [rSafety, Pol.sem_eq_toRPol_𝒜]
   constructor
   · intro h ⟨π, x, γ⟩
     specialize h π γ x.reverse
+
     grind
   · intro h π x γ
     grind
 theorem rSafety_iff' [Inhabited Pk[F,N]] {p : Pol[F,N,𝒮]} {r} :
-    rSafety p r ↔ ω∑ (x : GS[F,N]), p.toRPol.wnka.sem x ≤ r := by
+    rSafety p r ↔ ω∑ (x : GS[F,N]), 𝒜⟦~p.toRPol⟧ x ≤ r := by
   rw [rSafety_iff]
   constructor
   · intro h
@@ -311,7 +312,7 @@ Example execution time: **N/A**
 def extraction_len (n : ℕ) (r : 𝒮) : Option GS[F,N] :=
   let x := Listed.arrayOf (Pk[F,N] × Vector Pk[F,N] n × Pk[F,N])
   let y : Array (GS[F,N]) := x.map fun (α, xs, β) ↦ GS.mk α xs.toList β
-  y.find? (ℰ.sem · = r)
+  y.find? (𝔈.sem · = r)
 /-- Enumerate _all_ GS and check their weight, reusing computation up to the exit weight
 
 Example execution time: **113.988409s**
@@ -321,7 +322,7 @@ def extraction_len' (n : ℕ) (r : 𝒮) : Option GS[F,N] :=
   let x := Listed.arrayOf (Vector Pk[F,N] (n + 1))
   x.findSome?
     (fun α_xs ↦
-      let f := ℰ.semArray α_xs.toArray (by simp)
+      let f := 𝔈.semArray α_xs.toArray (by simp)
       pks.findSome? (fun β ↦ if f.finish β = r then some (α_xs, β) else none))
   |>.map fun (α_xs, β) ↦ GS.mk α_xs.head α_xs.tail.toList β
 
@@ -329,9 +330,9 @@ def extraction_len'' (acc : E𝒲[𝟙, Q, 𝒮]) (n : ℕ) (γ : Li[Pk[F,N]]) (
   let pks := Listed.arrayOf Li[Pk[F,N]]
   match n with
   | 0 =>
-    pks.findSome? (fun β ↦ if (acc * ℰ.𝒪.asNMatrix γ β) () () = r then some ⟨Listed.decodeFin γ, [], Listed.decodeFin β⟩ else none)
+    pks.findSome? (fun β ↦ if (acc * 𝔈.𝒪.asNMatrix γ β) () () = r then some ⟨Listed.decodeFin γ, [], Listed.decodeFin β⟩ else none)
   | n + 1 =>
-    pks.findSome? (fun β ↦ if let some gs := extraction_len'' (acc * ℰ.δ.asNMatrix γ β) n β r then (some ⟨Listed.decodeFin γ, gs.1 :: gs.2.1, gs.2.2⟩) else none)
+    pks.findSome? (fun β ↦ if let some gs := extraction_len'' (acc * 𝔈.δ.asNMatrix γ β) n β r then (some ⟨Listed.decodeFin γ, gs.1 :: gs.2.1, gs.2.2⟩) else none)
 
 /-- Enumerate _all_ GS and check their weight, reusing computation up for every prefix
 
@@ -339,14 +340,14 @@ Example execution time: **30.157497s**
 -/
 def extraction_len₀ (n : ℕ) (r : 𝒮) : Option GS[F,N] :=
   let pks := Listed.arrayOf Li[Pk[F,N]]
-  pks.findSome? (extraction_len'' ℰ ℰ.ι n · r)
+  pks.findSome? (extraction_len'' 𝔈 𝔈.ι n · r)
 
 partial def extraction_go [Inhabited F] [Inhabited N] (n : ℕ) (r : 𝒮) : GS[F,N] :=
-    match extraction_len₀ ℰ n r with
+    match extraction_len₀ 𝔈 n r with
     | some ρ => ρ
     | none => extraction_go (n + 1) r
 
-def extraction [Inhabited F] [Inhabited N] (r : 𝒮) : GS[F,N] := extraction_go ℰ 0 r
+def extraction [Inhabited F] [Inhabited N] (r : 𝒮) : GS[F,N] := extraction_go 𝔈 0 r
 
 end rSafety
 

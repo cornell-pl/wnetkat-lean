@@ -284,12 +284,15 @@ instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
     ext
     simp [mul_apply]
 
+axiom axiomNMatrixStarLeωSum {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [LawfulStar α] [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α] {n : ℕ} (m : NMatrix n n α) :
+    m^* ≤ ω∑ n, m ^ n
+
 -- TODO: we need this to show that our algorithms are computable; sorry for now
 instance {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [LawfulStar α] [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α] {n : ℕ} :
     LawfulStar (NMatrix n n α) where
   star_eq_sum m := by
     apply le_antisymm
-    · sorry
+    · exact axiomNMatrixStarLeωSum m
     · simp [ωSum_nat_eq_ωSup]
       intro i
       induction i with

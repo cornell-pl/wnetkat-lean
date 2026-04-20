@@ -140,6 +140,12 @@ theorem add_def [Add α] : X + X' = X.asNMatrix + X'.asNMatrix := rfl
 theorem one_def [Zero α] [One α] : (1 : EMatrix n n α) = (1 : EMatrix n n α).asNMatrix := rfl
 theorem zero_def [Zero α] : (0 : EMatrix m n α) = (0 : EMatrix m n α).asNMatrix := rfl
 
+theorem one_apply [DecidableEq n] [Zero α] [One α] {i j} : (1 : EMatrix n n α) i j = if i = j then 1 else 0 := by
+  rw [one_def]
+  simp [asNMatrix]
+  convert NMatrix.one_apply
+  simp
+
 @[simp]
 theorem zero_apply [Zero α] {i j} : (0 : EMatrix m n α) i j = 0 := by
   suffices (EMatrix.ofMatrix (0 : Matrix _ _ α)) i j = 0 by convert this
@@ -213,8 +219,6 @@ theorem mul_assoc [NonUnitalSemiring α] : X * Y * Z = X * (Y * Z) := NMatrix.mu
 
 -- theorem asMatrix_mul [Fintype n] [Mul α] [AddCommMonoid α] : (X * Y).asMatrix = X.asMatrix * Y.asMatrix := by simp [asMatrix]
 
-instance [Zero α] [One α] [DecidableEq n] : One (EMatrix n n α) := ⟨EMatrix.ofMatrix 1⟩
-
 section
 
 @[simp]
@@ -279,10 +283,7 @@ theorem ofMatrix_pow {m 𝒮 : Type*} [Listed m] [Semiring 𝒮] [DecidableEq m]
   | zero =>
     simp
     ext i j
-    simp
-    show _ = (1 : NMatrix _ _ 𝒮) (Listed.encodeFin i) (Listed.encodeFin j)
-    simp
-    rfl
+    simp [EMatrix.one_apply, Matrix.one_apply]
   | succ i ih =>
     simp [pow_succ, ← ih]
     ext a b

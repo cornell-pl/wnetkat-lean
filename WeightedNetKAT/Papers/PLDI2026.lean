@@ -44,13 +44,11 @@ Section 4, Lemma 1: p'.sem_G_theorem
 /-! ## Section 5 – wNetKAT Automata -/
 
 Section 5, Definition 3: WNKA[F,N,𝒮,S p']
--- TODO: update def
-Section 5, Inline 1: p'.wnka.sem
-/-- Use use `𝒪` in stead of `λ` due it it being reserved for lambda functions in lean -/
+Section 5, Inline 1: 𝒜⟦~p'⟧
+/-- We use `𝒪` in stead of `λ` due it it being reserved for lambda functions in lean -/
 Section 5, Table 1: (S p', p'.wnka.ι, p'.wnka.δ, p'.wnka.𝒪)
-Section 5, Lemma 2: p'.wnka_sem
--- TODO: update name
-Section 5, Corollary 1: p.sem_eq_toRPol_wnka_sem
+Section 5, Lemma 2: p'.𝒜_eq_G
+Section 5, Corollary 1: p.sem_eq_toRPol_𝒜
 variable {n : Type} [Fintype n] [DecidableEq n] in
 Section 5, Definition 4: Matrix.Star.instStar (α := 𝒮) (n := n)
 
