@@ -8,6 +8,7 @@ public import Mathlib.Algebra.Order.Ring.Nat
 public import Mathlib.Data.Finset.Sort
 public import Mathlib.Data.List.DropRight
 public import Mathlib.Tactic.Ring.RingNF
+public import Mathlib.Algebra.BigOperators.Ring.Finset
 
 @[expose] public section
 
@@ -714,5 +715,181 @@ theorem buckets_subset_partitionsFill' (xs : List α) (n : ℕ) (h : xs ≠ []) 
     · nth_rw 2 [← this]
       simp
       apply h
+
+theorem sum_partitions'_cons {𝒮' : Type*} [NonUnitalSemiring 𝒮'] {ι : Type*} [DecidableEq ι] {x : ι} {xs : List ι} {n} {f : List (ℕ × List ι) → 𝒮'} :
+      ∑ ys ∈ List.partitions' (x :: xs) n, f ys
+    = if xs = [] then ∑ i ∈ ..=n, f [(i, [x])] else ∑ ys ∈ xs.partitions' n, (f ((ys.head!.1, x :: ys.head!.2) :: ys.tail) + ∑ i ∈ Finset.image (fun j ↦ (j, [x]) :: ys) (..=n), f i) := by
+  split_ifs
+  · subst_eqs
+    simp [List.partitions']
+  simp [List.partitions']
+  rw [Finset.sum_biUnion]
+  · have :
+        ∑ ys ∈ xs.partitions' n,
+          ∑
+            i ∈
+              match ys with
+              | [] => Finset.image (fun i ↦ [(i, [x])]) (..=n)
+              | (i, y) :: ys => insert ((i, x :: y) :: ys) (Finset.image (fun j ↦ (j, [x]) :: (i, y) :: ys) (..=n)),
+            f i
+      = ∑ ys ∈ xs.partitions' n,
+          (f ((ys.head!.1, x :: ys.head!.2) :: ys.tail) + ∑ i ∈ (Finset.image (fun j ↦ (j, [x]) :: ys) (..=n)), f i) := by
+      congr!
+      split
+      · simp_all [List.mem_partitions'_iff]
+      · simp_all [List.mem_partitions'_iff]
+    convert this
+    simp
+  · intro as has bs hbs h S h₁ h₂ Z hZ
+    simp_all only [SetLike.mem_coe, ne_eq, Finset.le_eq_subset, Finset.bot_eq_empty,
+      Finset.notMem_empty]
+    specialize h₁ hZ
+    specialize h₂ hZ
+    simp_all [List.mem_partitions'_iff]
+    rcases as with _ | ⟨⟨a, a'⟩, as⟩ <;> rcases bs with _ | ⟨⟨b, b'⟩, bs⟩
+    · simp_all
+    · simp_all
+    · simp_all
+    · simp_all
+      grind
+
+theorem sum_partitionsFill' {𝒮' : Type*} [NonUnitalSemiring 𝒮'] {ι : Type*} [DecidableEq ι] {xs : List ι} {n} {f : List (List ι) → 𝒮'} :
+    ∑ ys ∈ List.partitionsFill' xs n, f ys = ∑ x ∈ xs.partitions' n, ∑ x_1 ∈ ..=n, f (List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) x ++ List.replicate x_1 []) := by
+  simp [List.partitionsFill']
+  rw [Finset.sum_biUnion, Finset.sum_image]
+  · simp
+  · intro as has bs hbs h
+    simp_all [List.mem_partitions'_iff]
+    obtain ⟨⟨_⟩, has⟩ := has
+    obtain ⟨h', hbs⟩ := hbs
+    induction as generalizing bs with
+    | nil => simp_all; rcases bs with _ | _ <;> simp_all; grind
+    | cons a as ih =>
+      obtain ⟨a, a'⟩ := a
+      simp_all
+      rcases bs with _ | ⟨⟨b, b'⟩, bs⟩
+      · simp_all
+      · simp_all
+        suffices a = b by
+          simp_all
+          specialize @ih bs (by simp_all) (by grind)
+          apply ih <;> clear ih
+          · simp_all
+          · grind
+        rcases a' with _ | ⟨a₀, a'⟩
+        · simp_all; grind
+        rcases b' with _ | ⟨b₀, b'⟩
+        · simp_all; grind
+        simp_all
+        set ts := List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) as
+        set ss := List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) bs
+        clear ih has hbs h'
+        induction a generalizing b with
+        | zero => simp at h; rcases b with _ | _ <;> simp_all [List.replicate]
+        | succ a ih => rcases b with _ | _ <;> simp_all [List.replicate]
+  · simp
+    intro as has bs hbs h S h₁ h₂ Z hZ
+    simp_all only [Set.mem_image, SetLike.mem_coe, ne_eq, Finset.le_eq_subset, Finset.bot_eq_empty,
+      Finset.notMem_empty]
+    simp_all [List.mem_partitions'_iff]
+    specialize h₁ hZ
+    specialize h₂ hZ
+    simp_all
+    obtain ⟨i, h₁, ⟨_⟩⟩ := h₁
+    obtain ⟨j, h₂, h'⟩ := h₂
+    obtain ⟨as, ⟨⟨_⟩, has⟩, _, ⟨_⟩⟩ := has
+    obtain ⟨bs, ⟨h'', hbs⟩, _, ⟨_⟩⟩ := hbs
+    clear hZ S
+    contrapose! h
+    simp_all
+    suffices i = j by subst_eqs; simp_all only [List.append_cancel_right_eq]
+    clear h''
+    induction as using List.reverseRecOn with
+    | nil =>
+      simp at h'
+      induction bs using List.reverseRecOn with
+      | nil => simp at h'; omega
+      | append_singleton bs b ih =>
+        obtain ⟨b, b'⟩ := b
+        clear ih
+        simp at h'
+        simp [← List.append_assoc] at h'
+        simp [List.eq_replicate_iff] at h'
+        obtain ⟨h₁, h₂⟩ := h'
+        subst_eqs
+        specialize h₂ b'
+        simp at h₂
+        subst_eqs
+        simp at hbs
+        grind
+    | append_singleton as a ih =>
+      obtain ⟨a, a'⟩ := a
+      clear ih
+      induction bs using List.reverseRecOn with
+      | nil =>
+        symm at h'
+        simp [List.eq_replicate_iff] at h'
+        obtain ⟨h₁, h₂⟩ := h'
+        specialize h₂ a'
+        simp at h₂
+        subst_eqs
+        simp at hbs
+        grind
+      | append_singleton bs b ih =>
+        obtain ⟨b, b'⟩ := b
+        clear ih
+        simp at h'
+        simp at has hbs
+        rcases a' with _ | ⟨a₀, a'⟩
+        · grind
+        rcases b' with _ | ⟨b₀, b'⟩
+        · grind
+        simp [← List.append_assoc] at h'
+        set ts := List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) bs ++ List.replicate b []
+        set ss := List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) as ++ List.replicate a []
+        clear hbs has
+        induction i generalizing j with
+        | zero =>
+          simp at h'; rcases j with _ | _
+          · rfl
+          · simp [List.replicate_add] at h'
+            rw [List.append_cons, List.append_cons] at h'
+            simp only [List.append_nil, ← List.append_assoc, List.append_singleton_inj, List.nil_eq,
+              reduceCtorEq, and_false] at h'
+        | succ i ih =>
+          rcases j with _ | j
+          · simp [List.replicate_add] at h'
+            nth_rw 2 [List.append_cons, List.append_cons] at h'
+            simp [← List.append_assoc] at h'
+          · simp [List.replicate_add] at h'
+            conv at h' => left; rw [List.append_cons, ← List.append_assoc, ← List.append_cons]
+            conv at h' => right; rw [List.append_cons, ← List.append_assoc, ← List.append_cons]
+            simp
+            exact ih (by omega) j (by omega) (List.append_cancel_right h')
+
+theorem sum_partitionsFill'_cons {𝒮' : Type*} [NonUnitalSemiring 𝒮'] {ι : Type*} [DecidableEq ι] {x : ι} {xs : List ι} {n} {f : List (List ι) → 𝒮'} (h : xs ≠ []) (hf : ∀ a b, f (a ++ b) = f a * f b) :
+      ∑ ys ∈ List.partitionsFill' (x :: xs) n, f ys
+    = ((∑ i ∈ xs.partitions' n,
+      f (List.replicate i.head!.1 []) * f [x :: i.head!.2] *
+        f (List.flatMap (fun x ↦ List.replicate x.1 [] ++ [x.2]) i.tail)) *
+    ∑ i ∈ ..=n, f (List.replicate i [])) + ∑ i ∈ ..=n, ∑ ys ∈ List.partitionsFill' xs n, f (List.replicate i [] ++ [x] :: ys) := by
+  simp [sum_partitionsFill']
+  nth_rw 2 [Finset.sum_comm]
+  simp [sum_partitions'_cons]
+  simp [Finset.sum_add_distrib, h]
+  congr! 1
+  have hf' {a b} : f (a :: b) = f [a] * f b := by
+    rw [← List.singleton_append, hf]
+  simp [hf]
+  conv => enter [1, 2, _, 2, _]; rw [hf']
+  simp [hf]
+  simp [← Finset.mul_sum]
+  simp [← Finset.sum_mul, ← mul_assoc]
+
+theorem mul_prod_mul_eq {α ι : Type*} [Semiring α] {xs : List ι} {a : α} {f : ι → α} :
+    a * (xs.map (f · * a)).prod = (xs.map (a * f ·)).prod * a := by
+  induction xs with
+  | nil => simp
+  | cons x xs ih => simp_all [mul_assoc]
 
 end List

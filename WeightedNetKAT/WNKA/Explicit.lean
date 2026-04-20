@@ -511,20 +511,10 @@ def EWNKA.toEWNKA_𝒪_apply {α β} : ℰ.toWNKA.𝒪 α β = (ℰ.𝒪 α β).
 
 notation "Li[" α "]" => Fin (Listed.size α)
 
-def EWNKA.compute (𝒜 : EWNKA[F,N,𝒮,Q]) (s : List Pk[F,N]) :
-    EMatrix Q 𝟙 𝒮 :=
-  match s with
-  -- NOTE: these are unreachable in practice, but setting them to 1 is okay by idempotency
-  | [] | [_] => .fill 1
-  | [α, α'] => 𝒜.𝒪 α α'
-  | α::α'::s => 𝒜.δ α α' * 𝒜.compute (α' :: s)
-
-def EWNKA.sem' (𝒜 : EWNKA[F,N,𝒮,Q]) : GS[F,N] →c 𝒮 :=
+def EWNKA.sem (𝒜 : EWNKA[F,N,𝒮,Q]) : GS[F,N] →c 𝒮 :=
   ⟨fun ⟨α, xs, β⟩ ↦
     (((α :: xs).zip xs).foldl (fun acc (γ, κ) ↦ acc * 𝒜.δ γ κ) 𝒜.ι * 𝒜.𝒪 (xs.getLast?.getD α) β) () (),
     SetCoe.countable _⟩
-def EWNKA.sem (𝒜 : EWNKA[F,N,𝒮,Q]) : GS[F,N] →c 𝒮 :=
-  ⟨(fun x ↦ (𝒜.ι * 𝒜.compute x.pks) () ()), SetCoe.countable _⟩
 
 /-- Stores partial computation of the weight of a trace.
 
@@ -556,15 +546,6 @@ def EWNKA.semArray_aux (𝒜 : EWNKA[F,N,𝒮,Q]) (α_xs : Array Pk[F,N]) (h : 0
 def EWNKA.semArray (𝒜 : EWNKA[F,N,𝒮,Q]) (α_xs : Array Pk[F,N]) (h : 0 < α_xs.size) : 𝒜.Precompute :=
   𝒜.semArray_aux α_xs h
 
-@[csimp]
-theorem EWNKA.sem_eq_sem' : @EWNKA.sem = @EWNKA.sem' := by
-  ext _ _ _ _ _ _ _ Q _ 𝒜 ⟨α, xs, β⟩
-  simp [sem, sem', GS.pks]
-  generalize 𝒜.ι = M
-  induction xs generalizing M α with
-  | nil => simp [compute]
-  | cons x xs ih => simp [compute, ← EMatrix.mul_assoc, ih, List.getLast?_cons]
-
 universe u
 
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] [DecidableEq F] [LawfulStar N𝒲[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮]] in
@@ -572,19 +553,21 @@ theorem EWNKA.semArray_eq_sem {ℰ : EWNKA[F,N,𝒮,Q]} {α_xs : Array Pk[F,N]} 
     (ℰ.semArray α_xs h).finish β = ℰ.sem ⟨α_xs.toList.head (by grind [Array.ne_empty_of_size_pos]), α_xs.toList.tail, β⟩ := by
   rcases α_xs with ⟨_ | ⟨α, xs⟩⟩
   · simp at h
-  simp [sem_eq_sem', semArray, semArray_aux, sem', Precompute.finish]
+  simp [semArray, semArray_aux, sem, Precompute.finish]
   generalize ℰ.ι = ι
   induction xs generalizing α ι with
   | nil => simp
   | cons x xs ih => simp at ih; simp [List.getLast?_cons, ← ih, Fin.foldl_succ]
 
-theorem RPol.ewnka_sem_eq_wnka_sem (p : RPol[F,N,𝒮]) : p.ewnka.sem = p.wnka.sem := by
+theorem RPol.ewnka_sem_eq_wnka_sem (p : RPol[F,N,𝒮]) : p.ewnka.sem = 𝒜⟦~p⟧ := by
   ext ⟨α, xs, β⟩
-  simp [ewnka, wnka, EWNKA.sem, WNKA.sem]
-  simp [Matrix.mul_apply, GS.pks, EMatrix.mul_apply]
+  simp [ewnka, EWNKA.sem, RPol.A_sem_def, Matrix.mul_apply, EMatrix.mul_apply]
   congr! with s _
-  ext s' ⟨⟩
-  induction xs generalizing α s' with simp_all [Matrix.mul_apply, EMatrix.mul_apply, EWNKA.compute, WNKA.compute]
+  ext ⟨⟩ s'
+  generalize ι p = i
+  symm
+  induction xs generalizing α i s' with simp_all
+  | cons x xs ih => congr!; ext; simp [EMatrix.mul_apply, Matrix.mul_apply]
 
 /--
 info: 'WeightedNetKAT.RPol.ewnka_sem_eq_wnka_sem' depends on axioms: [propext, Classical.choice, Quot.sound]
