@@ -12,12 +12,13 @@ public import WeightedNetKAT.FinsuppExt
 public import WeightedNetKAT.Language
 public import WeightedNetKAT.ListExt
 public import WeightedNetKAT.MatrixExt
-public import WeightedNetKAT.Star.Matrix
-public import WeightedNetKAT.Star
+public import WeightedNetKAT.KStar.Matrix
+public import WeightedNetKAT.KStar
 
 @[expose] public section
 
 open scoped RightActions
+open scoped Computability
 open OmegaCompletePartialOrder
 
 open MatrixNotation
@@ -248,7 +249,7 @@ def ι (p : RPol[F,N,𝒮]) : 𝕄[𝟙,S p,𝒮] := match p with
 
 mutual
 
-def 𝒪_heart (p₁ : RPol[F,N,𝒮]) : 𝕄[Pk[F,N],Pk[F,N],𝒮] := (ι p₁ ⊠ 𝒪 p₁)^*
+def 𝒪_heart (p₁ : RPol[F,N,𝒮]) : 𝕄[Pk[F,N],Pk[F,N],𝒮] := (ι p₁ ⊠ 𝒪 p₁)∗
 
 def 𝒪 (p : RPol[F,N,𝒮]) : 𝕄[Pk[F,N],Pk[F,N],𝕄[S p,𝟙,𝒮]] := fun α β ↦
   match p with
@@ -366,9 +367,9 @@ variable (p p' : RPol[F,N,𝒮])
 section
 
 /-- The `WNKA` of policy `p` -/
-def wnka [Star 𝒮] [LawfulStar 𝒮] (p : RPol[F,N,𝒮]) : WNKA[F,N,𝒮,S p] := ⟨ι p, δ p, 𝒪 p⟩
+def wnka [KStar 𝒮] [LawfulKStar 𝒮] (p : RPol[F,N,𝒮]) : WNKA[F,N,𝒮,S p] := ⟨ι p, δ p, 𝒪 p⟩
 
-variable [Star 𝒮] [LawfulStar 𝒮]
+variable [KStar 𝒮] [LawfulKStar 𝒮]
 
 @[simp] theorem wnka_ι : p.wnka.ι = ι p := rfl
 @[simp] theorem wnka_δ : p.wnka.δ = δ p := rfl
@@ -415,7 +416,7 @@ theorem 𝒜ₐ_iter_empty {α β} {n} : 𝒜ₐ⟦~p⟧ n ⟨α, [], β⟩ = �
 
 section
 
-variable [Star 𝒮] [LawfulStar 𝒮]
+variable [KStar 𝒮] [LawfulKStar 𝒮]
 
 theorem 𝒜_def {p : RPol[F,N,𝒮]} {gs} :
     𝒜⟦~p⟧ gs = (((gs.1 :: gs.2.1).zip gs.2.1).foldl (fun acc (γ, κ) ↦ acc * δ p γ κ) (ι p) * 𝒪 p (gs.2.1.getLast?.getD gs.1) gs.2.2) () () := by
@@ -762,7 +763,7 @@ theorem 𝒪ₐ_heart_le_of_le {n m} (h : n ≤ m) : 𝒪ₐ_heart p n ≤ 𝒪�
 
 theorem 𝒜ₐ_eq_Qₐ {n} {g} : 𝒜ₐ⟦~p⟧ n g = Qₐ⟦~p⟧ n g.2.1 g.1 g.2.2 := by rfl
 
-variable [Star 𝒮] [LawfulStar 𝒮] [Inhabited Pk[F,N]]
+variable [KStar 𝒮] [LawfulKStar 𝒮] [Inhabited Pk[F,N]]
 
 theorem Qₐ_iter_eq' {xs} {n} (ihp : G⟦~p⟧ = 𝒜⟦~p⟧) :
     Qₐ⟦~p⟧ n xs = (if xs = [] then (M'⟦~p⟧ n) else ((M'⟦~p⟧ n) * ∑ i ∈ Finset.range ‖xs‖, M⟦~p⟧ (xs[..i + 1]) * Qₐ⟦~p⟧ n (xs[i + 1..])) ) := by
@@ -884,7 +885,7 @@ theorem 𝒜_iter_nonempty {α α₀ β} {xₙ} :
   simp [← Matrix.mul_assoc, Matrix.C_mul_B, Matrix.C_mul_R, δ.δ']
   rw [xδ_δ'_as_sum_unfolded]
   have 𝒪_heart_eq : 𝒪_heart p = ω∑ (m : ℕ), (Q⟦~p⟧^m) [] := by
-    ext α γ; simp [𝒪_heart, LawfulStar.star_eq_sum]; congr! with i
+    ext α γ; simp [𝒪_heart, LawfulKStar.kstar_eq_sum]; congr! with i
     induction i generalizing α γ with
     | zero => simp; rfl
     | succ i ih =>
@@ -968,7 +969,7 @@ theorem 𝒜_iter_eq_ωSup_approx {α β} {xₙ} :
   rcases xₙ with _ | ⟨α₀, xₙ⟩
   · simp
     have 𝒪_heart_eq : 𝒪_heart p = ω∑ (m : ℕ), (Q⟦~p⟧^m) [] := by
-      ext α γ; simp [𝒪_heart, LawfulStar.star_eq_sum]; congr! with i
+      ext α γ; simp [𝒪_heart, LawfulKStar.kstar_eq_sum]; congr! with i
       induction i generalizing α γ with
       | zero => simp; rfl
       | succ i ih =>
@@ -1070,7 +1071,7 @@ theorem 𝒜_eq_G (p : RPol[F,N,𝒮]) : 𝒜_proof ~p := by
 end RPol
 
 
-variable [Star 𝒮] [LawfulStar 𝒮] [Inhabited Pk[F,N]] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮]
+variable [KStar 𝒮] [LawfulKStar 𝒮] [Inhabited Pk[F,N]] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮]
 
 theorem Pol.sem_eq_toRPol_𝒜 (p : Pol[F,N,𝒮]) (π) (h) :
     p.sem ⟨π, []⟩ h = 𝒜⟦~p.toRPol⟧ (π, h.2.reverse, h.1) := by

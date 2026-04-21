@@ -26,7 +26,7 @@ set_option linter.unusedSectionVars false
 variable {F N : Type} {𝒮 : Type}
 variable [DecidableEq F] [Listed F] [Inhabited F] [DecidableEq N] [Listed N] [Inhabited N]
 variable [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
-variable [Star 𝒮] [LawfulStar 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮]
+variable [KStar 𝒮] [LawfulKStar 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮]
 variable {p : Pol[F,N,𝒮]} {p' : RPol[F,N,𝒮]} {t : Pred[F,N]}
 
 /-! ## Section 3 – wNetKAT: Syntax and Semantics -/
@@ -50,6 +50,6 @@ Section 5, Table 1: (S p', p'.wnka.ι, p'.wnka.δ, p'.wnka.𝒪)
 Section 5, Lemma 2: p'.𝒜_eq_G
 Section 5, Corollary 1: p.sem_eq_toRPol_𝒜
 variable {n : Type} [Fintype n] [DecidableEq n] in
-Section 5, Definition 4: Matrix.Star.instStar (α := 𝒮) (n := n)
+Section 5, Definition 4: Matrix.KStar.instKStar (α := 𝒮) (n := n)
 
 end WeightedNetKAT.Paper.PLDI2026

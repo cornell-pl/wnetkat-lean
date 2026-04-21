@@ -1,5 +1,5 @@
 import WeightedNetKAT.Computation
-import WeightedNetKAT.Star
+import WeightedNetKAT.KStar
 import WeightedNetKAT.Instances.ENat
 import Mathlib.Data.ENat.Basic
 import Mathlib.Algebra.Tropical.Lattice
@@ -76,8 +76,8 @@ instance : Semiring ProbabilisticUnion where
   one_mul := sorry
   mul_one := sorry
 
-instance : WeightedNetKAT.Star ProbabilisticUnion where
-  star
+instance : KStar ProbabilisticUnion where
+  kstar
   | none => some 0
   | some q => if q = 0 then 0 else 1
 

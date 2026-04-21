@@ -3,11 +3,12 @@ module
 public import Mathlib.Data.ENat.Basic
 public import Mathlib.Data.Nat.Cast.Order.Ring
 public import WeightedNetKAT.Computation
-public import WeightedNetKAT.Star
+public import WeightedNetKAT.KStar
 
 @[expose] public section
 
 open OmegaCompletePartialOrder
+open scoped Computability
 
 def Bottleneck (α : Type) := α
 
@@ -103,13 +104,13 @@ instance [CompleteLinearOrder α] : OmegaContinuousNonUnitalSemiring (Bottleneck
   ωScottContinuous_mul_left := sorry
   ωScottContinuous_mul_right := sorry
 
-instance [Top α] : WeightedNetKAT.Star (Bottleneck α) where
-  star _ := ⊤
-instance [CompleteLinearOrder α] : WeightedNetKAT.LawfulStar (Bottleneck α) where
-  star_eq_sum m := by
+instance [Top α] : KStar (Bottleneck α) where
+  kstar _ := ⊤
+instance [CompleteLinearOrder α] : LawfulKStar (Bottleneck α) where
+  kstar_eq_sum m := by
     rw [ωSum_nat_eq_ωSup]
-    unfold WeightedNetKAT.Star.star
-    rw [instStarBottleneckOfTop]
+    unfold KStar.kstar
+    rw [instKStarBottleneckOfTop]
     apply le_antisymm
     · apply le_ωSup_of_le 1
       simp only [Chain.mk_apply, Finset.sum_range_one]

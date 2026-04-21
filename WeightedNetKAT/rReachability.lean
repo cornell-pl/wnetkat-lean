@@ -32,7 +32,7 @@ variable [Listed Q] [Fintype Q] [DecidableEq Q]
 variable [Semiring 𝒮] [DecidableEq 𝒮]
 variable (𝒜 : WNKA F N 𝒮 Q)
 variable (ℰ : EWNKA F N 𝒮 Q)
-variable [Star 𝒮]
+variable [KStar 𝒮]
 
 abbrev Run := List (Q × (Pk[F,N] × Pk[F,N]) × Q) × ((Pk[F,N] × Pk[F,N]) × Q)
 notation "Run["f","n","q"]" => Run (F:=f) (N:=n) (Q:=q)
@@ -96,7 +96,7 @@ def extendCycleFree' (cur : Run[F,N,Q]) (h : cur.isCycleFree) : Array Run[F,N,Q]
       else
         none
 
-omit [Fintype F] [Fintype Q] [Star 𝒮] in
+omit [Fintype F] [Fintype Q] [KStar 𝒮] in
 @[simp, grind]
 theorem extendCycleFree'_isCycleFree {ρ} {h} : ∀ ρ' ∈ extendCycleFree' 𝒜 ρ h, ρ'.isCycleFree := by
   intro ρ'; simp [extendCycleFree']; grind

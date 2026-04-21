@@ -3,7 +3,7 @@ module
 public import Mathlib.Computability.Language
 public import Mathlib.Data.ENat.Lattice
 public import WeightedNetKAT.Computation
-public import WeightedNetKAT.Star
+public import WeightedNetKAT.KStar
 
 @[expose] public section
 
@@ -24,13 +24,9 @@ instance : OmegaContinuousNonUnitalSemiring (Language α) where
   ωScottContinuous_mul_right x :=
     ωScottContinuous.of_monotone_map_ωSup ⟨mul_left_mono, (Language.iSup_mul · x)⟩
 
-instance : WeightedNetKAT.Star (Language α) where
-  star m := KStar.kstar m
-
 open scoped Classical in
-instance : WeightedNetKAT.LawfulStar (Language α) where
-  star_eq_sum m := by
-    simp [WeightedNetKAT.Star.star]
+instance : LawfulKStar (Language α) where
+  kstar_eq_sum m := by
     apply le_antisymm
     · refine kstar_le_of_mul_le_left ?_ ?_
       · rw [ωSum_nat_eq_succ]; simp only [pow_zero, self_le_add_right]

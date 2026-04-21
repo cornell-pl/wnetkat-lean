@@ -91,7 +91,7 @@ instance {X : Type} [Repr X] : Repr (X × Unit) where
 def RPol.eval {F N 𝒮 : Type}
     [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Listed F] [Listed N] [Inhabited N]
     [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
-    [DecidableEq 𝒮] [Star 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) : IO Std.Format := do
+    [DecidableEq 𝒮] [KStar 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) : IO Std.Format := do
   println! "computing wnka"
   let n : EWNKA F N 𝒮 (S p) := p.ewnka
   println! "accessing ι"
@@ -128,7 +128,7 @@ def RPol.eval {F N 𝒮 : Type}
 def RPol.eval_string {F N 𝒮 : Type}
     [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Listed F] [Listed N] [Inhabited N]
     [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
-    [DecidableEq 𝒮] [Star 𝒮] (p : RPol[F,N,𝒮]) (s : GS[F,N])
+    [DecidableEq 𝒮] [KStar 𝒮] (p : RPol[F,N,𝒮]) (s : GS[F,N])
     :=
       p.ewnka.sem s
 
@@ -141,7 +141,7 @@ instance {F N 𝒮 : Type}
     [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Listed F] [Listed N] [Inhabited N]
     [Listed Pk[F,N]]
     [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
-    [DecidableEq 𝒮] [Star 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) : Repr (WNKA F N 𝒮 (S p)) where
+    [DecidableEq 𝒮] [KStar 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) : Repr (WNKA F N 𝒮 (S p)) where
   reprPrec m n :=
     let ι := m.ι
     let δ : List (Pk[F,N] × Pk[F,N] × 𝕄[S p, S p, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, m.δ α β)) |>.filter (·.2.2 ≠ 0)

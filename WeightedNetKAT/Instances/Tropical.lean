@@ -1,4 +1,4 @@
-import WeightedNetKAT.Star
+import WeightedNetKAT.KStar
 import Mathlib.Data.ENat.Basic
 import Mathlib.Data.ENat.Basic
 import Mathlib.Algebra.Tropical.Lattice
@@ -7,8 +7,8 @@ import Mathlib.Algebra.Tropical.BigOperators
 open Tropical
 
 @[simp]
-instance : WeightedNetKAT.Star (Tropical (OrderDual ℕ∞)) where
-  star x := if x ≥ trop 0 then trop 0 else trop ⊤
+instance : KStar (Tropical (OrderDual ℕ∞)) where
+  kstar x := if x ≥ trop 0 then trop 0 else trop ⊤
 
 
 -- instance : LinearOrderedAddCommMonoidWithTop ℕ∞ᵒᵈ where
@@ -36,8 +36,8 @@ instance : Semiring (Tropical (OrderDual ℕ∞)) where
     simp
   mul_zero a := by simp
 
-instance : WeightedNetKAT.LawfulStar (Tropical (OrderDual ℕ∞)) where
-  star_eq_sum x := by
+instance : LawfulKStar (Tropical (OrderDual ℕ∞)) where
+  kstar_eq_sum x := by
     simp; split_ifs with h
     · subst_eqs
       rw [ωSum_nat_eq_succ]

@@ -1,5 +1,5 @@
 import WeightedNetKAT.Computation
-import WeightedNetKAT.Star
+import WeightedNetKAT.KStar
 import Mathlib.Algebra.Order.Kleene
 
 @[grind]

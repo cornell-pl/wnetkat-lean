@@ -1,7 +1,7 @@
 module
 
 public import WeightedNetKAT.Computation
-public import WeightedNetKAT.Star
+public import WeightedNetKAT.KStar
 public import WeightedNetKAT.Instances.ENat
 public import Mathlib.Data.ENat.Basic
 public import Mathlib.Algebra.Tropical.Lattice
@@ -290,8 +290,8 @@ instance : OmegaContinuousNonUnitalSemiring Arctic where
   ωScottContinuous_mul_right := sorry
 
 @[simp]
-instance : WeightedNetKAT.Star Arctic where
-  star x := if x ≤ arc 0 then arc 0 else arc ⊤
+instance : KStar Arctic where
+  kstar x := if x ≤ arc 0 then arc 0 else arc ⊤
 
 @[simp]
 theorem le_zero_arc {x : Arctic} : x ≤ arc 0 ↔ x = arc ⊥ ∨ x = arc 0 := by
@@ -437,8 +437,8 @@ instance : MulLeftMono (WithBot ℕ∞) where
     · simp_all
       sorry
 
-instance : WeightedNetKAT.LawfulStar Arctic where
-  star_eq_sum x := by
+instance : LawfulKStar Arctic where
+  kstar_eq_sum x := by
     sorry
     -- simp; split_ifs with h
     -- · simp [ωSum_nat_eq_ωSup, ωSup]

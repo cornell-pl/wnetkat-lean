@@ -2,7 +2,7 @@ module
 
 public import Mathlib.Data.ENat.Lattice
 public import WeightedNetKAT.Computation
-public import WeightedNetKAT.Star
+public import WeightedNetKAT.KStar
 
 @[expose] public section
 
@@ -33,12 +33,12 @@ instance : OmegaContinuousNonUnitalSemiring ℕ∞ where
     intro c
     exact ENat.iSup_mul (⇑c) x
 
-instance : WeightedNetKAT.Star ℕ∞ where
-  star | some 0 => 1 | _ => ⊤
+instance : KStar ℕ∞ where
+  kstar | some 0 => 1 | _ => ⊤
 
-instance : WeightedNetKAT.LawfulStar ℕ∞ where
-  star_eq_sum n := by
-    simp [WeightedNetKAT.Star.star]
+instance : LawfulKStar ℕ∞ where
+  kstar_eq_sum n := by
+    simp [KStar.kstar]
     have h₀ : (some 0 : Option ℕ) = (0 : ℕ∞) := by rfl
     split
     · rw [ωSum_nat_eq_succ, h₀]

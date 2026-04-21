@@ -7,6 +7,7 @@ public import WeightedNetKAT.WNKA.Explicit
 
 open OmegaCompletePartialOrder
 open scoped RightActions
+open scoped Computability
 
 open scoped MatrixNotation
 
@@ -104,7 +105,7 @@ variable [Listed Q] [Fintype Q] [DecidableEq Q]
 variable [Semiring 𝒮]
 variable (𝔄 : WNKA F N 𝒮 Q)
 variable (𝔈 : EWNKA F N 𝒮 Q)
-variable [Star 𝒮]
+variable [KStar 𝒮]
 
 @[grind]
 inductive Q'₀ where | qι | q𝒪 deriving DecidableEq, Fintype
@@ -138,11 +139,11 @@ def Δ_star : List Pk[F,N] → 𝕄[Q' F N Q, Q' F N Q, 𝒮]
 
 def M : 𝕄[Q' F N Q, Q' F N Q, 𝒮] := ∑ (α : Pk[F,N]), Δ 𝔄 α
 
-variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮]
+variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [KStar 𝒮]
 
-noncomputable def M_star : 𝕄[Q' F N Q, Q' F N Q, 𝒮] := Star.star (M 𝔄)
+noncomputable def M_star : 𝕄[Q' F N Q, Q' F N Q, 𝒮] := KStar.kstar (M 𝔄)
 
-noncomputable def sem' [Listed Q] [Star 𝒮] :=
+noncomputable def sem' [Listed Q] [KStar 𝒮] :=
     ((I : 𝕄[𝟙, Q' F N Q, 𝒮]) * M_star 𝔄 * (Λ : 𝕄[Q' F N Q, 𝟙, 𝒮]) : 𝕄[_, _, 𝒮]) () ()
 
 def EI : E𝕄[𝟙, Q' F N Q, 𝒮] := Eη₂ () (.inr .qι)
@@ -173,17 +174,17 @@ def Esem : List Li[Pk[F,N]] → 𝒮 := fun x ↦
 def EM : E𝕄[Q' F N Q, Q' F N Q, 𝒮] := ∑ (α : Li[Pk[F,N]]), EΔ 𝔈 α
 
 def EM_star : E𝕄[Q' F N Q, Q' F N Q, 𝒮] :=
-  let R := (EM 𝔈)^*
+  let R := (EM 𝔈)∗
   R
 
 def Esem' :=
     ((EI : E𝕄[𝟙, Q' F N Q, 𝒮]) * EM_star 𝔈 * (EΛ : E𝕄[Q' F N Q, 𝟙, 𝒮]) : E𝕄[_, _, 𝒮]) () ()
 
-omit [Fintype F] [Fintype Q] [Star 𝒮] in
+omit [Fintype F] [Fintype Q] [KStar 𝒮] in
 @[simp]
 theorem EI_eq_I : EI (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) = EMatrix.ofMatrix I := by
   ext; simp [EI, I, η₂]
-omit [Fintype F] [Fintype Q] [Star 𝒮] in
+omit [Fintype F] [Fintype Q] [KStar 𝒮] in
 @[simp]
 theorem EΔ_eq_Δ {β} : EΔ (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) 𝔈 β = EMatrix.ofMatrix (Δ 𝔈.toWNKA (Listed.decodeFin β)) := by
   simp [EΔ, Δ]
@@ -203,12 +204,12 @@ theorem EΔ_eq_Δ {β} : EΔ (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) 𝔈 β = EMatrix
   · rcases i with _ | i <;> simp_all
   · rcases i with _ | _ <;> rcases j with _ | _ <;> simp_all
 
-omit [Fintype F] [Fintype Q] [Star 𝒮] in
+omit [Fintype F] [Fintype Q] [KStar 𝒮] in
 @[simp]
 theorem EΛ_eq_Λ : EΛ (F:=F) (N:=N) (𝒮:=𝒮) (Q:=Q) = EMatrix.ofMatrix Λ := by
   ext; simp [EΛ, Λ, η₂]
 
-variable [LawfulStar 𝒮] [StarIter 𝒮]
+variable [LawfulKStar 𝒮] [KStarIter 𝒮]
 
 variable [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮]
 
@@ -216,9 +217,9 @@ omit [Fintype F] in
 @[simp]
 theorem Esem'_eq_sem' : Esem' 𝔈 = sem' 𝔈.toWNKA := by
   simp [Esem', sem', EM_star, M_star, EMatrix.mul_apply, Matrix.mul_apply]
-  suffices DFunLike.coe (EM 𝔈)^* = (M 𝔈.toWNKA)^* by congr!
+  suffices DFunLike.coe (EM 𝔈)∗ = (M 𝔈.toWNKA)∗ by congr!
   ext
-  simp [LawfulStar.star_eq_sum, EM, M]
+  simp [LawfulKStar.kstar_eq_sum, EM, M]
   congr! with n
   ext α β
   induction n generalizing α β with
@@ -231,15 +232,15 @@ theorem Esem'_eq_sem' : Esem' 𝔈 = sem' 𝔈.toWNKA := by
     simp [pow_succ, ih, EMatrix.mul_apply, Matrix.mul_apply, Matrix.sum_apply]
 
 
-def ErSafety [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [LawfulStar 𝒮] (p : Pol[F,N,𝒮]) (r : 𝒮) : Prop :=
+def ErSafety [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [LawfulKStar 𝒮] (p : Pol[F,N,𝒮]) (r : 𝒮) : Prop :=
   Esem' p.toRPol.ewnka ≤ r
 
 def sem'_fast {F : Type} [Listed F] [DecidableEq F] {N : Type} [Listed N] [DecidableEq N] {Q 𝒮 : Type}
   [Fintype Q] [DecidableEq Q] [Semiring 𝒮] (𝔄 : WNKA[F,N,𝒮,Q]) [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮]
-  [IsPositiveOrderedAddMonoid 𝒮] [Listed Q] [Star 𝒮] := Esem' 𝔄.toEWNKA
+  [IsPositiveOrderedAddMonoid 𝒮] [Listed Q] [KStar 𝒮] := Esem' 𝔄.toEWNKA
 
 def _root_.WeightedNetKAT.RPol.wnkaFast {F : Type} [Listed F] {N : Type} [Listed N] {𝒮 : Type} [Semiring 𝒮]
-  [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq N] [DecidableEq F] [Star 𝒮] [LawfulStar 𝒮]
+  [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq N] [DecidableEq F] [KStar 𝒮] [LawfulKStar 𝒮]
   (p : RPol[F,N,𝒮]) : WNKA[F,N,𝒮,S p] := p.ewnka.toWNKA
 
 theorem rSafety_iff [Inhabited Pk[F,N]] {p : Pol[F,N,𝒮]} {r} :
@@ -279,7 +280,7 @@ theorem rSafety_iff'' [Inhabited Pk[F,N]] {p : Pol[F,N,𝒮]} {r} :
   simp [sem']
   simp [I, Λ, M_star, M, Δ]
   simp [Matrix.mul_apply]
-  rw [LawfulStar.star_eq_sum]
+  rw [LawfulKStar.kstar_eq_sum]
   simp
   rw [ωSum_GS_eq_ωSum_nat]
   nth_rw 2 [ωSum_nat_eq_succ]

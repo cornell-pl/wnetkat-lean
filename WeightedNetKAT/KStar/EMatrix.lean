@@ -9,27 +9,28 @@ public import WeightedNetKAT.EMatrix
 public import WeightedNetKAT.Listed
 public import WeightedNetKAT.MatrixExt
 public import WeightedNetKAT.OmegaContinuousNonUnitalSemiring
-public import WeightedNetKAT.Star.Matrix
+public import WeightedNetKAT.KStar.Matrix
 import all Init.Data.Nat.Power2.Basic
 
 @[expose] public section
 
-namespace Matrix.Star
+namespace Matrix.KStar
 
-open WeightedNetKAT
+open KStar
 
 open scoped MatrixNotation
+open scoped Computability
 
 section
 
-variable {α : Type*} [AddCommMonoid α] [Mul α] [WeightedNetKAT.Star α]
+variable {α : Type*} [AddCommMonoid α] [Mul α] [KStar α]
 
-instance : WeightedNetKAT.Star 𝕄[𝟙,𝟙,α] where
-  star m := (m () ())^*
-instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α] [LawfulStar α] :
-    LawfulStar 𝕄[𝟙,𝟙,α] where
-  star_eq_sum m := by
-    have := LawfulStar.star_eq_sum (m () ())
+instance : KStar 𝕄[𝟙,𝟙,α] where
+  kstar m := (m () ())∗
+instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [KStar α] [LawfulKStar α] :
+    LawfulKStar 𝕄[𝟙,𝟙,α] where
+  kstar_eq_sum m := by
+    have := LawfulKStar.kstar_eq_sum (m () ())
     ext ⟨⟩ ⟨⟩
     simp_all
     convert this; clear this
@@ -43,17 +44,17 @@ instance {m n : ℕ} : HMul α N𝕄[m,n,α] N𝕄[m,n,α] where
 instance {m n : ℕ} : HMul N𝕄[m,n,α] α N𝕄[m,n,α] where
     hMul M s := M.map (fun x ↦ x * s)
 
-instance : WeightedNetKAT.Star N𝕄[1,1,α] where
-  star a := .fill (a 0 0)^*
+instance : KStar N𝕄[1,1,α] where
+  kstar a := .fill (a 0 0)∗
 
-instance {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] : StarIter N𝕄[1,1,α] where
-  star_iter m := by
-    simp [WeightedNetKAT.Star.star]
-    nth_rw 2 [← StarIter.star_iter]
+instance {α : Type*} [Semiring α] [KStar α] [KStarIter α] : KStarIter N𝕄[1,1,α] where
+  kstar_iter m := by
+    simp [KStar.kstar]
+    nth_rw 2 [← KStarIter.kstar_iter]
     ext ⟨_ | i, hi⟩ ⟨_ | j, hj⟩ <;> try omega
     simp [NMatrix.fill, Matrix.mul_apply]
 
-def star_fin' {n : ℕ} (m : N𝕄[n,n,α]) : N𝕄[n,n,α] :=
+def kstar_fin' {n : ℕ} (m : N𝕄[n,n,α]) : N𝕄[n,n,α] :=
   match n with
   | 0 => .ofFn fun a b ↦ False.elim (by have := a.isLt; omega)
   | n'+1 =>
@@ -63,12 +64,12 @@ def star_fin' {n : ℕ} (m : N𝕄[n,n,α]) : N𝕄[n,n,α] :=
     let c := m'.toBlocks₂₁
     let d := m'.toBlocks₂₂
 
-    let η₁ := star_fin' a
+    let η₁ := kstar_fin' a
     let η₂ := c * η₁
     let η₂' := η₁ * b
     let η₃ := η₂ * b
 
-    let δ : N𝕄[1,1,α] := (d + η₃)^*
+    let δ : N𝕄[1,1,α] := (d + η₃)∗
     let γ := δ * η₂
     let β := η₂' * δ
     let α := η₁ + β * η₂
@@ -92,8 +93,8 @@ def _root_.Nat.powTwoRec' {motive : ℕ → Sort*} (base : motive 1) (induct : �
   rw [this] at r
   exact r
 
-def starFin₂ {n : ℕ} (h : n.isPowerOfTwo) : N𝕄[n,n,α] → N𝕄[n,n,α] :=
-  let f₁ := fun M ↦ .ofFn fun _ _ ↦ (M ⟨0, by grind⟩ ⟨0, by grind⟩)^*
+def kstarFin₂ {n : ℕ} (h : n.isPowerOfTwo) : N𝕄[n,n,α] → N𝕄[n,n,α] :=
+  let f₁ := fun M ↦ .ofFn fun _ _ ↦ (M ⟨0, by grind⟩ ⟨0, by grind⟩)∗
   let f₂ := fun n (f : N𝕄[2 ^ n,2 ^ n,α] → N𝕄[2 ^ n,2 ^ n,α]) (M : N𝕄[2 ^ n + 2 ^ n,2 ^ n + 2 ^ n,α]) ↦
     let a := M.toBlocks₁₁
     let b := M.toBlocks₁₂
@@ -113,31 +114,31 @@ def starFin₂ {n : ℕ} (h : n.isPowerOfTwo) : N𝕄[n,n,α] → N𝕄[n,n,α] 
     ⟨(NMatrix.fromBlocks α β γ δ).data.cast (by grind)⟩
   Nat.powTwoRec' (motive := fun n ↦ N𝕄[n,n,α] → N𝕄[n,n,α]) f₁ f₂ n h
 
-/-- A more efficient version of `star_fin'` that splits the matrix up into four approximately equal
+/-- A more efficient version of `kstar_fin'` that splits the matrix up into four approximately equal
 blocks. -/
-def starFin {n : ℕ} (M : N𝕄[n,n,α]) : N𝕄[n,n,α] :=
+def kstarFin {n : ℕ} (M : N𝕄[n,n,α]) : N𝕄[n,n,α] :=
   if hn : n.isPowerOfTwo then
-    starFin₂ hn M
+    kstarFin₂ hn M
   else
     sorry
 
 -- NOTE: this should be `@[csimp]` once we've proven it correct
 -- @[csimp]
-theorem star_fin'_eq_starFin : @star_fin' = @starFin := by
+theorem kstar_fin'_eq_kstarFin : @kstar_fin' = @kstarFin := by
   sorry
 
-instance {n : ℕ} [AddCommMonoid α] [Mul α] [WeightedNetKAT.Star α] :
-    WeightedNetKAT.Star N𝕄[n,n,α] := ⟨star_fin'⟩
-instance {n : Type*} [Listed n] [AddCommMonoid α] [Mul α] [WeightedNetKAT.Star α] :
-    WeightedNetKAT.Star (E𝕄[n,n,α]) := inferInstanceAs (WeightedNetKAT.Star (NMatrix _ _ α))
+instance {n : ℕ} [AddCommMonoid α] [Mul α] [KStar α] :
+    KStar N𝕄[n,n,α] := ⟨kstar_fin'⟩
+instance {n : Type*} [Listed n] [AddCommMonoid α] [Mul α] [KStar α] :
+    KStar (E𝕄[n,n,α]) := inferInstanceAs (KStar (NMatrix _ _ α))
 
-def star_fin {n : ℕ} (m : 𝕄[Fin n,Fin n,α]) : 𝕄[Fin n,Fin n,α] :=
-  star_fin' (.ofMatrix m) |>.asMatrix
+def kstar_fin {n : ℕ} (m : 𝕄[Fin n,Fin n,α]) : 𝕄[Fin n,Fin n,α] :=
+  kstar_fin' (.ofMatrix m) |>.asMatrix
 
 end
 
-theorem star_fin'_iter {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] {n : ℕ} (M : N𝕄[n,n,α]) :
-    1 + M * M^* = M^* := by
+theorem kstar_fin'_iter {α : Type*} [Semiring α] [KStar α] [KStarIter α] {n : ℕ} (M : N𝕄[n,n,α]) :
+    1 + M * M∗ = M∗ := by
   induction n with
   | zero => ext ⟨_, _⟩; omega
   | succ n ih =>
@@ -146,19 +147,19 @@ theorem star_fin'_iter {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [Star
     let c := M.toBlocks₂₁
     let d := M.toBlocks₂₂
 
-    set a' := star_fin' a
-    have ha' : star_fin' a = a' := rfl
+    set a' := kstar_fin' a
+    have ha' : kstar_fin' a = a' := rfl
     replace ih : 1 + a * a' = a' := ih _
 
     wlog h : M = NMatrix.fromBlocks a b c d generalizing a b c d
     · absurd h; simp [a, b, c, d]
     · simp [h] at *
-      simp [WeightedNetKAT.Star.star]
-      rw [star_fin']
+      simp [KStar.kstar]
+      rw [kstar_fin']
       simp only [NMatrix.fromBlocks_toBlocks₁₁, NMatrix.fromBlocks_toBlocks₁₂,
         NMatrix.fromBlocks_toBlocks₂₂, NMatrix.fromBlocks_toBlocks₂₁]
       simp only [ha']
-      set δ' := (d + c * a' * b)^*
+      set δ' := (d + c * a' * b)∗
       simp [← NMatrix.mul_assoc]
       set γ' := δ' * c * a'
       have : a' * b * δ' * c * a' = a' * b * γ' := by simp [γ', NMatrix.mul_assoc]
@@ -169,7 +170,7 @@ theorem star_fin'_iter {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [Star
       simp [NMatrix.fromBlocks_mul]
       rw [← NMatrix.fromBlocks_eq_one (α:=α) (n:=n) (m:=1)]
       simp [NMatrix.fromBlocks_add]
-      have hδ : 1 + (d + c * a' * b) * δ' = δ' := by simp [δ']; exact StarIter.star_iter (d + c * a' * b)
+      have hδ : 1 + (d + c * a' * b) * δ' = δ' := by simp [δ']; exact KStarIter.kstar_iter (d + c * a' * b)
 
       congr! 1
       · grind only [NMatrix.add_mul, add_assoc, NMatrix.one_mul, add_comm, NMatrix.mul_assoc,
@@ -192,15 +193,15 @@ theorem star_fin'_iter {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [Star
       · grind only [NMatrix.add_mul, NMatrix.add_comm, NMatrix.mul_assoc, ← NMatrix.add_assoc]
 
 -- TODO
-theorem starFin_iter_pow_two {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] {n : ℕ} (M : N𝕄[2 ^ n,2 ^ n,α]) :
-    1 + M * starFin M = starFin M := by
+theorem kstarFin_iter_pow_two {α : Type*} [Semiring α] [KStar α] [KStarIter α] {n : ℕ} (M : N𝕄[2 ^ n,2 ^ n,α]) :
+    1 + M * kstarFin M = kstarFin M := by
   revert M
-  apply Nat.powTwoRec (motive := fun n ↦ ∀ (M : N𝕄[n,n,α]), 1 + M * starFin M = starFin M) ?_ ?_ n
+  apply Nat.powTwoRec (motive := fun n ↦ ∀ (M : N𝕄[n,n,α]), 1 + M * kstarFin M = kstarFin M) ?_ ?_ n
   · intro M
     ext ⟨i, hi⟩ ⟨j, hj⟩
     simp at hi hj
     subst_eqs
-    simp [starFin, Matrix.mul_apply]
+    simp [kstarFin, Matrix.mul_apply]
     sorry
   · clear n;
     intro n ih M
@@ -209,27 +210,27 @@ theorem starFin_iter_pow_two {α : Type*} [Semiring α] [WeightedNetKAT.Star α]
     let c := M.toBlocks₂₁
     let d := M.toBlocks₂₂
 
-    set a' := starFin a
-    have ha' : starFin a = a' := rfl
+    set a' := kstarFin a
+    have ha' : kstarFin a = a' := rfl
     replace ih : 1 + a * a' = a' := ih _
 
     wlog h : M = NMatrix.fromBlocks a b c d generalizing a b c d
     · absurd h; simp [a, b, c, d]
     · simp [h] at *
-      rw [starFin]
+      rw [kstarFin]
       sorry
 
-theorem starFin_iter {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] {n : ℕ} (M : N𝕄[n,n,α]) :
-    1 + M * starFin M = starFin M := by
+theorem kstarFin_iter {α : Type*} [Semiring α] [KStar α] [KStarIter α] {n : ℕ} (M : N𝕄[n,n,α]) :
+    1 + M * kstarFin M = kstarFin M := by
   if hm : n.isPowerOfTwo then
     obtain ⟨n, ⟨_⟩⟩ := hm
-    exact starFin_iter_pow_two M
+    exact kstarFin_iter_pow_two M
   else
     -- TODO: prove for non powers of two
     sorry
 
-instance {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [LawfulStar α] {n : ℕ} :
-    StarIter N𝕄[n,n,α] := ⟨star_fin'_iter⟩
+instance {α : Type*} [Semiring α] [KStar α] [KStarIter α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [LawfulKStar α] {n : ℕ} :
+    KStarIter N𝕄[n,n,α] := ⟨kstar_fin'_iter⟩
 
 open OmegaCompletePartialOrder
 
@@ -286,13 +287,13 @@ instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
     ext
     simp [mul_apply]
 
-axiom axiomNMatrixStarLeωSum {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [LawfulStar α] [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α] {n : ℕ} (m : N𝕄[n,n,α]) :
-    m^* ≤ ω∑ n, m ^ n
+axiom axiomNMatrixStarLeωSum {α : Type*} [Semiring α] [KStar α] [KStarIter α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [LawfulKStar α] [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α] {n : ℕ} (m : N𝕄[n,n,α]) :
+    m∗ ≤ ω∑ n, m ^ n
 
 -- TODO: we need this to show that our algorithms are computable; `axiomNMatrixStarLeωSum` for now
-instance {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [LawfulStar α] [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α] {n : ℕ} :
-    LawfulStar N𝕄[n,n,α] where
-  star_eq_sum m := by
+instance {α : Type*} [Semiring α] [KStar α] [KStarIter α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [LawfulKStar α] [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α] {n : ℕ} :
+    LawfulKStar N𝕄[n,n,α] where
+  kstar_eq_sum m := by
     apply le_antisymm
     · exact axiomNMatrixStarLeωSum m
     · simp [ωSum_nat_eq_ωSup]
@@ -301,13 +302,13 @@ instance {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] [Omeg
       | zero => simp
       | succ i ih =>
         simp [Finset.sum_range_succ', pow_succ', ← Finset.mul_sum]
-        rw [← star_fin'_iter]
+        rw [← kstar_fin'_iter]
         rw [add_comm]
         gcongr
 
 section
 
-variable {α : Type*} [Semiring α] [WeightedNetKAT.Star α] [StarIter α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [LawfulStar α] [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α]
+variable {α : Type*} [Semiring α] [KStar α] [KStarIter α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [LawfulKStar α] [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α]
 
-instance {n : Type*} [Listed n] : LawfulStar (E𝕄[n,n,α]) :=
-  inferInstanceAs (LawfulStar (NMatrix (Listed.size n) (Listed.size n) α))
+instance {n : Type*} [Listed n] : LawfulKStar (E𝕄[n,n,α]) :=
+  inferInstanceAs (LawfulKStar (NMatrix (Listed.size n) (Listed.size n) α))

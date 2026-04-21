@@ -16,13 +16,14 @@ public import WeightedNetKAT.FinsuppExt
 public import WeightedNetKAT.Language
 public import WeightedNetKAT.ListExt
 public import WeightedNetKAT.MatrixExt
-public import WeightedNetKAT.Star.EMatrix
+public import WeightedNetKAT.KStar.EMatrix
 public import WeightedNetKAT.WNKA
 
 @[expose] public section
 
 open OmegaCompletePartialOrder
 open scoped RightActions
+open scoped Computability
 
 open MatrixNotation
 
@@ -238,7 +239,7 @@ end Operators
 
 namespace RPol
 
-variable [Star 𝒮]
+variable [KStar 𝒮]
 
 def E𝒪_lambda [Listed N] (p : RPol[F,N,𝒮]) :
     EMatrix Pk[F,N] Pk[F,N] (EMatrix (S p) 𝟙 𝒮) :=
@@ -268,7 +269,7 @@ def E𝒪_lambda [Listed N] (p : RPol[F,N,𝒮]) :
       let ι₁ := Eι p₁
       let 𝒪₁ := E𝒪_lambda p₁
       let X := ι₁ ⊠ₑ 𝒪₁
-      let Y : N𝕄[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮] := X^*
+      let Y : N𝕄[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮] := X∗
       Y
     .ofFn fun α β ↦
       E𝒪_lambda[
@@ -280,7 +281,7 @@ def E𝒪_heart [Listed N] [DecidableEq N] (p₁ : RPol[F,N,𝒮]) : EMatrix Pk[
   let ι₁ := Eι p₁
   let 𝒪₁ := E𝒪_lambda p₁
   let X := ι₁ ⊠ₑ 𝒪₁
-  let Y : N𝕄[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮] := X^*
+  let Y : N𝕄[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮] := X∗
   Y
 
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
@@ -297,7 +298,7 @@ theorem EMatrix.asMatrix_one {X α : Type*} [Listed X] [DecidableEq X] [Zero α]
   ext i j
   simp [EMatrix.one_apply, Matrix.one_apply]
 
-omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮] in
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [KStar 𝒮] in
 @[simp]
 theorem Eι_eq_ι {p : RPol[F,N,𝒮]} : Eι p = EMatrix.ofMatrix (ι p) := by
   classical
@@ -315,12 +316,12 @@ theorem Eι_eq_ι {p : RPol[F,N,𝒮]} : Eι p = EMatrix.ofMatrix (ι p) := by
 
 variable [DecidableEq F]
 
-variable [Listed N] [DecidableEq N] [LawfulStar N𝕄[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮]]
+variable [Listed N] [DecidableEq N] [LawfulKStar N𝕄[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮]]
 
 theorem E𝒪_heart_eq_𝒪_heart {p : RPol[F,N,𝒮]} (h : E𝒪_lambda p = EMatrix.ofMatrix₂ (𝒪 p)) :
     E𝒪_heart p = EMatrix.ofMatrix (𝒪_heart p) := by
   simp [E𝒪_heart, 𝒪_heart]
-  simp [LawfulStar.star_eq_sum]
+  simp [LawfulKStar.kstar_eq_sum]
   ext α β
   simp
   convert EMatrix.ωSum_apply (ι:=ℕ) (x:=α) (y:=β) (f:=fun n ↦ EMatrix.ofMatrix (ι p ⊠ (E𝒪_lambda p).asMatrix₂) ^ n)
@@ -489,7 +490,7 @@ omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoi
 @[simp] theorem EWNKA.toEWNKA_toWNKA : 𝔈.toWNKA.toEWNKA = 𝔈 := by simp [WNKA.toEWNKA, EWNKA.toWNKA]
 
 variable [DecidableEq F] [DecidableEq N]
-variable [Star 𝒮] [LawfulStar 𝒮] [StarIter 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮]
+variable [KStar 𝒮] [LawfulKStar 𝒮] [KStarIter 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮]
 
 @[simp] theorem RPol.wnka_toEWNKA (p : RPol[F,N,𝒮]) : p.wnka.toEWNKA = p.ewnka := by
   simp [wnka, ewnka, WNKA.toEWNKA]
@@ -547,7 +548,7 @@ def EWNKA.semArray (𝒜 : EWNKA[F,N,𝒮,Q]) (α_xs : Array Pk[F,N]) (h : 0 < �
 
 universe u
 
-omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq F] [Star 𝒮] [LawfulStar 𝒮] [StarIter 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
+omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq F] [KStar 𝒮] [LawfulKStar 𝒮] [KStarIter 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 theorem EWNKA.semArray_eq_sem {𝔈 : EWNKA[F,N,𝒮,Q]} {α_xs : Array Pk[F,N]} {β : Pk[F,N]} (h : 0 < α_xs.size) :
     (𝔈.semArray α_xs h).finish β = 𝔈.sem ⟨α_xs.toList.head (by grind [Array.ne_empty_of_size_pos]), α_xs.toList.tail, β⟩ := by
   rcases α_xs with ⟨_ | ⟨α, xs⟩⟩
@@ -572,7 +573,7 @@ theorem RPol.ewnka_sem_eq_wnka_sem (p : RPol[F,N,𝒮]) : p.ewnka.sem = 𝒜⟦~
 info: 'WeightedNetKAT.RPol.ewnka_sem_eq_wnka_sem' depends on axioms: [propext,
  Classical.choice,
  Quot.sound,
- Matrix.Star.axiomNMatrixStarLeωSum]
+ Matrix.KStar.axiomNMatrixStarLeωSum]
 -/
 #guard_msgs in
 #print axioms RPol.ewnka_sem_eq_wnka_sem

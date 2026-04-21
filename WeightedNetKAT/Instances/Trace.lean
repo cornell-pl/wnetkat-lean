@@ -75,12 +75,12 @@ instance : OmegaContinuousNonUnitalSemiring (RegularExpression α) where
     -- intro c
     -- exact ENat.iSup_mul (⇑c) x
 
-instance : WeightedNetKAT.Star (RegularExpression α) where
+instance : KStar (RegularExpression α) where
   star m := m.star
 
-instance : WeightedNetKAT.LawfulStar (RegularExpression α) where
-  star_eq_sum n := by
-    simp [WeightedNetKAT.Star.star]
+instance : LawfulKStar (RegularExpression α) where
+  kstar_eq_sum n := by
+    simp [KStar.kstar]
     sorry
 
 open RegularExpression

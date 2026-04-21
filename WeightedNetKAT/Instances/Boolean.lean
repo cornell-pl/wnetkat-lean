@@ -2,7 +2,7 @@ module
 
 public import Mathlib.Data.Fintype.Order
 public import WeightedNetKAT.Computation
-public import WeightedNetKAT.Star
+public import WeightedNetKAT.KStar
 
 @[expose] public section
 
@@ -88,11 +88,11 @@ instance : OmegaContinuousNonUnitalSemiring BoolRing where
     rcases b <;> simp [Chain.map, OrderHom.comp, Function.comp_def]
     rfl
 
-instance : WeightedNetKAT.Star BoolRing where
-  star _ := true
+instance : KStar BoolRing where
+  kstar _ := true
 
-instance : WeightedNetKAT.LawfulStar BoolRing where
-  star_eq_sum m := by
-    simp only [WeightedNetKAT.Star.star, HPow.hPow, Pow.pow, Monoid.npow, Semiring.npow]
+instance : LawfulKStar BoolRing where
+  kstar_eq_sum m := by
+    simp only [KStar.kstar, HPow.hPow, Pow.pow, Monoid.npow, Semiring.npow]
     rw [ωSum_nat_eq_succ]
     simp
