@@ -39,7 +39,7 @@ Section 3, Figure 7: RPol[F,N,𝒮]
 
 Section 4, Inline 1: GS
 Section 4, Definition 2: G p'
-Section 4, Lemma 1: p'.sem_G_theorem
+Section 4, Lemma 1: p'.sem_G
 
 /-! ## Section 5 – wNetKAT Automata -/
 
