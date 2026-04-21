@@ -8,7 +8,7 @@ public import WeightedNetKAT.WNKA.Explicit
 open OmegaCompletePartialOrder
 open scoped RightActions
 
-open scoped WeightingNotation
+open scoped MatrixNotation
 
 namespace Listed
 
@@ -118,8 +118,8 @@ instance : Listed Q'₀ where
 
 abbrev Q' (F N Q : Type) [Listed F] := (Q × Pk[F,N]) ⊕ Q'₀
 
-def I : 𝒲[𝟙, Q' F N Q, 𝒮] := η₂ () (.inr .qι)
-def Δ (β : Pk[F,N]) : 𝒲[Q' F N Q, Q' F N Q, 𝒮]
+def I : 𝕄[𝟙, Q' F N Q, 𝒮] := η₂ () (.inr .qι)
+def Δ (β : Pk[F,N]) : 𝕄[Q' F N Q, Q' F N Q, 𝒮]
   | .inl (q, α), .inl (q', β') => if β = β' then 𝔄.δ α β q q' else 0
   | .inr .qι, .inl (q, β') => if β = β' then 𝔄.ι () q else 0
   | .inl (q, α), .inr .q𝒪 => 𝔄.𝒪 α β q ()
@@ -130,23 +130,23 @@ def Δ (β : Pk[F,N]) : 𝒲[Q' F N Q, Q' F N Q, 𝒮]
   | (.inr .qι), (.inr .q𝒪) => 0
   | (.inr .qι), (.inr .qι) => 0
   | (.inl _), (.inr .qι) => 0
-def Λ : 𝒲[Q' F N Q, 𝟙, 𝒮] := η₂ (.inr .q𝒪) ()
+def Λ : 𝕄[Q' F N Q, 𝟙, 𝒮] := η₂ (.inr .q𝒪) ()
 
-def Δ_star : List Pk[F,N] → 𝒲[Q' F N Q, Q' F N Q, 𝒮]
+def Δ_star : List Pk[F,N] → 𝕄[Q' F N Q, Q' F N Q, 𝒮]
   | [] => 1
   | α::x => Δ 𝔄 α * Δ_star x
 
-def M : 𝒲[Q' F N Q, Q' F N Q, 𝒮] := ∑ (α : Pk[F,N]), Δ 𝔄 α
+def M : 𝕄[Q' F N Q, Q' F N Q, 𝒮] := ∑ (α : Pk[F,N]), Δ 𝔄 α
 
 variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [Star 𝒮]
 
-noncomputable def M_star : 𝒲[Q' F N Q, Q' F N Q, 𝒮] := Star.star (M 𝔄)
+noncomputable def M_star : 𝕄[Q' F N Q, Q' F N Q, 𝒮] := Star.star (M 𝔄)
 
 noncomputable def sem' [Listed Q] [Star 𝒮] :=
-    ((I : 𝒲[𝟙, Q' F N Q, 𝒮]) * M_star 𝔄 * (Λ : 𝒲[Q' F N Q, 𝟙, 𝒮]) : 𝒲[_, _, 𝒮]) () ()
+    ((I : 𝕄[𝟙, Q' F N Q, 𝒮]) * M_star 𝔄 * (Λ : 𝕄[Q' F N Q, 𝟙, 𝒮]) : 𝕄[_, _, 𝒮]) () ()
 
-def EI : E𝒲[𝟙, Q' F N Q, 𝒮] := Eη₂ () (.inr .qι)
-def EΔ (β : Li[Pk[F,N]]) : E𝒲[Q' F N Q, Q' F N Q, 𝒮] :=
+def EI : E𝕄[𝟙, Q' F N Q, 𝒮] := Eη₂ () (.inr .qι)
+def EΔ (β : Li[Pk[F,N]]) : E𝕄[Q' F N Q, Q' F N Q, 𝒮] :=
   .ofFn fun q q' ↦ match (Listed.Li.getSum q).map Listed.Li.getProd id, (Listed.Li.getSum q').map Listed.Li.getProd id with
     | .inl (q, α), .inl (q', β') => if β = β' then 𝔈.δ.asNMatrix₂ α β q q' else 0
     | .inr 0, .inl (q, β') => if β = β' then 𝔈.ι.asNMatrix 0 q else 0
@@ -158,26 +158,26 @@ def EΔ (β : Li[Pk[F,N]]) : E𝒲[Q' F N Q, Q' F N Q, 𝒮] :=
     | (.inr 0), (.inr 1) => 0
     | (.inr 0), (.inr 0) => 0
     | (.inl _), (.inr 0) => 0
-def EΛ : E𝒲[Q' F N Q, 𝟙, 𝒮] := Eη₂ (.inr .q𝒪) ()
+def EΛ : E𝕄[Q' F N Q, 𝟙, 𝒮] := Eη₂ (.inr .q𝒪) ()
 
-def EΔ_star : List Li[Pk[F,N]] → E𝒲[Q' F N Q, Q' F N Q, 𝒮]
+def EΔ_star : List Li[Pk[F,N]] → E𝕄[Q' F N Q, Q' F N Q, 𝒮]
   | [] => 1
   | α::xs => EΔ 𝔈 α * EΔ_star xs
-def EΔ_star' (acc : E𝒲[𝟙, Q' F N Q, 𝒮]) : List Li[Pk[F,N]] → E𝒲[𝟙, Q' F N Q, 𝒮]
+def EΔ_star' (acc : E𝕄[𝟙, Q' F N Q, 𝒮]) : List Li[Pk[F,N]] → E𝕄[𝟙, Q' F N Q, 𝒮]
   | [] => acc
   | α::xs => EΔ_star' (acc * EΔ 𝔈 α) xs
 
 def Esem : List Li[Pk[F,N]] → 𝒮 := fun x ↦
-    (EΔ_star' 𝔈 EI x * (EΛ : E𝒲[Q' F N Q, 𝟙, 𝒮]) : E𝒲[_, _, 𝒮]) () ()
+    (EΔ_star' 𝔈 EI x * (EΛ : E𝕄[Q' F N Q, 𝟙, 𝒮]) : E𝕄[_, _, 𝒮]) () ()
 
-def EM : E𝒲[Q' F N Q, Q' F N Q, 𝒮] := ∑ (α : Li[Pk[F,N]]), EΔ 𝔈 α
+def EM : E𝕄[Q' F N Q, Q' F N Q, 𝒮] := ∑ (α : Li[Pk[F,N]]), EΔ 𝔈 α
 
-def EM_star : E𝒲[Q' F N Q, Q' F N Q, 𝒮] :=
+def EM_star : E𝕄[Q' F N Q, Q' F N Q, 𝒮] :=
   let R := (EM 𝔈)^*
   R
 
 def Esem' :=
-    ((EI : E𝒲[𝟙, Q' F N Q, 𝒮]) * EM_star 𝔈 * (EΛ : E𝒲[Q' F N Q, 𝟙, 𝒮]) : E𝒲[_, _, 𝒮]) () ()
+    ((EI : E𝕄[𝟙, Q' F N Q, 𝒮]) * EM_star 𝔈 * (EΛ : E𝕄[Q' F N Q, 𝟙, 𝒮]) : E𝕄[_, _, 𝒮]) () ()
 
 omit [Fintype F] [Fintype Q] [Star 𝒮] in
 @[simp]
@@ -326,7 +326,7 @@ def extraction_len' (n : ℕ) (r : 𝒮) : Option GS[F,N] :=
       pks.findSome? (fun β ↦ if f.finish β = r then some (α_xs, β) else none))
   |>.map fun (α_xs, β) ↦ ⟨α_xs.head, α_xs.tail.toList, β⟩
 
-def extraction_len'' (acc : E𝒲[𝟙, Q, 𝒮]) (n : ℕ) (γ : Li[Pk[F,N]]) (r : 𝒮) : Option GS[F,N] :=
+def extraction_len'' (acc : E𝕄[𝟙, Q, 𝒮]) (n : ℕ) (γ : Li[Pk[F,N]]) (r : 𝒮) : Option GS[F,N] :=
   let pks := Listed.arrayOf Li[Pk[F,N]]
   match n with
   | 0 =>

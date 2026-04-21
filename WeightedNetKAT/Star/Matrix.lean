@@ -10,16 +10,18 @@ namespace Matrix.Star
 
 open WeightedNetKAT
 
+open scoped MatrixNotation
+
 section
 
 variable {α : Type*} [AddCommMonoid α] [Mul α] [WeightedNetKAT.Star α]
 
 scoped notation "𝟙" => Unit
 
-instance : WeightedNetKAT.Star (Matrix 𝟙 𝟙 α) where
+instance : WeightedNetKAT.Star 𝕄[𝟙,𝟙,α] where
   star m := (m () ())^*
 instance {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [WeightedNetKAT.Star α] [LawfulStar α] :
-    LawfulStar (Matrix 𝟙 𝟙 α) where
+    LawfulStar 𝕄[𝟙,𝟙,α] where
   star_eq_sum m := by
     have := LawfulStar.star_eq_sum (m () ())
     ext ⟨⟩ ⟨⟩
@@ -38,11 +40,11 @@ variable {α : Type*} [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α]
 variable {n : Type*} [Fintype n] [DecidableEq n]
 
 noncomputable instance instStar :
-    WeightedNetKAT.Star (Matrix n n α) where
+    WeightedNetKAT.Star 𝕄[n,n,α] where
   star m := ω∑ i : ℕ, m^i
 
 noncomputable instance instLawfulStar :
-    WeightedNetKAT.LawfulStar (Matrix n n α) where
+    WeightedNetKAT.LawfulStar 𝕄[n,n,α] where
   star_eq_sum _ := rfl
 
 end

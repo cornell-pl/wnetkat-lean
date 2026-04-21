@@ -9,7 +9,7 @@ public import WeightedNetKAT.Instances.Bottleneck
 
 @[expose] public section
 
-open WeightingNotation
+open MatrixNotation
 
 namespace WeightedNetKAT
 
@@ -133,7 +133,7 @@ def RPol.eval_string {F N 𝒮 : Type}
       p.ewnka.sem s
 
 instance myRepr {α A B : Type} [DecidableEq α] [Zero α] [DecidableEq A] [DecidableEq B]
-    [Listed A] [Listed B] [Repr α] [Repr A] [Repr B] : Repr 𝒲[A, B, α] where
+    [Listed A] [Listed B] [Repr α] [Repr A] [Repr B] : Repr 𝕄[A, B, α] where
   reprPrec m n :=
     reprPrec (Listed.listOf (A × B) |>.filter (fun (a, b) ↦ m a b ≠ 0) |>.map (fun (a, b) ↦ s!"{reprStr a},{reprStr b}↦{reprStr (m a b)}")) n
 
@@ -144,8 +144,8 @@ instance {F N 𝒮 : Type}
     [DecidableEq 𝒮] [Star 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) : Repr (WNKA F N 𝒮 (S p)) where
   reprPrec m n :=
     let ι := m.ι
-    let δ : List (Pk[F,N] × Pk[F,N] × 𝒲[S p, S p, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, m.δ α β)) |>.filter (·.2.2 ≠ 0)
-    let 𝓁 : List (Pk[F,N] × Pk[F,N] × 𝒲[S p, 𝟙, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, m.𝒪 α β)) |>.filter (·.2.2 ≠ 0)
+    let δ : List (Pk[F,N] × Pk[F,N] × 𝕄[S p, S p, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, m.δ α β)) |>.filter (·.2.2 ≠ 0)
+    let 𝓁 : List (Pk[F,N] × Pk[F,N] × 𝕄[S p, 𝟙, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, m.𝒪 α β)) |>.filter (·.2.2 ≠ 0)
 
     let q : Pk[F,N] → String := fun x ↦ reprStr <| Listed.array.map x
 

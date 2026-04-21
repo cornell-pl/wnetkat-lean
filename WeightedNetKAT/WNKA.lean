@@ -20,7 +20,7 @@ public import WeightedNetKAT.Star
 open scoped RightActions
 open OmegaCompletePartialOrder
 
-open WeightingNotation
+open MatrixNotation
 
 namespace WeightedNetKAT
 
@@ -41,12 +41,12 @@ scoped notation "𝟙" => Unit
 -/
 structure WNKA (F N 𝒮 Q: Type) [Semiring 𝒮] [Listed F] where
   /-- `ι` is the initial weightings. -/
-  ι : 𝒲[𝟙,Q,𝒮]
+  ι : 𝕄[𝟙,Q,𝒮]
   /-- `δ` is a family of transition functions `B[α,β] : Q → 𝒞 𝒮 Q` indexed by packet pairs. -/
-  δ : (α β : Pk[F,N]) → 𝒲[Q,Q,𝒮]
+  δ : (α β : Pk[F,N]) → 𝕄[Q,Q,𝒮]
   /-- `𝒪` is a family of output weightings `R[α,β] : 𝒞 𝒮 Q` indexed by packet pairs. Note that
     we use 𝒪 instead of λ, since λ is the function symbol in Lean. -/
-  𝒪 : (α β : Pk[F,N]) → 𝒲[Q,𝟙,𝒮]
+  𝒪 : (α β : Pk[F,N]) → 𝕄[Q,𝟙,𝒮]
 notation "WNKA[" F "," N "," 𝒮 "," Q "]" => WNKA F N 𝒮 Q
 
 namespace WNKA
@@ -58,13 +58,13 @@ def sem [DecidableEq N] [DecidableEq F] (𝒜 : WNKA[F,N,𝒮,Q]) : GS[F,N] →c
     (((α :: xs).zip xs).foldl (fun acc (γ, κ) ↦ acc * 𝒜.δ γ κ) 𝒜.ι * 𝒜.𝒪 (xs.getLast?.getD α) β) () (),
     SetCoe.countable _⟩
 
-def xδ (d : Pk[F,N] → Pk[F,N] → 𝒲[Q, Q, 𝒮]) (xs : List Pk[F,N]) : 𝒲[Q, Q, 𝒮] :=
+def xδ (d : Pk[F,N] → Pk[F,N] → 𝕄[Q, Q, 𝒮]) (xs : List Pk[F,N]) : 𝕄[Q, Q, 𝒮] :=
   match xs with
   | [] | [_] => 1
   | α::α'::xs => d α α' * xδ d (α'::xs)
 
 omit [Listed N] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
-theorem xδ_right (f : Pk[F,N] → Pk[F,N] → 𝒲[Q, Q, 𝒮]) (A : List Pk[F,N]) {α₁ α₀} :
+theorem xδ_right (f : Pk[F,N] → Pk[F,N] → 𝕄[Q, Q, 𝒮]) (A : List Pk[F,N]) {α₁ α₀} :
     xδ f (A ++ [α₁, α₀]) = (xδ f (A ++ [α₁]) * f α₁ α₀) := by
   induction A with
   | nil => simp [xδ]
@@ -78,7 +78,7 @@ theorem xδ_right (f : Pk[F,N] → Pk[F,N] → 𝒲[Q, Q, 𝒮]) (A : List Pk[F,
       simp [Matrix.mul_assoc]
 
 omit [Listed N] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
-theorem xδ_δ'_as_sum_unfolded [Inhabited Pk[F,N]] {xₙ : List Pk[F,N]} {l r : 𝒲[Pk[F,N], Pk[F,N], 𝒲[Q, Q, 𝒮]]} :
+theorem xδ_δ'_as_sum_unfolded [Inhabited Pk[F,N]] {xₙ : List Pk[F,N]} {l r : 𝕄[Pk[F,N], Pk[F,N], 𝕄[Q, Q, 𝒮]]} :
       xδ (l + r) xₙ
     = xδ l xₙ +
       ∑ n ∈ Finset.range (xₙ.length - 1),
@@ -147,18 +147,6 @@ instance : Unique (Fin (Listed.size 𝟙)) where
 
 instance S.instDecidableEq (p : RPol[F,N,𝒮]) : DecidableEq (S p) := S.decidableEq p
 
-/-- A column vector -/
-scoped notation "C[" a "," b"]" => Matrix.fromCols a b
-/-- A row vector -/
-scoped notation "R[" a "," b"]" => Matrix.fromRows a b
-/-- A block matrix -/
-scoped notation "B[" "[" a ", " b "]" ", " "[" c ", " d "]" "]" => Matrix.fromBlocks a b c d
-
-alias C_mul_R := Matrix.fromCols_mul_fromRows
-alias C_mul_B := Matrix.fromCols_mul_fromBlocks
-alias B_mul_B := Matrix.fromBlocks_multiply
-alias B_mul_R := Matrix.fromBlocks_mul_fromRows
-
 @[reducible]
 instance S.fintype (p : RPol[F,N,𝒮]) : Fintype (S p) :=
   match p with
@@ -183,7 +171,7 @@ instance S.listed (p : RPol[F,N,𝒮]) : Listed (S p) :=
 
 abbrev η₁ {X : Type} [DecidableEq X] (i : X) : X → 𝒮 :=
   fun i' ↦ if i = i' then 1 else 0
-abbrev η₂ {X Y : Type} [DecidableEq X] [DecidableEq Y] (i : X) (j : Y) : 𝒲[X,Y,𝒮] :=
+abbrev η₂ {X Y : Type} [DecidableEq X] [DecidableEq Y] (i : X) (j : Y) : 𝕄[X,Y,𝒮] :=
   fun i' j' ↦ if i = i' ∧ j = j' then 1 else 0
 
 section Operators
@@ -199,34 +187,34 @@ variable {N : Type*} [Fintype N]
 variable {A B C : Type*} [Fintype A] [Fintype B] [Fintype C]
 variable {Q : Type*} [AddCommMonoid Q] [Mul Q]
 
-def box [Unique A] (l : 𝒲[A, B, Q]) (r : 𝒲[N, N, 𝒲[B, A, Q]]) : 𝒲[N, N, Q] :=
+def box [Unique A] (l : 𝕄[A, B, Q]) (r : 𝕄[N, N, 𝕄[B, A, Q]]) : 𝕄[N, N, Q] :=
   fun α β ↦ (l * r α β).down
 infixl:70 " ⊠ " => box
 
-def fox (l : 𝒲[A, B, Q]) (r : 𝒲[N, N, 𝒲[B, C, Q]]) : 𝒲[N, N, 𝒲[A, C, Q]] :=
+def fox (l : 𝕄[A, B, Q]) (r : 𝕄[N, N, 𝕄[B, C, Q]]) : 𝕄[N, N, 𝕄[A, C, Q]] :=
   fun α β ↦ l * r α β
 infixl:70 " ⊡ " => fox
 
-def sox (l : 𝒲[N, N, Q]) (r : 𝒲[N, N, 𝒲[A, B, Q]]) : 𝒲[N, N, 𝒲[A, B, Q]] :=
+def sox (l : 𝕄[N, N, Q]) (r : 𝕄[N, N, 𝕄[A, B, Q]]) : 𝕄[N, N, 𝕄[A, B, Q]] :=
   fun α β ↦ ∑ m, l α m •> r m β
 infixl:70 " ⊟> " => sox
 
-def sox' (l : 𝒲[N, N, 𝒲[A, B, Q]]) (r : 𝒲[N, N, Q]) : 𝒲[N, N, 𝒲[A, B, Q]] :=
+def sox' (l : 𝕄[N, N, 𝕄[A, B, Q]]) (r : 𝕄[N, N, Q]) : 𝕄[N, N, 𝕄[A, B, Q]] :=
   fun α β ↦ ∑ m, l α m <• r m β
 infixl:70 " <⊟ " => sox'
 
-def crox (l : 𝒲[N, N, 𝒲[A, B, Q]]) (r : 𝒲[N, N, 𝒲[B, C, Q]]) : 𝒲[N, N, 𝒲[A, C, Q]] :=
+def crox (l : 𝕄[N, N, 𝕄[A, B, Q]]) (r : 𝕄[N, N, 𝕄[B, C, Q]]) : 𝕄[N, N, 𝕄[A, C, Q]] :=
   fun α β ↦ ∑ m, l α m * r m β
 infixl:70 " ⊞ " => crox
 
 omit [Fintype A] [Fintype B]
 
-theorem add_sox [RightDistribClass Q] (l l' : 𝒲[N, N, Q]) (r : 𝒲[N, N, 𝒲[A, B, Q]]) :
+theorem add_sox [RightDistribClass Q] (l l' : 𝕄[N, N, Q]) (r : 𝕄[N, N, 𝕄[A, B, Q]]) :
     ((l + l') ⊟> r) = (l ⊟> r) + (l' ⊟> r) := by
   ext α β a b
   simp [sox, Matrix.sum_apply, add_mul, Finset.sum_add_distrib]
 
-theorem mul_sox {Q : Type*} [NonUnitalSemiring Q] (l l' : 𝒲[N, N, Q]) (r : 𝒲[N, N, 𝒲[A, B, Q]]) :
+theorem mul_sox {Q : Type*} [NonUnitalSemiring Q] (l l' : 𝕄[N, N, Q]) (r : 𝕄[N, N, 𝕄[A, B, Q]]) :
     ((l * l') ⊟> r) = (l ⊟> (l' ⊟> r)) := by
   ext α β a b
   simp [sox, Matrix.sum_apply, Matrix.mul_apply, Finset.mul_sum, Finset.sum_mul, ← mul_assoc]
@@ -235,8 +223,8 @@ theorem mul_sox {Q : Type*} [NonUnitalSemiring Q] (l l' : 𝒲[N, N, Q]) (r : �
 variable [DecidableEq N]
 
 @[simp]
-theorem one_sox {Q : Type*} [Semiring Q] (r : 𝒲[N, N, 𝒲[A, B, Q]]) :
-    ((1 : 𝒲[N, N, Q]) ⊟> r) = r := by
+theorem one_sox {Q : Type*} [Semiring Q] (r : 𝕄[N, N, 𝕄[A, B, Q]]) :
+    ((1 : 𝕄[N, N, Q]) ⊟> r) = r := by
   ext α β a b
   simp [sox, Matrix.one_apply]
 
@@ -249,7 +237,7 @@ variable [DecidableEq N] [DecidableEq F]
 
 namespace RPol
 
-def ι (p : RPol[F,N,𝒮]) : 𝒲[𝟙,S p,𝒮] := match p with
+def ι (p : RPol[F,N,𝒮]) : 𝕄[𝟙,S p,𝒮] := match p with
   | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} =>
     η₂ () ()
   | wnk_rpol {dup} => η₂ () ♡
@@ -260,9 +248,9 @@ def ι (p : RPol[F,N,𝒮]) : 𝒲[𝟙,S p,𝒮] := match p with
 
 mutual
 
-def 𝒪_heart (p₁ : RPol[F,N,𝒮]) : 𝒲[Pk[F,N],Pk[F,N],𝒮] := (ι p₁ ⊠ 𝒪 p₁)^*
+def 𝒪_heart (p₁ : RPol[F,N,𝒮]) : 𝕄[Pk[F,N],Pk[F,N],𝒮] := (ι p₁ ⊠ 𝒪 p₁)^*
 
-def 𝒪 (p : RPol[F,N,𝒮]) : 𝒲[Pk[F,N],Pk[F,N],𝒲[S p,𝟙,𝒮]] := fun α β ↦
+def 𝒪 (p : RPol[F,N,𝒮]) : 𝕄[Pk[F,N],Pk[F,N],𝕄[S p,𝟙,𝒮]] := fun α β ↦
   match p with
   | wnk_rpol {drop} => 0
   | wnk_rpol {skip} => if α = β then fun _ ↦ 1 else 0
@@ -278,7 +266,7 @@ def 𝒪 (p : RPol[F,N,𝒮]) : 𝒲[Pk[F,N],Pk[F,N],𝒲[S p,𝟙,𝒮]] := fun
 
 end
 
-def δ (p : RPol[F,N,𝒮]) : 𝒲[Pk[F,N],Pk[F,N],𝒲[S p,S p,𝒮]] := fun α β ↦
+def δ (p : RPol[F,N,𝒮]) : 𝕄[Pk[F,N],Pk[F,N],𝕄[S p,S p,𝒮]] := fun α β ↦
   match p with
   | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} =>
     0
@@ -293,21 +281,21 @@ def δ (p : RPol[F,N,𝒮]) : 𝒲[Pk[F,N],Pk[F,N],𝒲[S p,S p,𝒮]] := fun α
   | wnk_rpol {~p₁*} =>
     B[[δ' p₁ α β, 0],
       [(𝒪_heart p₁ ⊟> (ι p₁ ⊡ δ p₁)) α β, 0]]
-where δ' (p₁ : RPol[F,N,𝒮]) : 𝒲[Pk[F,N], Pk[F,N], 𝒲[S p₁, S p₁, 𝒮]] := δ p₁ + (𝒪 p₁ ⊞ (𝒪_heart p₁ ⊟> (ι p₁ ⊡ δ p₁)))
+where δ' (p₁ : RPol[F,N,𝒮]) : 𝕄[Pk[F,N], Pk[F,N], 𝕄[S p₁, S p₁, 𝒮]] := δ p₁ + (𝒪 p₁ ⊞ (𝒪_heart p₁ ⊟> (ι p₁ ⊡ δ p₁)))
 
-def 𝒪ₐ_heart (p₁ : RPol[F,N,𝒮]) (n : ℕ) : 𝒲[Pk[F,N],Pk[F,N],𝒮] :=
+def 𝒪ₐ_heart (p₁ : RPol[F,N,𝒮]) (n : ℕ) : 𝕄[Pk[F,N],Pk[F,N],𝒮] :=
   ∑ i ∈ Finset.range n, (ι p₁ ⊠ 𝒪 p₁)^i
-def ιₐ (p : RPol[F,N,𝒮]) : 𝒲[𝟙,S p ⊕ 𝟙,𝒮] :=
+def ιₐ (p : RPol[F,N,𝒮]) : 𝕄[𝟙,S p ⊕ 𝟙,𝒮] :=
   C[0, fun () ↦ 1]
-def 𝒪ₐ (p : RPol[F,N,𝒮]) (n : ℕ) : 𝒲[Pk[F,N],Pk[F,N],𝒲[S p ⊕ 𝟙,𝟙,𝒮]] := fun α β ↦
+def 𝒪ₐ (p : RPol[F,N,𝒮]) (n : ℕ) : 𝕄[Pk[F,N],Pk[F,N],𝕄[S p ⊕ 𝟙,𝟙,𝒮]] := fun α β ↦
     R[
       (𝒪 p <⊟ 𝒪ₐ_heart p n) α β,
       𝒪ₐ_heart p n α β
     ]
-def δₐ (p : RPol[F,N,𝒮]) (n : ℕ) : 𝒲[Pk[F,N],Pk[F,N],𝒲[S p ⊕ 𝟙,S p ⊕ 𝟙,𝒮]] := fun α β ↦
+def δₐ (p : RPol[F,N,𝒮]) (n : ℕ) : 𝕄[Pk[F,N],Pk[F,N],𝕄[S p ⊕ 𝟙,S p ⊕ 𝟙,𝒮]] := fun α β ↦
   B[[δ' p n α β, 0],
     [(𝒪ₐ_heart p n ⊟> (ι p ⊡ δ p)) α β, 0]]
-where δ' (p : RPol[F,N,𝒮]) (n : ℕ) : 𝒲[Pk[F,N], Pk[F,N], 𝒲[S p, S p, 𝒮]] := δ p + (𝒪 p ⊞ (𝒪ₐ_heart p n ⊟> (ι p ⊡ δ p)))
+where δ' (p : RPol[F,N,𝒮]) (n : ℕ) : 𝕄[Pk[F,N], Pk[F,N], 𝕄[S p, S p, 𝒮]] := δ p + (𝒪 p ⊞ (𝒪ₐ_heart p n ⊟> (ι p ⊡ δ p)))
 
 theorem xδ_δ_iter {p₁ : RPol[F,N,𝒮]} {α : Pk[F,N]} {xₙ : List Pk[F,N]} :
       xδ (δ p₁.Iter) (α :: xₙ)
@@ -315,7 +303,7 @@ theorem xδ_δ_iter {p₁ : RPol[F,N,𝒮]} {α : Pk[F,N]} {xₙ : List Pk[F,N]}
         [if xₙ = [] then 0 else ((𝒪_heart p₁ ⊟> (ι p₁ ⊡ δ p₁)) α (xₙ.head?.getD α) * xδ (δ.δ' p₁) xₙ), if xₙ = [] then 1 else 0]] := by
   induction xₙ generalizing α with
   | nil => simp [S, xδ]
-  | cons α₁ xₙ ih => rw [xδ, ih, δ, B_mul_B]; simp; rfl
+  | cons α₁ xₙ ih => rw [xδ, ih, δ, Matrix.B_mul_B]; simp; rfl
 
 theorem xδ_δₐ_iter {p₁ : RPol[F,N,𝒮]} {α  : Pk[F,N]} {xₙ : List Pk[F,N]} {n} :
       xδ (δₐ p₁ n) (α :: xₙ)
@@ -323,7 +311,7 @@ theorem xδ_δₐ_iter {p₁ : RPol[F,N,𝒮]} {α  : Pk[F,N]} {xₙ : List Pk[F
         [if xₙ = [] then 0 else ((𝒪ₐ_heart p₁ n ⊟> (ι p₁ ⊡ δ p₁)) α (xₙ.head?.getD α) * xδ (δₐ.δ' p₁ n) xₙ),if xₙ = [] then 1 else 0]] := by
   induction xₙ generalizing α with
   | nil => simp only [xδ, ↓reduceIte, Matrix.fromBlocks_one]
-  | cons α₁ xₙ ih => rw [xδ, ih, δₐ, B_mul_B]; simp [xδ]
+  | cons α₁ xₙ ih => rw [xδ, ih, δₐ, Matrix.B_mul_B]; simp [xδ]
 
 theorem xδ_seq_eq {p₁ p₂ : RPol[F,N,𝒮]} [Inhabited Pk[F,N]] {A} :
       xδ (δ wnk_rpol {~p₁; ~p₂}) A =
@@ -341,7 +329,7 @@ theorem xδ_seq_eq {p₁ p₂ : RPol[F,N,𝒮]} [Inhabited Pk[F,N]] {A} :
       simp [xδ_right]
       rw [ih]; clear ih
       simp [δ]
-      rw [B_mul_B]
+      rw [Matrix.B_mul_B]
       simp only [Matrix.mul_zero, add_zero, Matrix.mul_sum, ← Matrix.mul_assoc, Matrix.sum_mul, ←
         Finset.sum_add_distrib, Matrix.zero_mul, zero_mul, Finset.sum_const_zero, zero_add]
       congr! 4 with γ hi
@@ -391,7 +379,7 @@ def 𝒜 (p : RPol[F,N,𝒮]) := p.wnka.sem
 instance : Semantics F N 𝒮 𝒜 where
 
 /-- `Q⟦·⟧` is the **automata semantics** of `p` expressed as a matrix -/
-def Q (p : RPol[F,N,𝒮]) (xᵢ : List Pk[F,N]) : 𝒲[Pk[F,N], Pk[F,N], 𝒮] :=
+def Q (p : RPol[F,N,𝒮]) (xᵢ : List Pk[F,N]) : 𝕄[Pk[F,N], Pk[F,N], 𝒮] :=
   fun α β ↦ 𝒜⟦~p⟧ ⟨α, xᵢ, β⟩
 instance : Semantics F N 𝒮 Q where
 
@@ -403,12 +391,12 @@ def 𝒜ₐ (p : RPol[F,N,𝒮]) (n : ℕ) : GS F N → 𝒮 :=
 instance : Semantics F N 𝒮 𝒜ₐ where
 
 /-- `M⟦·⟧` is the **language semantics** of `p` expressed as a matrix -/
-def M (p : RPol[F,N,𝒮]) (xᵢ : List Pk[F,N]) : 𝒲[Pk[F,N], Pk[F,N], 𝒮] :=
+def M (p : RPol[F,N,𝒮]) (xᵢ : List Pk[F,N]) : 𝕄[Pk[F,N], Pk[F,N], 𝒮] :=
   fun α β ↦ G⟦~p⟧ ⟨α, xᵢ, β⟩
 instance : Semantics F N 𝒮 M where
 
 /-- `Qₐ⟦·⟧` is the **`n`-bounded automata semantics** of `p` expressed as a matrix -/
-def Qₐ (p : RPol[F,N,𝒮]) (n : ℕ) (xs : List Pk[F,N]) : 𝒲[Pk[F,N],Pk[F,N],𝒮] :=
+def Qₐ (p : RPol[F,N,𝒮]) (n : ℕ) (xs : List Pk[F,N]) : 𝕄[Pk[F,N],Pk[F,N],𝒮] :=
   fun a b ↦ 𝒜ₐ⟦~p⟧ n ⟨a, xs, b⟩
 instance : Semantics F N 𝒮 Qₐ where
 
@@ -420,7 +408,7 @@ instance : Semantics F N 𝒮 M' where
 theorem 𝒜ₐ_iter_empty {α β} {n} : 𝒜ₐ⟦~p⟧ n ⟨α, [], β⟩ = 𝒪ₐ_heart p n α β := by
   conv => left; simp [𝒜ₐ, Semantics.sem]
   simp [xδ, ιₐ, 𝒪ₐ]
-  rw [C_mul_R]
+  rw [Matrix.C_mul_R]
   simp only [Matrix.down, Matrix.zero_mul, PUnit.default_eq_unit, Matrix.add_apply,
     Matrix.zero_apply, Matrix.mul_apply, Finset.univ_unique, Pi.one_apply, Matrix.up_apply, one_mul,
     Finset.sum_const, Finset.card_singleton, one_smul, zero_add]
@@ -516,13 +504,13 @@ theorem 𝒜_dup : 𝒜_proof dup := by
 @[simp]
 theorem 𝒜_add_eq {p₁ p₂ : RPol[F,N,𝒮]} : 𝒜⟦~p₁ ⨁ ~p₂⟧ = 𝒜⟦~p₁⟧ + 𝒜⟦~p₂⟧ := by
   ext ⟨α, (_ | ⟨γ, xs⟩), β⟩
-  · simp [𝒜_def', ι, 𝒪, C_mul_R]
-  · simp [𝒜_def', ι, 𝒪, δ, C_mul_B, ← Matrix.mul_assoc]
+  · simp [𝒜_def', ι, 𝒪, Matrix.C_mul_R]
+  · simp [𝒜_def', ι, 𝒪, δ, Matrix.C_mul_B, ← Matrix.mul_assoc]
     generalize ι p₁ * δ p₁ α γ = i₁
     generalize ι p₂ * δ p₂ α γ = i₂
     induction xs generalizing i₁ i₂ α β γ with
-    | nil => simp [C_mul_R]
-    | cons x xs ih => simp [C_mul_B, ← Matrix.mul_assoc, ih]
+    | nil => simp [Matrix.C_mul_R]
+    | cons x xs ih => simp [Matrix.C_mul_B, ← Matrix.mul_assoc, ih]
 
 theorem 𝒜_add {p₁ p₂} (ih₁ : 𝒜⟦~p₁⟧ = G⟦~p₁⟧) (ih₂ : 𝒜⟦~p₂⟧ = G⟦~p₂⟧) : 𝒜_proof ~p₁ ⨁ ~p₂ := by
   simp [ih₁, ih₂, G]
@@ -536,16 +524,16 @@ theorem 𝒜_weight {w p} (ih : 𝒜⟦~p⟧ = G⟦~p⟧) : 𝒜_proof ~w ⨀ ~p
 @[simp]
 theorem 𝒜_seq_eq {p₁ p₂ : RPol[F,N,𝒮]} : 𝒜⟦~p₁ ; ~p₂⟧ = (𝒜⟦~p₁⟧ ♢ 𝒜⟦~p₂⟧) := by
   ext ⟨α, (_ | ⟨γ, xs⟩), β⟩
-  · simp only [𝒜_def', ↓reduceIte, ι, 𝒪, C_mul_R, Matrix.mul_sum, ← Matrix.mul_assoc,
+  · simp only [𝒜_def', ↓reduceIte, ι, 𝒪, Matrix.C_mul_R, Matrix.mul_sum, ← Matrix.mul_assoc,
     Matrix.zero_mul, Matrix.add_apply, Matrix.sum_apply, Matrix.zero_apply, add_zero,
     G.concat_apply, List.length_nil, zero_add, Finset.range_one, GS.splitAtJoined, List.splitAt_eq,
     List.take_nil, List.drop_nil, ← Matrix.unit_mul_apply, Finset.sum_const, Finset.card_singleton,
     one_smul]
-  · simp [𝒜_def'', ι, 𝒪, δ, C_mul_B, ← Matrix.mul_assoc, G.concat_apply, GS.splitAtJoined, xδ]
+  · simp [𝒜_def'', ι, 𝒪, δ, Matrix.C_mul_B, ← Matrix.mul_assoc, G.concat_apply, GS.splitAtJoined, xδ]
     letI : Inhabited Pk[F,N] := ⟨α⟩
     simp [List.getLast?_cons]
     rw [xδ_seq_eq]
-    simp [C_mul_B, C_mul_R]
+    simp [Matrix.C_mul_B, Matrix.C_mul_R]
     rw [Finset.sum_range_succ]
     simp [Matrix.mul_sum, Matrix.sum_mul, xδ, List.getLast?_cons]
     rw [add_comm]
@@ -588,7 +576,7 @@ theorem Q_nil_iter_eq_𝒜 {i α γ} : (Q⟦~p⟧ [] ^ i) α γ = (𝒜⟦~p⟧ 
 
 @[simp]
 theorem 𝒜_iter_nil {α β} : 𝒜⟦~p*⟧ ⟨α, [], β⟩ = 𝒪_heart p α β := by
-  rw [𝒜_def']; simp [ι, 𝒪, C_mul_R]
+  rw [𝒜_def']; simp [ι, 𝒪, Matrix.C_mul_R]
 
 theorem 𝒜_pow_empty {i} {α β} : (𝒜⟦~p⟧ ^ i) (α, [], β) = ((ι p ⊠ 𝒪 p) ^ i) α β := by
   induction i generalizing α β with
@@ -609,7 +597,7 @@ theorem 𝒜ₐ_iter_nonempty {α α₀ β} {xₙ} {n} :
   conv => left; simp [𝒜ₐ, Semantics.sem]
   simp [ιₐ, 𝒪ₐ]
   rw [xδ_δₐ_iter]
-  simp [C_mul_B, C_mul_R, δₐ.δ']
+  simp [Matrix.C_mul_B, Matrix.C_mul_R, δₐ.δ']
   rw [xδ_δ'_as_sum_unfolded]
   simp
   have 𝒪_heart_eq {n} : 𝒪ₐ_heart p n = ∑ m ∈ Finset.range n, (Q⟦~p⟧^m) [] := by
@@ -634,7 +622,7 @@ theorem 𝒜ₐ_iter_nonempty {α α₀ β} {xₙ} {n} :
       simp [ιₐ, 𝒪ₐ]
       rw [xδ_δₐ_iter]
       simp
-      rw [C_mul_B, C_mul_R]
+      rw [Matrix.C_mul_B, Matrix.C_mul_R]
       simp
       simp at hi
       split_ifs with hi'
@@ -699,7 +687,7 @@ theorem M_seq xs : M⟦~p ; ~p'⟧ xs = ∑ c ∈ ..=‖xs‖, M⟦~p⟧ (xs[..c
   ext
   simp [M, G, Semantics.sem, G.concat_apply, GS.splitAtJoined]
   simp [G_eq_M, Semantics.sem, ← Matrix.mul_apply, ← Matrix.sum_apply]
-theorem M_skip {xs : List Pk[F,N]} : M⟦skip⟧ xs = if xs = [] then (1 : 𝒲[_,_,𝒮]) else 0 := by
+theorem M_skip {xs : List Pk[F,N]} : M⟦skip⟧ xs = if xs = [] then (1 : 𝕄[_,_,𝒮]) else 0 := by
   ext α β
   rcases xs with _ | ⟨_, _⟩ <;> simp [M, Semantics.sem]
   rfl
@@ -718,7 +706,7 @@ theorem M_iter_eq_buckets {xs : List Pk[F,N]} {n : ℕ} :
   induction i generalizing xs with
   | zero =>
     simp [M_skip, M_seq, Finset.sum_range_succ]
-    have {a b : 𝒲[Pk[F,N], Pk[F,N], 𝒮]} : a = 0 → a + b = b := by simp_all
+    have {a b : 𝕄[Pk[F,N], Pk[F,N], 𝒮]} : a = 0 → a + b = b := by simp_all
     apply this; clear this
     simp_all
   | succ n ih =>
@@ -893,7 +881,7 @@ theorem 𝒜_iter_nonempty {α α₀ β} {xₙ} :
   rw [𝒜_def'']
   simp [ι, 𝒪]
   rw [xδ_δ_iter]
-  simp [← Matrix.mul_assoc, C_mul_B, C_mul_R, δ.δ']
+  simp [← Matrix.mul_assoc, Matrix.C_mul_B, Matrix.C_mul_R, δ.δ']
   rw [xδ_δ'_as_sum_unfolded]
   have 𝒪_heart_eq : 𝒪_heart p = ω∑ (m : ℕ), (Q⟦~p⟧^m) [] := by
     ext α γ; simp [𝒪_heart, LawfulStar.star_eq_sum]; congr! with i
@@ -913,14 +901,14 @@ theorem 𝒜_iter_nonempty {α α₀ β} {xₙ} :
       rcases xₙ with _ | ⟨α₁, xₙ⟩
       · simp [xδ, Matrix.down]
       congr! with i hi γ hγ
-      have {x y : 𝒲[𝟙, 𝟙, 𝒮]} : (x * y) () () = x () () * y () () := by simp [Matrix.mul_apply]
+      have {x y : 𝕄[𝟙, 𝟙, 𝒮]} : (x * y) () () = x () () * y () () := by simp [Matrix.mul_apply]
       nth_rw 2 [Matrix.mul_assoc]
       nth_rw 1 [Matrix.mul_assoc]
       simp [this]
       congr
-      simp [𝒜_def'', ι, 𝒪, C_mul_R]
+      simp [𝒜_def'', ι, 𝒪, Matrix.C_mul_R]
       rw [xδ_δ_iter]
-      simp [C_mul_B, C_mul_R]
+      simp [Matrix.C_mul_B, Matrix.C_mul_R]
       simp at hi
       split_ifs with hi'
       · omega

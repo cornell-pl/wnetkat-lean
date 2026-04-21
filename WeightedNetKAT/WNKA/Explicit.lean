@@ -24,7 +24,7 @@ public import WeightedNetKAT.WNKA
 open OmegaCompletePartialOrder
 open scoped RightActions
 
-open WeightingNotation
+open MatrixNotation
 
 @[simp]
 theorem Listed.array_sum_eq_finset_sum {ι α : Type*} [Listed ι] [AddCommMonoid α] (f : ι → α) :
@@ -53,12 +53,12 @@ structure EWNKA (F N 𝒮 Q: Type)
     [Listed Q]
 where
   /-- `ι` is the initial weightings. -/
-  ι : E𝒲[𝟙,Q,𝒮]
+  ι : E𝕄[𝟙,Q,𝒮]
   /-- `δ` is a family of transition functions `δ[α,β] : Q → 𝒞 𝒮 Q` indexed by packet pairs. -/
-  δ : E𝒲[Pk[F,N], Pk[F,N], E𝒲[Q,Q,𝒮]]
+  δ : E𝕄[Pk[F,N], Pk[F,N], E𝕄[Q,Q,𝒮]]
   /-- `𝒪` is a family of output weightings `𝒪[α,β] : 𝒞 𝒮 Q` indexed by packet pairs. Note that
     we use 𝒪 instead of λ, since λ is the function symbol in Lean. -/
-  𝒪 : E𝒲[Pk[F,N], Pk[F,N], E𝒲[Q,𝟙,𝒮]]
+  𝒪 : E𝕄[Pk[F,N], Pk[F,N], E𝕄[Q,𝟙,𝒮]]
 notation "EWNKA[" F "," N "," 𝒮 "," Q "]" => EWNKA F N 𝒮 Q
 
 def S.Eι {X Y : Type} [Listed X] [Listed Y] : (EMatrix 𝟙 X 𝒮) → (EMatrix 𝟙 Y 𝒮) → (EMatrix 𝟙 (X ⊕ Y) 𝒮) :=
@@ -137,8 +137,8 @@ section Operators
 variable {Pk : Type} [Listed Pk]
 
 def boxₑ {X} [Listed X] {Q : Type} [Mul Q] [AddCommMonoid Q] {Z : Type} [Listed Z] [Unique Z]
-    (l : E𝒲[Z, X, Q]) (r : E𝒲[Pk, Pk, E𝒲[X, Z, Q]]) :
-    E𝒲[Pk,Pk,Q] :=
+    (l : E𝕄[Z, X, Q]) (r : E𝕄[Pk, Pk, E𝕄[X, Z, Q]]) :
+    E𝕄[Pk,Pk,Q] :=
   .ofFn fun α β ↦ (l * r.asNMatrix α β).asNMatrix ⟨0, by simp⟩ ⟨0, by simp⟩
 
 infixr:50 " ⊠ₑ " => boxₑ
@@ -150,7 +150,7 @@ theorem _root_.Liste.decodeFin_unique {α : Type*} [Listed α] [Unique α] (i : 
 
 @[simp]
 theorem boxₑ_eq_box {X} [Listed X] [Fintype X] {Q : Type} [Mul Q] [AddCommMonoid Q] {Z : Type} [Listed Z] [Unique Z]
-    (l : E𝒲[Z, X, Q]) (r : E𝒲[Pk, Pk, E𝒲[X, Z, Q]]) :
+    (l : E𝕄[Z, X, Q]) (r : E𝕄[Pk, Pk, E𝕄[X, Z, Q]]) :
     boxₑ l r = EMatrix.ofMatrix (box l.asMatrix r.asMatrix₂) := by
   ext
   simp only [boxₑ, EMatrix.asNMatrix_apply, Liste.decodeFin_unique, EMatrix.mul_apply,
@@ -159,8 +159,8 @@ theorem boxₑ_eq_box {X} [Listed X] [Fintype X] {Q : Type} [Mul Q] [AddCommMono
 
 def foxₑ {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B] [Listed C]
-    (l : E𝒲[A, B, Q]) (r : E𝒲[Pk, Pk, E𝒲[B, C, Q]]) :
-    E𝒲[Pk, Pk, E𝒲[A, C, Q]] :=
+    (l : E𝕄[A, B, Q]) (r : E𝕄[Pk, Pk, E𝕄[B, C, Q]]) :
+    E𝕄[Pk, Pk, E𝕄[A, C, Q]] :=
   .ofFn fun α β ↦ l * r.asNMatrix α β
 
 infixr:50 " ⊡ₑ " => foxₑ
@@ -169,7 +169,7 @@ infixr:50 " ⊡ₑ " => foxₑ
 theorem foxₑ_eq_fox{A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B] [Listed C] [Fintype A]
     [Fintype B] [Fintype C]
-    (l : E𝒲[A, B, Q]) (r : E𝒲[Pk, Pk, E𝒲[B, C, Q]]) :
+    (l : E𝕄[A, B, Q]) (r : E𝕄[Pk, Pk, E𝕄[B, C, Q]]) :
     foxₑ l r = EMatrix.ofMatrix₂ (fox l.asMatrix r.asMatrix₂) := by
   ext
   simp [foxₑ, fox, Matrix.mul_apply, EMatrix.mul_apply, EMatrix.asMatrix₂]
@@ -177,8 +177,8 @@ theorem foxₑ_eq_fox{A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
 @[specialize, inline]
 def soxₑ {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B]
-    (l : E𝒲[Pk, Pk, Q]) (r : E𝒲[Pk, Pk, E𝒲[A, B, Q]]) :
-    E𝒲[Pk, Pk, E𝒲[A, B, Q]] :=
+    (l : E𝕄[Pk, Pk, Q]) (r : E𝕄[Pk, Pk, E𝕄[A, B, Q]]) :
+    E𝕄[Pk, Pk, E𝕄[A, B, Q]] :=
   .ofFn fun α β ↦ ∑ m, l.asNMatrix α m •> r.asNMatrix m β
 
 infixr:50 " ⊟ₑ " => soxₑ
@@ -188,7 +188,7 @@ theorem soxₑ_eq_sox {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B]
     [Fintype A] [Fintype B]
     [Fintype Pk]
-    (l : E𝒲[Pk, Pk, Q]) (r : E𝒲[Pk, Pk, E𝒲[A, B, Q]]) :
+    (l : E𝕄[Pk, Pk, Q]) (r : E𝕄[Pk, Pk, E𝕄[A, B, Q]]) :
     soxₑ l r = EMatrix.ofMatrix₂ (sox l.asMatrix r.asMatrix₂) := by
   ext
   simp [soxₑ, sox, Matrix.sum_apply, EMatrix.sum_apply]
@@ -197,8 +197,8 @@ theorem soxₑ_eq_sox {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
 
 def sox'ₑ {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B]
-    (l : E𝒲[Pk, Pk, E𝒲[A, B, Q]]) (r : E𝒲[Pk, Pk, Q]) :
-    E𝒲[Pk, Pk, E𝒲[A, B, Q]] :=
+    (l : E𝕄[Pk, Pk, E𝕄[A, B, Q]]) (r : E𝕄[Pk, Pk, Q]) :
+    E𝕄[Pk, Pk, E𝕄[A, B, Q]] :=
   .ofFn fun α β ↦ ∑ m, l.asNMatrix α m <• r.asNMatrix m β
 
 infixr:50 " ⊟'ₑ " => sox'ₑ
@@ -208,7 +208,7 @@ theorem sox'ₑ_eq_sox' {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B]
     [Fintype A] [Fintype B]
     [Fintype Pk]
-    (l : E𝒲[Pk, Pk, E𝒲[A, B, Q]]) (r : E𝒲[Pk, Pk, Q]) :
+    (l : E𝕄[Pk, Pk, E𝕄[A, B, Q]]) (r : E𝕄[Pk, Pk, Q]) :
     sox'ₑ l r = EMatrix.ofMatrix₂ (sox' l.asMatrix₂ r.asMatrix) := by
   ext
   simp [sox'ₑ, sox', Matrix.sum_apply, EMatrix.sum_apply]
@@ -216,8 +216,8 @@ theorem sox'ₑ_eq_sox' {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
 
 def croxₑ {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B] [DecidableEq C] [Listed C]
-    (l : E𝒲[Pk, Pk, E𝒲[A, B, Q]]) (r : E𝒲[Pk, Pk, E𝒲[B, C, Q]]) :
-    E𝒲[Pk, Pk, E𝒲[A, C, Q]] :=
+    (l : E𝕄[Pk, Pk, E𝕄[A, B, Q]]) (r : E𝕄[Pk, Pk, E𝕄[B, C, Q]]) :
+    E𝕄[Pk, Pk, E𝕄[A, C, Q]] :=
   .ofFn fun α β ↦ ∑ m, l.asNMatrix α m * r.asNMatrix m β
 
 infixr:50 " ⊞ₑ " => croxₑ
@@ -227,7 +227,7 @@ theorem croxₑ_eq_crox {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B] [DecidableEq C] [Listed C]
     [Fintype A] [Fintype B] [Fintype C]
     [Fintype Pk]
-    (l : E𝒲[Pk, Pk, E𝒲[A, B, Q]]) (r : E𝒲[Pk, Pk, E𝒲[B, C, Q]]) :
+    (l : E𝕄[Pk, Pk, E𝕄[A, B, Q]]) (r : E𝕄[Pk, Pk, E𝕄[B, C, Q]]) :
     croxₑ l r = EMatrix.ofMatrix₂ (crox l.asMatrix₂ r.asMatrix₂) := by
   ext
   simp only [croxₑ, EMatrix.asNMatrix_apply, Listed.sum_fin, Listed.encodeFin_decodeFin,
@@ -268,7 +268,7 @@ def E𝒪_lambda [Listed N] (p : RPol[F,N,𝒮]) :
       let ι₁ := Eι p₁
       let 𝒪₁ := E𝒪_lambda p₁
       let X := ι₁ ⊠ₑ 𝒪₁
-      let Y : N𝒲[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮] := X^*
+      let Y : N𝕄[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮] := X^*
       Y
     .ofFn fun α β ↦
       E𝒪_lambda[
@@ -280,7 +280,7 @@ def E𝒪_heart [Listed N] [DecidableEq N] (p₁ : RPol[F,N,𝒮]) : EMatrix Pk[
   let ι₁ := Eι p₁
   let 𝒪₁ := E𝒪_lambda p₁
   let X := ι₁ ⊠ₑ 𝒪₁
-  let Y : N𝒲[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮] := X^*
+  let Y : N𝕄[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮] := X^*
   Y
 
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
@@ -315,7 +315,7 @@ theorem Eι_eq_ι {p : RPol[F,N,𝒮]} : Eι p = EMatrix.ofMatrix (ι p) := by
 
 variable [DecidableEq F]
 
-variable [Listed N] [DecidableEq N] [LawfulStar N𝒲[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮]]
+variable [Listed N] [DecidableEq N] [LawfulStar N𝕄[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮]]
 
 theorem E𝒪_heart_eq_𝒪_heart {p : RPol[F,N,𝒮]} (h : E𝒪_lambda p = EMatrix.ofMatrix₂ (𝒪 p)) :
     E𝒪_heart p = EMatrix.ofMatrix (𝒪_heart p) := by
@@ -343,8 +343,8 @@ theorem E𝒪_heart_eq_𝒪_heart {p : RPol[F,N,𝒮]} (h : E𝒪_lambda p = EMa
     congr!
     simp [h]
 
-theorem _root_.EMatrix.apply_encodeFin {m n α : Type*} [Listed m] [Listed n] {M : N𝒲[Listed.size m, Listed.size n, α]} {i j} :
-      (@DFunLike.coe E𝒲[m, n, α] m (fun _ ↦ n → α) EMatrix.instFunLikeForall M i j : α)
+theorem _root_.EMatrix.apply_encodeFin {m n α : Type*} [Listed m] [Listed n] {M : N𝕄[Listed.size m, Listed.size n, α]} {i j} :
+      (@DFunLike.coe E𝕄[m, n, α] m (fun _ ↦ n → α) EMatrix.instFunLikeForall M i j : α)
     = M (Listed.encodeFin i) (Listed.encodeFin j) := by
   rfl
 
@@ -436,7 +436,7 @@ def Eδ_delta (p : RPol[F,N,𝒮]) : EMatrix Pk[F,N] Pk[F,N] (EMatrix (S p) (S p
     let δ₁ := Eδ_delta p₁
     let 𝒪_heart₁ := E𝒪_heart p₁
     let X := 𝒪_heart₁ ⊟ₑ ι₁ ⊡ₑ δ₁
-    let Eδ' : E𝒲[Pk[F,N], Pk[F,N], E𝒲[S p₁, S p₁, 𝒮]] := δ₁ + ((E𝒪_lambda p₁) ⊞ₑ X)
+    let Eδ' : E𝕄[Pk[F,N], Pk[F,N], E𝕄[S p₁, S p₁, 𝒮]] := δ₁ + ((E𝒪_lambda p₁) ⊞ₑ X)
     .ofFn fun α β ↦
       Eδ_delta[[Eδ'.getN α β, 0],
                [X.asNMatrix α β, 0]]
@@ -460,7 +460,7 @@ theorem Eδ_delta_eq_δ {p : RPol[F,N,𝒮]} : Eδ_delta p = EMatrix.ofMatrix₂
   next p ih =>
     ext α β i j; simp_all [Eδ_delta, δ, δ.δ', E𝒪_heart_eq_𝒪_heart]
 
-def δ_aux (p : RPol[F,N,𝒮]) : 𝒲[Pk[F,N],Pk[F,N],𝒲[S p,S p,𝒮]] := Eδ_delta p |>.asMatrix₂
+def δ_aux (p : RPol[F,N,𝒮]) : 𝕄[Pk[F,N],Pk[F,N],𝕄[S p,S p,𝒮]] := Eδ_delta p |>.asMatrix₂
 
 def ewnka (p : RPol[F,N,𝒮]) : EWNKA[F,N,𝒮,S p] := ⟨Eι p, Eδ_delta p, E𝒪_lambda p⟩
 
@@ -525,7 +525,7 @@ final packet.
 This gives roughly a `|Pk[F,N]|` times speed up.
 -/
 structure EWNKA.Precompute (𝔈 : EWNKA[F,N,𝒮,Q]) where
-  m : E𝒲[𝟙, Q, 𝒮]
+  m : E𝕄[𝟙, Q, 𝒮]
   γ : Pk[F,N]
 
 @[specialize, inline]
