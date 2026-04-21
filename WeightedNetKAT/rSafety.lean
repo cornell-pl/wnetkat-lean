@@ -311,7 +311,7 @@ Example execution time: **N/A**
 -/
 def extraction_len (n : ℕ) (r : 𝒮) : Option GS[F,N] :=
   let x := Listed.arrayOf (Pk[F,N] × Vector Pk[F,N] n × Pk[F,N])
-  let y : Array (GS[F,N]) := x.map fun (α, xs, β) ↦ GS.mk α xs.toList β
+  let y : Array (GS[F,N]) := x.map fun (α, xs, β) ↦ ⟨α, xs.toList, β⟩
   y.find? (𝔈.sem · = r)
 /-- Enumerate _all_ GS and check their weight, reusing computation up to the exit weight
 
@@ -324,7 +324,7 @@ def extraction_len' (n : ℕ) (r : 𝒮) : Option GS[F,N] :=
     (fun α_xs ↦
       let f := 𝔈.semArray α_xs.toArray (by simp)
       pks.findSome? (fun β ↦ if f.finish β = r then some (α_xs, β) else none))
-  |>.map fun (α_xs, β) ↦ GS.mk α_xs.head α_xs.tail.toList β
+  |>.map fun (α_xs, β) ↦ ⟨α_xs.head, α_xs.tail.toList, β⟩
 
 def extraction_len'' (acc : E𝒲[𝟙, Q, 𝒮]) (n : ℕ) (γ : Li[Pk[F,N]]) (r : 𝒮) : Option GS[F,N] :=
   let pks := Listed.arrayOf Li[Pk[F,N]]

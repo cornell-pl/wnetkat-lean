@@ -52,6 +52,10 @@ theorem zero_apply {a : α} : (0 : α →c M) a = 0 :=
 @[simp]
 theorem support_zero : (0 : α →c M).support = ∅ := by simp [support]; rfl
 
+theorem ite_apply {p} [Decidable p] {f g : α →c M} {a : α} :
+    (if p then f else g) a = if p then f a else g a := by
+  split_ifs <;> rfl
+
 instance instInhabited : Inhabited (α →c M) :=
   ⟨0⟩
 
