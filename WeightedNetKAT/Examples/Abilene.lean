@@ -22,13 +22,13 @@ This file contains a simplified version of the _Abilene_ network
 
 -/
 
-def List.sum' {α : Type} [Add α] [Zero α] (a : List α) : α :=
+def List.sum' {α : Type*} [Add α] [Zero α] (a : List α) : α :=
   match a with
   | [] => 0
   | [x] => x
   | x::y::z => x + sum' (y::z)
 
-def Array.sum' {α : Type} [Add α] [Zero α] (a : Array α) : α := a.toList.sum'
+def Array.sum' {α : Type*} [Add α] [Zero α] (a : Array α) : α := a.toList.sum'
 
 namespace WeightedNetKAT
 
@@ -81,9 +81,9 @@ instance (priority := 1000000) {Q} [Std.ToFormat Q] : Repr Run[Switch,City,Q] wh
 instance {𝒮} {p : RPol[Switch,City,𝒮]} : Std.ToFormat (@S Switch instListedSwitch City 𝒮 p) where
   format x := reprStr x
 
-def mod {𝒮} [Semiring 𝒮] {α : Type} (c : α) : RPol[Switch,α,𝒮] :=
+def mod {𝒮} [Semiring 𝒮] {α : Type*} (c : α) : RPol[Switch,α,𝒮] :=
   .Mod (.fill c)
-def test {𝒮} [Semiring 𝒮] {α : Type} (c : α) : RPol[Switch,α,𝒮] :=
+def test {𝒮} [Semiring 𝒮] {α : Type*} (c : α) : RPol[Switch,α,𝒮] :=
   .Test (.fill c)
 
 def latency : City → City → Option Arctic

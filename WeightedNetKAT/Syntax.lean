@@ -8,15 +8,15 @@ public import WeightedNetKAT.Listed.Vector
 
 namespace WeightedNetKAT
 
-variable {𝒮 : Type}
+variable {𝒮 : Type*}
 
-variable {F : Type} [Listed F] [DecidableEq F]
-variable {N : Type} [DecidableEq N]
+variable {F : Type*} [Listed F] [DecidableEq F]
+variable {N : Type*} [DecidableEq N]
 
--- abbrev Pk (F N : Type) := F → N
+-- abbrev Pk (F N : Type*) := F → N
 -- notation "Pk[" F "," N "]" => Pk F N
 
-structure Pk (F N : Type) [Listed F] where
+structure Pk (F N : Type*) [Listed F] where
   data : Vector N (Listed.size (α:=F))
 deriving DecidableEq, Inhabited
 notation "Pk[" F "," N "]" => Pk F N
@@ -43,7 +43,7 @@ instance Pk.ofNat {n : ℕ} [OfNat N n] : OfNat Pk[F,N] n where
 -- omit [Fintype F] [Fintype N] [DecidableEq F] [DecidableEq N] in
 -- instance [Listed F] [Listed N] [Inhabited N] : Listed Pk[F,N] := Listed.pi F N
 
-instance {F : Type} [Listed F] [Repr F] [Repr N] : Repr Pk[F,N] where
+instance {F : Type*} [Listed F] [Repr F] [Repr N] : Repr Pk[F,N] where
   reprPrec x _ := s!"\{{Listed.listOf _ |>.map (fun k ↦ s!"{reprStr k}↦{reprStr (x k)}") |> ",".intercalate}}"
 
 notation "H[" F "," N "]" => Pk[F,N] × List Pk[F,N]
@@ -52,7 +52,7 @@ instance : DecidableEq H[F,N] := inferInstanceAs (DecidableEq (_ × _))
 instance [Listed N] : Countable H[F,N] := inferInstanceAs (Countable (_ × _))
 -- instance [Encodable F] [Encodable N] : Encodable H[F,N] := inferInstanceAs (Encodable (_ × _))
 
-inductive Pred (F N : Type) where
+inductive Pred (F N : Type*) where
   | Bool (b : Bool)
   | Test (f : F) (n : N)
   | Dis (t u : Pred F N)
@@ -61,7 +61,7 @@ inductive Pred (F N : Type) where
 
 notation "Pred[" F "," N "]" => Pred F N
 
-inductive Pol (F N W : Type) where
+inductive Pol (F N W : Type*) where
   | Filter (t : Pred[F,N])
   | Mod (f : F) (n : N)
   | Dup

@@ -9,7 +9,7 @@ open OmegaCompletePartialOrder
 
 /-- `Countsupp α M`, denoted `α →c M`, is the type of functions `f : α → M` such that
   `f x = 0` for all but countably many `x`.  -/
-structure Countsupp (α M : Type) [Zero M] where
+structure Countsupp (α M : Type*) [Zero M] where
   toFun : α → M
   countable : toFun.support.Countable
 
@@ -20,7 +20,7 @@ namespace Countsupp
 
 section Basic
 
-variable {α M : Type}
+variable {α M : Type*}
 
 variable [Zero M]
 
@@ -88,8 +88,8 @@ end Basic
 
 section OmegaContinuousNonUnitalSemiring
 
-variable {X : Type}
-variable {𝒮 : Type}
+variable {X : Type*}
+variable {𝒮 : Type*}
   [Semiring 𝒮]
   [OmegaCompletePartialOrder 𝒮]
   [OrderBot 𝒮]
@@ -162,7 +162,7 @@ instance : OmegaCompletePartialOrder (X →c 𝒮) where
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] in
 @[simp]
-theorem ωSup_apply {X : Type} [Fintype X] [DecidableEq 𝒮] (C : Chain (X →c 𝒮)) (x : X) :
+theorem ωSup_apply {X : Type*} [Fintype X] [DecidableEq 𝒮] (C : Chain (X →c 𝒮)) (x : X) :
     (ωSup C) x = ωSup (C.map ⟨(· x), (fun ⦃_ _⦄ a ↦ a x)⟩) := rfl
 
 instance : OrderBot (X →c 𝒮) where
@@ -179,7 +179,7 @@ instance : IsPositiveOrderedAddMonoid (X →c 𝒮) where
 variable [OmegaContinuousNonUnitalSemiring 𝒮]
 
 open OmegaContinuousNonUnitalSemiring in
-instance {X : Type} : OmegaContinuousNonUnitalSemiring (X →c 𝒮) where
+instance {X : Type*} : OmegaContinuousNonUnitalSemiring (X →c 𝒮) where
   ωScottContinuous_add_left := by
     refine fun m ↦ ωScottContinuous.of_monotone_map_ωSup ⟨add_right_mono, fun C ↦ ?_⟩
     ext x
@@ -201,7 +201,7 @@ instance {X : Type} : OmegaContinuousNonUnitalSemiring (X →c 𝒮) where
     simp only [mul_apply, ωSup_apply, ωSup_mul]
     rfl
 
-noncomputable def bind {Y : Type} (f : X →c 𝒮) (g : X → Y →c 𝒮) : Y →c 𝒮 :=
+noncomputable def bind {Y : Type*} (f : X →c 𝒮) (g : X → Y →c 𝒮) : Y →c 𝒮 :=
   ⟨fun y ↦ ω∑ x : f.support, f x * g x y, by
     let s : Set _ := ⋃ x ∈ f.support, (g x).support
     apply Set.Countable.mono _ (Set.Countable.biUnion f.countable fun a _ ↦ (g a).countable : Countable s)
@@ -216,11 +216,11 @@ noncomputable def bind {Y : Type} (f : X →c 𝒮) (g : X → Y →c 𝒮) : Y 
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 @[simp]
-theorem bind_apply {Y : Type} (f : X →c 𝒮) (g : X → Y →c 𝒮) (y : Y) :
+theorem bind_apply {Y : Type*} (f : X →c 𝒮) (g : X → Y →c 𝒮) (y : Y) :
     f.bind g y = ω∑ (i : f.support), f i * g i y := by rfl
 
 omit [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
-theorem bind_mono_right {Y : Type} (f : X →c 𝒮) (g₁ g₂ : X → Y →c 𝒮) (h : g₁ ≤ g₂) :
+theorem bind_mono_right {Y : Type*} (f : X →c 𝒮) (g₁ g₂ : X → Y →c 𝒮) (h : g₁ ≤ g₂) :
     f.bind g₁ ≤ f.bind g₂ := by
   intro y
   simp [bind]
@@ -229,7 +229,7 @@ theorem bind_mono_right {Y : Type} (f : X →c 𝒮) (g₁ g₂ : X → Y →c �
   exact h n y
 
 omit [MulLeftMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
-theorem bind_mono_left {Y : Type} {f₁ f₂ : X →c 𝒮} (g : X → Y →c 𝒮) (h : f₁ ≤ f₂) :
+theorem bind_mono_left {Y : Type*} {f₁ f₂ : X →c 𝒮} (g : X → Y →c 𝒮) (h : f₁ ≤ f₂) :
     f₁.bind g ≤ f₂.bind g := by
   intro y
   simp [bind]
@@ -263,7 +263,7 @@ theorem bind_mono_left {Y : Type} {f₁ f₂ : X →c 𝒮} (g : X → Y →c �
     exists_eq_right, exists_prop, imp_self, implies_true]
   · intro _ _; rfl
 
-theorem bind_continuous_right {Y : Type} (f : X →c 𝒮) :
+theorem bind_continuous_right {Y : Type*} (f : X →c 𝒮) :
     ωScottContinuous (f.bind (Y:=Y)) := by
   refine ωScottContinuous.of_monotone_map_ωSup ⟨bind_mono_right f, ?_⟩
   intro C
@@ -273,7 +273,7 @@ theorem bind_continuous_right {Y : Type} (f : X →c 𝒮) :
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 @[simp]
-theorem sum_apply [DecidableEq X] {Y : Type} {f : X → Y →c 𝒮} {y : Y} (S : Finset X) :
+theorem sum_apply [DecidableEq X] {Y : Type*} {f : X → Y →c 𝒮} {y : Y} (S : Finset X) :
     (∑ x ∈ S, f x) y = ∑ x ∈ S, f x y := by
   induction S using Finset.induction with
   | empty => simp
@@ -281,7 +281,7 @@ theorem sum_apply [DecidableEq X] {Y : Type} {f : X → Y →c 𝒮} {y : Y} (S 
 
 omit [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] in
 @[simp]
-theorem ωSum_apply [Countable X] {Y : Type} {f : X → Y →c 𝒮} {y : Y} :
+theorem ωSum_apply [Countable X] {Y : Type*} {f : X → Y →c 𝒮} {y : Y} :
     (ω∑ (x : X), f x) y = ω∑ (x : X), f x y := by
   simp [ωSum, Chain.map]
   congr!
@@ -289,7 +289,7 @@ theorem ωSum_apply [Countable X] {Y : Type} {f : X → Y →c 𝒮} {y : Y} :
   congr!
   split <;> simp_all
 
-theorem bind_continuous_left {Y : Type} (g : X → Y →c 𝒮) :
+theorem bind_continuous_left {Y : Type*} (g : X → Y →c 𝒮) :
     ωScottContinuous (bind (g:=g)) := by
   refine ωScottContinuous.of_monotone_map_ωSup ⟨fun f₁ f₂ ↦ bind_mono_left g, ?_⟩
   intro C

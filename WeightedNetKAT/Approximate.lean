@@ -8,7 +8,7 @@ open OmegaCompletePartialOrder OmegaContinuousNonUnitalSemiring
 
 namespace WeightedNetKAT
 
-variable {X : Type} {𝒮 : Type}
+variable {X : Type*} {𝒮 : Type*}
   [Semiring 𝒮]
   [OmegaCompletePartialOrder 𝒮]
   [OrderBot 𝒮]
@@ -17,8 +17,8 @@ variable {X : Type} {𝒮 : Type}
   [IsPositiveOrderedAddMonoid 𝒮]
   [OmegaContinuousNonUnitalSemiring 𝒮]
 
-variable {F : Type} [Listed F] [DecidableEq F]
-variable {N : Type} [DecidableEq N]
+variable {F : Type*} [Listed F] [DecidableEq F]
+variable {N : Type*} [DecidableEq N]
 
 instance : Zero Pol[F,N,𝒮] where
   zero := wnk_pol {drop}

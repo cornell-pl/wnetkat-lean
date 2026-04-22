@@ -9,7 +9,7 @@ public import WeightedNetKAT.KStar
 
 open OmegaCompletePartialOrder
 
-variable {α : Type}
+variable {α : Type*}
 
 instance : IsPositiveOrderedAddMonoid (Language α) where
   bot_eq_zero := rfl

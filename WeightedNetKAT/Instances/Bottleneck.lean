@@ -10,9 +10,9 @@ public import WeightedNetKAT.KStar
 open OmegaCompletePartialOrder
 open scoped Computability
 
-def Bottleneck (α : Type) := α
+def Bottleneck (α : Type*) := α
 
-variable {α : Type}
+variable {α : Type*}
 
 instance [i : Repr α] : Repr (Bottleneck α) := ⟨@reprPrec α i⟩
 

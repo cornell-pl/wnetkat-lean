@@ -9,7 +9,7 @@ public import Mathlib.Logic.Function.Basic
 
 @[expose] public section
 
-theorem Finset.filterMap_insert {α β : Type} [DecidableEq α] [DecidableEq β] (f : α → Option β) (hf : ∀ a a', ∀ b ∈ f a, b ∈ f a' → a = a') (a : α) (s : Finset α) :
+theorem Finset.filterMap_insert {α β : Type*} [DecidableEq α] [DecidableEq β] (f : α → Option β) (hf : ∀ a a', ∀ b ∈ f a, b ∈ f a' → a = a') (a : α) (s : Finset α) :
       (insert a s).filterMap f hf
     = match f a with | some x => insert x (s.filterMap f hf) | none => s.filterMap f hf := by
   simp only [insert_eq]
@@ -20,7 +20,7 @@ theorem Finset.filterMap_insert {α β : Type} [DecidableEq α] [DecidableEq β]
   · ext b
     simp_all
 
-theorem Finset.sum_filterMap {ι : Type} {κ : Type} {M : Type} [AddCommMonoid M] [DecidableEq ι] [DecidableEq κ]
+theorem Finset.sum_filterMap {ι : Type*} {κ : Type*} {M : Type*} [AddCommMonoid M] [DecidableEq ι] [DecidableEq κ]
     (s : Finset ι) (e : ι → Option κ) (he : ∀ a a', ∀ b ∈ e a, b ∈ e a' → a = a') (f : κ → M) :
     ∑ x ∈ s.filterMap e he, f x = ∑ x ∈ s, match e x with | some y => f y | none => 0 := by
   induction s using Finset.induction with
@@ -39,25 +39,25 @@ theorem Finset.sum_filterMap {ι : Type} {κ : Type} {M : Type} [AddCommMonoid M
 
 namespace WeightedNetKAT
 
-variable {𝒮 : Type} [Semiring 𝒮]
+variable {𝒮 : Type*} [Semiring 𝒮]
 variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
 
-variable {F : Type} [DecidableEq F] [Listed F]
-variable {N : Type} [DecidableEq N]
+variable {F : Type*} [DecidableEq F] [Listed F]
+variable {N : Type*} [DecidableEq N]
 
-instance {X : Type} [Countable X] : One (X →c 𝒮) where
+instance {X : Type*} [Countable X] : One (X →c 𝒮) where
   one := ⟨1, SetCoe.countable _⟩
 
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[simp]
-theorem Countsupp.one_apply {X : Type} [Countable X] {x : X} : (1 : X →c 𝒮) x = 1 := by rfl
+theorem Countsupp.one_apply {X : Type*} [Countable X] {x : X} : (1 : X →c 𝒮) x = 1 := by rfl
 
 @[simp]
-theorem Countsupp.zero_bind {X : Type} [Countable X] [Encodable X] {g : X → X →c 𝒮} :
+theorem Countsupp.zero_bind {X : Type*} [Countable X] [Encodable X] {g : X → X →c 𝒮} :
     ((0 : X →c 𝒮).bind g) = 0 := by ext x; simp
 
 @[simp]
-theorem Countsupp.one_bind {X : Type} [Countable X] [Encodable X] {g : X → X →c 𝒮} :
+theorem Countsupp.one_bind {X : Type*} [Countable X] [Encodable X] {g : X → X →c 𝒮} :
     ((1 : X →c 𝒮).bind g) = ω∑ x, g x := by
   ext x
   simp

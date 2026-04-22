@@ -10,25 +10,27 @@ public import WeightedNetKAT.ListExt
 
 namespace WeightedNetKAT
 
+universe u v
+
 /-- `Pk?` is the set of complete tests. -/
-def Pk? (F : Type) (N : Type) [Listed F] : Type := Pk[F,N]
+def Pk? (F : Type u) (N : Type v) [Listed F] : Type v := Pk[F,N]
 
 /-- `Pk!` is the set of all complete assignments. -/
-def Pk! (F : Type) (N : Type) [Listed F] : Type := Pk[F,N]
+def Pk! (F : Type u) (N : Type v) [Listed F] : Type v := Pk[F,N]
 
 /--
 The language of guarded strings.
 
 Isomorphically defined as `Pk? ⬝ (Pk! ⬝ dup)* ⬝ Pk!`.
 -/
-def GS (F : Type) (N : Type) [Listed F] := Pk[F,N] × List Pk[F,N] × Pk[F,N]
+def GS (F : Type u) (N : Type v) [Listed F] : Type v := Pk[F,N] × List Pk[F,N] × Pk[F,N]
 notation "GS[" f "," n "]" => GS (F:=f) (N:=n)
 
-instance {F N : Type} [Listed F] [DecidableEq F] [DecidableEq N] : DecidableEq GS[F,N] := instDecidableEqProd
-instance {F N : Type} [Listed F] [Listed N] [DecidableEq N] : Countable GS[F,N] := instCountableProd
+instance {F N : Type*} [Listed F] [DecidableEq F] [DecidableEq N] : DecidableEq GS[F,N] := instDecidableEqProd
+instance {F N : Type*} [Listed F] [Listed N] [DecidableEq N] : Countable GS[F,N] := instCountableProd
 
-variable {F : Type} [Listed F] [DecidableEq F]
-variable {N : Type} [Listed N] [DecidableEq N]
+variable {F : Type*} [Listed F] [DecidableEq F]
+variable {N : Type*} [Listed N] [DecidableEq N]
 
 notation "gs[" α ";" β "]" => (⟨α, [], β⟩ : GS _ _)
 notation "gs[" α ";" x ";" "dup" ";" β "]" => (⟨α, [x], β⟩ : GS _ _)
@@ -53,7 +55,7 @@ export ConcatAssoc (concat_assoc)
 instance : Concat GS[F,N] (Option GS[F,N]) where
   concat | ⟨α, x, β⟩, ⟨γ, y, ξ⟩ => if β = γ then some ⟨α, x ++ y, ξ⟩ else none
 
-variable {𝒮 : Type} [Semiring 𝒮]
+variable {𝒮 : Type*} [Semiring 𝒮]
 
 def GS.splitAtJoined (g : GS[F,N]) (n : ℕ) (γ : Pk[F,N]) : GS[F,N] × GS[F,N] :=
   let (g₀, g, gₙ) := g

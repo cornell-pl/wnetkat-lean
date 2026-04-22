@@ -5,7 +5,7 @@ public import Lean.PrettyPrinter.Delaborator.Basic
 
 @[expose] public section
 
-class Subst (W Var : Type) (E : outParam Type) where
+class Subst (W Var : Type*) (E : outParam Type*) where
   /-- Written using `a[x ↦ e]`. Substitutes all `x` in `a` with `e`. -/
   subst : W → Var → E → W
 
@@ -20,7 +20,7 @@ meta def Subst.substUnexpander : Unexpander
 | `($(_) $m $x $v) => `($m[$x ↦ $v])
 | _ => throw ()
 
-variable {α β : Type}
+variable {α β : Type*}
 
 instance [BEq α] [Hashable α] : Subst (Std.HashMap α β) α β where
   subst m x v := m.insert x v

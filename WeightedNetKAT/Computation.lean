@@ -5,7 +5,7 @@ public import WeightedNetKAT.FinsuppExt
 
 @[expose] public section
 
-variable {X : Type} {𝒮 : Type}
+variable {X : Type*} {𝒮 : Type*}
   [Semiring 𝒮]
   [PartialOrder 𝒮]
   [OrderBot 𝒮]
@@ -14,8 +14,8 @@ variable {X : Type} {𝒮 : Type}
   [IsPositiveOrderedAddMonoid 𝒮]
   [DecidableEq 𝒮]
 
-variable {F : Type} [Listed F] [DecidableEq F]
-variable {N : Type} [DecidableEq N]
+variable {F : Type*} [Listed F] [DecidableEq F]
+variable {N : Type*} [DecidableEq N]
 
 namespace WeightedNetKAT
 
@@ -38,7 +38,7 @@ end WeightedNetKAT
 
 section
 
-def Finset.toList' {α : Type} [Encodable α] [DecidableEq α] (s : Finset α) : List α := s.val.rep
+def Finset.toList' {α : Type*} [Encodable α] [DecidableEq α] (s : Finset α) : List α := s.val.rep
 
 def Finsupp.pretty [DecidableEq X] (m : X →₀ 𝒮) : Finset (X × 𝒮) := m.support.image (fun s ↦ (s, m s))
 unsafe instance 𝒞.repr [DecidableEq X] [Repr X] [Repr 𝒮] : Repr (X →₀ 𝒮) where
@@ -48,10 +48,10 @@ end
 
 section
 
-variable {X : Type} {𝒮 : Type}
+variable {X : Type*} {𝒮 : Type*}
 variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [Semiring 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [MulLeftMono 𝒮] [MulRightMono 𝒮] [OmegaContinuousNonUnitalSemiring 𝒮] [DecidableEq 𝒮]
-variable {F : Type} [Listed F] [DecidableEq F]
-variable {N : Type} [DecidableEq N]
+variable {F : Type*} [Listed F] [DecidableEq F]
+variable {N : Type*} [DecidableEq N]
 
 def Finsupp.to𝒲 (m : H[F,N] →₀ 𝒮) : H[F,N] →c 𝒮 := ⟨m.toFun, Set.Finite.countable m.hasFiniteSupport⟩
 

@@ -40,7 +40,7 @@ def rep : ℕ → List α
 end
 
 @[simp]
-theorem take_length_succ {α : Type} (A : List α) : take (A.length + 1) A = A := by
+theorem take_length_succ {α : Type*} (A : List α) : take (A.length + 1) A = A := by
   simp only [take_eq_self_iff, le_add_iff_nonneg_right, zero_le]
 
 end List

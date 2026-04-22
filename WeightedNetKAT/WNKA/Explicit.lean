@@ -42,13 +42,13 @@ theorem Listed.array_sum_eq_finset_sum {ι α : Type*} [Listed ι] [AddCommMonoi
 
 namespace WeightedNetKAT
 
-variable {F : Type} [Listed F]
-variable {N : Type}
-variable {𝒮 : Type} [Semiring 𝒮]
+variable {F : Type*} [Listed F]
+variable {N : Type*}
+variable {𝒮 : Type*} [Semiring 𝒮]
 variable [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
 
 /-- An efficient version of [`WNKA`] that uses explicit matrices. -/
-structure EWNKA (F N 𝒮 Q: Type)
+structure EWNKA (F N 𝒮 Q: Type*)
     [Semiring 𝒮]
     [Listed F] [Listed N]
     [Listed Q]
@@ -62,28 +62,28 @@ where
   𝒪 : E𝕄[Pk[F,N], Pk[F,N], E𝕄[Q,𝟙,𝒮]]
 notation "EWNKA[" F "," N "," 𝒮 "," Q "]" => EWNKA F N 𝒮 Q
 
-def S.Eι {X Y : Type} [Listed X] [Listed Y] : (EMatrix 𝟙 X 𝒮) → (EMatrix 𝟙 Y 𝒮) → (EMatrix 𝟙 (X ⊕ Y) 𝒮) :=
+def S.Eι {X Y : Type*} [Listed X] [Listed Y] : (EMatrix 𝟙 X 𝒮) → (EMatrix 𝟙 Y 𝒮) → (EMatrix 𝟙 (X ⊕ Y) 𝒮) :=
   fun m₁ m₂ ↦ .ofFnSlow (fun () x ↦ x.elim (m₁ () ·) (m₂ () ·))
 notation "Eι[" a "," b"]" => S.Eι a b
 
 omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[grind =, simp]
-theorem S.Eι_eq_ι {X Y : Type} [Listed X] [Listed Y] {m₁ : EMatrix 𝟙 X 𝒮} {m₂ : EMatrix 𝟙 Y 𝒮} {i} {j} :
+theorem S.Eι_eq_ι {X Y : Type*} [Listed X] [Listed Y] {m₁ : EMatrix 𝟙 X 𝒮} {m₂ : EMatrix 𝟙 Y 𝒮} {i} {j} :
     Eι[m₁, m₂] i j = C[m₁.asMatrix, m₂.asMatrix] i j := by
   simp [Eι]; rfl
 
-def S.E𝒪_lambda {X Y : Type} [Listed X] [Listed Y] : (EMatrix X 𝟙 𝒮) → (EMatrix Y 𝟙 𝒮) → (EMatrix (X ⊕ Y) 𝟙 𝒮) :=
+def S.E𝒪_lambda {X Y : Type*} [Listed X] [Listed Y] : (EMatrix X 𝟙 𝒮) → (EMatrix Y 𝟙 𝒮) → (EMatrix (X ⊕ Y) 𝟙 𝒮) :=
   fun m₁ m₂ ↦ .ofFnSlow fun x () ↦ x.elim (m₁ · ()) (m₂ · ())
 notation "E𝒪_lambda[" a "," b"]" => S.E𝒪_lambda a b
 
 omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[simp]
-theorem S.E𝒪_lambda_eq_𝒪 {X Y : Type} [Listed X] [Listed Y] {m₁ : EMatrix X 𝟙 𝒮} {m₂ : EMatrix Y 𝟙 𝒮} {i} {j} :
+theorem S.E𝒪_lambda_eq_𝒪 {X Y : Type*} [Listed X] [Listed Y] {m₁ : EMatrix X 𝟙 𝒮} {m₂ : EMatrix Y 𝟙 𝒮} {i} {j} :
     E𝒪_lambda m₁ m₂ i j = R[m₁.asMatrix, m₂.asMatrix] i j := by
   rcases i <;> simp [E𝒪_lambda, Matrix.fromRows]
 
 omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
-theorem S.E𝒪_lambda_eq_𝒪' {X Y : Type} [Listed X] [Listed Y] {m₁ : Matrix X 𝟙 𝒮} {m₂ : Matrix Y 𝟙 𝒮} {i} {j} :
+theorem S.E𝒪_lambda_eq_𝒪' {X Y : Type*} [Listed X] [Listed Y] {m₁ : Matrix X 𝟙 𝒮} {m₂ : Matrix Y 𝟙 𝒮} {i} {j} :
     R[m₁, m₂] i j = E𝒪_lambda (EMatrix.ofMatrix m₁) (EMatrix.ofMatrix m₂) i j := by
   rcases i <;> simp [E𝒪_lambda]
 
@@ -120,7 +120,7 @@ theorem S.Eδ_delta_eq_δ
 
 end delta
 
-abbrev Eη₂ {X Y : Type} [instX : Listed X] [instY : Listed Y] (i : X) (j : Y) : EMatrix X Y 𝒮 :=
+abbrev Eη₂ {X Y : Type*} [instX : Listed X] [instY : Listed Y] (i : X) (j : Y) : EMatrix X Y 𝒮 :=
   let i := Listed.encode i; let j := Listed.encode j;
   .ofFn fun i' j' ↦ if i = i' ∧ j = j' then 1 else 0
 
@@ -135,9 +135,9 @@ def Eι (p : RPol[F,N,𝒮]) : EMatrix 𝟙 (S p) 𝒮 := match p with
 
 section Operators
 
-variable {Pk : Type} [Listed Pk]
+variable {Pk : Type*} [Listed Pk]
 
-def boxₑ {X} [Listed X] {Q : Type} [Mul Q] [AddCommMonoid Q] {Z : Type} [Listed Z] [Unique Z]
+def boxₑ {X} [Listed X] {Q : Type*} [Mul Q] [AddCommMonoid Q] {Z : Type*} [Listed Z] [Unique Z]
     (l : E𝕄[Z, X, Q]) (r : E𝕄[Pk, Pk, E𝕄[X, Z, Q]]) :
     E𝕄[Pk,Pk,Q] :=
   .ofFn fun α β ↦ (l * r.asNMatrix α β).asNMatrix ⟨0, by simp⟩ ⟨0, by simp⟩
@@ -150,7 +150,7 @@ theorem _root_.Liste.decodeFin_unique {α : Type*} [Listed α] [Unique α] (i : 
   exact Unique.eq_default (Listed.decodeFin i)
 
 @[simp]
-theorem boxₑ_eq_box {X} [Listed X] [Fintype X] {Q : Type} [Mul Q] [AddCommMonoid Q] {Z : Type} [Listed Z] [Unique Z]
+theorem boxₑ_eq_box {X} [Listed X] [Fintype X] {Q : Type*} [Mul Q] [AddCommMonoid Q] {Z : Type*} [Listed Z] [Unique Z]
     (l : E𝕄[Z, X, Q]) (r : E𝕄[Pk, Pk, E𝕄[X, Z, Q]]) :
     boxₑ l r = EMatrix.ofMatrix (box l.asMatrix r.asMatrix₂) := by
   ext
@@ -158,7 +158,7 @@ theorem boxₑ_eq_box {X} [Listed X] [Fintype X] {Q : Type} [Mul Q] [AddCommMono
     EMatrix.ofFn_apply, Listed.encodeFin_decodeFin, EMatrix.ofMatrix_apply, box, Matrix.down,
     Matrix.mul_apply, EMatrix.asMatrix_apply₂, EMatrix.asMatrix₂]
 
-def foxₑ {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+def foxₑ {A B C : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B] [Listed C]
     (l : E𝕄[A, B, Q]) (r : E𝕄[Pk, Pk, E𝕄[B, C, Q]]) :
     E𝕄[Pk, Pk, E𝕄[A, C, Q]] :=
@@ -167,7 +167,7 @@ def foxₑ {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
 infixr:50 " ⊡ₑ " => foxₑ
 
 @[simp]
-theorem foxₑ_eq_fox{A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+theorem foxₑ_eq_fox{A B C : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B] [Listed C] [Fintype A]
     [Fintype B] [Fintype C]
     (l : E𝕄[A, B, Q]) (r : E𝕄[Pk, Pk, E𝕄[B, C, Q]]) :
@@ -176,7 +176,7 @@ theorem foxₑ_eq_fox{A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
   simp [foxₑ, fox, Matrix.mul_apply, EMatrix.mul_apply, EMatrix.asMatrix₂]
 
 @[specialize, inline]
-def soxₑ {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+def soxₑ {A B : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B]
     (l : E𝕄[Pk, Pk, Q]) (r : E𝕄[Pk, Pk, E𝕄[A, B, Q]]) :
     E𝕄[Pk, Pk, E𝕄[A, B, Q]] :=
@@ -185,7 +185,7 @@ def soxₑ {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
 infixr:50 " ⊟ₑ " => soxₑ
 
 @[simp]
-theorem soxₑ_eq_sox {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+theorem soxₑ_eq_sox {A B : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B]
     [Fintype A] [Fintype B]
     [Fintype Pk]
@@ -196,7 +196,7 @@ theorem soxₑ_eq_sox {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
   simp [HSMul.hSMul]
   congr
 
-def sox'ₑ {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+def sox'ₑ {A B : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B]
     (l : E𝕄[Pk, Pk, E𝕄[A, B, Q]]) (r : E𝕄[Pk, Pk, Q]) :
     E𝕄[Pk, Pk, E𝕄[A, B, Q]] :=
@@ -205,7 +205,7 @@ def sox'ₑ {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
 infixr:50 " ⊟'ₑ " => sox'ₑ
 
 @[simp]
-theorem sox'ₑ_eq_sox' {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+theorem sox'ₑ_eq_sox' {A B : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B]
     [Fintype A] [Fintype B]
     [Fintype Pk]
@@ -215,7 +215,7 @@ theorem sox'ₑ_eq_sox' {A B : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
   simp [sox'ₑ, sox', Matrix.sum_apply, EMatrix.sum_apply]
   simp [HSMul.hSMul, EMatrix.asMatrix₂]
 
-def croxₑ {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+def croxₑ {A B C : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B] [DecidableEq C] [Listed C]
     (l : E𝕄[Pk, Pk, E𝕄[A, B, Q]]) (r : E𝕄[Pk, Pk, E𝕄[B, C, Q]]) :
     E𝕄[Pk, Pk, E𝕄[A, C, Q]] :=
@@ -224,7 +224,7 @@ def croxₑ {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
 infixr:50 " ⊞ₑ " => croxₑ
 
 @[simp]
-theorem croxₑ_eq_crox {A B C : Type} {Q : Type} [AddCommMonoid Q] [Mul Q]
+theorem croxₑ_eq_crox {A B C : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
     [Listed A] [Listed B] [DecidableEq C] [Listed C]
     [Fintype A] [Fintype B] [Fintype C]
     [Fintype Pk]
@@ -471,7 +471,7 @@ variable [Listed N]
 
 section
 
-variable {Q : Type} [Listed Q]
+variable {Q : Type*} [Listed Q]
 variable (𝔄 : WNKA[F,N,𝒮,Q]) (𝔈 : EWNKA[F,N,𝒮,Q])
 
 def WNKA.toEWNKA : EWNKA[F,N,𝒮,Q] where

@@ -91,16 +91,16 @@ def EMatrix.ofFn_eq_ofFnSlow {m n α : Type*} [Listed m] [Listed n] (f : Li[m] �
 
 namespace WeightedNetKAT
 
-variable {F : Type} [Fintype F] [Listed F] [DecidableEq F]
-variable {N : Type} [Listed N] [DecidableEq N]
-variable {𝒮 : Type} [Semiring 𝒮]
+variable {F : Type*} [Fintype F] [Listed F] [DecidableEq F]
+variable {N : Type*} [Listed N] [DecidableEq N]
+variable {𝒮 : Type*} [Semiring 𝒮]
 
 def rSafety [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] (p : Pol[F,N,𝒮]) (r : 𝒮) : Prop :=
   ∀ (π : Pk[F,N]) (h : H[F,N]), p.sem ⟨π, []⟩ h ≤ r
 
 namespace rSafety
 
-variable {Q 𝒮 : Type}
+variable {Q 𝒮 : Type*}
 variable [Listed Q] [Fintype Q] [DecidableEq Q]
 variable [Semiring 𝒮]
 variable (𝔄 : WNKA F N 𝒮 Q)
@@ -117,7 +117,7 @@ instance : Listed Q'₀ where
   complete := by grind
   encode | .qι => 0 | .q𝒪 => 1
 
-abbrev Q' (F N Q : Type) [Listed F] := (Q × Pk[F,N]) ⊕ Q'₀
+abbrev Q' (F N Q : Type*) [Listed F] := (Q × Pk[F,N]) ⊕ Q'₀
 
 def I : 𝕄[𝟙, Q' F N Q, 𝒮] := η₂ () (.inr .qι)
 def Δ (β : Pk[F,N]) : 𝕄[Q' F N Q, Q' F N Q, 𝒮]
@@ -235,11 +235,11 @@ theorem Esem'_eq_sem' : Esem' 𝔈 = sem' 𝔈.toWNKA := by
 def ErSafety [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [LawfulKStar 𝒮] (p : Pol[F,N,𝒮]) (r : 𝒮) : Prop :=
   Esem' p.toRPol.ewnka ≤ r
 
-def sem'_fast {F : Type} [Listed F] [DecidableEq F] {N : Type} [Listed N] [DecidableEq N] {Q 𝒮 : Type}
+def sem'_fast {F : Type*} [Listed F] [DecidableEq F] {N : Type*} [Listed N] [DecidableEq N] {Q 𝒮 : Type*}
   [Fintype Q] [DecidableEq Q] [Semiring 𝒮] (𝔄 : WNKA[F,N,𝒮,Q]) [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮]
   [IsPositiveOrderedAddMonoid 𝒮] [Listed Q] [KStar 𝒮] := Esem' 𝔄.toEWNKA
 
-def _root_.WeightedNetKAT.RPol.wnkaFast {F : Type} [Listed F] {N : Type} [Listed N] {𝒮 : Type} [Semiring 𝒮]
+def _root_.WeightedNetKAT.RPol.wnkaFast {F : Type*} [Listed F] {N : Type*} [Listed N] {𝒮 : Type*} [Semiring 𝒮]
   [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [DecidableEq N] [DecidableEq F] [KStar 𝒮] [LawfulKStar 𝒮]
   (p : RPol[F,N,𝒮]) : WNKA[F,N,𝒮,S p] := p.ewnka.toWNKA
 
