@@ -27,6 +27,81 @@ open scoped Computability
 
 open MatrixNotation
 
+namespace Listed
+
+notation "Li[" α "]" => Fin (Listed.size α)
+
+variable {α β : Type*} [Listed α] [Listed β]
+
+def Li.getSum : Li[α ⊕ β] ≃ Li[α] ⊕ Li[β] where
+  toFun i :=
+    if hi : i < size α then .inl ⟨i, hi⟩ else .inr ⟨i - size α, by
+      obtain ⟨i, hi'⟩ := i
+      simp_all only [not_lt]
+      simp [size] at hi'
+      omega⟩
+  invFun
+  | .inl i => ⟨i, by simp [size]; omega⟩
+  | .inr i => ⟨i + size α, by simp [size]; omega⟩
+  left_inv := by
+    intro ⟨i, hi⟩; simp
+    split_ifs with h
+    · simp
+    · simp; omega
+  right_inv := by rintro (_ | _) <;> simp
+
+def Li.getProd : Li[α × β] ≃ Li[α] × Li[β] where
+  toFun i := ⟨
+    ⟨i / size β, (Nat.div_lt_iff_lt_mul (Nat.pos_of_lt_mul_left i.isLt)).mpr i.isLt⟩,
+    ⟨i % size β, Nat.mod_lt i (Nat.pos_of_lt_mul_left i.isLt)⟩⟩
+  invFun := fun ⟨a, b⟩ ↦ ⟨a * size β + b, by
+    obtain ⟨a, ha⟩ := a
+    obtain ⟨b, hb⟩ := b
+    simp_all [size]
+    simp only [Nat.lt_iff_add_one_le] at *
+    rw [add_assoc]
+    grw [hb, ← ha]
+    rw [← Nat.succ_mul]⟩
+  left_inv := by intro ⟨i, hi⟩; simp [size] at hi ⊢; exact Nat.div_add_mod' i (size β)
+  right_inv := by
+    intro ⟨⟨a, ha⟩, ⟨b, hb⟩⟩
+    simp [Nat.mod_eq_of_lt hb, Nat.div_eq_iff, Nat.zero_lt_of_lt hb]
+    omega
+
+theorem decodeFin_getSum (i : Li[α ⊕ β]) : decodeFin i = (Li.getSum i).map decodeFin decodeFin := by
+  rw [← encodeFin_eq_iff]
+  simp [Li.getSum]
+  split_ifs <;> simp_all [encodeFin, encode, decodeFin]
+  grind
+
+theorem decodeFin_getProd (i : Li[α × β]) : decodeFin i = (Li.getProd i).map decodeFin decodeFin := by
+  rw [← encodeFin_eq_iff]
+  simp [Li.getProd]
+  simp_all [encodeFin, encode, decodeFin, Nat.div_add_mod']
+
+@[simp]
+theorem Li.getSum_encodeFin (i : α ⊕ β) : Li.getSum (encodeFin i) = i.map encodeFin encodeFin := by
+  rcases i with a | b
+  · simp [Li.getSum]
+    split_ifs with h
+    · simp; rfl
+    · contrapose! h; simp [encodeFin, encode, encode_lt_size]
+  · simp [Li.getSum]
+    split_ifs with h
+    · contrapose! h; simp [encodeFin, encode]
+    · simp_all [encodeFin, encode]
+
+@[simp]
+theorem Li.getProd_encodeFin (i : α × β) : Li.getProd (encodeFin i) = i.map encodeFin encodeFin := by
+  obtain ⟨a, b⟩ := i
+  simp [Li.getProd]
+  simp [encodeFin, encode]
+  have ha := encode_lt_size a
+  have hb := encode_lt_size b
+  simp +arith [Nat.div_eq_of_lt_le, Nat.mod_eq_of_lt, add_mul, hb]
+
+end Listed
+
 @[simp]
 theorem Listed.array_sum_eq_finset_sum {ι α : Type*} [Listed ι] [AddCommMonoid α] (f : ι → α) :
     ((Listed.array : Array ι).map f).sum = ∑ i, f (Listed.decodeFin i) := by
@@ -63,17 +138,19 @@ where
 notation "EWNKA[" F "," N "," 𝒮 "," Q "]" => EWNKA F N 𝒮 Q
 
 def S.Eι {X Y : Type*} [Listed X] [Listed Y] : (EMatrix 𝟙 X 𝒮) → (EMatrix 𝟙 Y 𝒮) → (EMatrix 𝟙 (X ⊕ Y) 𝒮) :=
-  fun m₁ m₂ ↦ .ofFnSlow (fun () x ↦ x.elim (m₁ () ·) (m₂ () ·))
+  -- fun m₁ m₂ ↦ .ofFnSlow (fun () x ↦ x.elim (m₁ () ·) (m₂ () ·))
+  fun m₁ m₂ ↦ .ofFn (fun _ x ↦ (Listed.Li.getSum x).elim (m₁.asNMatrix 0 ·) (m₂.asNMatrix 0 ·))
 notation "Eι[" a "," b"]" => S.Eι a b
 
 omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[grind =, simp]
 theorem S.Eι_eq_ι {X Y : Type*} [Listed X] [Listed Y] {m₁ : EMatrix 𝟙 X 𝒮} {m₂ : EMatrix 𝟙 Y 𝒮} {i} {j} :
     Eι[m₁, m₂] i j = C[m₁.asMatrix, m₂.asMatrix] i j := by
-  simp [Eι]; rfl
+  rcases j with j | j <;> simp [Eι]
 
 def S.E𝒪_lambda {X Y : Type*} [Listed X] [Listed Y] : (EMatrix X 𝟙 𝒮) → (EMatrix Y 𝟙 𝒮) → (EMatrix (X ⊕ Y) 𝟙 𝒮) :=
-  fun m₁ m₂ ↦ .ofFnSlow fun x () ↦ x.elim (m₁ · ()) (m₂ · ())
+  -- fun m₁ m₂ ↦ .ofFnSlow fun x () ↦ x.elim (m₁ · ()) (m₂ · ())
+  fun m₁ m₂ ↦ .ofFn fun x _ ↦ (Listed.Li.getSum x).elim (m₁.asNMatrix · 0) (m₂.asNMatrix · 0)
 notation "E𝒪_lambda[" a "," b"]" => S.E𝒪_lambda a b
 
 omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
@@ -99,9 +176,12 @@ def S.Eδ_delta :
     (EMatrix Z W 𝒮) →
     (EMatrix (X ⊕ Z) (Y ⊕ W) 𝒮) :=
   fun mxy mxw mzy mzw ↦
-    .ofFnSlow (fun xz yw ↦
-      xz.elim (fun x ↦ yw.elim (mxy x ·) (mxw x ·))
-              (fun z ↦ yw.elim (mzy z ·) (mzw z ·)))
+    -- .ofFnSlow (fun xz yw ↦
+    --   xz.elim (fun x ↦ yw.elim (mxy x ·) (mxw x ·))
+    --           (fun z ↦ yw.elim (mzy z ·) (mzw z ·)))
+    .ofFn (fun xz yw ↦
+      (Listed.Li.getSum xz).elim (fun x ↦ (Listed.Li.getSum yw).elim (mxy.asNMatrix x ·) (mxw.asNMatrix x ·))
+              (fun z ↦ (Listed.Li.getSum yw).elim (mzy.asNMatrix z ·) (mzw.asNMatrix z ·)))
 
 notation "Eδ_delta[" "[" a "," b "]" "," "[" c "," d "]" "]" => S.Eδ_delta a b c d
 
@@ -416,7 +496,8 @@ def Eδ_delta (p : RPol[F,N,𝒮]) : EMatrix Pk[F,N] Pk[F,N] (EMatrix (S p) (S p
   match p with
   | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} => .ofFn fun _ _ ↦
     0
-  | wnk_rpol {dup} => .ofFn fun α β ↦ .ofFnSlow fun s ↦ if s = ♡ ∧ α = β then η₁ ♣ else 0
+  -- | wnk_rpol {dup} => .ofFn fun α β ↦ .ofFnSlow fun s ↦ if s = ♡ ∧ α = β then η₁ ♣ else 0
+  | wnk_rpol {dup} => .ofFn fun α β ↦ .ofFn fun s ↦ if s = 0 ∧ α = β then η₁ 1 else 0
   | wnk_rpol {~_ ⨀ ~p₁} => Eδ_delta p₁
   | wnk_rpol {~p₁ ⨁ ~p₂} =>
     let δ₁ := Eδ_delta p₁
@@ -450,7 +531,11 @@ theorem Eδ_delta_eq_δ {p : RPol[F,N,𝒮]} : Eδ_delta p = EMatrix.ofMatrix₂
   next => ext; simp [Eδ_delta, δ]
   next => ext; simp [Eδ_delta, δ]
   next => ext; simp [Eδ_delta, δ]
-  next => ext; simp [Eδ_delta, δ]
+  next =>
+    ext _ _ i j; simp [Eδ_delta, δ]
+    rcases i <;> rcases j <;> simp [Listed.encodeFin, Listed.encode]
+    · split_ifs <;> rfl
+    · split_ifs <;> rfl
   next p q ih₁ ih₂ =>
     ext α β i j; simp_all [Eδ_delta, δ, S]
     congr! with γ
@@ -508,8 +593,6 @@ def EWNKA.toEWNKA_δ_apply {α β} : 𝔈.toWNKA.δ α β = (𝔈.δ α β).asMa
 @[simp]
 def EWNKA.toEWNKA_𝒪_apply {α β} : 𝔈.toWNKA.𝒪 α β = (𝔈.𝒪 α β).asMatrix := by
   simp [EWNKA.toWNKA]; rfl
-
-notation "Li[" α "]" => Fin (Listed.size α)
 
 def EWNKA.sem (𝒜 : EWNKA[F,N,𝒮,Q]) : GS[F,N] →c 𝒮 :=
   ⟨fun ⟨α, xs, β⟩ ↦
