@@ -33,32 +33,28 @@ syntax (name:=noncomputable_instantiate_computableSemiring) "instantiate_computa
 -- for `Arctic`, leading to nonsensical/unexpected results
 
 elab "instantiate_computableSemiring" b:term " => " a:term : command => do
-  elabCommand <|← `(instance computableSemiring : ComputableSemiring $a := ComputableSemiring.fromWeighted $b)
-  elabCommand <|← `(noncomputable instance lawfulComputableSemiring : LawfulComputableSemiring $a := LawfulComputableSemiring.fromWeighted $b)
+  elabCommand <|← `(instance : Semiring $a := WSemiring.toSemiring $b)
+  elabCommand <|← `(instance : KStar $a := WKStar.toKStar $b)
+  elabCommand <|← `(instance : PartialOrder $a := WPartialOrder.toPartialOrder $b)
+  elabCommand <|← `(noncomputable instance : OmegaCompletePartialOrder $a := WOmegaCompletePartialOrder.toOmegaCompletePartialOrder $b)
+  elabCommand <|← `(noncomputable instance : OrderBot $a := WOmegaContinuousNonUnitalSemiring.toOrderBot $b)
+  elabCommand <|← `(noncomputable instance : IsPositiveOrderedAddMonoid $a := WOmegaContinuousNonUnitalSemiring.toIsPositiveOrderedAddMonoid $b)
+  elabCommand <|← `(noncomputable instance : LawfulKStar $a := LawfulWKStar.toLawfulKStar $b)
   elabCommand <|← `(instance {n : ℕ} [inst : OfNat $b n] : OfNat $a n := ⟨inst.ofNat⟩)
   elabCommand <|← `(instance [inst : Repr $b] : Repr $a := inst)
 
 elab "noncomputable" "instantiate_computableSemiring" b:term " => " a:term : command => do
-  elabCommand <|← `(noncomputable instance computableSemiring : ComputableSemiring $a := ComputableSemiring.fromWeighted $b)
-  elabCommand <|← `(noncomputable instance lawfulComputableSemiring : LawfulComputableSemiring $a := LawfulComputableSemiring.fromWeighted $b)
+  elabCommand <|← `(noncomputable instance : Semiring $a := WSemiring.toSemiring $b)
+  elabCommand <|← `(noncomputable instance : KStar $a := WKStar.toKStar $b)
+  elabCommand <|← `(noncomputable instance : PartialOrder $a := WPartialOrder.toPartialOrder $b)
+  elabCommand <|← `(noncomputable instance : OmegaCompletePartialOrder $a := WOmegaCompletePartialOrder.toOmegaCompletePartialOrder $b)
+  elabCommand <|← `(noncomputable instance : OrderBot $a := WOmegaContinuousNonUnitalSemiring.toOrderBot $b)
+  elabCommand <|← `(noncomputable instance : IsPositiveOrderedAddMonoid $a := WOmegaContinuousNonUnitalSemiring.toIsPositiveOrderedAddMonoid $b)
+  elabCommand <|← `(noncomputable instance : LawfulKStar $a := LawfulWKStar.toLawfulKStar $b)
   elabCommand <|← `(instance {n : ℕ} [inst : OfNat $b n] : OfNat $a n := ⟨inst.ofNat⟩)
   elabCommand <|← `(instance [inst : Repr $b] : Repr $a := inst)
 
 end InstantiationMacros
-
-section
-
-variable {α : Type*} [computableSemiring : ComputableSemiring α]
-
-instance : Semiring α := computableSemiring.toSemiring
-instance : KStar α := computableSemiring.toKStar
-variable [lawfulComputableSemiring : LawfulComputableSemiring α]
-noncomputable instance : OmegaCompletePartialOrder α := lawfulComputableSemiring.toOmegaCompletePartialOrder
-noncomputable instance : OrderBot α := lawfulComputableSemiring.toOrderBot
-noncomputable instance : IsPositiveOrderedAddMonoid α := lawfulComputableSemiring.toIsPositiveOrderedAddMonoid
-noncomputable instance : LawfulKStar α := lawfulComputableSemiring.toLawfulKStar
-
-end
 
 namespace ENat.WithBot
 
@@ -225,9 +221,11 @@ local instance : WSemiring ENat where
 local instance : WLE ENat where
   wle := (· ≥ ·)
 
-noncomputable local instance : WOmegaContinuousNonUnitalSemiring ENat where
+local instance : WPartialOrder ENat where
   wle_trans h₁ h₂ := by simp_all; apply le_trans h₂ h₁
   wle_antisymm a b h₁ h₂ := by simp_all; apply le_antisymm h₂ h₁
+
+noncomputable local instance : WOmegaContinuousNonUnitalSemiring ENat where
   wωSup f h := ⨅ i, f i
   wle_wωSup := by simp [iInf_le]
   wωSup_wle := by simp
@@ -254,7 +252,7 @@ noncomputable scoped instance : LawfulWKStar ENat where
       | zero => simp
       | succ n ih =>
         simp_all [wstarn]
-        grind only [instWOmegaContinuousNonUnitalSemiringENat._simp_14, = min_def]
+        grind only [instWOmegaContinuousNonUnitalSemiringENat._simp_10, = min_def]
 
 instantiate_computableSemiring ENat => Tropical
 
@@ -307,10 +305,11 @@ scoped instance : WSemiring (WithBot ENat) where
   right_distrib := by simp [max_add]
 
 scoped instance : WLE (WithBot ENat) := ⟨(· ≤ ·)⟩
-
-noncomputable scoped instance : WOmegaContinuousNonUnitalSemiring (WithBot ENat) where
+scoped instance : WPartialOrder (WithBot ENat) where
   wle_trans h₁ h₂ := by simp_all; apply le_trans h₁ h₂
   wle_antisymm a b h₁ h₂ := by simp_all; apply le_antisymm h₁ h₂
+
+noncomputable scoped instance : WOmegaContinuousNonUnitalSemiring (WithBot ENat) where
   wωSup f h := ⨆ i, f i
   wle_wωSup := by simp [le_iSup]
   wωSup_wle := by simp
@@ -408,10 +407,11 @@ scoped instance : WSemiring Bool where
   right_distrib := by simp
 
 scoped instance : WLE Bool := ⟨(· ≤ ·)⟩
-
-noncomputable scoped instance : WOmegaContinuousNonUnitalSemiring Bool where
+scoped instance : WPartialOrder Bool where
   wle_trans h₁ h₂ := by simp_all; apply le_trans h₁ h₂
   wle_antisymm a b h₁ h₂ := by simp_all; apply le_antisymm h₁ h₂
+
+noncomputable scoped instance : WOmegaContinuousNonUnitalSemiring Bool where
   wωSup f h := ⨆ i, f i
   wle_wωSup := by simp [le_iSup]
   wωSup_wle := by simp
@@ -460,10 +460,11 @@ scoped instance : WSemiring (WithBot ENat) where
   right_distrib := by simp [min_max_distrib_right]
 
 scoped instance : WLE (WithBot ENat) := ⟨(· ≤ ·)⟩
-
-noncomputable scoped instance : WOmegaContinuousNonUnitalSemiring (WithBot ENat) where
+scoped instance : WPartialOrder (WithBot ENat) where
   wle_trans h₁ h₂ := by simp_all; apply le_trans h₁ h₂
   wle_antisymm a b h₁ h₂ := by simp_all; apply le_antisymm h₁ h₂
+
+noncomputable scoped instance : WOmegaContinuousNonUnitalSemiring (WithBot ENat) where
   wωSup f h := ⨆ i, f i
   wle_wωSup := by simp [le_iSup]
   wωSup_wle := by simp
@@ -504,10 +505,11 @@ noncomputable scoped instance : WSemiring ENNReal where
   right_distrib := by simp [add_mul]
 
 scoped instance : WLE ENNReal := ⟨(· ≤ ·)⟩
-
-noncomputable scoped instance : WOmegaContinuousNonUnitalSemiring ENNReal where
+scoped instance : WPartialOrder ENNReal where
   wle_trans h₁ h₂ := by simp_all; apply le_trans h₁ h₂
   wle_antisymm a b h₁ h₂ := by simp_all; apply le_antisymm h₁ h₂
+
+noncomputable scoped instance : WOmegaContinuousNonUnitalSemiring ENNReal where
   wωSup f h := ⨆ i, f i
   wle_wωSup := by simp [le_iSup]
   wωSup_wle := by simp
@@ -540,7 +542,8 @@ abbrev Viterbi.PReal : Submonoid ENNReal where
   mul_mem' := by simp +contextual [Right.mul_le_one]
   one_mem' := by simp
 
-def Viterbi := Viterbi.PReal
+-- NOTE: We need to put `Type` explicitly here, otherwise `Submonoid ENNReal` leaks through
+def Viterbi : Type := Viterbi.PReal
 
 namespace Viterbi
 
@@ -580,6 +583,9 @@ noncomputable scoped instance : WSemiring PReal where
   right_distrib := by simp; intro a ha b hb c hc; ext; convert (max_mul_mul_right a b c).symm
 
 scoped instance : WLE PReal := ⟨(· ≤ ·)⟩
+scoped instance : WPartialOrder PReal where
+  wle_trans h₁ h₂ := by simp_all; apply le_trans h₁ h₂
+  wle_antisymm a b h₁ h₂ := by simp_all; apply le_antisymm h₁ h₂
 
 @[simp]
 theorem PReal.iSup_val {f : ℕ → PReal} : (⨆ i, f i).val = ⨆ i, (f i).val := by
@@ -587,8 +593,6 @@ theorem PReal.iSup_val {f : ℕ → PReal} : (⨆ i, f i).val = ⨆ i, (f i).val
   apply le_antisymm <;> simp +contextual [this, Subtype.coe_le_coe.mp, le_iSup_iff]
 
 noncomputable scoped instance : WOmegaContinuousNonUnitalSemiring PReal where
-  wle_trans h₁ h₂ := by simp_all; apply le_trans h₁ h₂
-  wle_antisymm a b h₁ h₂ := by simp_all; apply le_antisymm h₁ h₂
   wωSup f h := ⨆ i, f i
   wle_wωSup := by simp [le_iSup]
   wωSup_wle := by simp

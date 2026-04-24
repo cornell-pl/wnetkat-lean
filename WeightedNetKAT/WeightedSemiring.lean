@@ -95,11 +95,12 @@ class WSemiring (α : Type*) extends WAdd α, WMul α, WOne α, WZero α where
   wnsmul_zero (x : α) : wnsmul 0 x = 𝟘 := by simp
   wnsmul_succ (n : ℕ) (x : α) : wnsmul (n + 1) x = wnsmul n x ⨁ x := by simp [AddMonoid.nsmul_succ, add_mul]
 
-/-- Weighted variant of [`Preorder`] -/
-class WPreorder (α : Type*) extends WLE α, WLT α where
+/-- Weighted variant of [`PartialOrder`] -/
+class WPartialOrder (α : Type*) extends WLE α, WLT α where
   wle_refl (a : α) : a ≼ a := by intro; simp
   wle_trans {a b c : α} : a ≼ b → b ≼ c → a ≼ c
   wlt_iff_wle_not_wge (a b : α) : a ≺ b ↔ a ≼ b ∧ ¬b ≼ a := by intro _ _; rfl
+  wle_antisymm (a b : α) (hab : a ≼ b) (hba : b ≼ a) : a = b
 
 abbrev WSemiring.toSemiring (α : Type*) [WSemiring α] : Semiring α where
   add := wadd
@@ -124,36 +125,35 @@ abbrev WSemiring.toSemiring (α : Type*) [WSemiring α] : Semiring α where
 abbrev WLE.toLE (α : Type*) [WLE α] : LE α := ⟨wle⟩
 abbrev WLT.toLT (α : Type*) [WLT α] : LT α := ⟨wlt⟩
 
-abbrev WPreorder.toPreorder (α : Type*) [WPreorder α] : Preorder α :=
+abbrev WPartialOrder.toPartialOrder (α : Type*) [WPartialOrder α] : PartialOrder α :=
   { WLE.toLE α, WLT.toLT α with
     le_refl := wle_refl
     le_trans _ _ _ := wle_trans
     lt_iff_le_not_ge a b := wlt_iff_wle_not_wge a b
+    le_antisymm := wle_antisymm
   }
-
 
 instance {α : Type*} [WLE α] : WLT α where
   wlt a b := a ≼ b ∧ ¬b ≼ a
 
-class WOmegaCompletePartialOrder (α : Type*) extends WPreorder α where
-  wle_antisymm (a b : α) : a ≼ b → b ≼ a → a = b
+class WOmegaCompletePartialOrder (α : Type*) extends WPartialOrder α where
   wωSup (f : ℕ → α) (h : ∀ {a b}, a ≤ b → f a ≼ f b) : α
   wle_wωSup (f : ℕ → α) (h : ∀ {a b}, a ≤ b → f a ≼ f b) (i : ℕ) : f i ≼ wωSup f h
   wωSup_wle (f : ℕ → α) (h : ∀ {a b}, a ≤ b → f a ≼ f b) (x : α) : (∀ (i : ℕ), f i ≼ x) → wωSup f h ≼ x
 
 theorem WOmegaCompletePartialOrder.wωSup_wle_of_wle {α : Type*} [WOmegaCompletePartialOrder α] {f : ℕ → α} {h : ∀ {a b}, a ≤ b → f a ≼ f b} {x : α} (i : ℕ) (hi : x ≼ f i) :
     x ≼ wωSup f h :=
-  WPreorder.wle_trans hi (wle_wωSup f h i)
+  WPartialOrder.wle_trans hi (wle_wωSup f h i)
 
 section
 
 local instance {α : Type*} [WLE α] : LE α := WLE.toLE α
 local instance {α : Type*} [WLT α] : LT α := WLT.toLT α
-local instance {α : Type*} [WPreorder α] : Preorder α := WPreorder.toPreorder α
+local instance {α : Type*} [WPartialOrder α] : PartialOrder α := WPartialOrder.toPartialOrder α
 
 abbrev WOmegaCompletePartialOrder.toOmegaCompletePartialOrder (α : Type*) [WOmegaCompletePartialOrder α] : OmegaCompletePartialOrder α :=
-  { WPreorder.toPreorder α with
-    le_antisymm := wle_antisymm
+  { WPartialOrder.toPartialOrder α with
+    le_antisymm := WPartialOrder.wle_antisymm
     ωSup c := wωSup c (c.monotone ·)
     le_ωSup c := wle_wωSup c (c.monotone ·)
     ωSup_le c := wωSup_wle c (c.monotone ·)
@@ -249,10 +249,10 @@ section
 variable {α : Type*} [WOmegaContinuousNonUnitalSemiring α] {a b c d : α} {n m : ℕ}
 
 open WSemiring
-open WPreorder
+open WPartialOrder
 open WOmegaContinuousNonUnitalSemiring
 
-attribute [refl, simp] WPreorder.wle_refl
+attribute [refl, simp] WPartialOrder.wle_refl
 attribute [gcongr] wadd_left_mono
 attribute [gcongr] wadd_right_mono
 attribute [simp] wadd_wzero
@@ -283,7 +283,7 @@ theorem wmul_le_wmul (hac : a ≼ c) (hbd : b ≼ d) : a ⨀ b ≼ c ⨀ d := by
 @[gcongr]
 theorem wstarn_mono_left (h : a ≼ b) : wstarn a n ≼ wstarn b n := by
   induction n with
-  | zero => simp [WPreorder.wle_refl]
+  | zero => simp [WPartialOrder.wle_refl]
   | succ n ih =>
     simp [wstarn]
     gcongr
@@ -302,9 +302,8 @@ theorem wstarn_le_succ : wstarn a n ≼ wstarn a (n + 1) := by
 theorem wstarn_mono_right (h : n ≤ m) : wstarn a n ≼ wstarn a m := by
   fun_induction wstarn a m
   · simp_all
-  · grind [wle_trans, WOmegaCompletePartialOrder.wle_antisymm, wstarn.eq_def,
-      wadd_le_wadd, wstarn_mono_left, wle_refl, wzero_le, wmul_left_mono,
-      wstarn_le_succ]
+  · grind [wle_trans, WPartialOrder.wle_antisymm, wstarn.eq_def, wadd_le_wadd, wstarn_mono_left,
+      wle_refl, wzero_le, wmul_left_mono, wstarn_le_succ]
 
 theorem wstarn_mono : Monotone (wstarn a) := by apply wstarn_mono_right
 
@@ -367,40 +366,9 @@ abbrev LawfulWKStar.toKStarIter (α : Type*)
 
 end
 
-section
-
-class ComputableSemiring (α : Type*) extends Semiring α, KStar α where
-
-class MulMono (α : Type*) [LE α] [Mul α] where
-  mul_le_mul_left (a b c : α) (h : b ≤ c) : a * b ≤ a * c
-  mul_le_mul_right (a b c : α) (h : b ≤ c) : b * a ≤ c * a
-
-instance {α : Type*} [LE α] [Mul α] [MulMono α] : MulLeftMono α := ⟨MulMono.mul_le_mul_left⟩
-instance {α : Type*} [LE α] [Mul α] [MulMono α] : MulRightMono α := ⟨MulMono.mul_le_mul_right⟩
-
-class LawfulComputableSemiring (α : Type*) [ComputableSemiring α] extends
-    OmegaCompletePartialOrder α, OrderBot α, MulMono α, IsPositiveOrderedAddMonoid α,
-    OmegaContinuousNonUnitalSemiring α, LawfulKStar α where
-
 end
 
 end
-
-abbrev ComputableSemiring.fromWeighted (α : Type*) [WSemiring α] [WKStar α] : ComputableSemiring α :=
-  { ‹WSemiring α›.toSemiring, ‹WKStar α›.toKStar with }
-
-abbrev LawfulComputableSemiring.fromWeighted (α : Type*) [WKStar α] [WOmegaCompletePartialOrder α] [WOmegaContinuousNonUnitalSemiring α] [LawfulWKStar α] : @LawfulComputableSemiring α (ComputableSemiring.fromWeighted α) :=
-  letI := ComputableSemiring.fromWeighted α
-  {
-    ‹WOmegaContinuousNonUnitalSemiring α›.toOmegaCompletePartialOrder,
-    ‹WOmegaContinuousNonUnitalSemiring α›.toOrderBot,
-    ‹WOmegaContinuousNonUnitalSemiring α›.toOmegaContinuousNonUnitalSemiring,
-    ‹WOmegaContinuousNonUnitalSemiring α›.toIsPositiveOrderedAddMonoid,
-    ‹LawfulWKStar α›.toLawfulKStar
-    with
-    mul_le_mul_left := by apply (WOmegaContinuousNonUnitalSemiring.toMulLeftMono α).elim
-    mul_le_mul_right := by apply (WOmegaContinuousNonUnitalSemiring.toMulRightMono α).elim
-  }
 
 attribute [simp] wzero
 attribute [simp] wadd

@@ -341,7 +341,7 @@ theorem zero_add [NonUnitalSemiring α] : 0 + X = X := by
 theorem add_zero [NonUnitalSemiring α] : X + 0 = X := by
   ext; simp only [_root_.add_zero]
 
-instance {α : Type*} [Semiring α] : Semiring (N𝕄[n,n,α]) where
+instance {α : Type*} [Semiring α] : Semiring N𝕄[n,n,α] where
   left_distrib A B C := by ext; simp [left_distrib, mul_def]
   right_distrib A B C := by ext; simp [right_distrib, mul_def]
   zero_mul A := by ext; simp only [zero_mul]
@@ -363,7 +363,7 @@ instance : PartialOrder N𝕄[m,n,α] where
   le_refl a := le_refl a.asMatrix
   le_trans a b c hab hbc := le_trans hab hbc
   le_antisymm a b hab hba := NMatrix.ext_iff.mpr fun i ↦ congrFun (congrFun (le_antisymm hab hba) i)
-instance : OmegaCompletePartialOrder (N𝕄[m,n,α]) where
+instance : OmegaCompletePartialOrder N𝕄[m,n,α] where
   ωSup c := ωSup (c.map ⟨(·.asMatrix), fun _ _ a ↦ a⟩) |> .ofMatrix
   le_ωSup c i := by
     have := le_ωSup (c.map ⟨(·.asMatrix), fun _ _ a ↦ a⟩) i
