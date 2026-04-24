@@ -2,10 +2,8 @@ module
 
 public import Mathlib.Logic.Encodable.Pi
 public import WeightedNetKAT.Computation
-public import WeightedNetKAT.WNKA
 public import WeightedNetKAT.WNKA.Explicit
-public import WeightedNetKAT.Instances.Boolean
-public import WeightedNetKAT.Instances.Bottleneck
+public import WeightedNetKAT.WeightedSemiring.Instances
 
 @[expose] public section
 
@@ -75,7 +73,7 @@ def S.repr {F N 𝒮 : Type*} [Listed F] {p : RPol[F,N,𝒮]} (s : S p) : String
   | wnk_rpol { ~p₁* } =>
     match s with
     | .inl s => let s' : S p₁ := s; s'.repr
-    | .inr 𝟙 => "♡*"
+    | .inr () => "♡*"
 
 instance {F N 𝒮 : Type*} [Listed F] {p : RPol[F,N,𝒮]} : Repr (S p) where
   reprPrec s _ := s.repr
@@ -87,8 +85,8 @@ instance {X : Type*} [Repr X] : Repr (X × Unit) where
 
 def RPol.eval {F N 𝒮 : Type*}
     [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Listed F] [Listed N] [Inhabited N]
-    [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
-    [DecidableEq 𝒮] [KStar 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) : IO Std.Format := do
+    [Semiring 𝒮] [DecidableEq 𝒮] [KStar 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) :
+    IO Std.Format := do
   println! "computing wnka"
   let n : EWNKA F N 𝒮 (S p) := p.ewnka
   println! "accessing ι"
@@ -124,8 +122,7 @@ def RPol.eval {F N 𝒮 : Type*}
 
 def RPol.eval_string {F N 𝒮 : Type*}
     [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Listed F] [Listed N] [Inhabited N]
-    [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
-    [DecidableEq 𝒮] [KStar 𝒮] (p : RPol[F,N,𝒮]) (s : GS[F,N])
+    [Semiring 𝒮] [DecidableEq 𝒮] [KStar 𝒮] (p : RPol[F,N,𝒮]) (s : GS[F,N])
     :=
       p.ewnka.sem s
 
@@ -137,9 +134,9 @@ instance myRepr {α A B : Type*} [DecidableEq α] [Zero α] [DecidableEq A] [Dec
 instance {F N 𝒮 : Type*}
     [Fintype F] [DecidableEq F] [Fintype N] [DecidableEq N] [Listed F] [Listed N] [Inhabited N]
     [Listed Pk[F,N]]
-    [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮]
-    [DecidableEq 𝒮] [KStar 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) : Repr (WNKA F N 𝒮 (S p)) where
-  reprPrec m n :=
+    [Semiring 𝒮] [DecidableEq 𝒮] [KStar 𝒮] [Repr 𝒮] [Repr F] [Repr N] (p : RPol[F,N,𝒮]) :
+    Repr (WNKA F N 𝒮 (S p)) where
+  reprPrec m _ :=
     let ι := m.ι
     let δ : List (Pk[F,N] × Pk[F,N] × 𝕄[S p, S p, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, m.δ α β)) |>.filter (·.2.2 ≠ 0)
     let 𝓁 : List (Pk[F,N] × Pk[F,N] × 𝕄[S p, 𝟙, 𝒮]) := (Listed.listOf (Pk[F,N] × Pk[F,N])).map (fun (α, β) ↦ (α, β, m.𝒪 α β)) |>.filter (·.2.2 ≠ 0)

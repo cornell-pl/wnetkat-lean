@@ -1,6 +1,6 @@
 module
 
-public import WeightedNetKAT.Instances.ENat
+public import WeightedNetKAT.WeightedSemiring.Instances
 public import Lake.Util.Log
 
 @[expose] public section

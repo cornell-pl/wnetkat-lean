@@ -1,9 +1,9 @@
 import WeightedNetKAT.Examples.Common
 import WeightedNetKAT.WNKA
-import WeightedNetKAT.Instances.ENat
-import WeightedNetKAT.Instances.Trace
 
 namespace WeightedNetKAT
+
+open Weighted (Bottleneck)
 
 open Fields
 
@@ -13,11 +13,11 @@ info: ι := [♡ = ⊤]
 𝓁 := [[♡ = ⊤ [0, 0];[0, 0]], [♡ = ⊤ [1, 0];[1, 0]], [♡ = ⊤ [0, 1];[0, 1]], [♡ = ⊤ [1, 1];[1, 1]]]
 -/
 #guard_msgs in
-#wnka_eval[Fin 2, Fin 2, Bottleneck ℕ∞] { skip }
+#wnka_eval[Fin 2, Fin 2, Bottleneck] { skip }
 
-#wnka_dot[Fin 2, Fin 2, Bottleneck ℕ∞] { skip }
+#wnka_dot[Fin 2, Fin 2, Bottleneck] { skip }
 
-#wnka_eval[Fin 2, Fin 2, Bottleneck ℕ∞] { (3 ⨀ skip)* }
+#wnka_eval[Fin 2, Fin 2, Bottleneck] { (3 ⨀ skip)* }
 
 /-- info: some 1 -/
 #guard_msgs in
@@ -104,9 +104,9 @@ info: {((![0], []), some 1),
 #wnka_eval_str[Fin 2, Fin 2, ℕ∞] { (3 ⨀ dup) } ( ⟨pk[], [], pk[]⟩ )
 #wnka_eval[Fin 1, Fin 2, ℕ∞] { (3 ⨀ dup)* }
 
-#wnka_eval[Fin 2, Fin 2, Bottleneck ℕ∞] { (3 ⨀ dup)* }
+#wnka_eval[Fin 2, Fin 2, Bottleneck] { (3 ⨀ dup)* }
 
-#wnka_eval'[Fin 1, Fin 1, Bottleneck ℕ∞] {
+#wnka_eval'[Fin 1, Fin 1, Bottleneck] {
     -- skip; dup
     if 0 = 0 then 2 ⨀ 1 ← 0; 0 ← 1 else
     if 0 = 1 then 4 ⨀ 1 ← 1; 0 ← 1 else drop
@@ -162,7 +162,7 @@ info: ι := [ll♡ = ⊤, lrl♡ = ⊤, lrrl♡ = ⊤, lrrrl♡ = ⊤, lrrrr♡ 
   rlrrrrrrrlr♡ = ⊤ [1, 1, 1];[1, 1, 1]]]
 -/
 #guard_msgs in
-#wnka_eval'[Fields, Fin 2, Bottleneck ℕ∞] {
+#wnka_eval'[Fields, Fin 2, Bottleneck] {
   if pt = 3 then ~2 ⨀ sw ← 3 else drop
   -- if pt = 4 then ~4 ⨀ sw ← 4 else drop
 }
@@ -173,7 +173,7 @@ info: ι := [l♡ = ⊤, r♡ = ⊤]
 𝓁 := [[l♡ = ⊤ [0, 0];[0, 0]]]
 -/
 #guard_msgs in
-#wnka_eval'[Fin 2, Fin 1, Bottleneck ℕ∞] { ~1 = ~1 }
+#wnka_eval'[Fin 2, Fin 1, Bottleneck] { ~1 = ~1 }
 
 /--
 info: ι := [♡ = ⊤]
@@ -181,7 +181,7 @@ info: ι := [♡ = ⊤]
 𝓁 := [[♣ = ⊤ [0, 0];[0, 0]], [♣ = ⊤ [1, 0];[1, 0]], [♣ = ⊤ [0, 1];[0, 1]], [♣ = ⊤ [1, 1];[1, 1]]]
 -/
 #guard_msgs in
-#wnka_eval[Fin 2, Fin 2, Bottleneck ℕ∞] { dup }
+#wnka_eval[Fin 2, Fin 2, Bottleneck] { dup }
 
 /--
 info: ι := [♡ = 10]
@@ -189,7 +189,7 @@ info: ι := [♡ = 10]
 𝓁 := [[♣ = ⊤ [0, 0];[0, 0]], [♣ = ⊤ [1, 0];[1, 0]], [♣ = ⊤ [0, 1];[0, 1]], [♣ = ⊤ [1, 1];[1, 1]]]
 -/
 #guard_msgs in
-#wnka_eval[Fin 2, Fin 2, Bottleneck ℕ∞] { ~10 ⨀ dup }
+#wnka_eval[Fin 2, Fin 2, Bottleneck] { ~10 ⨀ dup }
 
 /--
 info: ι := [l♡ = ⊤]
@@ -200,7 +200,7 @@ info: ι := [l♡ = ⊤]
 𝓁 := [[r♣ = ⊤ [0, 0];[0, 0]], [r♣ = ⊤ [1, 0];[1, 0]], [r♣ = ⊤ [0, 1];[0, 1]], [r♣ = ⊤ [1, 1];[1, 1]]]
 -/
 #guard_msgs in
-#wnka_eval[Fin 2, Fin 2, Bottleneck ℕ∞] { skip ; ~10 ⨀ dup }
+#wnka_eval[Fin 2, Fin 2, Bottleneck] { skip ; ~10 ⨀ dup }
 
 /--
 info: ι := [♡ = ⊤]
@@ -208,7 +208,7 @@ info: ι := [♡ = ⊤]
 𝓁 := [[♡ = ⊤ [0, 0];[1, 0]], [♡ = ⊤ [1, 0];[1, 0]], [♡ = ⊤ [0, 1];[1, 0]], [♡ = ⊤ [1, 1];[1, 0]]]
 -/
 #guard_msgs in
-#wnka_eval[Fin 2, Fin 2, Bottleneck ℕ∞] { @mod ~pk[0 ↦ 1] }
+#wnka_eval[Fin 2, Fin 2, Bottleneck] { @mod ~pk[0 ↦ 1] }
 
 /--
 info: ι := [l♡ = ⊤, r♡ = ⊤]
@@ -223,7 +223,7 @@ info: ι := [l♡ = ⊤, r♡ = ⊤]
  [r♡ = ⊤ [1, 1];[0, 1]]]
 -/
 #guard_msgs in
-#wnka_eval[Fin 2, Fin 2, Bottleneck ℕ∞] { @mod ~pk[0 ↦ 1] ⨁ @mod ~pk[1 ↦ 1] }
+#wnka_eval[Fin 2, Fin 2, Bottleneck] { @mod ~pk[0 ↦ 1] ⨁ @mod ~pk[1 ↦ 1] }
 
 /--
 info: ι := [ll♡ = ⊤, lr♡ = ⊤]
@@ -240,7 +240,7 @@ info: ι := [ll♡ = ⊤, lr♡ = ⊤]
 𝓁 := [[rl♣ = ⊤ [1, 0];[1, 0], rr♡ = ⊤ [1, 0];[1, 0]]]
 -/
 #guard_msgs in
-#wnka_eval[Fin 2, Fin 2, Bottleneck ℕ∞] {
+#wnka_eval[Fin 2, Fin 2, Bottleneck] {
   (@mod ~pk[0 ↦ 1] ⨁ @mod ~pk[1 ↦ 1]) ; dup ; @test ~pk[0 ↦ 1]
 }
 
@@ -257,6 +257,6 @@ info: ι := [l♡ = ⊤]
   rrrr♡ = ⊤ [0, 0];[0, 0]]]
 -/
 #guard_msgs in
-#wnka_eval[Fin 2, Fin 2, Bottleneck ℕ∞] { skip; (dup; @mod ~pk[0 ↦ 1] ⨁ ~1 ⨀ skip); skip; skip; @test ~pk[0 ↦ 0] }
+#wnka_eval[Fin 2, Fin 2, Bottleneck] { skip; (dup; @mod ~pk[0 ↦ 1] ⨁ ~1 ⨀ skip); skip; skip; @test ~pk[0 ↦ 0] }
 
 end WeightedNetKAT

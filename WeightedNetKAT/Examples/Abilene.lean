@@ -5,9 +5,8 @@ public import WeightedNetKAT.WNKA
 public import WeightedNetKAT.WNKA.Explicit
 public import WeightedNetKAT.rSafety
 public import WeightedNetKAT.rReachability
-public import WeightedNetKAT.Instances.Language
-public import WeightedNetKAT.Instances.ENat
-public import WeightedNetKAT.Instances.Arctic
+public meta import WeightedNetKAT.WeightedSemiring.Instances
+public import WeightedNetKAT.WeightedSemiring.Instances
 public import WeightedNetKAT.Papers.PLDI2026
 public import WeightedNetKAT.Perf
 public import Lake.Util.Log
@@ -22,12 +21,18 @@ This file contains a simplified version of the _Abilene_ network
 
 -/
 
+/-- A version of `List.sum` that doesn't leave a trailing `0`
+
+Useful for non-`AddZeroClass` instances of add.  -/
 def List.sum' {α : Type*} [Add α] [Zero α] (a : List α) : α :=
   match a with
   | [] => 0
   | [x] => x
   | x::y::z => x + sum' (y::z)
 
+/-- A version of `Array.sum` that doesn't leave a trailing `0`
+
+Useful for non-`AddZeroClass` instances of add.  -/
 def Array.sum' {α : Type*} [Add α] [Zero α] (a : Array α) : α := a.toList.sum'
 
 namespace WeightedNetKAT
@@ -86,7 +91,7 @@ def mod {𝒮} [Semiring 𝒮] {α : Type*} (c : α) : RPol[Switch,α,𝒮] :=
 def test {𝒮} [Semiring 𝒮] {α : Type*} (c : α) : RPol[Switch,α,𝒮] :=
   .Test (.fill c)
 
-def latency : City → City → Option Arctic
+def latency : City → City → Option Weighted.Arctic
   | SEA, DEN => ms 3
   | SEA, BAY => ms 2
 
@@ -112,9 +117,9 @@ def latency : City → City → Option Arctic
   | ATL, DC  => ms 2
 
   | _, _ => none
-where ms := Arctic.arc
+where ms := some
 
-def bandwidth : City → City → Option (Bottleneck EENat)
+def bandwidth : City → City → Option Weighted.Bottleneck
   | SEA, DEN  | DEN, SEA => mbps 500
   | SEA, BAY  | BAY, SEA => mbps 1000
 
@@ -140,10 +145,41 @@ def bandwidth : City → City → Option (Bottleneck EENat)
   | ATL, DC   | DC, ATL => mbps 900
 
   | _, _ => none
-where mbps := some ∘ id
+where mbps := some
 
 theorem bandwidth_is_symm {a b} : bandwidth a b = bandwidth b a := by
   cases a <;> cases b <;> rfl
+
+open scoped Computability
+
+open OmegaCompletePartialOrder
+
+@[simp]
+theorem OrderRingIso.ωSum_nat_eq_of_lawfulkstar {α β : Type*}
+    [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [KStar α] [LawfulKStar α] [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α]
+    [Semiring β] [OmegaCompletePartialOrder β] [OrderBot β] [IsPositiveOrderedAddMonoid β] [KStar β] [LawfulKStar β] [MulLeftMono β] [MulRightMono β] [OmegaContinuousNonUnitalSemiring β]
+    (e : α ≃+*o β) (f : ℕ → α) :
+    e (ω∑ i, f i) = ω∑ i, e (f i) := by
+  apply le_antisymm
+  · apply e.symm.map_le_map_iff'.mp
+    simp [ωSum_nat_eq_ωSup]
+    apply fun i ↦ e.map_le_map_iff'.mp ?_
+    simp
+    apply le_ωSup_of_le i (by rfl)
+  · simp [ωSum_nat_eq_ωSup]
+    intro i
+    apply e.symm.map_le_map_iff'.mp
+    simp
+    apply le_ωSup_of_le i
+    rfl
+
+@[simp]
+theorem OrderRingIso.kstar_eq_of_lawfulkstar {α β : Type*}
+    [Semiring α] [OmegaCompletePartialOrder α] [OrderBot α] [IsPositiveOrderedAddMonoid α] [KStar α] [LawfulKStar α] [MulLeftMono α] [MulRightMono α] [OmegaContinuousNonUnitalSemiring α]
+    [Semiring β] [OmegaCompletePartialOrder β] [OrderBot β] [IsPositiveOrderedAddMonoid β] [KStar β] [LawfulKStar β] [MulLeftMono β] [MulRightMono β] [OmegaContinuousNonUnitalSemiring β]
+    (e : α ≃+*o β) (a : α) :
+    e a∗ = (e a)∗ := by
+  simp [LawfulKStar.kstar_eq_sum]
 
 def build_of_rel {α β : Type} [Listed α] [DecidableEq α] [Semiring β] (r : α → α → Option β) : RPol[Switch,α,β] :=
   Listed.arrayOf α |>.filterMap (fun x ↦
@@ -155,8 +191,8 @@ def build_of_rel {α β : Type} [Listed α] [DecidableEq α] [Semiring β] (r : 
   ) |>.sum'
 
 def run : IO Unit := do
-  let pol := wnk_rpol { (~(build_of_rel latency) ; dup)* }
-  let n : EWNKA Switch City Arctic (S pol) ← Perf.time "wnka" fun _ ↦ pol.ewnka
+  let pol := wnk_rpol { (~(build_of_rel bandwidth) ; dup)* }
+  let n : EWNKA Switch City Weighted.Bottleneck (S pol) ← Perf.time "wnka" fun _ ↦ pol.ewnka
   println! " ∘ WNKA has been built!"
 
   let v ← Perf.time "rSafety sem" fun _ ↦ rSafety.Esem' n
