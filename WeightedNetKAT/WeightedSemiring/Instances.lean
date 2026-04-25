@@ -25,32 +25,22 @@ section InstantiationMacros
 
 open Lean Elab PrettyPrinter Delaborator Meta Command Term
 
-syntax (name:=instantiate_computableSemiring) "instantiate_computableSemiring " term " => " term : command
-syntax (name:=noncomputable_instantiate_computableSemiring) "instantiate_computableSemiring " term " => " term : command
-
 -- NOTE: we add instances of `OfNat` to make sure that it behaves "as expected". The default
 -- instance after `instantiate_computableSemiring` will map `1` to `𝟙`, which, for example, is `0`
 -- for `Arctic`, leading to nonsensical/unexpected results
 
-elab "instantiate_computableSemiring" b:term " => " a:term : command => do
-  elabCommand <|← `(instance : Semiring $a := WSemiring.toSemiring $b)
-  elabCommand <|← `(instance : KStar $a := WKStar.toKStar $b)
-  elabCommand <|← `(instance : PartialOrder $a := WPartialOrder.toPartialOrder $b)
+elab c:declModifiers "instantiate_computableSemiring" b:term " => " a:term : command => do
+  elabCommand <|← `($c:declModifiers instance : Semiring $a := WSemiring.toSemiring $b)
+  elabCommand <|← `($c:declModifiers instance : KStar $a := WKStar.toKStar $b)
+  elabCommand <|← `($c:declModifiers instance : PartialOrder $a := WPartialOrder.toPartialOrder $b)
+  elabCommand <|← `($c:declModifiers instance : DecidableLE $a := WPartialOrder.toDecidableLE $b)
   elabCommand <|← `(noncomputable instance : OmegaCompletePartialOrder $a := WOmegaCompletePartialOrder.toOmegaCompletePartialOrder $b)
   elabCommand <|← `(noncomputable instance : OrderBot $a := WOmegaContinuousNonUnitalSemiring.toOrderBot $b)
   elabCommand <|← `(noncomputable instance : IsPositiveOrderedAddMonoid $a := WOmegaContinuousNonUnitalSemiring.toIsPositiveOrderedAddMonoid $b)
+  elabCommand <|← `(noncomputable instance : MulLeftMono $a := WOmegaContinuousNonUnitalSemiring.toMulLeftMono $b)
+  elabCommand <|← `(noncomputable instance : MulRightMono $a := WOmegaContinuousNonUnitalSemiring.toMulRightMono $b)
   elabCommand <|← `(noncomputable instance : LawfulKStar $a := LawfulWKStar.toLawfulKStar $b)
-  elabCommand <|← `(instance {n : ℕ} [inst : OfNat $b n] : OfNat $a n := ⟨inst.ofNat⟩)
-  elabCommand <|← `(instance [inst : Repr $b] : Repr $a := inst)
-
-elab "noncomputable" "instantiate_computableSemiring" b:term " => " a:term : command => do
-  elabCommand <|← `(noncomputable instance : Semiring $a := WSemiring.toSemiring $b)
-  elabCommand <|← `(noncomputable instance : KStar $a := WKStar.toKStar $b)
-  elabCommand <|← `(noncomputable instance : PartialOrder $a := WPartialOrder.toPartialOrder $b)
-  elabCommand <|← `(noncomputable instance : OmegaCompletePartialOrder $a := WOmegaCompletePartialOrder.toOmegaCompletePartialOrder $b)
-  elabCommand <|← `(noncomputable instance : OrderBot $a := WOmegaContinuousNonUnitalSemiring.toOrderBot $b)
-  elabCommand <|← `(noncomputable instance : IsPositiveOrderedAddMonoid $a := WOmegaContinuousNonUnitalSemiring.toIsPositiveOrderedAddMonoid $b)
-  elabCommand <|← `(noncomputable instance : LawfulKStar $a := LawfulWKStar.toLawfulKStar $b)
+  elabCommand <|← `(noncomputable instance : OmegaContinuousNonUnitalSemiring $a := WOmegaContinuousNonUnitalSemiring.toOmegaContinuousNonUnitalSemiring $b)
   elabCommand <|← `(instance {n : ℕ} [inst : OfNat $b n] : OfNat $a n := ⟨inst.ofNat⟩)
   elabCommand <|← `(instance [inst : Repr $b] : Repr $a := inst)
 
@@ -505,9 +495,10 @@ noncomputable scoped instance : WSemiring ENNReal where
   right_distrib := by simp [add_mul]
 
 scoped instance : WLE ENNReal := ⟨(· ≤ ·)⟩
-scoped instance : WPartialOrder ENNReal where
+noncomputable scoped instance : WPartialOrder ENNReal where
   wle_trans h₁ h₂ := by simp_all; apply le_trans h₁ h₂
   wle_antisymm a b h₁ h₂ := by simp_all; apply le_antisymm h₁ h₂
+  decidableWLE := Classical.decRel wle
 
 noncomputable scoped instance : WOmegaContinuousNonUnitalSemiring ENNReal where
   wωSup f h := ⨆ i, f i
@@ -583,9 +574,10 @@ noncomputable scoped instance : WSemiring PReal where
   right_distrib := by simp; intro a ha b hb c hc; ext; convert (max_mul_mul_right a b c).symm
 
 scoped instance : WLE PReal := ⟨(· ≤ ·)⟩
-scoped instance : WPartialOrder PReal where
+noncomputable scoped instance : WPartialOrder PReal where
   wle_trans h₁ h₂ := by simp_all; apply le_trans h₁ h₂
   wle_antisymm a b h₁ h₂ := by simp_all; apply le_antisymm h₁ h₂
+  decidableWLE := Classical.decRel wle
 
 @[simp]
 theorem PReal.iSup_val {f : ℕ → PReal} : (⨆ i, f i).val = ⨆ i, (f i).val := by

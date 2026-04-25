@@ -101,6 +101,7 @@ class WPartialOrder (α : Type*) extends WLE α, WLT α where
   wle_trans {a b c : α} : a ≼ b → b ≼ c → a ≼ c
   wlt_iff_wle_not_wge (a b : α) : a ≺ b ↔ a ≼ b ∧ ¬b ≼ a := by intro _ _; rfl
   wle_antisymm (a b : α) (hab : a ≼ b) (hba : b ≼ a) : a = b
+  decidableWLE : DecidableRel (wle : α → α → Prop) := by simp; infer_instance
 
 abbrev WSemiring.toSemiring (α : Type*) [WSemiring α] : Semiring α where
   add := wadd
@@ -132,6 +133,10 @@ abbrev WPartialOrder.toPartialOrder (α : Type*) [WPartialOrder α] : PartialOrd
     lt_iff_le_not_ge a b := wlt_iff_wle_not_wge a b
     le_antisymm := wle_antisymm
   }
+
+abbrev WPartialOrder.toDecidableLE (α : Type*) [inst : WPartialOrder α] :
+    @DecidableLE α (inst.toLE α) :=
+  inst.decidableWLE
 
 instance {α : Type*} [WLE α] : WLT α where
   wlt a b := a ≼ b ∧ ¬b ≼ a
