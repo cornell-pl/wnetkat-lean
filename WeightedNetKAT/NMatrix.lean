@@ -195,7 +195,7 @@ theorem fromBlocks_toBlocks₂₂ : NB[[m₁₁, m₁₂], [m₂₁, m₂₂]].t
   simp [fromBlocks, toBlocks₂₂]
 
 @[simp]
-theorem fromBlocks_get {i j} :
+theorem fromBlocks_apply {i j} :
       NB[[m₁₁, m₁₂], [m₂₁, m₂₂]] i j
     = if hi : i < m then
         if hj : j < n then m₁₁ ⟨i, by omega⟩ ⟨j, by omega⟩ else m₁₂ ⟨i, by omega⟩ ⟨j - n, by omega⟩
@@ -483,7 +483,7 @@ theorem fromBlocks_eq_one [Semiring α] :
       NB[[(1 : N𝕄[n,n,α]), (0 : N𝕄[n,m,α])], [(0 : N𝕄[m,n,α]), (1 : N𝕄[m,m,α])]]
     = 1 := by
   ext ⟨i, hi⟩ ⟨j, hj⟩
-  grind [fromBlocks_get]
+  grind [fromBlocks_apply]
 
 @[simp]
 theorem fromBlocks_le_iff [OmegaCompletePartialOrder α] :

@@ -137,66 +137,53 @@ where
   𝒪 : E𝕄[Pk[F,N], Pk[F,N], E𝕄[Q,𝟙,𝒮]]
 notation "EWNKA[" F "," N "," 𝒮 "," Q "]" => EWNKA F N 𝒮 Q
 
-def S.Eι {X Y : Type*} [Listed X] [Listed Y] : (EMatrix 𝟙 X 𝒮) → (EMatrix 𝟙 Y 𝒮) → (EMatrix 𝟙 (X ⊕ Y) 𝒮) :=
-  -- fun m₁ m₂ ↦ .ofFnSlow (fun () x ↦ x.elim (m₁ () ·) (m₂ () ·))
+def S.EC {X Y : Type*} [Listed X] [Listed Y] : (EMatrix 𝟙 X 𝒮) → (EMatrix 𝟙 Y 𝒮) → (EMatrix 𝟙 (X ⊕ Y) 𝒮) :=
   fun m₁ m₂ ↦ .ofFn (fun _ x ↦ (Listed.Li.getSum x).elim (m₁.asNMatrix 0 ·) (m₂.asNMatrix 0 ·))
-notation "Eι[" a "," b"]" => S.Eι a b
+notation "EC[" a "," b"]" => S.EC a b
 
 omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[grind =, simp]
-theorem S.Eι_eq_ι {X Y : Type*} [Listed X] [Listed Y] {m₁ : EMatrix 𝟙 X 𝒮} {m₂ : EMatrix 𝟙 Y 𝒮} {i} {j} :
-    Eι[m₁, m₂] i j = C[m₁.asMatrix, m₂.asMatrix] i j := by
-  rcases j with j | j <;> simp [Eι]
+theorem S.EC_eq_C {X Y : Type*} [Listed X] [Listed Y] {m₁ : EMatrix 𝟙 X 𝒮} {m₂ : EMatrix 𝟙 Y 𝒮} {i} {j} :
+    EC[m₁, m₂] i j = C[m₁.asMatrix, m₂.asMatrix] i j := by
+  rcases j with j | j <;> simp [EC]
 
-def S.E𝒪_lambda {X Y : Type*} [Listed X] [Listed Y] : (EMatrix X 𝟙 𝒮) → (EMatrix Y 𝟙 𝒮) → (EMatrix (X ⊕ Y) 𝟙 𝒮) :=
-  -- fun m₁ m₂ ↦ .ofFnSlow fun x () ↦ x.elim (m₁ · ()) (m₂ · ())
+def S.ER {X Y : Type*} [Listed X] [Listed Y] : (EMatrix X 𝟙 𝒮) → (EMatrix Y 𝟙 𝒮) → (EMatrix (X ⊕ Y) 𝟙 𝒮) :=
   fun m₁ m₂ ↦ .ofFn fun x _ ↦ (Listed.Li.getSum x).elim (m₁.asNMatrix · 0) (m₂.asNMatrix · 0)
-notation "E𝒪_lambda[" a "," b"]" => S.E𝒪_lambda a b
+notation "ER[" a "," b"]" => S.ER a b
 
 omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[simp]
-theorem S.E𝒪_lambda_eq_𝒪 {X Y : Type*} [Listed X] [Listed Y] {m₁ : EMatrix X 𝟙 𝒮} {m₂ : EMatrix Y 𝟙 𝒮} {i} {j} :
-    E𝒪_lambda m₁ m₂ i j = R[m₁.asMatrix, m₂.asMatrix] i j := by
-  rcases i <;> simp [E𝒪_lambda, Matrix.fromRows]
-
-omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
-theorem S.E𝒪_lambda_eq_𝒪' {X Y : Type*} [Listed X] [Listed Y] {m₁ : Matrix X 𝟙 𝒮} {m₂ : Matrix Y 𝟙 𝒮} {i} {j} :
-    R[m₁, m₂] i j = E𝒪_lambda (EMatrix.ofMatrix m₁) (EMatrix.ofMatrix m₂) i j := by
-  rcases i <;> simp [E𝒪_lambda]
+theorem S.ER_eq_C {X Y : Type*} [Listed X] [Listed Y] {m₁ : EMatrix X 𝟙 𝒮} {m₂ : EMatrix Y 𝟙 𝒮} {i} {j} :
+    ER[m₁,m₂] i j = R[m₁.asMatrix, m₂.asMatrix] i j := by
+  rcases i <;> simp [ER, Matrix.fromRows]
 
 section delta
 
 variable {X Y Z W : Type*} [Listed X] [Listed Y] [Listed Z] [Listed W]
 
 attribute [grind] Prod.map Function.Injective in
-def S.Eδ_delta :
+def _root_.EMatrix.fromBlocks :
     (EMatrix X Y 𝒮) →
     (EMatrix X W 𝒮) →
     (EMatrix Z Y 𝒮) →
     (EMatrix Z W 𝒮) →
     (EMatrix (X ⊕ Z) (Y ⊕ W) 𝒮) :=
-  fun mxy mxw mzy mzw ↦
-    -- .ofFnSlow (fun xz yw ↦
-    --   xz.elim (fun x ↦ yw.elim (mxy x ·) (mxw x ·))
-    --           (fun z ↦ yw.elim (mzy z ·) (mzw z ·)))
-    .ofFn (fun xz yw ↦
-      (Listed.Li.getSum xz).elim (fun x ↦ (Listed.Li.getSum yw).elim (mxy.asNMatrix x ·) (mxw.asNMatrix x ·))
-              (fun z ↦ (Listed.Li.getSum yw).elim (mzy.asNMatrix z ·) (mzw.asNMatrix z ·)))
+  NMatrix.fromBlocks
 
-notation "Eδ_delta[" "[" a "," b "]" "," "[" c "," d "]" "]" => S.Eδ_delta a b c d
+notation "EB[" "[" a "," b "]" "," "[" c "," d "]" "]" => EMatrix.fromBlocks a b c d
 
 omit [Semiring 𝒮] [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
 @[simp]
-theorem S.Eδ_delta_eq_δ
+theorem S.EB_eq_δ
     (mxy : EMatrix X Y 𝒮)
     (mxw : EMatrix X W 𝒮)
     (mzy : EMatrix Z Y 𝒮)
     (mzw : EMatrix Z W 𝒮)
     {i} {j} :
-    Eδ_delta mxy mxw mzy mzw i j = B[[mxy.asMatrix, mxw.asMatrix], [mzy.asMatrix, mzw.asMatrix]] i j := by
-  simp [Eδ_delta]
-  rcases i <;> rcases j <;> simp
-
+    EB[[mxy,mxw],[mzy,mzw]] i j = B[[mxy.asMatrix, mxw.asMatrix], [mzy.asMatrix, mzw.asMatrix]] i j := by
+  simp [EMatrix.fromBlocks, NMatrix.fromBlocks]
+  show (NMatrix.ofFn _) _ _ = _
+  rcases i <;> rcases j <;> simp [Listed.encodeFin, Listed.encode, Listed.encode_lt_size] <;> rfl
 
 end delta
 
@@ -204,14 +191,14 @@ abbrev Eη₂ {X Y : Type*} [instX : Listed X] [instY : Listed Y] (i : X) (j : Y
   let i := Listed.encode i; let j := Listed.encode j;
   .ofFn fun i' j' ↦ if i = i' ∧ j = j' then 1 else 0
 
-def Eι (p : RPol[F,N,𝒮]) : EMatrix 𝟙 (S p) 𝒮 := match p with
+def EC (p : RPol[F,N,𝒮]) : EMatrix 𝟙 (S p) 𝒮 := match p with
   | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} =>
     Eη₂ () ()
   | wnk_rpol {dup} => Eη₂ () ♡
-  | wnk_rpol {~w ⨀ ~p₁} => w • Eι p₁
-  | wnk_rpol {~p₁ ⨁ ~p₂} => Eι[Eι p₁, Eι p₂]
-  | wnk_rpol {~p₁ ; ~_} => Eι[Eι p₁, 0]
-  | wnk_rpol {~_*} => Eι[0, 1]
+  | wnk_rpol {~w ⨀ ~p₁} => w • EC p₁
+  | wnk_rpol {~p₁ ⨁ ~p₂} => EC[EC p₁, EC p₂]
+  | wnk_rpol {~p₁ ; ~_} => EC[EC p₁, 0]
+  | wnk_rpol {~_*} => EC[0, 1]
 
 section Operators
 
@@ -296,7 +283,7 @@ theorem sox'ₑ_eq_sox' {A B : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
   simp [HSMul.hSMul, EMatrix.asMatrix₂]
 
 def croxₑ {A B C : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
-    [Listed A] [Listed B] [DecidableEq C] [Listed C]
+    [Listed A] [Listed B] [Listed C]
     (l : E𝕄[Pk, Pk, E𝕄[A, B, Q]]) (r : E𝕄[Pk, Pk, E𝕄[B, C, Q]]) :
     E𝕄[Pk, Pk, E𝕄[A, C, Q]] :=
   .ofFn fun α β ↦ ∑ m, l.asNMatrix α m * r.asNMatrix m β
@@ -305,7 +292,7 @@ infixr:50 " ⊞ₑ " => croxₑ
 
 @[simp]
 theorem croxₑ_eq_crox {A B C : Type*} {Q : Type*} [AddCommMonoid Q] [Mul Q]
-    [Listed A] [Listed B] [DecidableEq C] [Listed C]
+    [Listed A] [Listed B] [Listed C]
     [Fintype A] [Fintype B] [Fintype C]
     [Fintype Pk]
     (l : E𝕄[Pk, Pk, E𝕄[A, B, Q]]) (r : E𝕄[Pk, Pk, E𝕄[B, C, Q]]) :
@@ -321,7 +308,7 @@ namespace RPol
 
 variable [KStar 𝒮]
 
-def E𝒪_lambda [Listed N] (p : RPol[F,N,𝒮]) :
+def ER [Listed N] (p : RPol[F,N,𝒮]) :
     EMatrix Pk[F,N] Pk[F,N] (EMatrix (S p) 𝟙 𝒮) :=
   match _ : p with
   | wnk_rpol {drop} => 0
@@ -332,44 +319,44 @@ def E𝒪_lambda [Listed N] (p : RPol[F,N,𝒮]) :
     .ofFn fun α β ↦ if α = β ∧ β = γ then .ofFn fun _ ↦ 1 else 0
   | wnk_rpol {@mod ~π} => let π := Listed.encode π; .ofFn fun _ β ↦ if β = π then .ofFn fun _ ↦ 1 else 0
   | wnk_rpol {dup} => let v := Eη₂ ♣ (); .ofFn fun α β ↦ if α = β then v else 0
-  | wnk_rpol {~_ ⨀ ~p₁} => let 𝒪₁ := E𝒪_lambda p₁; .ofFn fun α β ↦ 𝒪₁.getN α β
+  | wnk_rpol {~_ ⨀ ~p₁} => let 𝒪₁ := ER p₁; .ofFn fun α β ↦ 𝒪₁.getN α β
   | wnk_rpol {~p₁ ⨁ ~p₂} =>
-    let 𝒪₁ := E𝒪_lambda p₁
-    let 𝒪₂ := E𝒪_lambda p₂
-    .ofFn fun α β ↦ E𝒪_lambda[𝒪₁.getN α β, 𝒪₂.getN α β]
+    let 𝒪₁ := ER p₁
+    let 𝒪₂ := ER p₂
+    .ofFn fun α β ↦ ER[𝒪₁.getN α β, 𝒪₂.getN α β]
   | wnk_rpol {~p₁ ; ~p₂} =>
-    let 𝒪₁ := E𝒪_lambda p₁ |>.asNMatrix₂
-    let M₂ := E𝒪_lambda p₂ |>.asNMatrix₂
-    let M₃ := Eι p₂ |>.asNMatrix
+    let 𝒪₁ := ER p₁ |>.asNMatrix₂
+    let M₂ := ER p₂ |>.asNMatrix₂
+    let M₃ := EC p₂ |>.asNMatrix
     .ofFn fun α β ↦
-      E𝒪_lambda[∑ γ, 𝒪₁ α γ * M₃ * M₂ γ β, M₂ α β]
+      ER[∑ γ, 𝒪₁ α γ * M₃ * M₂ γ β, M₂ α β]
   | wnk_rpol {~p₁*} =>
-    let 𝒪₁ := E𝒪_lambda p₁ |>.asNMatrix
+    let 𝒪₁ := ER p₁ |>.asNMatrix
     let M₂ :=
-      let ι₁ := Eι p₁
-      let 𝒪₁ := E𝒪_lambda p₁
+      let ι₁ := EC p₁
+      let 𝒪₁ := ER p₁
       let X := ι₁ ⊠ₑ 𝒪₁
       let Y : N𝕄[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮] := X∗
       Y
     .ofFn fun α β ↦
-      E𝒪_lambda[
+      ER[
         ∑ γ, 𝒪₁ α γ <• M₂ γ β,
         .ofFn fun _ _ ↦ M₂ α β
       ]
 
-def E𝒪_heart [Listed N] [DecidableEq N] (p₁ : RPol[F,N,𝒮]) : EMatrix Pk[F,N] Pk[F,N] 𝒮 :=
-  let ι₁ := Eι p₁
-  let 𝒪₁ := E𝒪_lambda p₁
+def ER_heart [Listed N] [DecidableEq N] (p₁ : RPol[F,N,𝒮]) : EMatrix Pk[F,N] Pk[F,N] 𝒮 :=
+  let ι₁ := EC p₁
+  let 𝒪₁ := ER p₁
   let X := ι₁ ⊠ₑ 𝒪₁
   let Y : N𝕄[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮] := X∗
   Y
 
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] in
-theorem E𝒪_lambda_iter [Listed N] [DecidableEq N] (p₁ : RPol[F,N,𝒮]) :
-    E𝒪_lambda wnk_rpol {~p₁*} = .ofFn fun α β ↦
-      E𝒪_lambda[
-        (∑ γ, (E𝒪_lambda p₁).asNMatrix α γ <• (E𝒪_heart p₁).asNMatrix γ β),
-        .ofFn fun _ _ ↦ (E𝒪_heart p₁).asNMatrix α β
+theorem ER_iter [Listed N] [DecidableEq N] (p₁ : RPol[F,N,𝒮]) :
+    ER wnk_rpol {~p₁*} = .ofFn fun α β ↦
+      ER[
+        (∑ γ, (ER p₁).asNMatrix α γ <• (ER_heart p₁).asNMatrix γ β),
+        .ofFn fun _ _ ↦ (ER_heart p₁).asNMatrix α β
       ] :=
   rfl
 
@@ -380,14 +367,14 @@ theorem EMatrix.asMatrix_one {X α : Type*} [Listed X] [DecidableEq X] [Zero α]
 
 omit [OmegaCompletePartialOrder 𝒮] [OrderBot 𝒮] [IsPositiveOrderedAddMonoid 𝒮] [KStar 𝒮] in
 @[simp]
-theorem Eι_eq_ι {p : RPol[F,N,𝒮]} : Eι p = EMatrix.ofMatrix (ι p) := by
+theorem EC_eq_C {p : RPol[F,N,𝒮]} : EC p = EMatrix.ofMatrix (ι p) := by
   classical
   induction p
-  all_goals ext i j; simp [ι, Eι, η₂]
+  all_goals ext i j; simp [ι, EC, η₂]
   next p q ihp ihq =>
-    have := S.Eι_eq_ι (m₁:=Eι p) (m₂:=0) (i:=i) (j:=j)
+    have := S.EC_eq_C (m₁:=EC p) (m₂:=0) (i:=i) (j:=j)
     simp only [EMatrix.zero_asMatrix] at this
-    simp only [S.Eι_eq_ι] at this
+    simp only [S.EC_eq_C] at this
     convert this
     · simp
     · simp [ihp]
@@ -398,13 +385,13 @@ variable [DecidableEq F]
 
 variable [Listed N] [DecidableEq N] [LawfulKStar N𝕄[Listed.size Pk[F,N], Listed.size Pk[F,N], 𝒮]]
 
-theorem E𝒪_heart_eq_𝒪_heart {p : RPol[F,N,𝒮]} (h : E𝒪_lambda p = EMatrix.ofMatrix₂ (𝒪 p)) :
-    E𝒪_heart p = EMatrix.ofMatrix (𝒪_heart p) := by
-  simp [E𝒪_heart, 𝒪_heart]
+theorem ER_heart_eq_𝒪_heart {p : RPol[F,N,𝒮]} (h : ER p = EMatrix.ofMatrix₂ (𝒪 p)) :
+    ER_heart p = EMatrix.ofMatrix (𝒪_heart p) := by
+  simp [ER_heart, 𝒪_heart]
   simp [LawfulKStar.kstar_eq_sum]
   ext α β
   simp
-  convert EMatrix.ωSum_apply (ι:=ℕ) (x:=α) (y:=β) (f:=fun n ↦ EMatrix.ofMatrix (ι p ⊠ (E𝒪_lambda p).asMatrix₂) ^ n)
+  convert EMatrix.ωSum_apply (ι:=ℕ) (x:=α) (y:=β) (f:=fun n ↦ EMatrix.ofMatrix (ι p ⊠ (ER p).asMatrix₂) ^ n)
   symm
   rename_i n
   ext α β
@@ -430,31 +417,31 @@ theorem _root_.EMatrix.apply_encodeFin {m n α : Type*} [Listed m] [Listed n] {M
   rfl
 
 @[simp]
-theorem E𝒪_lambda_eq_𝒪 {p : RPol[F,N,𝒮]} : E𝒪_lambda p = EMatrix.ofMatrix₂ (𝒪 p) := by
+theorem ER_eq_C {p : RPol[F,N,𝒮]} : ER p = EMatrix.ofMatrix₂ (𝒪 p) := by
   induction p
   next =>
     ext
-    simp [𝒪, E𝒪_lambda]
+    simp [𝒪, ER]
   next =>
     ext i j i' j'
-    simp [𝒪, E𝒪_lambda]
+    simp [𝒪, ER]
     split_ifs <;> simp
   next =>
     ext
-    simp [𝒪, E𝒪_lambda]
+    simp [𝒪, ER]
     split_ifs <;> simp
   next =>
     ext
-    simp [𝒪, E𝒪_lambda]
+    simp [𝒪, ER]
     split_ifs <;> simp
   next =>
     ext
-    simp [𝒪, E𝒪_lambda]
+    simp [𝒪, ER]
     split_ifs <;> simp
     simp [η₂]
   next p q ihp ihq =>
     ext α β i j
-    simp [𝒪, E𝒪_lambda]
+    simp [𝒪, ER]
     simp_all
     congr
     · ext γ u ⟨_⟩
@@ -477,78 +464,77 @@ theorem E𝒪_lambda_eq_𝒪 {p : RPol[F,N,𝒮]} : E𝒪_lambda p = EMatrix.ofM
       simp
   next p ih =>
     ext
-    simp [𝒪, E𝒪_lambda, ih]
+    simp [𝒪, ER, ih]
   next p q ihp ihq =>
     ext
-    simp [𝒪, E𝒪_lambda, ihp, ihq]
+    simp [𝒪, ER, ihp, ihq]
   next p ih =>
     ext α β i j
-    simp [E𝒪_lambda_iter, 𝒪, sox', ih, E𝒪_heart_eq_𝒪_heart]
+    simp [ER_iter, 𝒪, sox', ih, ER_heart_eq_𝒪_heart]
     congr! with γ
     ext
     simp [HSMul.hSMul, SMul.smul]
 
-def ι_aux (p : RPol[F,N,𝒮]) : Matrix 𝟙 (S p) 𝒮 := Eι p |>.asMatrix
+def ι_aux (p : RPol[F,N,𝒮]) : Matrix 𝟙 (S p) 𝒮 := EC p |>.asMatrix
 
-def 𝒪_aux (p : RPol[F,N,𝒮]) : Matrix Pk[F,N] Pk[F,N] (Matrix (S p) 𝟙 𝒮) := E𝒪_lambda p |>.asMatrix₂
+def 𝒪_aux (p : RPol[F,N,𝒮]) : Matrix Pk[F,N] Pk[F,N] (Matrix (S p) 𝟙 𝒮) := ER p |>.asMatrix₂
 
-def Eδ_delta (p : RPol[F,N,𝒮]) : EMatrix Pk[F,N] Pk[F,N] (EMatrix (S p) (S p) 𝒮) :=
+def EB (p : RPol[F,N,𝒮]) : EMatrix Pk[F,N] Pk[F,N] (EMatrix (S p) (S p) 𝒮) :=
   match p with
   | wnk_rpol {drop} | wnk_rpol {skip} | wnk_rpol {@test ~_} | wnk_rpol {@mod ~_} => .ofFn fun _ _ ↦
     0
-  -- | wnk_rpol {dup} => .ofFn fun α β ↦ .ofFnSlow fun s ↦ if s = ♡ ∧ α = β then η₁ ♣ else 0
   | wnk_rpol {dup} => .ofFn fun α β ↦ .ofFn fun s ↦ if s = 0 ∧ α = β then η₁ 1 else 0
-  | wnk_rpol {~_ ⨀ ~p₁} => Eδ_delta p₁
+  | wnk_rpol {~_ ⨀ ~p₁} => EB p₁
   | wnk_rpol {~p₁ ⨁ ~p₂} =>
-    let δ₁ := Eδ_delta p₁
-    let δ₂ := Eδ_delta p₂
+    let δ₁ := EB p₁
+    let δ₂ := EB p₂
     .ofFn fun α β ↦
-      Eδ_delta[[δ₁.getN α β,    0],
+      EB[[δ₁.getN α β,    0],
         [0,           δ₂.getN α β]]
   | wnk_rpol {~p₁ ; ~p₂} =>
-    let ι₂ := Eι p₂
-    let δ₁ := Eδ_delta p₁ |>.asNMatrix
-    let δ₂ := Eδ_delta p₂ |>.asNMatrix
-    let 𝒪₁ := E𝒪_lambda p₁ |>.asNMatrix
+    let ι₂ := EC p₂
+    let δ₁ := EB p₁ |>.asNMatrix
+    let δ₂ := EB p₂ |>.asNMatrix
+    let 𝒪₁ := ER p₁ |>.asNMatrix
     .ofFn fun α β ↦
-      Eδ_delta[[δ₁ α β, ∑ γ, 𝒪₁ α γ * ι₂ * δ₂ γ β],
+      EB[[δ₁ α β, ∑ γ, 𝒪₁ α γ * ι₂ * δ₂ γ β],
                [0,      δ₂ α β]]
   | wnk_rpol {~p₁*} =>
-    let ι₁ := Eι p₁
-    let δ₁ := Eδ_delta p₁
-    let 𝒪_heart₁ := E𝒪_heart p₁
+    let ι₁ := EC p₁
+    let δ₁ := EB p₁
+    let 𝒪_heart₁ := ER_heart p₁
     let X := 𝒪_heart₁ ⊟ₑ ι₁ ⊡ₑ δ₁
-    let Eδ' : E𝕄[Pk[F,N], Pk[F,N], E𝕄[S p₁, S p₁, 𝒮]] := δ₁ + ((E𝒪_lambda p₁) ⊞ₑ X)
+    let Eδ' : E𝕄[Pk[F,N], Pk[F,N], E𝕄[S p₁, S p₁, 𝒮]] := δ₁ + ((ER p₁) ⊞ₑ X)
     .ofFn fun α β ↦
-      Eδ_delta[[Eδ'.getN α β, 0],
+      EB[[Eδ'.getN α β, 0],
                [X.asNMatrix α β, 0]]
 
 @[simp]
-theorem Eδ_delta_eq_δ {p : RPol[F,N,𝒮]} : Eδ_delta p = EMatrix.ofMatrix₂ (δ p) := by
+theorem EB_eq_δ {p : RPol[F,N,𝒮]} : EB p = EMatrix.ofMatrix₂ (δ p) := by
   classical
   induction p
-  next => ext; simp [Eδ_delta, δ]
-  next => ext; simp [Eδ_delta, δ]
-  next => ext; simp [Eδ_delta, δ]
-  next => ext; simp [Eδ_delta, δ]
+  next => ext; simp [EB, δ]
+  next => ext; simp [EB, δ]
+  next => ext; simp [EB, δ]
+  next => ext; simp [EB, δ]
   next =>
-    ext _ _ i j; simp [Eδ_delta, δ]
+    ext _ _ i j; simp [EB, δ]
     rcases i <;> rcases j <;> simp [Listed.encodeFin, Listed.encode]
     · split_ifs <;> rfl
     · split_ifs <;> rfl
   next p q ih₁ ih₂ =>
-    ext α β i j; simp_all [Eδ_delta, δ, S]
+    ext α β i j; simp_all [EB, δ, S]
     congr! with γ
     ext p' q'
     simp [Matrix.mul_apply, EMatrix.mul_apply]
-  next => ext; simp_all [Eδ_delta, δ, S]
-  next => ext; simp_all [Eδ_delta, δ]
+  next => ext; simp_all [EB, δ, S]
+  next => ext; simp_all [EB, δ]
   next p ih =>
-    ext α β i j; simp_all [Eδ_delta, δ, δ.δ', E𝒪_heart_eq_𝒪_heart]
+    ext α β i j; simp_all [EB, δ, δ.δ', ER_heart_eq_𝒪_heart]
 
-def δ_aux (p : RPol[F,N,𝒮]) : 𝕄[Pk[F,N],Pk[F,N],𝕄[S p,S p,𝒮]] := Eδ_delta p |>.asMatrix₂
+def δ_aux (p : RPol[F,N,𝒮]) : 𝕄[Pk[F,N],Pk[F,N],𝕄[S p,S p,𝒮]] := EB p |>.asMatrix₂
 
-def ewnka (p : RPol[F,N,𝒮]) : EWNKA[F,N,𝒮,S p] := ⟨Eι p, Eδ_delta p, E𝒪_lambda p⟩
+def ewnka (p : RPol[F,N,𝒮]) : EWNKA[F,N,𝒮,S p] := ⟨EC p, EB p, ER p⟩
 
 end RPol
 
